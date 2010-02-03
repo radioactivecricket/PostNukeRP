@@ -172,7 +172,11 @@ end
 
 function PickupCheck( ply, ent)
 	--admin can do whatever they want
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then return true end
+	if ply:IsSuperAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then return true end
+	
+	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 and not (ent:IsSuperAdmin() or ent:IsAdmin()) then return true end
+	
+	if ent:IsPlayer() then return false
 	
 	--local searchString = " "..ent:GetClass()
 	if string.find(ent:GetClass(), "unc_") == 2 then
