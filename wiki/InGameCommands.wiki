@@ -1,0 +1,13 @@
+#In Game Commands
+
+= Keyboard Shortcutes =
+
+*TAB* - Open Main Menu / Player Menu
+*F2* - Take Ownership of Car / Place item into inventory.
+*F3* - Open Player Inventory.
+*F4*  - Open Shop/Build Menu 
+
+= Chat Commands =
+
+
+= Console Commands =
