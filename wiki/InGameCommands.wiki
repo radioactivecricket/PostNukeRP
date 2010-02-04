@@ -14,3 +14,9 @@
 
 
 = Console Commands =
+
+*pnrp_save* - Save all aspects of your character.  Soon to be modified.
+
+*pnrp_load* - Loads your character.  Will be locked to admin only in the future.
+
+*pnrp_loadweps* - Loads character weapons.  Will be locked admin only in the future.
