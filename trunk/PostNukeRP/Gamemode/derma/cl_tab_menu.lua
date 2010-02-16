@@ -79,7 +79,7 @@ function PNRP.buildMenu(parent_frame)
 
 	classmenu = vgui.Create("DButton") -- Create the button 	
 		classmenu:SetParent( parent_frame ) -- parent the button to the frame
-		classmenu:SetText( "Class Menu >" ) -- set the button text
+		classmenu:SetText( "Class Menu >>" ) -- set the button text
 		classmenu:SetPos(20, 25) -- set the button position in the frame
 		classmenu:SetSize( 100, 20 ) -- set the button size
 		classmenu.DoClick = function ( btn ) -- this will be called when the button is clicked

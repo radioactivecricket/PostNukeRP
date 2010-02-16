@@ -114,7 +114,10 @@ function PNRP.InventoryWeight( p )
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
 	
-	if !file.Exists( ILoc ) then print( "Inventory file doesn't exist !" ) return end	
+	if !file.Exists( ILoc ) then 
+		print( "Inventory file doesn't exist !" )
+		return 0
+	end	
 	
 	local Inv = PNRP.Inventory( p )
 	

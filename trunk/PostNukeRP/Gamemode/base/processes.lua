@@ -352,24 +352,51 @@ function PROCESS:OnStop()
 			
 			local ent = ents.Create(self.Data.Ent)
 			local pos = self.Data.Pos + Vector(0,0,20)
---			ent:SetModel("models/buggy.mdl")
+			
+			ent:SetAngles(Angle(0,0,0))
+			ent:SetPos(pos)
+			Msg(tostring(self.Data.Model).."\n")
+			//This fixes the seating animation for the seats
+			if(self.Data.Ent == "prop_vehicle_prisoner_pod") then
+				Msg("Seat fix ran. \n")
+				local vname = self.Data.ID
+				local VehicleList = list.Get( "Vehicles" )
+				local vehicle = VehicleList[ vname ]
+				
+				ent:SetModel(self.Data.Model)
+				
+				// Not a valid vehicle to be spawning..
+				if ( vehicle ) then 
+					for k, v in pairs( vehicle.KeyValues ) do
+						ent:SetKeyValue( k, v )
+					end	 
+					ent:Spawn()
+					ent:Activate()
+					
+					ent.VehicleName 	= vname
+					ent.VehicleTable 	= vehicle
+					ent.ClassOverride 	= vehicle.Class
+					//This is the main part that fixes the animation.
+					if ( vehicle.Members ) then
+						table.Merge( ent, vehicle.Members )
+						duplicator.StoreEntityModifier( ent, "VehicleMemDupe", vehicle.Members );
+					end
+					
+					ent:SetNetworkedString("Owner", "World")
+				end
+			else
+			
 			ent:SetModel(self.Data.Model)
 			ent:SetKeyValue( "actionScale", 1 ) 
 			ent:SetKeyValue( "VehicleLocked", 0 ) 
 			ent:SetKeyValue( "solid", 6 ) 
---			ent:SetKeyValue( "vehiclescript", "scripts/vehicles/jeep_test.txt" ) 
 			ent:SetKeyValue( "vehiclescript", self.Data.Script ) 
-			ent:SetAngles(Angle(0,0,0))
-			ent:SetPos(pos)
-			Msg(tostring(self.Data.Model).."\n")
-			if(self.Data.Model == "models/nova/jeep_seat.mdl" or self.Data.Model == "models/nova/airboat_seat.mdl") then
-				Msg("Did This \n")
-				ent:SetKeyValue( "limitview", "0" )
-			end
 			
 			ent:Spawn()
 			ent:Activate()
 			ent:SetNetworkedString("Owner", "World")
+			
+			end
          else
             --self.Owner:SendMessage("Failed.",3,Color(200,0,0,255))
          end
