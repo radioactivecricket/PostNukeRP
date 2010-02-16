@@ -51,6 +51,20 @@ CreateConVar("pnrp_MaxAntGuards","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARC
 
 CreateConVar("pnrp_packCap","50",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_packCapScav","75",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_ReproduceRes","1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_MaxReproducedRes","20", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_propBanning", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_propAllowing", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_propPay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_propCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_adminCreateAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_adminTouchAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_exp2Level", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 	
 --CreateConVar("pnrp_SpawnMobs","1",FCVAR_NOTIFY )
 --CreateConVar("pnrp_MaxZombies","30",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)

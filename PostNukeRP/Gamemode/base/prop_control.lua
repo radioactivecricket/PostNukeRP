@@ -1,14 +1,14 @@
 
-CreateConVar("pnrp_propBanning", "1", FCVAR_ARCHIVE)
-CreateConVar("pnrp_propAllowing", "0", FCVAR_ARCHIVE)
+--CreateConVar("pnrp_propBanning", "1", FCVAR_ARCHIVE)
+--CreateConVar("pnrp_propAllowing", "0", FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_propPay", "1", FCVAR_ARCHIVE)
-CreateConVar("pnrp_propCost", "10", FCVAR_ARCHIVE)
+--CreateConVar("pnrp_propPay", "1", FCVAR_ARCHIVE)
+--CreateConVar("pnrp_propCost", "10", FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_adminCreateAll", "1", FCVAR_ARCHIVE)
-CreateConVar("pnrp_adminTouchAll", "1", FCVAR_ARCHIVE)
+--CreateConVar("pnrp_adminCreateAll", "1", FCVAR_ARCHIVE)
+--CreateConVar("pnrp_adminTouchAll", "1", FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_exp2Level", "1", FCVAR_ARCHIVE)
+--CreateConVar("pnrp_exp2Level", "1", FCVAR_ARCHIVE)
 
 BannedProps = { }
 function AddBannedProp(mdl) table.insert(BannedProps, mdl) end

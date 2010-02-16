@@ -9,6 +9,8 @@ for k, v in pairs(file.FindInLua("PostNukeRP/gamemode/derma/*.lua")) do
 end
 
 Resources = {}
+local PrevHealth
+local LastDraw
 local dynaset = {}
 dynaset.prevyaw = 0
 dynaset.newroll = 0
@@ -211,3 +213,26 @@ end
 
 hook.Add("Think", "DynaEyeTilt", DynaEyeTilt)
 
+local function DamageBlur()
+	local person = LocalPlayer()
+	local delay = 0.5
+	local blurmax = 0.75
+	if person:Alive() then
+		if !LastDraw and !PrevHealth then 
+			LastDraw = CurTime() + 2
+			PrevHealth = person:Health()
+		end
+		
+		if person:Health() < PrevHealth then
+			LastDraw = CurTime()
+			PrevHealth = person:Health()
+		end
+		
+		local TimeDif = CurTime() - LastDraw 
+		
+		if TimeDif < delay then
+			DrawMotionBlur( ( TimeDif / delay ) * blurmax, 0.79, 0.05) --*((PrevHealth-person:Health())/10)
+		end
+	end
+end
+hook.Add( "RenderScreenspaceEffects", "RenderDamage", DamageBlur )

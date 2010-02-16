@@ -236,8 +236,28 @@ function PNRP.GetSpawnflags ( ply )
 --			return true
 --		end
 	end
-	ply:ChatPrint("Class: "..tostring(ent:GetClass()))
+--	ply:ChatPrint("Class: "..tostring(ent:GetClass()))
+	EntityKeyValueInfo( ent )
+--	Msg(EntityKeyValueInfo( ent, 0 ).."\n")
+	ply:ChatPrint(tostring(ent:GetTable().HandleAnimation) )
 end
 concommand.Add( "pnrp_getinfo", PNRP.GetSpawnflags )
+
+function EntityKeyValueInfo( ent, key, value )
+
+--return tostring(key).." "..tostring(value)
+	Msg(tostring(ent).." "..tostring(key).." "..tostring(value).."\n")
+
+--	for k,v in pairs(ent:GetKeyValues()) do
+--		if string.lower(v) == wep:GetClass() then
+--		Msg( tostring(k).." "..tostring(v).."\n")
+--		ply:ChatPrint(tostring(k)..": ["..tostring(v).."] \n")
+--			return true
+--		end
+--	end
+
+end
+
+hook.Add( 'EntityKeyValue' , "EntityKeyValueInfo", getMoreInfo )
 
 --EOF

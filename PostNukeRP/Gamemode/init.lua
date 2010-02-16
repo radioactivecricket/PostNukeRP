@@ -7,8 +7,8 @@ AddCSLuaFile("itembase.lua")
 
 --include('keymap.lua')
 
-CreateConVar("pnrp_ReproduceRes","1")
-CreateConVar("pnrp_MaxReproducedRes","20",FCVAR_ARCHIVE)
+--CreateConVar("pnrp_ReproduceRes","1", FCVAR_ARCHIVE + FCVAR_NOTIFY)
+--CreateConVar("pnrp_MaxReproducedRes","20",FCVAR_ARCHIVE + FCVAR_NOTIFY)
 
 local PlayerMeta = FindMetaTable("Player")
 local EntityMeta = FindMetaTable("Entity")
@@ -240,9 +240,9 @@ function string.Capitalize(str)
 end
 
 function GM.run_Command(ply, command, arg)
-	
-	RunConsoleCommand( arg[1], arg[2] )	
-					
+	if ply:IsAdmin() then
+		RunConsoleCommand( arg[1], arg[2] )	
+	end				
 end
 
 concommand.Add( "pnrp_RunCommand", GM.run_Command )
