@@ -195,20 +195,25 @@ function PickupCheck( ply, ent)
 	--Unownable should be un-pickupable, so we check that next
 	if owner == "Unownable" then return false end
 	
-	if owner == "None" or owner == "World" then return true end
+	--if owner == "None" or owner == "World" then return true end
 	if ply:Nick() == owner then return true end
+	if owner ~= ply:Nick() then 
+		if owner ~= "None" and owner ~= "World" then
+			return false
+		end
+	end
 	
 	--If nothing is triggered, just return false.
-	return false
+	--return false
 end
 hook.Add( "PhysgunPickup", "pickupCheck", PickupCheck )
 
-function PhysReloadCheck ( weapon, ply )
+function PhysUnfreezeCheck ( ply, ent, physobj )
 	--admin can do whatever they want
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then return true end
 
 	--get the entity we're looking at, do the same checks as when doing pickup
-	local ent = ply:GetEyeTrace().Entity
+	--local ent = ply:GetEyeTrace().Entity
 	
 	local owner = ent:GetNWString( "Owner", "None" )
 	
@@ -218,13 +223,13 @@ function PhysReloadCheck ( weapon, ply )
 	
 	if myDistance > 300 then return false end
 	if owner == "Unownable" then return false end
-	if owner == "None" or owner == "World" then return true end
+	--if owner == "None" or owner == "World" then return true end
 	if ply:Nick() == owner then return true end
 	
 	--If nothing is triggered, just return false.
-	return false
+	--return false
 end
-hook.Add("OnPhysgunReload", "PhysgunReloadCheck", PhysReloadCheck)
+hook.Add("CanPlayerUnfreeze", "PhyUnfreezeCheck", PhysUnfreezeCheck)
 
 function ToolCheck( ply, tr, toolmode )
 	--check for globally allowed tools (Admins can use all tools)

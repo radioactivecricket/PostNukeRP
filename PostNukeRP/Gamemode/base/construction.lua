@@ -147,6 +147,7 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					ent:SetKeyValue( "vehiclescript", data.Script ) 
 					ent:SetAngles(Angle(0,0,0))
 					ent:SetPos(pos)
+					ent:SetKeyValue( "model", self.Data.Model )
 					
 					ent:Spawn()
 					ent:Activate()

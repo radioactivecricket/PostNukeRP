@@ -50,7 +50,7 @@ function GM.SaveCharacter(ply,cmd,args)
 			end
 		end
 	end 
-	PNRP.GetCar( ply )
+	
 	file.Write("PostNukeRP/Saves/"..ply:UniqueID()..".txt",util.TableToKeyValues(tbl))
 end
 

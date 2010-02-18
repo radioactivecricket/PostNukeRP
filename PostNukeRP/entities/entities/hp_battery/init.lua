@@ -19,7 +19,7 @@ function ENT:Use( activator, caller )
 		local armor = activator:Armor()
 		
 		if not ( armor == 100 ) then
-			local sound = Sound("items/suitcharge1.wav")
+			local sound = Sound("items/battery_pickup.wav")
 			self.Entity:EmitSound( sound )
 			
 			self.Entity:Remove()
