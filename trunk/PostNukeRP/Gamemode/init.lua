@@ -58,6 +58,7 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		ply:IncResource("Chemicals",0)
 		
 		PNRP.SendInventory( ply )
+		PNRP.SendCarInventory( ply )
 		
 		Msg("Load Timer run for "..ply:Nick().."\n")
 	end)
@@ -95,6 +96,7 @@ end
 function GM:PlayerDisconnected(ply)
 	
 	self.SaveCharacter(ply)
+	PNRP.GetCar( ply )
 	Msg("Saved character of disconnecting player "..ply:Nick()..".\n")
 end
 
@@ -258,11 +260,20 @@ end
 function GM:ShowTeam( ply )
 	local tr = ply:TraceFromEyes(200)
 	local ent = tr.Entity
+	local myClass
+	--Added to remove the Null Entity error
+	if tostring(ent) == "[NULL Entity]" then return end
 	
-	local ItemID = PNRP.FindItemID( ent:GetClass() )
+	if ent:GetClass() == "prop_vehicle_prisoner_pod" then
+		myClass = "weapon_seat"
+	else
+		myClass = ent:GetClass()
+	end
+	
+	local ItemID = PNRP.FindItemID( myClass )
 	print("This is the ItemID:  "..ItemID)
 	
-	if ItemID then
+	if ItemID != nill then
 		print("This is the type:  "..PNRP.Items[ItemID].Type)
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
@@ -298,8 +309,34 @@ function GM:ShowTeam( ply )
 end
 --F3 Button
 function GM:ShowSpare1( ply )
-	ply:ConCommand("pnrp_inv")
+	local tr = ply:TraceFromEyes(200)
+	local ent = tr.Entity
+	--Opens Car inventory when looking at a car owned by you.
+	if tostring(ent) != "[NULL Entity]" then
+		local ItemID = PNRP.FindItemID( ent:GetClass() )
+		if ItemID != nil then
+			local myType = PNRP.Items[ItemID].Type
+			if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
+				local myModel = ent:GetModel()
+				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
+				ply:SendLua( "CurCarMaxWeight = "..tostring(PNRP.Items[ItemID].Weight) )
+				ply:ConCommand("pnrp_carinv")
+			else
+				--If not looking at the car, open normal inventory.
+				ply:ConCommand("pnrp_inv")
+			end
+		else
+			--If not looking at the car, open normal inventory.
+			ply:ConCommand("pnrp_inv")
+		end
+	else
+	--If not looking at the car, open normal inventory.
+		ply:ConCommand("pnrp_inv")
+	
+	end
 end
+concommand.Add( "pnrp_ShowSpare1", GM.ShowSpare1 )
+
 --F4 Button
 function GM:ShowSpare2( ply )
 	ply:ConCommand("pnrp_buy_shop")
@@ -307,38 +344,25 @@ end
 
 function PNRP.GetCar( ply )
 	for k,v in pairs(ents.GetAll()) do
-		local ItemID = PNRP.FindItemID( v:GetClass() )
+		local myClass = v:GetClass()
+		local ItemID = PNRP.FindItemID( myClass )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
 			if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
 				local myModel = v:GetModel()
-				if myModel == "models/buggy.mdl" then
-					Msg("Sending ".."vehicle_jeep".." to "..ply:Nick().."'s Inventory".."\n")
-					PNRP.AddToInentory( ply, "vehicle_jeep" )
-					v:Remove()
-				elseif myModel == "models/airboat.mdl" then
-					Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-					PNRP.AddToInentory( ply, ItemID )
-					v:Remove()
-				elseif myModel == "models/vehicle.mdl" then
-					Msg("Sending ".."vehicle_jalopy".." to "..ply:Nick().."'s Inventory".."\n")
-					PNRP.AddToInentory( ply, "vehicle_jalopy" )
-					v:Remove()
-				elseif myModel == "models/nova/jeep_seat.mdl" then
-					Msg("Sending ".."vehicle_jeep_seat".." to "..ply:Nick().."'s Inventory".."\n")
-					PNRP.AddToInentory( ply, "vehicle_jeep_seat" )
-					v:Remove()
-				elseif myModel == "models/nova/airboat_seat.mdl" then
-					Msg("Sending ".."vehicle_airboat_seat".." to "..ply:Nick().."'s Inventory".."\n")
-					PNRP.AddToInentory( ply, "vehicle_airboat_seat" )
-					v:Remove()
-				end
+								
+				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
+				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
+				
+				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
+				PNRP.AddToInentory( ply, ItemID )
+				v:Remove()
 				
 			end
 		end	
 	end
 end
-
 concommand.Add( "pnrp_GetCar", PNRP.GetCar )
+
 
 --EOF

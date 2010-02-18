@@ -147,14 +147,14 @@ function PROCESS:OnStop()
             self.Owner:IncResource("Scrap",num2)
             self.Owner:EmitSound(Sound("items/ammo_pickup.wav"))
 
-            if self.Data.Entity then self.Data.Entity.Uses = self.Data.Entity.Uses - num2 end
+            if self.Data.Entity and self.Data.Entity.Uses then self.Data.Entity.Uses = self.Data.Entity.Uses - num2 end
          else
             --self.Owner:SendMessage("Failed.",3,Color(200,0,0,255))
          end
          
          self.Owner:Freeze(false)
          
-         if self.Data.Entity != NULL then
+         if self.Data.Entity and self.Data.Entity.Uses then
             if self.Data.Entity.Uses <= 0 then
                self.Data.Entity:Remove()
             end
@@ -199,14 +199,14 @@ function PROCESS:OnStop()
             self.Owner:IncResource("Chemicals",num2)
             self.Owner:EmitSound(Sound("items/ammo_pickup.wav"))
 
-            if self.Data.Entity then self.Data.Entity.Uses = self.Data.Entity.Uses - num2 end
+            if self.Data.Entity and self.Data.Entity.Uses then self.Data.Entity.Uses = self.Data.Entity.Uses - num2 end
          else
             --self.Owner:SendMessage("Failed.",3,Color(200,0,0,255))
          end
          
          self.Owner:Freeze(false)
          
-         if self.Data.Entity != NULL then
+         if self.Data.Entity and self.Data.Entity.Uses then
             if self.Data.Entity.Uses <= 0 then
                self.Data.Entity:Remove()
             end
@@ -251,14 +251,14 @@ function PROCESS:OnStop()
             self.Owner:IncResource("Small_Parts",num2)
             self.Owner:EmitSound(Sound("items/ammo_pickup.wav"))
 
-            if self.Data.Entity then self.Data.Entity.Uses = self.Data.Entity.Uses - num2 end
+            if self.Data.Entity and self.Data.Entity.Uses then self.Data.Entity.Uses = self.Data.Entity.Uses - num2 end
          else
             --self.Owner:SendMessage("Failed.",3,Color(200,0,0,255))
          end
          
          self.Owner:Freeze(false)
          
-         if self.Data.Entity != NULL then
+         if self.Data.Entity and self.Data.Entity.Uses then
             if self.Data.Entity.Uses <= 0 then
                self.Data.Entity:Remove()
             end
@@ -392,10 +392,10 @@ function PROCESS:OnStop()
 			ent:SetKeyValue( "solid", 6 ) 
 			ent:SetKeyValue( "vehiclescript", self.Data.Script ) 
 			
+			ent:SetKeyValue( "model", self.Data.Model )
 			ent:Spawn()
 			ent:Activate()
-			ent:SetNetworkedString("Owner", "World")
-			
+			ent:SetNetworkedString("Owner", "World")			
 			end
          else
             --self.Owner:SendMessage("Failed.",3,Color(200,0,0,255))

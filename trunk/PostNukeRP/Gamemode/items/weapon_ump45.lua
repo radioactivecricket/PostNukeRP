@@ -3,7 +3,7 @@ local ITEM = {}
 
 ITEM.ID = "wep_ump45"
 
-ITEM.Name = "HK nnnUMP-45"
+ITEM.Name = "HK UMP-45"
 ITEM.ClassSpawn = "Engineer"
 ITEM.Scrap = 20
 ITEM.Small_Parts = 75

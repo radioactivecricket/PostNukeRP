@@ -236,3 +236,5 @@ local function DamageBlur()
 	end
 end
 hook.Add( "RenderScreenspaceEffects", "RenderDamage", DamageBlur )
+
+

@@ -126,14 +126,42 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet)
 						pnlPanel.ItemWeight:SizeToContents() 
 				 		pnlPanel.ItemWeight:SetContentAlignment( 5 )	
 				 		
-				 		pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
-				 		pnlPanel.sendCarInv:SetPos(450, 55)
-				    	pnlPanel.sendCarInv:SetText( "Send to Car Inv" )
-				    	pnlPanel.sendCarInv:SizeToContents() 
-				    	pnlPanel.sendCarInv.DoClick = function()
-				        	PNRP.AddToCarInentory( ply, item.ID )
-				    	end
-				
+				 		if itemtype != "vehicle" then
+				 		
+					    	for k,v in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
+								local ItemID = PNRP.FindItemID( v:GetClass() )
+								if ItemID != nil then
+									local myType = PNRP.Items[ItemID].Type
+									if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
+									
+										pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
+								 		pnlPanel.sendCarInv:SetPos(450, 55)
+								    	pnlPanel.sendCarInv:SetText( "Send to Car Inv" )
+								    	pnlPanel.sendCarInv:SizeToContents() 
+								    	pnlPanel.sendCarInv.DoClick = function()
+								    		
+								    		local weight = CurCarInvWeight + item.Weight
+											local weightCap
+											
+											
+											weightCap = PNRP.Items[ItemID].Weight
+											
+											if weight <= weightCap then
+												RunConsoleCommand("pnrp_addtocarinentory",item.ID)
+												parent_frame:Close()
+											else
+												parent_frame:Close()
+												ply:ChatPrint("You're car trunk is full.")
+											end
+								    												
+										end
+									end
+						
+								end
+					    	
+					    	end
+						end
+						
 				 	end
 				end
 			end

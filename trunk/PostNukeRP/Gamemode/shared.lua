@@ -65,7 +65,10 @@ CreateConVar("pnrp_adminCreateAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR
 CreateConVar("pnrp_adminTouchAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_exp2Level", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-	
+
+CreateConVar("pnrp_voiceLimit", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_voiceDist", "550", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
 --CreateConVar("pnrp_SpawnMobs","1",FCVAR_NOTIFY )
 --CreateConVar("pnrp_MaxZombies","30",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 --CreateConVar("pnrp_MaxFastZombies","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
@@ -103,5 +106,16 @@ for k, v in pairs( file.FindInLua( "PostNukeRP/gamemode/items/*.lua" ) ) do
 	if (SERVER) then AddCSLuaFile("items/"..v) end
 end
 
+function PNRP.FindItemID( class )
+	
+	for itemname, item in pairs( PNRP.Items ) do
+		if class == item.Ent then
+			return item.ID
+		end
+		
+	end	
+	return nil
+	
+end
 
 --EOF
