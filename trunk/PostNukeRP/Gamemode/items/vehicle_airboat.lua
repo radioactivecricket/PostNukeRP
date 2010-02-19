@@ -16,7 +16,7 @@ ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_airboat"
 ITEM.Model = "models/airboat.mdl"
 ITEM.Script = "scripts/vehicles/airboat.txt"
-ITEM.Weight = 50
+ITEM.Weight = 100
 
 function ITEM.Spawn( p )
 	PNRP.BaseVehicle( p, "models/airboat.mdl", "prop_vehicle_airboat", "scripts/vehicles/airboat.txt", ITEM )

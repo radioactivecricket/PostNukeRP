@@ -37,7 +37,7 @@ function GM.car_inventory_window(ply)
 			
 			
 	local InvWeight = vgui.Create("DLabel", inventory_frame)		
-			InvWeight:SetPos(580, 55 )
+			InvWeight:SetPos(575, 55 )
 			local maxCarWeight	
 			maxCarWeight = tostring(CurCarMaxWeight)
 			

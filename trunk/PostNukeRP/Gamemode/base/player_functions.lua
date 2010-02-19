@@ -1,18 +1,25 @@
 --Chat Commands
 PNRP.ChatCommands = { }
+PNRP.ChatConCommands = { }
 
 function PNRP.ChatCmd( cmdtext, callback )
 
-	table.insert( PNRP.ChatCommands, { cmd = cmdtext, cb = callback } );
+	PNRP.ChatCommands[cmdtext] = callback
 
 end
 
-local function chtTest( ply, cmd, text )
+function PNRP.ChatConCmd( cmdtext, callback )
 
+	PNRP.ChatConCommands[cmdtext] = callback
+
+end
+
+function PNRP.chtTest( ply, cmd, text )
+	
 	ply:ChatPrint("Test")
 
 end
-PNRP.ChatCmd( "/test", chtTest );
+PNRP.ChatCmd( "/test", PNRP.chtTest )
 
 
 /*---------------------------------------------------------
@@ -82,6 +89,7 @@ end
 function GM.LoadWeaps( ply )
 	if file.Exists("PostNukeRP/Saves/"..ply:UniqueID()..".txt") then
 		local tbl = util.KeyValuesToTable(file.Read("PostNukeRP/Saves/"..ply:UniqueID()..".txt"))
+--		ply:RemoveAllAmmo()
 		
 		if tbl["weapons"] then
 			for k,v in pairs(tbl["weapons"]) do
@@ -97,6 +105,7 @@ function GM.LoadWeaps( ply )
 end
 
 concommand.Add( "pnrp_save", GM.SaveCharacter )
+PNRP.ChatConCmd( "/save", "pnrp_save" )
 concommand.Add( "pnrp_load", GM.LoadCharacter )
 concommand.Add( "pnrp_loadweps", GM.LoadWeaps )
 /*-------------------------------------------------------*/
@@ -122,14 +131,60 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	for k, v in pairs(ply:GetWeapons()) do
 		local wepCheck = PNRP.CheckDefWeps(v) and v != "weapon_real_cs_admin_weapon"
 		if !wepCheck then
-			local ent = ents.Create(v:GetClass())
-	        --ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
-			ent:SetModel(v:GetModel())
-	        ent:SetAngles(Angle(0,0,0))
-			ent:SetPos(pos)
-			ent:Spawn()
-			ent:SetClip1(v:Clip1())
-			ent:SetNetworkedString("Owner", "World")
+			if PNRP.FindWepItem(v:GetModel()) then
+				local myItem = PNRP.FindWepItem(v:GetModel())
+				local ent = ents.Create(myItem.Ent)
+				--ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
+				ent:SetModel(myItem.Model)
+				ent:SetAngles(Angle(0,0,0))
+				ent:SetPos(pos)
+				ent:Spawn()
+				ent:SetNetworkedString("Ammo", v:Clip1())
+				ent:SetNetworkedString("Owner", "World")
+				
+				local ammoDrop = ply:GetAmmoCount(v:GetPrimaryAmmoType())
+				if ammoDrop > 0 then
+					local myAmmoType = PNRP.ConvertAmmoType(v:GetPrimaryAmmoType())
+					local entClass
+					local entModel
+					ply:ChatPrint(myAmmoType)
+					
+					local ammoFType = "ammo_"..myAmmoType
+					local ItemID = PNRP.FindItemID( ammoFType )
+					if ItemID then
+						entClass = ammoFType
+						entModel = PNRP.Items[ItemID].Model
+					
+--					if myAmmoType == "357" then
+--						entClass = "ammo_357"
+--						entModel = "models/items/357ammo.mdl"
+						
+--						ply:SetAmmo(0, "357")
+--					elseif myAmmoType == "smg1" then
+--						entClass = "ammo_smg1"
+--						entModel = "models/items/boxmrounds.mdl"
+						
+--						ply:SetAmmo(0, "smg1")
+--					elseif myAmmoType == "pistol" then
+--						entClass = "ammo_pistol"
+--						entModel = "models/items/boxsrounds.mdl"
+						
+--						ply:SetAmmo(0, "pistol")
+--					elseif myAmmoType == "buckshot" then
+--						entClass = "ammo_shotgun"
+--						entModel = "models/items/boxbuckshot.mdl"
+						
+--						ply:SetAmmo(0, "buckshot")
+					end
+					local entAmmo = ents.Create(entClass)
+					entAmmo:SetModel(entModel)
+					entAmmo:SetAngles(Angle(0,0,0))
+					entAmmo:SetPos(pos)
+					entAmmo:Spawn()
+					
+					entAmmo:SetNetworkedString("Ammo", tostring(ammoDrop))
+				end
+			end
 		end
 	end 		
 end
@@ -197,15 +252,12 @@ function PNRP.DropWeapon (ply, command, args)
 		
 		if PNRP.CheckDefWeps(myWep) then return end
 		
-		ply:ChatPrint("I exist!")
-		ply:ChatPrint("Active Wep:  "..tostring(myWep:GetModel()))
 		local wepModel = myWep:GetModel()
 		if string.find(myWep:GetModel(), "v_") ~= 1 then
 			wepModel = "models/weapons/w_"..string.sub(myWep:GetModel(),string.find(myWep:GetModel(), "v_")+2)
 		end
-		ply:ChatPrint("After model check:  "..wepModel)
+		
 		local wepEnt = ConvertWepEnt( wepModel )
-		ply:ChatPrint("My Ent:  "..wepEnt)
 		
 		local tr = ply:TraceFromEyes(200)
 		local trPos = tr.HitPos
@@ -223,7 +275,132 @@ function PNRP.DropWeapon (ply, command, args)
 	end
 end
 concommand.Add( "pnrp_dropWep", PNRP.DropWeapon )
+PNRP.ChatConCmd( "/dropwep", "pnrp_dropWep" )
+PNRP.ChatConCmd( "/dropgun", "pnrp_dropWep" )
 
+function PNRP.DropAmmo (ply, command, args)
+	local ammoType = args[1]
+	ply:ChatPrint("Ammo Type:  "..ammoType)
+	local ammoAmt = tonumber(args[2])
+	local entClass
+	local entModel
+	
+	
+	if ammoType and ammoAmt then
+		local ammoFType = "ammo_"..ammoType
+		local ItemID = PNRP.FindItemID( ammoFType )
+		if ItemID then
+			entClass = ammoFType
+			entModel = PNRP.Items[ItemID].Model
+		
+		
+--		if ammoType == "smg1" then 
+--			entClass = "ammo_smg1"
+--			entModel = "models/items/boxmrounds.mdl"
+--		elseif ammoType == "357" then
+--			entClass = "ammo_357"
+--			entModel = "models/items/357ammo.mdl"
+--		elseif ammoType == "buckshot" then
+--			entClass = "ammo_shotgun"
+--			entModel = "models/items/boxbuckshot.mdl"
+--		elseif ammoType == "pistol" then
+--			entClass = "ammo_pistol"
+--			entModel = "models/items/boxsrounds.mdl"
+		else
+			ply:ChatPrint("Invalid ammo type.")
+			return
+		end
+	elseif ammoType then
+		local ammoFType = "ammo_"..ammoType
+		local ItemID = PNRP.FindItemID( ammoFType )
+		if ItemID then
+			entClass = ammoFType
+			entModel = PNRP.Items[ItemID].Model
+			ammoAmt = PNRP.Items[ItemID].Energy
+			
+--		if ammoType == "smg1" then 
+--			entClass = "ammo_smg1"
+--			entModel = "models/items/boxmrounds.mdl"
+--			ammoAmt = 75
+--		elseif ammoType == "357" then
+--			entClass = "ammo_357"
+--			entModel = "models/items/357ammo.mdl"
+--			ammoAmt = 10
+--		elseif ammoType == "buckshot" then
+--			entClass = "ammo_shotgun"
+--			entModel = "models/items/boxbuckshot.mdl"
+--			ammoAmt = 20
+--		elseif ammoType == "pistol" then
+--			entClass = "ammo_pistol"
+--			entModel = "models/items/boxsrounds.mdl"
+--			ammoAmt = 20
+		else
+			ply:ChatPrint("Invalid ammo type.")
+			return
+		end
+	else
+--		ammoType =  ply:GetActiveWeapon():GetPrimaryAmmoType()
+		ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
+		local ammoFType = "ammo_"..ammoType
+		
+		local ItemID = PNRP.FindItemID( ammoFType )
+		if ItemID then
+			entClass = ammoFType
+			entModel = PNRP.Items[ItemID].Model
+			ammoAmt = PNRP.Items[ItemID].Energy
+		
+--		if ammoType == "smg1" then 
+--			entClass = "ammo_smg1"
+--			entModel = "models/items/boxmrounds.mdl"
+--			ammoAmt = 75
+--		elseif ammoType == "357" then
+--			entClass = "ammo_357"
+--			entModel = "models/items/357ammo.mdl"
+--			ammoAmt = 10
+--		elseif ammoType == "buckshot" then
+--			entClass = "ammo_shotgun"
+--			entModel = "models/items/boxbuckshot.mdl"
+--			ammoAmt = 20
+--		elseif ammoType == "pistol" then
+--			entClass = "ammo_pistol"
+--			entModel = "models/items/boxsrounds.mdl"
+--			ammoAmt = 20
+		else
+			ply:ChatPrint("Invalid ammo type.")
+			return
+		end
+	end
+	
+	if ply:GetAmmoCount(ammoType) < ammoAmt then
+		ply:ChatPrint("You cannot drop that much.  All ammo dropped instead.")
+		
+		ammoAmt = ply:GetAmmoCount(ammoType)
+	end
+	
+	if ply:GetAmmoCount(ammoType) <= 0 then
+		ply:ChatPrint("You don't have any of this type!")
+		return
+	end
+	
+	local tr = ply:TraceFromEyes(200)
+	local trPos = tr.HitPos
+	
+	local ent = ents.Create(entClass)
+	local pos = trPos + Vector(0,0,20)
+	ent:SetModel(entModel)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+	ent:SetNetworkedString("Owner", "World")
+	ent:SetNetworkedString("Ammo", tostring(ammoAmt))
+	
+	local prevAmmo = ply:GetAmmoCount(ammoType)
+	
+	ply:RemoveAmmo( ammoAmt, ammoType )
+	ply:ChatPrint(tostring(prevAmmo).."  -  "..tostring(ammoAmt).." = "..tostring(prevAmmo - ammoAmt))
+end
+concommand.Add( "pnrp_dropAmmo", PNRP.DropAmmo )
+PNRP.ChatConCmd( "/dropammo", "pnrp_dropAmmo" )
 
 function PNRP.GetSpawnflags ( ply )
 	local tr = ply:TraceFromEyes(400)

@@ -300,6 +300,11 @@ function PROCESS:OnStop()
 			self.Owner:DecResource("Chemicals", self.Data.Chems)
 			
 			local ent = ents.Create(self.Data.Ent)
+			if self.Data.Type == "ammo" then
+			
+				ent:SetNetworkedString("Ammo", tostring(self.Data.Energy))
+
+			end
 			local pos = self.Data.Pos + Vector(0,0,20)
 			ent:SetModel(self.Data.Model)
 			ent:SetAngles(Angle(0,0,0))
