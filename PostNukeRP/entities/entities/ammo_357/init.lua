@@ -10,6 +10,11 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	self.Entity:PhysWake()
+	
+	self.Entity:SetNetworkedString("NormalAmmo", "10")
+	if not self.Entity:GetNWString("Ammo") then
+		self.Entity:SetNetworkedString("Ammo", "10")
+	end
 end
 
 function ENT:Use( activator, caller )
@@ -18,9 +23,17 @@ function ENT:Use( activator, caller )
 		local sound = Sound("items/ammo_pickup.wav")
 		self.Entity:EmitSound( sound )
 	
+		local ammo
+		if self.Entity:GetNWString("Ammo") then
+			ammo = tonumber(self.Entity:GetNWString("Ammo"))
+		else
+			self.Entity:SetNetworkedString("Ammo", "10")
+			ammo = 10
+		end
+	
 		self.Entity:Remove()
 		
-		activator:GiveAmmo( 7, "357")
+		activator:GiveAmmo( ammo, "357")
  
 	end
  

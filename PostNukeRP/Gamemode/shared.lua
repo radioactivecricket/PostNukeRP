@@ -118,4 +118,41 @@ function PNRP.FindItemID( class )
 	
 end
 
+function PNRP.FindWepItem( model )
+	local fixedModel = string.sub( model, 1, string.find(model, "v_") - 1).."w"..string.sub( model, string.find(model, "v_") + 1 ) 
+	
+	for itemname, item in pairs( PNRP.Items ) do
+		if fixedModel == item.Model then
+			return item
+		end
+		
+	end	
+	return nil
+	
+end
+
+function PNRP.FindAmmoType( id, class )
+	if id then
+		if id == "wep_deagle" or id == "wep_scout" then
+			return "357"
+		elseif id == "wep_p228" then
+			return "pistol"
+		elseif id == "wep_shotgun" then
+			return "buckshot"
+		else
+			return "smg1"
+		end
+	elseif class then
+		if class == "wep_deagle" or class == "wep_scout" then
+			return "357"
+		elseif class == "wep_p228" then
+			return "pistol"
+		elseif class == "wep_shotgun" then
+			return "buckshot"
+		else
+			return "smg1"
+		end
+	end
+end
+
 --EOF

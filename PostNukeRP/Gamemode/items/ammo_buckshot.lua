@@ -1,9 +1,9 @@
 local ITEM = {}
 
 
-ITEM.ID = "box_buckshot"
+ITEM.ID = "ammo_buckshot"
 
-ITEM.Name = "Shotgun Ammo"
+ITEM.Name = "Buckshot Ammo"
 ITEM.ClassSpawn = "Engineer"
 ITEM.Scrap = 10
 ITEM.Small_Parts = 0
@@ -12,8 +12,8 @@ ITEM.Chance = 100
 ITEM.Info = ""
 ITEM.Type = "ammo"
 ITEM.Remove = true
-ITEM.Energy = 0
-ITEM.Ent = "ammo_shotgun"
+ITEM.Energy = 20
+ITEM.Ent = "ammo_buckshot"
 ITEM.Model = "models/items/boxbuckshot.mdl"
 ITEM.Script = ""
 ITEM.Weight = 2

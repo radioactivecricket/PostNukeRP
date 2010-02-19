@@ -22,7 +22,9 @@ function GM.BuildItem( ply, command, arg )
 					data.Chems = item.Chemicals
 					data.Script = item.Script
 					data.Ent = item.Ent
+					data.Type = item.Type
 					data.Model = item.Model
+					data.Energy = item.Energy
 					if item.Type != "vehicle" then
 						ply:DoProcess("ConstructItem",2,data)
 					else
@@ -63,7 +65,7 @@ function PNRP.DropSpawn( ply, ID, q )
 			data.Model = item.Model
 			for i = 1, q do
 				
-				if item.Type != "vehicle" then
+				if item.Type ~= "vehicle" then
 					ply:EmitSound(Sound("items/ammo_pickup.wav"))
 					
 					local ent = ents.Create(data.Ent)
@@ -72,6 +74,22 @@ function PNRP.DropSpawn( ply, ID, q )
 					ent:SetAngles(Angle(0,0,0))
 					ent:SetPos(pos)
 					ent:Spawn()
+					if item.Type == "weapon" and item.ID ~= "wep_grenade" then
+						ent:SetNetworkedString("Ammo", "0")
+					elseif item.Type == "ammo" then
+						
+						ent:SetNetworkedString("Ammo", tostring(item.Energy))
+					
+--						if item.Ent == "ammo_smg1" then 
+--							ent:SetNetworkedString("Ammo", "75")
+--						elseif item.Ent == "ammo_357" then
+--							ent:SetNetworkedString("Ammo", "10")
+--						elseif item.Ent == "ammo_shotgun" then
+--							ent:SetNetworkedString("Ammo", "20")
+--						elseif item.Ent == "ammo_pistol" then
+--							ent:SetNetworkedString("Ammo", "20")
+--						end
+					end
 					ent:SetNetworkedString("Owner", "World")
 					PNRP.TakeFromInventory( ply, data.ID )
 					

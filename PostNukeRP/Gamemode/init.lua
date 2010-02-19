@@ -273,7 +273,7 @@ function GM:ShowTeam( ply )
 	local ItemID = PNRP.FindItemID( myClass )
 	print("This is the ItemID:  "..ItemID)
 	
-	if ItemID != nill then
+	if ItemID != nil then
 		print("This is the type:  "..PNRP.Items[ItemID].Type)
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
@@ -283,10 +283,83 @@ function GM:ShowTeam( ply )
 				ply:ConCommand("pnrp_addowner")
 			end
 		else
-			if myType == "weapon" or myType == "ammo" or myType == "medical" or myType == "food" or myType == "tool" then
+			if myType == "weapon" then
 				-- ply:ChatPrint("InvWeight Debug:  "..tostring(PNRP.InventoryWeight( ply )))
 				-- ply:ChatPrint("ItemWeight Debug:  "..tostring(PNRP.Items[ItemID].Weight))
 				-- ply:ChatPrint("ItemID Debug:  "..tostring(ItemID))
+				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
+				local weightCap
+				
+				if team.GetName(ply:Team()) == "Scavenger" then
+					weightCap = GetConVarNumber("pnrp_packCapScav")
+				else
+					weightCap = GetConVarNumber("pnrp_packCap")
+				end
+				
+				if weight <= weightCap then
+					PNRP.AddToInentory( ply, ItemID )
+					if tonumber(ent:GetNetworkedString("Ammo")) > 0 then
+						ply:GiveAmmo(tonumber(ent:GetNetworkedString("Ammo")), PNRP.FindAmmoType( ItemID, nil))
+					end
+					ent:Remove()
+				else
+					ply:ChatPrint("You're pack is too full and cannot carry this.")
+				end
+			elseif myType == "ammo" then
+				local boxes = math.floor( tonumber(ent:GetNWString("Ammo")) / tonumber(ent:GetNWString("NormalAmmo")) )
+				local ammoLeft = tonumber(ent:GetNWString("Ammo"))
+				local overweight = false
+				
+				local weightCap
+						
+				if team.GetName(ply:Team()) == "Scavenger" then
+					weightCap = GetConVarNumber("pnrp_packCapScav")
+				else
+					weightCap = GetConVarNumber("pnrp_packCap")
+				end
+				
+				if boxes > 0 then
+					for box = 1, boxes do
+						local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
+						
+						if weight <= weightCap then
+							PNRP.AddToInentory( ply, ItemID )
+							ammoLeft = ammoLeft - tonumber(ent:GetNWString("NormalAmmo"))
+						else
+							ply:ChatPrint("You're pack is too full and cannot carry all of this.")
+							overweight = true
+							break
+						end
+					end
+				end
+				
+				local ammoType
+--				if ent:GetClass() == "ammo_smg1" then
+--					ammoType = "smg1"
+--				elseif ent:GetClass() == "ammo_shotgun" then
+--					ammoType = "buckshot"
+--				elseif ent:GetClass() == "ammo_pistol" then
+--					ammoType = "pistol"
+--				elseif ent:GetClass() == "ammo_357" then
+--					ammoType = "357"
+--				end
+				
+				ammoType = string.gsub(ent:GetClass(),"ammo_","")
+				
+				if ammoLeft > 0 and boxes > 0 and not overweight then
+					ply:ChatPrint("You have loaded the rest of your ammo onto your combat vest.  "..tostring(ammoLeft).." extra rounds taken.")
+					ply:GiveAmmo(ammoLeft, ammoType)
+					ent:Remove()
+				elseif ammoLeft > 0 and boxes > 0 and overweight then
+					ply:ChatPrint("The rest stays on the ground.")
+					ent:SetNetworkedString("Ammo", tostring(ammoLeft))
+				elseif ammoLeft > 0 then
+					ply:ChatPrint("This isn't enough to worry about.  Only "..tostring(ammoLeft).." rounds here.")
+				else
+					ply:ChatPrint("You have picked up all of this ammo.")
+					ent:Remove()
+				end
+			elseif myType == "medical" or myType == "food" or myType == "tool" then
 				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
 				local weightCap
 				
@@ -363,6 +436,6 @@ function PNRP.GetCar( ply )
 	end
 end
 concommand.Add( "pnrp_GetCar", PNRP.GetCar )
-
+PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 
 --EOF

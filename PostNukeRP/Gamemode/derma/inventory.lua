@@ -37,7 +37,7 @@ function GM.inventory_window(ply)
 			PropertySheet:AddSheet( "Tools", toolsPanel, "gui/silkicons/wrench", false, false, "Make Tools - Still in Development" )
 	
 	local InvWeight = vgui.Create("DLabel", inventory_frame)		
-			InvWeight:SetPos(580, 55 )
+			InvWeight:SetPos(575, 55 )
 			local maxWeight
 			if ply:Team() == TEAM_SCAVENGER then
 				maxWeight = GetConVar("pnrp_packCapScav"):GetInt()

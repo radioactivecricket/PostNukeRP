@@ -16,7 +16,7 @@ ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_jeep_old"
 ITEM.Model = "models/buggy.mdl"
 ITEM.Script = "scripts/vehicles/jeep_test.txt"
-ITEM.Weight = 100
+ITEM.Weight = 150
 
 function ITEM.Spawn( p )
 	PNRP.BaseVehicle( p, "models/buggy.mdl", "prop_vehicle_jeep_old", "scripts/vehicles/jeep_test.txt", ITEM )
