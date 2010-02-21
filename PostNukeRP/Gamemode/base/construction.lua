@@ -25,6 +25,7 @@ function GM.BuildItem( ply, command, arg )
 					data.Type = item.Type
 					data.Model = item.Model
 					data.Energy = item.Energy
+					data.Create = item.Create
 					if item.Type != "vehicle" then
 						ply:DoProcess("ConstructItem",2,data)
 					else
@@ -63,36 +64,41 @@ function PNRP.DropSpawn( ply, ID, q )
 			data.Script = item.Script
 			data.Ent = item.Ent
 			data.Model = item.Model
+			data.Create = item.Create
 			for i = 1, q do
 				
 				if item.Type ~= "vehicle" then
 					ply:EmitSound(Sound("items/ammo_pickup.wav"))
 					
-					local ent = ents.Create(data.Ent)
 					local pos = data.Pos + Vector(0,0,20)
-					ent:SetModel(data.Model)
-					ent:SetAngles(Angle(0,0,0))
-					ent:SetPos(pos)
-					ent:Spawn()
-					if item.Type == "weapon" and item.ID ~= "wep_grenade" then
-						ent:SetNetworkedString("Ammo", "0")
-					elseif item.Type == "ammo" then
+					if item.Type == "tool" then
+						item.Create(ply, item.Ent, pos)
+					else
+						local ent = ents.Create(data.Ent)
+						ent:SetModel(data.Model)
+						ent:SetAngles(Angle(0,0,0))
+						ent:SetPos(pos)
+						ent:Spawn()
+						if item.Type == "weapon" and item.ID ~= "wep_grenade" then
+							ent:SetNetworkedString("Ammo", "0")
+						elseif item.Type == "ammo" then
+							
+							ent:SetNetworkedString("Ammo", tostring(item.Energy))
 						
-						ent:SetNetworkedString("Ammo", tostring(item.Energy))
-					
---						if item.Ent == "ammo_smg1" then 
---							ent:SetNetworkedString("Ammo", "75")
---						elseif item.Ent == "ammo_357" then
---							ent:SetNetworkedString("Ammo", "10")
---						elseif item.Ent == "ammo_shotgun" then
---							ent:SetNetworkedString("Ammo", "20")
---						elseif item.Ent == "ammo_pistol" then
---							ent:SetNetworkedString("Ammo", "20")
---						end
+	--						if item.Ent == "ammo_smg1" then 
+	--							ent:SetNetworkedString("Ammo", "75")
+	--						elseif item.Ent == "ammo_357" then
+	--							ent:SetNetworkedString("Ammo", "10")
+	--						elseif item.Ent == "ammo_shotgun" then
+	--							ent:SetNetworkedString("Ammo", "20")
+	--						elseif item.Ent == "ammo_pistol" then
+	--							ent:SetNetworkedString("Ammo", "20")
+	--						end
+						end
+						ent:SetNetworkedString("Owner", "World")
 					end
-					ent:SetNetworkedString("Owner", "World")
-					PNRP.TakeFromInventory( ply, data.ID )
 					
+					PNRP.TakeFromInventory( ply, data.ID )
 				else
 					
 					local ent = ents.Create(data.Ent)
