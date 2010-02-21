@@ -299,18 +299,23 @@ function PROCESS:OnStop()
 			self.Owner:DecResource("Small_Parts", self.Data.SmallParts)
 			self.Owner:DecResource("Chemicals", self.Data.Chems)
 			
-			local ent = ents.Create(self.Data.Ent)
-			if self.Data.Type == "ammo" then
-			
-				ent:SetNetworkedString("Ammo", tostring(self.Data.Energy))
-
-			end
 			local pos = self.Data.Pos + Vector(0,0,20)
-			ent:SetModel(self.Data.Model)
-			ent:SetAngles(Angle(0,0,0))
-			ent:SetPos(pos)
-			ent:Spawn()
-			ent:SetNetworkedString("Owner", "World")
+			
+			if self.Data.Type == "tool" then
+				self.Data.Create(self.Owner, self.Data.Ent, pos)
+			else
+				local ent = ents.Create(self.Data.Ent)
+				if self.Data.Type == "ammo" then
+			
+					ent:SetNetworkedString("Ammo", tostring(self.Data.Energy))
+
+				end
+				ent:SetModel(self.Data.Model)
+				ent:SetAngles(Angle(0,0,0))
+				ent:SetPos(pos)
+				ent:Spawn()
+				ent:SetNetworkedString("Owner", "World")
+			end
 			
 			Msg(self.Owner:Nick().." created "..tostring(self.Data.Name)..".\n")
          else

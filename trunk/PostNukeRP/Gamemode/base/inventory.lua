@@ -21,6 +21,7 @@ function PNRP.AddItem( itemtable )
 		Remove = itemtable.Remove,
 		Script = itemtable.Script,
 		Weight = itemtable.Weight,
+		Create = itemtable.Create,
 	}
 	
 end	

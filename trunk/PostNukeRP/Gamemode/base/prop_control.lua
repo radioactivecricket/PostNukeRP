@@ -39,6 +39,7 @@ function PNRP.AddItem( itemtable )
 		Remove = itemtable.Remove,
 		Script = itemtable.Script,
 		Weight = itemtable.Weight,
+		Create = itemtable.Create,
 	}
 	
 	AddBannedProp(itemtable.Model)
@@ -95,12 +96,22 @@ function GM:PlayerSpawnProp(ply, model)
 
 	if allowed then
 		if GetConVarNumber("pnrp_propPay") == 1 then
-			if ply:GetResource("Scrap") >= GetConVarNumber("pnrp_propCost") then
-				ply:ChatPrint(tostring(GetConVarNumber("pnrp_propCost")).." scrap used to create this prop.")
-				ply:DecResource("Scrap", GetConVarNumber("pnrp_propCost"))
+			local ent = ents.Create("prop_physics")
+			ent:SetModel(model)
+			ent:Spawn()			
+			
+			local price = math.Round(((ent:BoundingRadius() + ent:GetPhysicsObject():GetMass()) / 2) * (GetConVarNumber("pnrp_propCost") / 100))
+			ent:Remove()
+			
+			if price < 1 then price = 1 end
+			--ply:ChatPrint("Price:  "..tostring(price))
+			
+			if ply:GetResource("Scrap") >= price then
+				ply:ChatPrint(tostring(price).." scrap used to create this prop.")
+				ply:DecResource("Scrap", price)
 				return true
 			else
-				ply:ChatPrint(tostring(GetConVarNumber("pnrp_propCost")).." scrap needed to create this prop.")
+				ply:ChatPrint(tostring(price).." scrap needed to create this prop.")
 				return false
 			end
 		else
