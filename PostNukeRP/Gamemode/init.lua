@@ -96,7 +96,7 @@ end
 function GM:PlayerDisconnected(ply)
 	
 	self.SaveCharacter(ply)
-	PNRP.GetCar( ply )
+	PNRP.GetAllCar( ply )
 	Msg("Saved character of disconnecting player "..ply:Nick()..".\n")
 end
 
@@ -270,6 +270,32 @@ function GM:ShowTeam( ply )
 		myClass = ent:GetClass()
 	end
 	
+	if myClass == "prop_physics" then
+		local myModel = ent:GetModel()
+		
+		for itemname, item in pairs( PNRP.Items ) do
+			if myModel == item.Model then
+--				myClass = item.ID
+				
+				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[item.ID].Weight
+				local weightCap
+				
+				if team.GetName(ply:Team()) == "Scavenger" then
+					weightCap = GetConVarNumber("pnrp_packCapScav")
+				else
+					weightCap = GetConVarNumber("pnrp_packCap")
+				end
+				
+				if weight <= weightCap then
+					PNRP.AddToInentory( ply, item.ID )
+					ent:Remove()
+				else
+					ply:ChatPrint("You're pack is too full and cannot carry this.")
+				end
+			end
+		end		
+	end
+	
 	local ItemID = PNRP.FindItemID( myClass )
 	print("This is the ItemID:  "..ItemID)
 	
@@ -277,16 +303,11 @@ function GM:ShowTeam( ply )
 		print("This is the type:  "..PNRP.Items[ItemID].Type)
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
-			if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
-				ply:ConCommand("pnrp_removeowner")
-			else
-				ply:ConCommand("pnrp_addowner")
-			end
 			if tonumber(ent:GetNetworkedString( "Type" , "0" )) == 1 then
 				if ent:GetModel() == "models/nova/jeep_seat.mdl" then
-					ItemID = "Seat_Jeep"
+					ItemID = "seat_jeep"
 				else
-					ItemID = "Seat_Airboat"
+					ItemID = "seat_airboat"
 				end
 				
 				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
@@ -303,6 +324,12 @@ function GM:ShowTeam( ply )
 					ent:Remove()
 				else
 					ply:ChatPrint("You're pack is too full and cannot carry this.")
+				end
+			else
+				if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
+					ply:ConCommand("pnrp_removeowner")
+				else
+					ply:ConCommand("pnrp_addowner")
 				end
 			end
 		else
@@ -398,6 +425,7 @@ function GM:ShowTeam( ply )
 				else
 					ply:ChatPrint("You're pack is too full and cannot carry this.")
 				end
+
 			end
 		end
 	end
@@ -438,7 +466,7 @@ function GM:ShowSpare2( ply )
 	ply:ConCommand("pnrp_buy_shop")
 end
 
-function PNRP.GetCar( ply )
+function PNRP.GetAllCars( ply )
 	for k,v in pairs(ents.GetAll()) do
 		local myClass = v:GetClass()
 		local ItemID = PNRP.FindItemID( myClass )
@@ -458,7 +486,42 @@ function PNRP.GetCar( ply )
 		end	
 	end
 end
+concommand.Add( "pnrp_GetAllCar", PNRP.GetAllCars )
+PNRP.ChatConCmd( "/getallcars", "pnrp_GetAllCar" )
+
+function PNRP.GetCar( ply )
+	
+	local tr = ply:TraceFromEyes(200)
+	local ent = tr.Entity
+	if tostring(ent) != "[NULL Entity]" then
+		local myClass = ent:GetClass()
+		local ItemID = PNRP.FindItemID( myClass )
+		if ItemID != nil then
+			local myType = PNRP.Items[ItemID].Type
+			if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
+				local myModel = ent:GetModel()
+								
+				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
+				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
+				
+				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
+				PNRP.AddToInentory( ply, ItemID )
+				ent:Remove()
+				
+			end
+		end	
+	end
+end
 concommand.Add( "pnrp_GetCar", PNRP.GetCar )
 PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
+
+--This is an override to hide death notices.
+function GM:PlayerDeath( Victim, Inflictor, Attacker )  
+
+   -- Don't spawn for at least 2 seconds
+   Victim.NextSpawnTime = CurTime() + 2
+   Victim.DeathTime = CurTime()
+
+end  
 
 --EOF

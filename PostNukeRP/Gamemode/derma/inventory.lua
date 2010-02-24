@@ -68,7 +68,7 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet)
 			if item.Type == tostring( itemtype ) then
 				for k, v in pairs( MyInventory ) do
 		
-					if k == itemname then
+					if string.lower(k) == string.lower(itemname) then
 						local pnlPanel = vgui.Create("DPanel")
 						pnlPanel:SetTall(75)
 						pnlPanel.Paint = function()

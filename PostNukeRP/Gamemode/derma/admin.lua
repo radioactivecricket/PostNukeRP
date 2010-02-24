@@ -45,6 +45,20 @@ function GM.open_admin(ply)
 				    E2RestrictSlider:SetValue( GetConVar("pnrp_exp2Level"):GetInt() )
 				GModeSettingsList:AddItem( E2RestrictSlider )				
 				
+				local ToolRestrictLabel= vgui.Create("DLabel", GModeSettingsList)
+					ToolRestrictLabel:SetText("Tool Restriction:  (Def: 2)" )
+					ToolRestrictLabel:SizeToContents()
+				GModeSettingsList:AddItem( ToolRestrictLabel )
+					
+				local ToolRestrictSlider = vgui.Create( "DNumSlider", GModeSettingsList )
+				    ToolRestrictSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    ToolRestrictSlider:SetText( "0 - None, 1 - Admin, 2 - Engineer, 3 - Engineer/Science, 4 - Everyone" )
+				    ToolRestrictSlider:SetMin( 0 )
+				    ToolRestrictSlider:SetMax( 4 )
+				    ToolRestrictSlider:SetDecimals( 0 )
+				    ToolRestrictSlider:SetValue( GetConVar("pnrp_toolLevel"):GetInt() )
+				GModeSettingsList:AddItem( ToolRestrictSlider )
+				
 				local adminCreateAllTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					adminCreateAllTgl:SetText( "Admin can create all." )
 					adminCreateAllTgl:SetValue( GetConVar("pnrp_adminCreateAll"):GetInt() )
@@ -140,6 +154,7 @@ function GM.open_admin(ply)
 				    		voiceLimitOnOff = 0
 				    	end
 				    	RunConsoleCommand("pnrp_RunCommand","pnrp_exp2Level",tostring(E2RestrictSlider:GetValue()))
+				    	RunConsoleCommand("pnrp_RunCommand","pnrp_toolLevel",tostring(ToolRestrictSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminCreateAll",tostring(adminCreateAllOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminTouchAll",tostring(adminTouchAllOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propBanning",tostring(propBanningOnOff))

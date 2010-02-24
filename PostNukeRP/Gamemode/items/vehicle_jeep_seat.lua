@@ -1,7 +1,7 @@
 local ITEM = {}
 
 
-ITEM.ID = "Seat_Jeep"
+ITEM.ID = "seat_jeep"
 
 ITEM.Name = "Jeep Seat"
 ITEM.ClassSpawn = "All"
