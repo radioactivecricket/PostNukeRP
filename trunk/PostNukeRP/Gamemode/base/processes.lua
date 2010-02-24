@@ -305,7 +305,7 @@ function PROCESS:OnStop()
 				self.Data.Create(self.Owner, self.Data.Ent, pos)
 			else
 				local ent = ents.Create(self.Data.Ent)
-				if self.Data.Type == "ammo" then
+				if self.Data.Type == "ammo" or self.Data.Type == "weapon" then
 			
 					ent:SetNetworkedString("Ammo", tostring(self.Data.Energy))
 
@@ -396,16 +396,19 @@ function PROCESS:OnStop()
 				end
 			else
 			
-			ent:SetModel(self.Data.Model)
-			ent:SetKeyValue( "actionScale", 1 ) 
-			ent:SetKeyValue( "VehicleLocked", 0 ) 
-			ent:SetKeyValue( "solid", 6 ) 
-			ent:SetKeyValue( "vehiclescript", self.Data.Script ) 
-			
-			ent:SetKeyValue( "model", self.Data.Model )
-			ent:Spawn()
-			ent:Activate()
-			ent:SetNetworkedString("Owner", "World")			
+				ent:SetModel(self.Data.Model)
+				ent:SetKeyValue( "actionScale", 1 ) 
+				ent:SetKeyValue( "VehicleLocked", 0 ) 
+				ent:SetKeyValue( "solid", 6 ) 
+				ent:SetKeyValue( "vehiclescript", self.Data.Script ) 
+				
+				ent:SetKeyValue( "model", self.Data.Model )
+				ent:Spawn()
+				ent:Activate()
+				ent:SetNetworkedString("Owner", "World")
+				if self.Data.Ent == "weapon_seat" then
+					ent:SetNetworkedString("Type", "1")
+				end
 			end
          else
             --self.Owner:SendMessage("Failed.",3,Color(200,0,0,255))

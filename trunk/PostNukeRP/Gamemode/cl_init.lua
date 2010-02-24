@@ -15,6 +15,12 @@ local dynaset = {}
 dynaset.prevyaw = 0
 dynaset.newroll = 0
 
+timer.Create( "autosave", 300, 0, function()
+	RunConsoleCommand("pnrp_save")
+	LocalPlayer():ChatPrint("Heeeyyy!  Autosaved.")
+end )
+
+
 --Get resource
 function GetResource(resource)
 	return Resources[resource] or 0

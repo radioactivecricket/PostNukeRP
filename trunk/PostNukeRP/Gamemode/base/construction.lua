@@ -40,7 +40,7 @@ function GM.BuildItem( ply, command, arg )
 				ply:ChatPrint("Incorrect Class! "..item.ClassSpawn.." class Item.")
 			end
 		else
-			--ply:ChatPrint("Indexes "..arg[1].." | "..item.ID)	
+
 		end
 	end
 end
@@ -85,15 +85,6 @@ function PNRP.DropSpawn( ply, ID, q )
 							
 							ent:SetNetworkedString("Ammo", tostring(item.Energy))
 						
-	--						if item.Ent == "ammo_smg1" then 
-	--							ent:SetNetworkedString("Ammo", "75")
-	--						elseif item.Ent == "ammo_357" then
-	--							ent:SetNetworkedString("Ammo", "10")
-	--						elseif item.Ent == "ammo_shotgun" then
-	--							ent:SetNetworkedString("Ammo", "20")
-	--						elseif item.Ent == "ammo_pistol" then
-	--							ent:SetNetworkedString("Ammo", "20")
-	--						end
 						end
 						ent:SetNetworkedString("Owner", "World")
 					end
@@ -103,12 +94,10 @@ function PNRP.DropSpawn( ply, ID, q )
 					
 					local ent = ents.Create(data.Ent)
 					local pos = data.Pos + Vector(0,0,20)
-		--			ent:SetModel("models/buggy.mdl")
 					ent:SetModel(data.Model)
 					ent:SetKeyValue( "actionScale", 1 ) 
 					ent:SetKeyValue( "VehicleLocked", 0 ) 
 					ent:SetKeyValue( "solid", 6 ) 
-		--			ent:SetKeyValue( "vehiclescript", "scripts/vehicles/jeep_test.txt" ) 
 					ent:SetKeyValue( "vehiclescript", data.Script ) 
 					ent:SetAngles(Angle(0,0,0))
 					ent:SetPos(pos)
@@ -117,12 +106,15 @@ function PNRP.DropSpawn( ply, ID, q )
 					ent:Activate()
 					ent:SetNetworkedString("Owner", ply:Nick())
 					PNRP.TakeFromInventory( ply, data.ID )
+					if self.Data.Ent == "weapon_seat" then
+						ent:SetNetworkedString("Type", "1")
+					end
 				end	
 				
 			end
 		
 		else
-			--ply:ChatPrint("Indexes "..arg[1].." | "..item.ID)	
+		
 		end
 	end
 end
@@ -162,12 +154,10 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					
 					local ent = ents.Create(data.Ent)
 					local pos = data.Pos + Vector(0,0,20)
-		--			ent:SetModel("models/buggy.mdl")
 					ent:SetModel(data.Model)
 					ent:SetKeyValue( "actionScale", 1 ) 
 					ent:SetKeyValue( "VehicleLocked", 0 ) 
 					ent:SetKeyValue( "solid", 6 ) 
-		--			ent:SetKeyValue( "vehiclescript", "scripts/vehicles/jeep_test.txt" ) 
 					ent:SetKeyValue( "vehiclescript", data.Script ) 
 					ent:SetAngles(Angle(0,0,0))
 					ent:SetPos(pos)
@@ -182,7 +172,7 @@ function PNRP.DropCarSpawn( ply, ID, q )
 			end
 		
 		else
-			--ply:ChatPrint("Indexes "..arg[1].." | "..item.ID)	
+
 		end
 	end
 end

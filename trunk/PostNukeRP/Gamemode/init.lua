@@ -282,6 +282,29 @@ function GM:ShowTeam( ply )
 			else
 				ply:ConCommand("pnrp_addowner")
 			end
+			if tonumber(ent:GetNetworkedString( "Type" , "0" )) == 1 then
+				if ent:GetModel() == "models/nova/jeep_seat.mdl" then
+					ItemID = "Seat_Jeep"
+				else
+					ItemID = "Seat_Airboat"
+				end
+				
+				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
+				local weightCap
+				
+				if team.GetName(ply:Team()) == "Scavenger" then
+					weightCap = GetConVarNumber("pnrp_packCapScav")
+				else
+					weightCap = GetConVarNumber("pnrp_packCap")
+				end
+				
+				if weight <= weightCap then
+					PNRP.AddToInentory( ply, ItemID )
+					ent:Remove()
+				else
+					ply:ChatPrint("You're pack is too full and cannot carry this.")
+				end
+			end
 		else
 			if myType == "weapon" then
 				-- ply:ChatPrint("InvWeight Debug:  "..tostring(PNRP.InventoryWeight( ply )))

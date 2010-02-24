@@ -138,6 +138,7 @@ function GM.SpawnMobs()
 					--ent:SetAngles(Angle(0,math.random(1,360),0))
 					local class
 					local npcType
+					local guardChecked = false
 					
 					while spawnable  == false do
 						npcType = math.random(1,5)
@@ -160,28 +161,34 @@ function GM.SpawnMobs()
 						end
 						if npcType == 5 and antguardspawn then
 							local spawnChance = math.random(1,10)
-							if spawnChance == 4 then
+							if spawnChance == 4 and not guardChecked then
 								class = "npc_antlionguard"
 								spawnable = true
 							else
+								guardChecked = true
 								if !zombiespawn and !fastzomspawn and !poisonzomspawn and !antlionspawn then
-									return 
+									break
 								end
 							end
 						end
+						if !zombiespawn and !fastzomspawn and !poisonzomspawn and !antlionspawn  and guardChecked then
+							break
+						end
 					end
-					local ent = ents.Create(class)
-					ent:SetPos(groundtrace.HitPos+Vector(0,0,50))
-					if npcType < 4 then
-						local squadnum = math.random(1,GetConVarNumber("pnrp_ZombieSquads"))
-						ent:SetKeyValue ("squadname", "npc_zombies"..tostring(squadnum))
+					if class then
+						local ent = ents.Create(class)
+						ent:SetPos(groundtrace.HitPos+Vector(0,0,50))
+						if npcType < 4 then
+							local squadnum = math.random(1,GetConVarNumber("pnrp_ZombieSquads"))
+							ent:SetKeyValue ("squadname", "npc_zombies"..tostring(squadnum))
+						end
+						if npcType == 4 or npcType == 5 then
+							ent:SetKeyValue ("squadname", "npc_antlions")
+						end
+						-- ent:DropToGround()
+						ent:Spawn()
+						ent:SetNetworkedString("Owner", "Unownable")
 					end
-					if npcType == 4 or npcType == 5 then
-						ent:SetKeyValue ("squadname", "npc_antlions")
-					end
-					-- ent:DropToGround()
-					ent:Spawn()
-					ent:SetNetworkedString("Owner", "Unownable")
 				end
 			end
 		end

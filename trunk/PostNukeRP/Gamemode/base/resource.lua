@@ -94,14 +94,58 @@ function GM.GiveResource(ply,command,args)
 		target:IncResource(resource,int)
 		target:ChatPrint("You received "..tostring(int).." "..tostring(resource).." from "..ply:Nick()..".")
 		ply:DecResource(resource,int)
-		Msg(ply:Nick().." gave "..target:Nick().." "..tostring(int).." "..tostring(resource)..".")
+		Msg(ply:Nick().." gave "..target:Nick().." "..tostring(int).." "..tostring(resource)..".\n")
 	else
-		Msg("Target Not Found ("..tostring(target)..") Passed: "..tostring(args[3]))
+		Msg("Target Not Found ("..tostring(target)..") Passed: "..tostring(args[3]).."\n")
 	end
 	
 --	end
 end
 concommand.Add( "pnrp_give_res", GM.GiveResource )
+
+function GM.AdminGiveResource(ply,command,args)
+	if ply:IsAdmin() then	
+		local resource = args[1] 
+		local int = tonumber(args[2])
+		local targetName
+		
+		for k,v in pairs(ents.GetAll()) do
+				if v:GetName()==args[3] then
+					target = v
+				end
+				
+			end
+			
+		if target:IsPlayer() then 
+		
+			if int <= 0 and target:GetResource(resource) <= 0 then
+				ply:ChatPrint("Player allready has 0 Resources")
+				return
+			end
+			
+			if int + target:GetResource(resource) <= 0 then
+				int = target:GetResource(resource)
+				int = -int
+			end
+			
+			if int == 0 then
+				return
+			end
+			
+			ply:ChatPrint("You gave "..target:Nick().." "..tostring(int).." "..tostring(resource)..".")
+			target:IncResource(resource,int)
+			target:ChatPrint("You received "..tostring(int).." "..tostring(resource).." from "..ply:Nick()..".")
+			
+			Msg("Admin: "..ply:Nick().." gave "..target:Nick().." "..tostring(int).." "..tostring(resource)..".\n")
+		else
+			Msg("Admin: Target Not Found ("..tostring(target)..") Passed: "..tostring(args[3]).."\n")
+		end
+		
+	--	end
+	end
+end
+concommand.Add( "pnrp_admin_give_res", GM.AdminGiveResource )
+
 
 function PlayerMeta:GetAllResources()
 	local num = 0

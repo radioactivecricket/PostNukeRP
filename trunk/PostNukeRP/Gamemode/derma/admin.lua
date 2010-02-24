@@ -4,18 +4,25 @@ function GM.open_admin(ply)
 	local GM = GAMEMODE
 	if ply:IsAdmin() then	
 		admin_frame = vgui.Create( "DFrame" )
-				admin_frame:SetSize( 400, 500 ) --Set the size
+				admin_frame:SetSize( 400, 520 ) --Set the size
 				admin_frame:SetPos(ScrW() / 2 - admin_frame:GetWide() / 2, ScrH() / 2 - admin_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 				admin_frame:SetTitle( "Admin Menu" ) --Set title
 				admin_frame:SetVisible( true )
 				admin_frame:SetDraggable( true )
 				admin_frame:ShowCloseButton( true )
 				admin_frame:MakePopup()
-				
+		
+		local shopmenu = vgui.Create("DButton") -- Create the button
+			shopmenu:SetParent( admin_frame ) -- parent the button to the frame
+			shopmenu:SetText( "Admin Trade >" ) -- set the button text
+			shopmenu:SetPos(20, 25) -- set the button position in the frame
+			shopmenu:SetSize( 100, 20 ) -- set the button size
+			shopmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_trade_window" ) SCFrame=false admin_frame:Close() end 		
+						
 		local AdminTabSheet = vgui.Create( "DPropertySheet" )
 			AdminTabSheet:SetParent( admin_frame )
-			AdminTabSheet:SetPos( 5, 30 )
-			AdminTabSheet:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 40 )
+			AdminTabSheet:SetPos( 5, 50 )
+			AdminTabSheet:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 60 )
 --Server Settings
 			local GModeSettingsList = vgui.Create( "DPanelList", AdminTabSheet )
 				GModeSettingsList:SetPos( 10,10 )
@@ -76,6 +83,21 @@ function GM.open_admin(ply)
 				    propCostSlider:SetDecimals( 0 )
 				    propCostSlider:SetValue( GetConVar("pnrp_propCost"):GetInt() )
 				GModeSettingsList:AddItem( propCostSlider )
+				
+				local voiceLimitTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
+					voiceLimitTgl:SetText( "Voice Range Limiter" )
+					voiceLimitTgl:SetValue( GetConVar("pnrp_voiceLimit"):GetInt() )
+					voiceLimitTgl:SizeToContents() 
+				GModeSettingsList:AddItem( voiceLimitTgl )
+				
+				local voiceLimitSlider = vgui.Create( "DNumSlider", GModeSettingsList )
+				    voiceLimitSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    voiceLimitSlider:SetText( "Voice Limit Range (Def 500)" )
+				    voiceLimitSlider:SetMin( 0 )
+				    voiceLimitSlider:SetMax( 2000 )
+				    voiceLimitSlider:SetDecimals( 0 )
+				    voiceLimitSlider:SetValue( GetConVar("pnrp_voiceDist"):GetInt() )
+				GModeSettingsList:AddItem( voiceLimitSlider )
 					
 				--Saves the Settings from the GMode Settings
 				local GModeSettingsSaveBTN = vgui.Create("DButton", SpawnerList )
@@ -86,6 +108,7 @@ function GM.open_admin(ply)
 				    	local propBanningOnOff
 				    	local propAllowingOnOff
 				    	local propPayOnOff
+				    	local voiceLimitOnOff
 				    	if adminCreateAllTgl:GetChecked(true) then
 				    		adminCreateAllOnOff = 1
 				    	else
@@ -111,6 +134,11 @@ function GM.open_admin(ply)
 				    	else
 				    		propPayOnOff = 0
 				    	end
+				    	if voiceLimitTgl:GetChecked(true) then
+				    		voiceLimitOnOff = 1
+				    	else
+				    		voiceLimitOnOff = 0
+				    	end
 				    	RunConsoleCommand("pnrp_RunCommand","pnrp_exp2Level",tostring(E2RestrictSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminCreateAll",tostring(adminCreateAllOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminTouchAll",tostring(adminTouchAllOnOff))
@@ -118,6 +146,8 @@ function GM.open_admin(ply)
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propAllowing",tostring(propAllowingOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propPay",tostring(propPayOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propCost",tostring(propCostSlider:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceLimit",tostring(voiceLimitOnOff))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceDist",tostring(voiceLimitSlider:GetValue()))
 				    end
 				GModeSettingsList:AddItem( GModeSettingsSaveBTN )
 				
