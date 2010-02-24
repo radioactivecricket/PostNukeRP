@@ -94,6 +94,9 @@ function PNRP.DropSpawn( ply, ID, q )
 					
 					local ent = ents.Create(data.Ent)
 					local pos = data.Pos + Vector(0,0,20)
+					if data.Ent == "weapon_seat" then
+						ent:SetNetworkedString("Type", "1")
+					end
 					ent:SetModel(data.Model)
 					ent:SetKeyValue( "actionScale", 1 ) 
 					ent:SetKeyValue( "VehicleLocked", 0 ) 
@@ -101,14 +104,13 @@ function PNRP.DropSpawn( ply, ID, q )
 					ent:SetKeyValue( "vehiclescript", data.Script ) 
 					ent:SetAngles(Angle(0,0,0))
 					ent:SetPos(pos)
+					ent:SetKeyValue( "model", data.Model )
 					
 					ent:Spawn()
 					ent:Activate()
 					ent:SetNetworkedString("Owner", ply:Nick())
 					PNRP.TakeFromInventory( ply, data.ID )
-					if self.Data.Ent == "weapon_seat" then
-						ent:SetNetworkedString("Type", "1")
-					end
+				
 				end	
 				
 			end
@@ -154,6 +156,9 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					
 					local ent = ents.Create(data.Ent)
 					local pos = data.Pos + Vector(0,0,20)
+					if data.Ent == "weapon_seat" then
+						ent:SetNetworkedString("Type", "1")
+					end
 					ent:SetModel(data.Model)
 					ent:SetKeyValue( "actionScale", 1 ) 
 					ent:SetKeyValue( "VehicleLocked", 0 ) 
@@ -161,7 +166,7 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					ent:SetKeyValue( "vehiclescript", data.Script ) 
 					ent:SetAngles(Angle(0,0,0))
 					ent:SetPos(pos)
-					ent:SetKeyValue( "model", self.Data.Model )
+					ent:SetKeyValue( "model", data.Model )
 					
 					ent:Spawn()
 					ent:Activate()

@@ -243,23 +243,18 @@ end
 hook.Add("CanPlayerUnfreeze", "PhyUnfreezeCheck", PhysUnfreezeCheck)
 
 function ToolCheck( ply, tr, toolmode )
-	--check for globally allowed tools (Admins can use all tools)
-	if toolmode == "remover" or toolmode == "weld" or toolmode == "weld_ez" 
-	  or toolmode == "easy_precision" or toolmode == "duplicator" 
-	  or toolmode == "adv_duplicator" or toolmode == "weld_ez2" 
-	  or(ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 ) then 
+	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 		return true
 	end
-	
 	
 	if toolmode == "wire_expression" or toolmode == "wire_expression2" or toolmode == "wire_gate_expression" or toolmode == "wire_debugger" or toolmode == "wire_adv" then
 		if GetConVarNumber("pnrp_exp2Level") == 0 then 
 			return false 
 		elseif GetConVarNumber("pnrp_exp2Level") == 1 and ply:IsAdmin() then
 			return true
-		elseif GetConVarNumber("pnrp_exp2Level") == 2 and (ply:IsAdmin() or team.GetName(ply:Team()) == "Engineer") then
+		elseif GetConVarNumber("pnrp_exp2Level") == 2 and (ply:IsAdmin() or ply:Team() == TEAM_ENGINEER) then
 			return true
-		elseif GetConVarNumber("pnrp_exp2Level") == 3 and (ply:IsAdmin() or team.GetName(ply:Team()) == "Engineer" or team.GetName(ply:Team()) == "Science") then
+		elseif GetConVarNumber("pnrp_exp2Level") == 3 and (ply:IsAdmin() or ply:Team() == TEAM_ENGINEER or ply:Team() == TEAM_SCIENCE) then
 			return true
 		elseif GetConVarNumber("pnrp_exp2Level") == 4 then
 			return true
@@ -268,12 +263,32 @@ function ToolCheck( ply, tr, toolmode )
 		end
 	end
 	
-	--check for class (Engineers can use all tools right now)
-	if team.GetName(ply:Team()) == "Engineer" then
-		return true
+	--check for globally allowed tools (Admins can use all tools)
+	local DoToolCheck = false
+	if GetConVarNumber("pnrp_toolLevel") == 1 and not ply:IsAdmin() then
+		DoToolCheck = true
+	elseif GetConVarNumber("pnrp_toolLevel") == 2 and ply:Team() ~= TEAM_ENGINEER then
+		DoToolCheck = true
+	elseif GetConVarNumber("pnrp_toolLevel") == 3 and not (ply:Team() == TEAM_ENGINEER or ply:Team() == TEAM_SCIENCE) then
+		DoToolCheck = true
 	end
 	
+	if DoToolCheck then
+		if not (toolmode == "remover" or toolmode == "weld" or toolmode == "weld_ez" 
+		  or toolmode == "easy_precision" or toolmode == "duplicator" 
+		  or toolmode == "adv_duplicator" or toolmode == "weld_ez2"
+		  or toolmode == "nocollide")
+		   then 
+			return false
+		end
+	end
+	--check for class (Engineers can use all tools right now)
+	--if team.GetName(ply:Team()) == "Engineer" then
+	--	return true
+	--end
+	
+	--delegate to assmod
 	--if you don't meet any of these, you can go to hell.
-	return false
+	--return false
 end
 hook.Add( "CanTool", "ToolCheck", ToolCheck )

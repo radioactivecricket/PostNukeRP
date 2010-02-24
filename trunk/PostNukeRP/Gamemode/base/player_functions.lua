@@ -35,6 +35,7 @@ function GM.SaveCharacter(ply,cmd,args)
 	tbl["date"] = os.date("%A %m/%d/%y")
 	tbl["name"] = ply:Nick()
 	tbl["weapons"] = {}
+	tbl["ammo"] = {}
 	--Sets Resources
 	for k,v in pairs(ply.Resources) do
 		if v <= 0 then
@@ -46,14 +47,15 @@ function GM.SaveCharacter(ply,cmd,args)
 	for k, v in pairs(ply:GetWeapons()) do
 		local wepCheck = PNRP.CheckDefWeps(v)
 		if !wepCheck then
-			local ammotbl = {}
+--			local ammotbl = {}
 			local ammo = ply:GetAmmoCount( v:GetPrimaryAmmoType() ) 
 			local ammoType = PNRP.ConvertAmmoType(v:GetPrimaryAmmoType())
 			--tbl["weapons"][tostring(v:GetClass())] = tostring(ammo)
+			tbl["weapons"][tostring(v:GetClass())] = 1
 			if ammoType then
-				ammotbl[ammoType] = ammo
+--				ammotbl[ammoType] = ammo
 				
-				tbl["weapons"][tostring(v:GetClass())] = ammotbl
+				tbl["ammo"][ammoType] = ammo
 			end
 		end
 	end 
@@ -95,11 +97,14 @@ function GM.LoadWeaps( ply )
 		if tbl["weapons"] then
 			for k,v in pairs(tbl["weapons"]) do
 				ply:Give(string.lower(k))
-				if v then
-					for ammoType,ammoNum in pairs(v) do
-						ply:GiveAmmo(ammoNum, ammoType)
-					end
-				end
+--				if v then
+--					for ammoType,ammoNum in pairs(v) do
+--						ply:GiveAmmo(ammoNum, ammoType)
+--					end
+--				end
+			end
+			for ammoType,ammoNum in pairs(tbl["ammo"]) do
+				ply:GiveAmmo(ammoNum, ammoType)
 			end
 		end
 	end
