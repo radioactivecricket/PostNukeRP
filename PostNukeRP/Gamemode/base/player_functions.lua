@@ -57,6 +57,7 @@ function GM.SaveCharacter(ply,cmd,args)
 			end
 		end
 	end 
+	Msg("Player Data Saved.\n")
 	
 	file.Write("PostNukeRP/Saves/"..ply:UniqueID()..".txt",util.TableToKeyValues(tbl))
 end
@@ -106,8 +107,7 @@ end
 
 concommand.Add( "pnrp_save", GM.SaveCharacter )
 PNRP.ChatConCmd( "/save", "pnrp_save" )
-concommand.Add( "pnrp_load", GM.LoadCharacter )
-concommand.Add( "pnrp_loadweps", GM.LoadWeaps )
+
 /*-------------------------------------------------------*/
 
 function GM:DoPlayerDeath( ply, attacker, dmginfo )
@@ -154,27 +154,6 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 					if ItemID then
 						entClass = ammoFType
 						entModel = PNRP.Items[ItemID].Model
-					
---					if myAmmoType == "357" then
---						entClass = "ammo_357"
---						entModel = "models/items/357ammo.mdl"
-						
---						ply:SetAmmo(0, "357")
---					elseif myAmmoType == "smg1" then
---						entClass = "ammo_smg1"
---						entModel = "models/items/boxmrounds.mdl"
-						
---						ply:SetAmmo(0, "smg1")
---					elseif myAmmoType == "pistol" then
---						entClass = "ammo_pistol"
---						entModel = "models/items/boxsrounds.mdl"
-						
---						ply:SetAmmo(0, "pistol")
---					elseif myAmmoType == "buckshot" then
---						entClass = "ammo_shotgun"
---						entModel = "models/items/boxbuckshot.mdl"
-						
---						ply:SetAmmo(0, "buckshot")
 					end
 					local entAmmo = ents.Create(entClass)
 					entAmmo:SetModel(entModel)
@@ -292,20 +271,6 @@ function PNRP.DropAmmo (ply, command, args)
 		if ItemID then
 			entClass = ammoFType
 			entModel = PNRP.Items[ItemID].Model
-		
-		
---		if ammoType == "smg1" then 
---			entClass = "ammo_smg1"
---			entModel = "models/items/boxmrounds.mdl"
---		elseif ammoType == "357" then
---			entClass = "ammo_357"
---			entModel = "models/items/357ammo.mdl"
---		elseif ammoType == "buckshot" then
---			entClass = "ammo_shotgun"
---			entModel = "models/items/boxbuckshot.mdl"
---		elseif ammoType == "pistol" then
---			entClass = "ammo_pistol"
---			entModel = "models/items/boxsrounds.mdl"
 		else
 			ply:ChatPrint("Invalid ammo type.")
 			return
@@ -317,29 +282,11 @@ function PNRP.DropAmmo (ply, command, args)
 			entClass = ammoFType
 			entModel = PNRP.Items[ItemID].Model
 			ammoAmt = PNRP.Items[ItemID].Energy
-			
---		if ammoType == "smg1" then 
---			entClass = "ammo_smg1"
---			entModel = "models/items/boxmrounds.mdl"
---			ammoAmt = 75
---		elseif ammoType == "357" then
---			entClass = "ammo_357"
---			entModel = "models/items/357ammo.mdl"
---			ammoAmt = 10
---		elseif ammoType == "buckshot" then
---			entClass = "ammo_shotgun"
---			entModel = "models/items/boxbuckshot.mdl"
---			ammoAmt = 20
---		elseif ammoType == "pistol" then
---			entClass = "ammo_pistol"
---			entModel = "models/items/boxsrounds.mdl"
---			ammoAmt = 20
 		else
 			ply:ChatPrint("Invalid ammo type.")
 			return
 		end
 	else
---		ammoType =  ply:GetActiveWeapon():GetPrimaryAmmoType()
 		ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
 		local ammoFType = "ammo_"..ammoType
 		
@@ -348,23 +295,6 @@ function PNRP.DropAmmo (ply, command, args)
 			entClass = ammoFType
 			entModel = PNRP.Items[ItemID].Model
 			ammoAmt = PNRP.Items[ItemID].Energy
-		
---		if ammoType == "smg1" then 
---			entClass = "ammo_smg1"
---			entModel = "models/items/boxmrounds.mdl"
---			ammoAmt = 75
---		elseif ammoType == "357" then
---			entClass = "ammo_357"
---			entModel = "models/items/357ammo.mdl"
---			ammoAmt = 10
---		elseif ammoType == "buckshot" then
---			entClass = "ammo_shotgun"
---			entModel = "models/items/boxbuckshot.mdl"
---			ammoAmt = 20
---		elseif ammoType == "pistol" then
---			entClass = "ammo_pistol"
---			entModel = "models/items/boxsrounds.mdl"
---			ammoAmt = 20
 		else
 			ply:ChatPrint("Invalid ammo type.")
 			return
@@ -436,5 +366,11 @@ function EntityKeyValueInfo( ent, key, value )
 end
 
 hook.Add( 'EntityKeyValue' , "EntityKeyValueInfo", getMoreInfo )
+
+function PNRP.Unfreeze(ply)
+	ply:Freeze(false)
+end
+concommand.Add( "pnrp_unfreeze", PNRP.Unfreeze )
+PNRP.ChatCmd( "/unfreeze", PNRP.Unfreeze )
 
 --EOF

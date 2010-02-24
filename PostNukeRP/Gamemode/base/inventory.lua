@@ -80,6 +80,7 @@ function PNRP.SendInventory( p )
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
 	
+	p:SendLua( "CurWeight = "..tostring(PNRP.InventoryWeight( p ) ) )
 	if !file.Exists( ILoc ) then print( "Inventory file doesn't exist !" ) return end	
 	
 	p:SendLua( "MyInventory = {}" )
@@ -91,8 +92,6 @@ function PNRP.SendInventory( p )
 		p:SendLua( "MyInventory['" ..k.. "'] = "..v ) --SendLua ftw
 		
 	end	
-	
-	p:SendLua( "CurWeight = "..tostring(PNRP.InventoryWeight( p ) ) )
 	
 end
 
@@ -134,6 +133,7 @@ function PNRP.SendCarInventory( p )
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
 	
+	p:SendLua( "CurCarInvWeight = "..tostring(PNRP.CarInventoryWeight( p ) ) )
 	if !file.Exists( ILoc ) then print( "Car Inventory file doesn't exist !" ) return end	
 	
 	p:SendLua( "MyCarInventory = {}" )
@@ -146,7 +146,7 @@ function PNRP.SendCarInventory( p )
 		
 	end	
 	
-	p:SendLua( "CurCarInvWeight = "..tostring(PNRP.CarInventoryWeight( p ) ) )
+	
 	
 end
 
@@ -177,8 +177,6 @@ function PNRP.CarInventoryWeight( p )
 			
 		end
 	end
-	
-	if weightSum == nil then weightSum = 0 end
 	
 	return weightSum
 end
