@@ -180,6 +180,20 @@ function GM:PlayerSpawnSWEP( p, classname )
 	
 end
 
+function GM:PlayerSpawnNPC( p, npc_type, npc_weapon )
+
+	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	
+		p:ChatPrint( "NPC spawning is disabled." )
+	
+		return false
+		
+	end	
+
+	return true
+	
+end	
+
 
 function PickupCheck( ply, ent)
 	--admin can do whatever they want
