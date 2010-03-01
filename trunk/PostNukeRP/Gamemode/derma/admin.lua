@@ -4,7 +4,7 @@ function GM.open_admin(ply)
 	local GM = GAMEMODE
 	if ply:IsAdmin() then	
 		admin_frame = vgui.Create( "DFrame" )
-				admin_frame:SetSize( 400, 520 ) --Set the size
+				admin_frame:SetSize( 400, 650 ) --Set the size
 				admin_frame:SetPos(ScrW() / 2 - admin_frame:GetWide() / 2, ScrH() / 2 - admin_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 				admin_frame:SetTitle( "Admin Menu" ) --Set title
 				admin_frame:SetVisible( true )
@@ -112,6 +112,36 @@ function GM.open_admin(ply)
 				    voiceLimitSlider:SetDecimals( 0 )
 				    voiceLimitSlider:SetValue( GetConVar("pnrp_voiceDist"):GetInt() )
 				GModeSettingsList:AddItem( voiceLimitSlider )
+				
+				local classCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
+					classCostTgl:SetText( "Charg for Class Change" )
+					classCostTgl:SetValue( GetConVar("pnrp_classChangePay"):GetInt() )
+					classCostTgl:SizeToContents() 
+				GModeSettingsList:AddItem( classCostTgl )
+				
+				local classCostSlider = vgui.Create( "DNumSlider", GModeSettingsList )
+				    classCostSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    classCostSlider:SetText( "Class Change Cost (Def 10)" )
+				    classCostSlider:SetMin( 0 )
+				    classCostSlider:SetMax( 100 )
+				    classCostSlider:SetDecimals( 0 )
+				    classCostSlider:SetValue( GetConVar("pnrp_classChangeCost"):GetInt() )
+				GModeSettingsList:AddItem( classCostSlider )
+				
+				local deathCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
+					deathCostTgl:SetText( "Charg for Death Penalty" )
+					deathCostTgl:SetValue( GetConVar("pnrp_deathPay"):GetInt() )
+					deathCostTgl:SizeToContents() 
+				GModeSettingsList:AddItem( deathCostTgl )
+				
+				local deathCostSlider = vgui.Create( "DNumSlider", GModeSettingsList )
+				    deathCostSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    deathCostSlider:SetText( "Death Penalty Cost (Def 10)" )
+				    deathCostSlider:SetMin( 0 )
+				    deathCostSlider:SetMax( 100 )
+				    deathCostSlider:SetDecimals( 0 )
+				    deathCostSlider:SetValue( GetConVar("pnrp_deathCost"):GetInt() )
+				GModeSettingsList:AddItem( deathCostSlider )
 					
 				--Saves the Settings from the GMode Settings
 				local GModeSettingsSaveBTN = vgui.Create("DButton", SpawnerList )
@@ -123,6 +153,8 @@ function GM.open_admin(ply)
 				    	local propAllowingOnOff
 				    	local propPayOnOff
 				    	local voiceLimitOnOff
+				    	local classCostOnOff
+				    	local deathCostOnOff
 				    	if adminCreateAllTgl:GetChecked(true) then
 				    		adminCreateAllOnOff = 1
 				    	else
@@ -153,6 +185,16 @@ function GM.open_admin(ply)
 				    	else
 				    		voiceLimitOnOff = 0
 				    	end
+				    	if classCostTgl:GetChecked(true) then
+				    		classCostOnOff = 1
+				    	else
+				    		classCostOnOff = 0
+				    	end
+				    	if deathCostTgl:GetChecked(true) then
+				    		deathCostOnOff = 1
+				    	else
+				    		deathCostOnOff = 0
+				    	end
 				    	RunConsoleCommand("pnrp_RunCommand","pnrp_exp2Level",tostring(E2RestrictSlider:GetValue()))
 				    	RunConsoleCommand("pnrp_RunCommand","pnrp_toolLevel",tostring(ToolRestrictSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminCreateAll",tostring(adminCreateAllOnOff))
@@ -163,6 +205,10 @@ function GM.open_admin(ply)
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propCost",tostring(propCostSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceLimit",tostring(voiceLimitOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceDist",tostring(voiceLimitSlider:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_classChangePay",tostring(classCostOnOff))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_classChangeCost",tostring(classCostSlider:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_deathPay",tostring(deathCostOnOff))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_deathCost",tostring(deathCostSlider:GetValue()))
 				    end
 				GModeSettingsList:AddItem( GModeSettingsSaveBTN )
 				

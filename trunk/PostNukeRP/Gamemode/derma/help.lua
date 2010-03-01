@@ -17,12 +17,15 @@ local help = 	{
 				"/save - save's your characters data.",
 				"/getallcars - picks up any cars that belong to you in the world",
 				"/getcar - picks up the car that you are looking at within 200. You must own the car to pick it up.",
+				"/stowgun /stowpwep or /putawaygun - Moved your active gun to inventory.",
 				"/dropweap or /dropgun - drops your current weapon.",
 				"/dropammo ammoType ammount - Drops the type and ammount of ammo.",
 				"          ammoTypes = smg1, buckshot, pistol, 357, ect....",
 				"",
 				"Classes",
 				"------------------------------------------------",
+				"Note: If enabled by admins, there is a cost to changing classes.",
+				"",
 				"WASTELANDER:",	
 				"Bonus to HP",
 				"Bonus to Endurance (In Dev)",
@@ -41,6 +44,11 @@ local help = 	{
 				"CULTIVATOR:",	
 				"Ability to create Food (In Dev)",
 				"",
+				"Player Death:",
+				"------------------------------------------------",
+				"When you die, you will drop all your equiped weapons and ammo",
+				"to the ground. This does not affect whats in your inventory.",
+				"If enabled, there is a % cost to your resources when you die."
 				}
 				
 function HelpPanel() 

@@ -257,9 +257,41 @@ end
 hook.Add("CanPlayerUnfreeze", "PhyUnfreezeCheck", PhysUnfreezeCheck)
 
 function ToolCheck( ply, tr, toolmode )
+	local ent = tr.Entity
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 		return true
 	end
+	
+	local searchPos
+	
+	if string.find(ent:GetClass(), "unc_") == 2 then
+		return false
+	end
+	
+	if string.find(ent:GetClass(), "pc_") == 2 then
+		return false
+	end
+	
+	searchPos = string.find(ent:GetClass(), "door_")
+	
+	if not searchPos then
+		searchPos = 0
+	end
+	if searchPos > 1 then
+		return false
+	end
+	
+	searchPos = string.find(ent:GetClass(), "dynam")
+	
+	if not searchPos then
+		searchPos = 0
+	end
+	if searchPos > 1 then
+		return false
+	end
+	
+	local owner = ent:GetNWString( "Owner", "None" )
+	if owner == "Unownable" then return false end
 	
 	if toolmode == "wire_expression" or toolmode == "wire_expression2" or toolmode == "wire_gate_expression" or toolmode == "wire_debugger" or toolmode == "wire_adv" then
 		if GetConVarNumber("pnrp_exp2Level") == 0 then 
