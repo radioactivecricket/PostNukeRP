@@ -37,6 +37,7 @@ for k, v in pairs( file.FindInLua( "PostNukeRP/gamemode/items/*.lua" ) ) do
 	include("items/"..v)
 end
 
+RunConsoleCommand( "sv_alltalk", tostring(0) )
 game.ConsoleCommand( "sbox_godmode 0\n" )
 game.ConsoleCommand( "sbox_plpldamage 0\n" )
 --game.ConsoleCommand( "sbox_noclip 0\n" )
@@ -77,7 +78,10 @@ function GM:PlayerSpawn( ply )  //What happens when the player spawns
     
     if ply:Team() == TEAM_WASTELANDER then
     	ply:SetMaxHealth( 150, true )
-    else  
+    elseif ply:Team() == TEAM_SCAVENGER then
+    	ply:SetMaxHealth( 75, true )
+    	ply:SetHealth(75)
+    else 
     	ply:SetMaxHealth( 100, true )
     end
     
@@ -96,7 +100,7 @@ end
 function GM:PlayerDisconnected(ply)
 	
 	self.SaveCharacter(ply)
-	PNRP.GetAllCar( ply )
+	PNRP.GetAllCars( ply )
 	Msg("Saved character of disconnecting player "..ply:Nick()..".\n")
 end
 
@@ -163,7 +167,9 @@ end --Here we end the Loadout function
 function team_set_wastelander( ply )
  
     ply:SetTeam( TEAM_WASTELANDER )
-    
+    classChangeCost(ply, "Scrap")
+    classChangeCost(ply, "Small_Parts")
+    classChangeCost(ply, "Chemicals")
     ply:Spawn() -- Make the player respawn
  
 end
@@ -171,7 +177,9 @@ end
 function team_set_scavenger( ply )
  
     ply:SetTeam( TEAM_SCAVENGER )
-    
+   classChangeCost(ply, "Scrap")
+    classChangeCost(ply, "Small_Parts")
+    classChangeCost(ply, "Chemicals")
     ply:Spawn() -- Make the player respawn
     
 end
@@ -179,7 +187,9 @@ end
 function team_set_science( ply )
  
     ply:SetTeam( TEAM_SCIENCE )
-    
+    classChangeCost(ply, "Scrap")
+    classChangeCost(ply, "Small_Parts")
+    classChangeCost(ply, "Chemicals")
     ply:Spawn() -- Make the player respawn
     
 end
@@ -187,15 +197,19 @@ end
 function team_set_engineer( ply )
  
     ply:SetTeam( TEAM_ENGINEER )
-    
+    classChangeCost(ply, "Scrap")
+    classChangeCost(ply, "Small_Parts")
+    classChangeCost(ply, "Chemicals")
     ply:Spawn() -- Make the player respawn
     
 end
 
 function team_set_cultivator( ply )
  
-    ply:SetTeam( TEAM_CULTIVATOR )
-    
+    ply:SetTeam( TEAM_CULTIVATOR )    
+    classChangeCost(ply, "Scrap")
+    classChangeCost(ply, "Small_Parts")
+    classChangeCost(ply, "Chemicals")
     ply:Spawn() -- Make the player respawn
     
 end
@@ -205,6 +219,25 @@ concommand.Add( "team_set_scavenger", team_set_scavenger )
 concommand.Add( "team_set_science", team_set_science )
 concommand.Add( "team_set_engineer", team_set_engineer )
 concommand.Add( "team_set_cultivator", team_set_cultivator )
+
+function classChangeCost(ply, Recource)
+	
+	if GetConVarNumber("pnrp_classChangePay") == 1 then
+	    local getRec
+	    local int
+	    local cost = GetConVarNumber("pnrp_classChangeCost") / 100
+  
+	    getRec = ply:GetResource(Recource)
+	    int = getRec * cost
+	    int = math.Round(int)
+	    if getRec - int >= 0 then
+	    	Msg("Class change cost applied to "..Recource.." \n")
+	    	ply:DecResource(Recource,int)
+	    end
+	end
+end
+
+
 
 ----Code Below This Line----
 
@@ -274,7 +307,7 @@ function GM:ShowTeam( ply )
 		local myModel = ent:GetModel()
 		
 		for itemname, item in pairs( PNRP.Items ) do
-			if myModel == item.Model then
+			if myModel == item.Model and item.Type != "junk" and item.Type != "build" then
 --				myClass = item.ID
 				
 				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[item.ID].Weight

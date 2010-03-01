@@ -51,11 +51,17 @@ function GM.SaveCharacter(ply,cmd,args)
 			local ammo = ply:GetAmmoCount( v:GetPrimaryAmmoType() ) 
 			local ammoType = PNRP.ConvertAmmoType(v:GetPrimaryAmmoType())
 			--tbl["weapons"][tostring(v:GetClass())] = tostring(ammo)
-			tbl["weapons"][tostring(v:GetClass())] = 1
+--			tbl["weapons"][tostring(v:GetClass())] = 1
 			if ammoType then
 --				ammotbl[ammoType] = ammo
-				
-				tbl["ammo"][ammoType] = ammo
+				tbl["weapons"][tostring(v:GetClass())] = 1
+				--grenade fix
+				if tostring(v:GetClass()) == "weapon_frag" then
+					ammoType = "grenade"
+					tbl["ammo"][ammoType] = ammo - 1  --Removes one since it gives you one as a weapon
+				else
+					tbl["ammo"][ammoType] = ammo
+				end
 			end
 		end
 	end 
@@ -120,7 +126,11 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	ply:CreateRagdoll()
  
 	ply:AddDeaths( 1 )
- 
+ 	
+	PNRP.DeathPay(ply, "Scrap")
+	PNRP.DeathPay(ply, "Small_Parts")
+	PNRP.DeathPay(ply, "Chemicals")
+	
 	if ( attacker:IsValid() && attacker:IsPlayer() ) then
  
 		if ( attacker == ply ) then
@@ -138,6 +148,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 		if !wepCheck then
 			if PNRP.FindWepItem(v:GetModel()) then
 				local myItem = PNRP.FindWepItem(v:GetModel())
+				Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
 				local ent = ents.Create(myItem.Ent)
 				--ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
 				ent:SetModel(myItem.Model)
@@ -154,23 +165,60 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 					local entModel
 					ply:ChatPrint(myAmmoType)
 					
-					local ammoFType = "ammo_"..myAmmoType
-					local ItemID = PNRP.FindItemID( ammoFType )
-					if ItemID then
-						entClass = ammoFType
-						entModel = PNRP.Items[ItemID].Model
+					local ammoFType
+					--grenade fix
+					if myItem.ID == "wep_grenade" then
+						ammoFType = "wep_grenade"
+						local ItemID = PNRP.FindItemID( ammoFType )
+						if ItemID then
+							entClass = ammoFType
+							entModel = PNRP.Items[ItemID].Model
+						end
+						local entAmmo
+						--Starts at 2 since it allready drops one as a weapon
+						for i=2,ammoDrop do
+							entAmmo = ents.Create(entClass)
+							entAmmo:SetModel(entModel)
+							entAmmo:SetAngles(Angle(0,0,0))
+							entAmmo:SetPos(pos)
+							entAmmo:Spawn()
+						end
+						
+					else
+						ammoFType = "ammo_"..myAmmoType
+						local ItemID = PNRP.FindItemID( ammoFType )
+						if ItemID then
+							entClass = ammoFType
+							entModel = PNRP.Items[ItemID].Model
+						end
+						local entAmmo = ents.Create(entClass)
+						entAmmo:SetModel(entModel)
+						entAmmo:SetAngles(Angle(0,0,0))
+						entAmmo:SetPos(pos)
+						entAmmo:Spawn()
+						
+						entAmmo:SetNetworkedString("Ammo", tostring(ammoDrop))
 					end
-					local entAmmo = ents.Create(entClass)
-					entAmmo:SetModel(entModel)
-					entAmmo:SetAngles(Angle(0,0,0))
-					entAmmo:SetPos(pos)
-					entAmmo:Spawn()
-					
-					entAmmo:SetNetworkedString("Ammo", tostring(ammoDrop))
 				end
 			end
 		end
 	end 		
+end
+
+function PNRP.DeathPay(ply, Recource)
+	if GetConVarNumber("pnrp_deathPay") == 1 then
+	    local getRec
+	    local int
+	    local cost = GetConVarNumber("pnrp_deathCost") / 100
+  
+	    getRec = ply:GetResource(Recource)
+	    int = getRec * cost
+	    int = math.Round(int)
+	    if getRec - int >= 0 then
+	    	Msg("Death cost applied to "..Recource.." \n")
+	    	ply:DecResource(Recource,int)
+	    end
+	end
 end
 
 function PNRP.CheckDefWeps(wep)
@@ -261,6 +309,43 @@ end
 concommand.Add( "pnrp_dropWep", PNRP.DropWeapon )
 PNRP.ChatConCmd( "/dropwep", "pnrp_dropWep" )
 PNRP.ChatConCmd( "/dropgun", "pnrp_dropWep" )
+
+function PNRP.StowWeapon (ply, command, args)
+	local myWep = ply:GetActiveWeapon()
+	if ( myWep ) then
+		local curAmmo = myWep:Clip1()
+		
+		if PNRP.CheckDefWeps(myWep) then return end
+		
+		local ItemID = PNRP.FindWepItem(tostring(myWep:GetModel()))
+				
+		if ItemID != nil then
+		
+			local weight = PNRP.InventoryWeight( ply ) + ItemID.Weight
+			local weightCap
+			
+			if team.GetName(ply:Team()) == "Scavenger" then
+				weightCap = GetConVarNumber("pnrp_packCapScav")
+			else
+				weightCap = GetConVarNumber("pnrp_packCap")
+			end
+			
+			if weight <= weightCap then
+				PNRP.AddToInentory( ply, ItemID.ID )
+				ply:GiveAmmo(myWep:Clip1(), myWep:GetPrimaryAmmoType())
+				ply:StripWeapon(myWep:GetClass())
+			else
+				ply:ChatPrint("You're pack is too full and cannot carry this.")
+			end
+		
+		end		
+		
+	end
+end
+concommand.Add( "pnrp_stowWep", PNRP.StowWeapon )
+PNRP.ChatConCmd( "/stowpwep", "pnrp_stowWep" )
+PNRP.ChatConCmd( "/stowgun", "pnrp_stowWep" )
+PNRP.ChatConCmd( "/putawaygun", "pnrp_stowWep" )
 
 function PNRP.DropAmmo (ply, command, args)
 	local ammoType = args[1]
