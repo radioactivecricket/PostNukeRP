@@ -143,7 +143,7 @@ function set_class()
 		team_2:SetPos( frame:GetTall() / 2, 160 ) --Place it next to our previous one
 		team_2:SetSize( 75, 75)
 		team_2:SetText( "Science" )
-		team_2.DoClick = function() --Make the player join team 2
+		team_2.DoClick = function() --Make the player join team 3
 		
 	    RunConsoleCommand( "team_set_science" )
 	end
@@ -152,7 +152,7 @@ function set_class()
 		team_2:SetPos( frame:GetTall() / 2, 235 ) --Place it next to our previous one
 		team_2:SetSize( 75, 75)
 		team_2:SetText( "Engineer" )
-		team_2.DoClick = function() --Make the player join team 2
+		team_2.DoClick = function() --Make the player join team 4
 		
 	    RunConsoleCommand( "team_set_engineer" )
 	end
@@ -161,7 +161,7 @@ function set_class()
 		team_2:SetPos( frame:GetTall() / 2, 235 ) --Place it next to our previous one
 		team_2:SetSize( 75, 75)
 		team_2:SetText( "Cultivator" )
-		team_2.DoClick = function() --Make the player join team 2
+		team_2.DoClick = function() --Make the player join team 5
 		
 	    RunConsoleCommand( "team_set_cultivator" )
 	end
