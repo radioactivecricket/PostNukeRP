@@ -21,6 +21,9 @@ function PNRP.chtTest( ply, cmd, text )
 end
 PNRP.ChatCmd( "/test", PNRP.chtTest )
 
+PNRP.ChatConCmd( "/classmenu", "pnrp_classmenu" )
+PNRP.ChatConCmd( "/shop", "pnrp_buy_shop" )
+PNRP.ChatConCmd( "/inv", "pnrp_inv" )
 
 /*---------------------------------------------------------
   Save/Load

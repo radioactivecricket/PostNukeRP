@@ -79,18 +79,10 @@ function PNRP.buildMenu(parent_frame)
 
 	classmenu = vgui.Create("DButton") -- Create the button 	
 		classmenu:SetParent( parent_frame ) -- parent the button to the frame
-		classmenu:SetText( "Class Menu >>" ) -- set the button text
+		classmenu:SetText( "Class Menu >" ) -- set the button text
 		classmenu:SetPos(20, 25) -- set the button position in the frame
 		classmenu:SetSize( 100, 20 ) -- set the button size
-		classmenu.DoClick = function ( btn ) -- this will be called when the button is clicked
-					local menu123 = DermaMenu() -- create a derma menu
-					menu123:AddOption("Wastelander", function() RunConsoleCommand( "team_set_wastelander" ) SCFrame=false ScoreFrame:Close() end ) -- adding options
-					menu123:AddOption("Scavenger", function() RunConsoleCommand( "team_set_scavenger" ) SCFrame=false ScoreFrame:Close() end )
-					menu123:AddOption("Science", function() RunConsoleCommand( "team_set_science" ) SCFrame=false ScoreFrame:Close() end )
-					menu123:AddOption("Engineer", function() RunConsoleCommand( "team_set_engineer" ) SCFrame=false ScoreFrame:Close() end )
-					menu123:AddOption("Cultivator", function() RunConsoleCommand( "team_set_cultivator" ) SCFrame=false ScoreFrame:Close() end )
-					menu123:Open()
-			end  -- ending the doclick function
+		classmenu.DoClick = function() RunConsoleCommand( "pnrp_classmenu" ) SCFrame=false parent_frame:Close() end 
 		
 		local shopmenu = vgui.Create("DButton") -- Create the button
 			shopmenu:SetParent( parent_frame ) -- parent the button to the frame
