@@ -126,6 +126,10 @@ PNRP.ChatConCmd( "/save", "pnrp_save" )
 
 function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	
+	if ply:GetNetworkedBool("IsAsleep") then
+		ply:ConCommand("pnrp_wake")
+	end
+	
 	ply:CreateRagdoll()
  
 	ply:AddDeaths( 1 )
