@@ -32,6 +32,18 @@ function PNRP.AddItem( itemtable )
 	
 end	
 
+PNRP.Weapons = {}
+
+function PNRP.AddWeapon( weptable )
+
+	PNRP.Weapons[weptable.ID] =
+	{
+		ID = weptable.ID,
+		AmmoType = weptable.AmmoType,	
+	}
+	
+end
+
 if (!SERVER) then return end
 
 --Below Code may not acually be needed at this time--

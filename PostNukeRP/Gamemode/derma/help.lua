@@ -13,6 +13,7 @@ local help = 	{
 				"F2 - Pickup / Take or Release Ownership of Car",
 				"F3 - Personal Inventory or when looking at your car, Car Inventory",
 				"F4 - Shop Menu",
+				"F12 - Set / Release Ownership.",
 				"",
 				"/save - save's your characters data.",
 				"/getallcars - picks up any cars that belong to you in the world",
@@ -24,6 +25,13 @@ local help = 	{
 				"/classmenu - Opens the class change menu.",
 				"/shop - Opens shop menu.",
 				"/inv - Opens the players inventory.",
+				"/setowner - Set / Release Ownership.",
+				"",
+				"Hands (Weapon):",
+				"          Left Click - Gather Resources.",
+				"          Right Click - Knock on Door.",
+				"          Alt+Left Click - Unlock Door or Car.",
+				"          Alt+Right Click - Lock Door or Car.",
 				"",
 				"Classes",
 				"------------------------------------------------",
@@ -51,7 +59,16 @@ local help = 	{
 				"------------------------------------------------",
 				"When you die, you will drop all your equiped weapons and ammo",
 				"to the ground. This does not affect whats in your inventory.",
-				"If enabled, there is a % cost to your resources when you die."
+				"If enabled, there is a % cost to your resources when you die.",
+				"",
+				"------------------------------------------------",
+				"",
+				"PostNukeRP Forums: http://gmdev.thercs.net/",
+				"Radioactive Cricket Site: http://radioactivecricket.com/   (Will post updates here too)",
+				"PostNukeRP Site: http://radioactivecricket.com/pnrp/   (Site is still being worked on)",
+				"Team Echo Forums: http://tecgmodgroup.forumotion.com/",
+				"",
+				"You can also look for our PostNukeRP Steam group as well."
 				}
 				
 function HelpPanel() 

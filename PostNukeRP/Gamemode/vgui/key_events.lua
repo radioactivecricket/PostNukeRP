@@ -26,7 +26,7 @@ local function KeyThink( )
 			elseif i == KEY_F9 then -- Enter Code Here 
 			elseif i == KEY_F10 then -- Enter Code Here
 			elseif i == KEY_F11 then -- Enter Code Here
-			elseif i == KEY_F12 then -- Enter Code Here
+			elseif i == KEY_F12 then RunConsoleCommand("pnrp_setowner")
 			end
 		end
 --		elseif(KeyEvents[i]==3) then LocalPlayer():ChatPrint("You released key " .. i) end

@@ -142,6 +142,15 @@ function GM.open_admin(ply)
 				    deathCostSlider:SetDecimals( 0 )
 				    deathCostSlider:SetValue( GetConVar("pnrp_deathCost"):GetInt() )
 				GModeSettingsList:AddItem( deathCostSlider )
+				
+				local ownDoorsSlider = vgui.Create( "DNumSlider", GModeSettingsList )
+				    ownDoorsSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    ownDoorsSlider:SetText( "Number of doors that can be owned (Def 3)" )
+				    ownDoorsSlider:SetMin( 0 )
+				    ownDoorsSlider:SetMax( 10 )
+				    ownDoorsSlider:SetDecimals( 0 )
+				    ownDoorsSlider:SetValue( GetConVar("pnrp_maxOwnDoors"):GetInt() )
+				GModeSettingsList:AddItem( ownDoorsSlider )
 					
 				--Saves the Settings from the GMode Settings
 				local GModeSettingsSaveBTN = vgui.Create("DButton", SpawnerList )
@@ -209,6 +218,7 @@ function GM.open_admin(ply)
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_classChangeCost",tostring(classCostSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_deathPay",tostring(deathCostOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_deathCost",tostring(deathCostSlider:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_maxOwnDoors",tostring(ownDoorsSlider:GetValue()))
 				    end
 				GModeSettingsList:AddItem( GModeSettingsSaveBTN )
 				

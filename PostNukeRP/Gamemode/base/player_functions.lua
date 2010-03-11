@@ -154,6 +154,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
 				local ent = ents.Create(myItem.Ent)
 				--ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
+				ply:SendHint( "Dropped "..myItem.Name,5)
 				ent:SetModel(myItem.Model)
 				ent:SetAngles(Angle(0,0,0))
 				ent:SetPos(pos)
@@ -167,7 +168,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 					local entClass
 					local entModel
 				--	ply:ChatPrint(myAmmoType)
-					
+					ply:SendHint( "Dropped "..myItem.Name,5)
 					local ammoFType
 					--grenade fix
 					if myItem.ID == "wep_grenade" then

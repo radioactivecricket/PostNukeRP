@@ -140,18 +140,29 @@ function PNRP.DropCarSpawn( ply, ID, q )
 			data.Model = item.Model
 			for i = 1, q do
 				
-				if item.Type != "vehicle" then
+				if item.Type ~= "vehicle" then
 					ply:EmitSound(Sound("items/ammo_pickup.wav"))
 					
-					local ent = ents.Create(data.Ent)
 					local pos = data.Pos + Vector(0,0,20)
-					ent:SetModel(data.Model)
-					ent:SetAngles(Angle(0,0,0))
-					ent:SetPos(pos)
-					ent:Spawn()
-					ent:SetNetworkedString("Owner", "World")
-					PNRP.TakeFromCarInventory( ply, data.ID )
+					if item.Type == "tool" then
+						item.Create(ply, item.Ent, pos)
+					else
+						local ent = ents.Create(data.Ent)
+						ent:SetModel(data.Model)
+						ent:SetAngles(Angle(0,0,0))
+						ent:SetPos(pos)
+						ent:Spawn()
+						if item.Type == "weapon" and item.ID ~= "wep_grenade" then
+							ent:SetNetworkedString("Ammo", "0")
+						elseif item.Type == "ammo" then
+							
+							ent:SetNetworkedString("Ammo", tostring(item.Energy))
+						
+						end
+						ent:SetNetworkedString("Owner", "World")
+					end
 					
+					PNRP.TakeFromCarInventory( ply, data.ID )
 				else
 					
 					local ent = ents.Create(data.Ent)
@@ -172,7 +183,8 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					ent:Activate()
 					ent:SetNetworkedString("Owner", ply:Nick())
 					PNRP.TakeFromCarInventory( ply, data.ID )
-				end	
+				
+				end
 				
 			end
 		
