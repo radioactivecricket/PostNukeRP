@@ -166,7 +166,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 					local myAmmoType = PNRP.ConvertAmmoType(v:GetPrimaryAmmoType())
 					local entClass
 					local entModel
-					ply:ChatPrint(myAmmoType)
+				--	ply:ChatPrint(myAmmoType)
 					
 					local ammoFType
 					--grenade fix
@@ -218,6 +218,7 @@ function PNRP.DeathPay(ply, Recource)
 	    int = getRec * cost
 	    int = math.Round(int)
 	    if getRec - int >= 0 then
+	    	ply:ChatPrint("Death has taken "..int.." "..Recource.." from you.")
 	    	Msg("Death cost applied to "..Recource.." \n")
 	    	ply:DecResource(Recource,int)
 	    end
