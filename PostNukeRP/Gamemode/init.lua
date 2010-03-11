@@ -232,6 +232,7 @@ function classChangeCost(ply, Recource)
 	    int = math.Round(int)
 	    if getRec - int >= 0 then
 	    	Msg("Class change cost applied to "..Recource.." \n")
+	    	ply:ChatPrint("Changing classes has cost you "..int.." "..Recource..".")
 	    	ply:DecResource(Recource,int)
 	    end
 	end
@@ -555,6 +556,6 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
    Victim.NextSpawnTime = CurTime() + 2
    Victim.DeathTime = CurTime()
 
-end  
+end   
 
 --EOF

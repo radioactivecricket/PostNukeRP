@@ -64,10 +64,10 @@ CreateConVar("pnrp_propCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCH
 CreateConVar("pnrp_adminCreateAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_adminTouchAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_exp2Level", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_toolLevel", "2", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_exp2Level", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_toolLevel", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_voiceLimit", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_voiceLimit", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_voiceDist", "550", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_classChangePay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
