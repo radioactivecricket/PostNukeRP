@@ -76,6 +76,8 @@ CreateConVar("pnrp_classChangeCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCV
 CreateConVar("pnrp_deathPay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_deathCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
+CreateConVar("pnrp_maxOwnDoors", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
 local pmeta = FindMetaTable("Player")
 
 function pmeta:IsOutside()
@@ -133,25 +135,28 @@ end
 
 function PNRP.FindAmmoType( id, class )
 	if id then
-		if id == "wep_deagle" or id == "wep_scout" then
-			return "357"
-		elseif id == "wep_p228" then
-			return "pistol"
-		elseif id == "wep_shotgun" then
-			return "buckshot"
-		else
-			return "smg1"
+		if PNRP.Items[id].Type == "weapon" then
+			return PNRP.Weapons[id].AmmoType	
 		end
-	elseif class then
-		if class == "wep_deagle" or class == "wep_scout" then
-			return "357"
-		elseif class == "wep_p228" then
-			return "pistol"
-		elseif class == "wep_shotgun" then
-			return "buckshot"
-		else
-			return "smg1"
-		end
+--		if id == "wep_deagle" or id == "wep_scout" then
+--			return "357"
+--		elseif id == "wep_p228" then
+--			return "pistol"
+--		elseif id == "wep_shotgun" then
+--			return "buckshot"
+--		else
+--			return "smg1"
+--		end
+--	elseif class then
+--		if class == "wep_deagle" or class == "wep_scout" then
+--			return "357"
+--		elseif class == "wep_p228" then
+--			return "pistol"
+--		elseif class == "wep_shotgun" then
+--			return "buckshot"
+--		else
+--			return "smg1"
+--		end
 	end
 end
 

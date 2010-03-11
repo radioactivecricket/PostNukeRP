@@ -165,6 +165,22 @@ function GM:PlayerSpawnEffect( p, model )
 	
 end	
 
+function GM:PlayerSpawnSENT( p, classname )
+	p:ChatPrint("Classname:  "..classname)
+	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+		for k, v in pairs(PNRP.Items) do
+			if v.ClassSpawn == classname then
+				return false
+			end
+		end
+		
+		if string.find(classname, "eapon") == 2 then
+			return false
+		end
+	end
+	
+	return true
+end
 
 function GM:PlayerSpawnSWEP( p, classname )
 
@@ -205,6 +221,10 @@ function PickupCheck( ply, ent)
 	
 	--local searchString = " "..ent:GetClass()
 	if string.find(ent:GetClass(), "unc_") == 2 then
+		return false
+	end
+	
+	if string.find(ent:GetClass(), "dynam") == 6 then
 		return false
 	end
 	
@@ -263,6 +283,10 @@ function ToolCheck( ply, tr, toolmode )
 	end
 	
 	local searchPos
+	
+	if string.find(ent:GetClass(), "ep_") == 2 then
+		return false
+	end
 	
 	if string.find(ent:GetClass(), "unc_") == 2 then
 		return false

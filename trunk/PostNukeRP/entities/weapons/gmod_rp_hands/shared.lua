@@ -77,43 +77,57 @@ function SWEP:PrimaryAttack()
     if (!SERVER) then return end		
 	
     if !tr.Entity:IsValid() then return end
+	if self.Owner:KeyDown(IN_WALK) then
+		local owner = tr.Entity:GetNWString( "Owner", "None" )
+		if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
+			tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
+			self.Owner:ChatPrint("Unlocked.")
+			tr.Entity:Fire("unlock", "", 0)
+		elseif tr.Entity:IsVehicle() and self.Owner:Nick() == owner then
+			tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
+			self.Owner:ChatPrint("Unlocked.")
+			tr.Entity:Fire("unlock", "", 0)
+		elseif tr.Entity:IsVehicle() or tr.Entity:IsDoor() then
+			self.Owner:ChatPrint("You do not own it!")
+		end
+	else
+		if tr.Entity:IsJunkPile() then
+			local data = {}
+			data.Entity = tr.Entity
 
-	if tr.Entity:IsJunkPile() then
-        local data = {}
-        data.Entity = tr.Entity
-
-        data.Chance = 50
-        data.MinAmount = 1
-        data.MaxAmount = 3
-		self.Owner:DoProcess("ScavScrap",2,data)
-    end
-	
-	if tr.Entity:IsChemPile() then
-        local data = {}
-        data.Entity = tr.Entity
-
-        data.Chance = 50
-        data.MinAmount = 1
-        data.MaxAmount = 3
-		self.Owner:DoProcess("ScavChems",2,data)
-    end
-	
-	if tr.Entity:IsSmallPile() then
-        local data = {}
-        data.Entity = tr.Entity
-
-        data.Chance = 50
-        data.MinAmount = 1
-        data.MaxAmount = 3
-		self.Owner:DoProcess("ScavParts",2,data)
-    end
-	
-	if !tr.Entity:IsPlayer() then return end
-	
-	tr.Entity:EmitSound("physics/flesh/flesh_impact_bullet"..math.random(1, 5)..".wav")
-	tr.Entity:TakeDamage( 3, self.Owner , self.Weapon )
-	self.NextPunch = CurTime() + 1.5
+			data.Chance = 50
+			data.MinAmount = 1
+			data.MaxAmount = 3
+			self.Owner:DoProcess("ScavScrap",2,data)
+		end
 		
+		if tr.Entity:IsChemPile() then
+			local data = {}
+			data.Entity = tr.Entity
+
+			data.Chance = 50
+			data.MinAmount = 1
+			data.MaxAmount = 3
+			self.Owner:DoProcess("ScavChems",2,data)
+		end
+		
+		if tr.Entity:IsSmallPile() then
+			local data = {}
+			data.Entity = tr.Entity
+
+			data.Chance = 50
+			data.MinAmount = 1
+			data.MaxAmount = 3
+			self.Owner:DoProcess("ScavParts",2,data)
+		end
+		
+		if !tr.Entity:IsPlayer() then return end
+		
+		tr.Entity:EmitSound("physics/flesh/flesh_impact_bullet"..math.random(1, 5)..".wav")
+		tr.Entity:TakeDamage( 3, self.Owner , self.Weapon )
+		
+	end
+	self.NextPunch = CurTime() + 1.5
 end
 
 /*---------------------------------------------------------
@@ -132,10 +146,72 @@ function SWEP:SecondaryAttack()
     if (!SERVER) then return end	
 	
 	if !tr.Entity:IsValid() then return end
-	
-	if !string.find( string.lower( tr.Entity:GetClass() ), "door" ) then return end
-	tr.Entity:EmitSound("physics/flesh/flesh_impact_bullet1.wav")
+	if self.Owner:KeyDown(IN_WALK) then
+		local owner = tr.Entity:GetNWString( "Owner", "None" )
+		if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
+			tr.Entity:EmitSound(Sound("doors/latchlocked2.wav"))
+			self.Owner:ChatPrint("Locked.")
+			tr.Entity:Fire("Lock", "", 0)
+		elseif tr.Entity:IsVehicle() and self.Owner:Nick() == owner then
+			tr.Entity:EmitSound(Sound("doors/latchlocked2.wav"))
+			self.Owner:ChatPrint("Locked.")
+			tr.Entity:Fire("Lock", "", 0)
+		end
+	else
+		if !string.find( string.lower( tr.Entity:GetClass() ), "door" ) then return end
+		tr.Entity:EmitSound("physics/flesh/flesh_impact_bullet1.wav")
+		
+	end
 	self.NextKnock = CurTime() + .3
+end
+
+function SWEP:Reload()
+	local trace = {}
+    trace.start = self.Owner:EyePos()
+	trace.endpos = trace.start + self.Owner:GetAimVector() * 100
+	trace.filter = self.Owner
+	local tr = util.TraceLine(trace) 
+	
+	if (!SERVER) then return end
+	
+	if !tr.Entity:IsValid() then return end
+	
+	local owner = tr.Entity:GetNWString( "Owner", "None" )
+	
+	-- if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
+		-- if todo == "unlock" then
+			-- tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
+			-- self.Owner:ChatPrint("Unlocked.")
+		-- elseif todo == "Lock" then
+			-- tr.Entity:EmitSound(Sound("doors/latchlocked2.wav"))
+			-- self.Owner:ChatPrint("Locked.")
+		-- end
+		-- tr.Entity:Fire(todo, "", 0)
+	-- end
+	
+	-- if tr.Entity:IsVehicle() and self.Owner:Nick() == owner then
+		-- for k, v in pairs(tr.Entity:GetKeyValues()) do
+			-- self.Owner:ChatPrint(k.." = "..tostring(v))
+			-- if (k == "Lock") then
+				-- if v == 1 then
+					-- todo="Lock"
+				-- end
+			-- elseif (k == "Unlock") then
+				-- if v == 1 then
+					-- todo="unlock"
+				-- end
+			-- end
+
+		-- end
+		-- if todo == "unlock" then
+			-- tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
+			-- self.Owner:ChatPrint("Unlocked.")
+		-- elseif todo == "Lock" then
+			-- tr.Entity:EmitSound(Sound("doors/latchlocked2.wav"))
+			-- self.Owner:ChatPrint("Locked.")
+		-- end
+		-- tr.Entity:Fire(todo, "", 0)
+	-- end
 	
 end
 

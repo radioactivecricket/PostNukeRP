@@ -61,6 +61,8 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		PNRP.SendInventory( ply )
 		PNRP.SendCarInventory( ply )
 		
+		ply:GetTable().LastHealthUpdate = 0
+		
 		Msg("Load Timer run for "..ply:Nick().."\n")
 	end)
 		
@@ -101,6 +103,12 @@ function GM:PlayerDisconnected(ply)
 	
 	self.SaveCharacter(ply)
 	PNRP.GetAllCars( ply )
+	
+	local DoorList = PNRP.ListDoors( ply )
+	for k, v in pairs(DoorList) do
+		v:SetNetworkedString("Owner", "World")
+	end
+	
 	Msg("Saved character of disconnecting player "..ply:Nick()..".\n")
 end
 
@@ -252,6 +260,18 @@ function PlayerMeta:TraceFromEyes(dist)
 	trace.filter = self
 
 	return util.TraceLine(trace)
+end
+
+function EntityMeta:IsDoor()
+	local class = self:GetClass()
+
+	if class == "func_door" or
+		class == "func_door_rotating" or
+		class == "prop_door_rotating" or
+		class == "prop_dynamic" then
+		return true
+	end
+	return false
 end
 
 function PNRP.ClassIsNearby(pos,class,range)
@@ -447,6 +467,13 @@ function GM:ShowTeam( ply )
 				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
 				local weightCap
 				
+				if myType == "tool" then
+					if tostring(ent:GetNetworkedString( "Owner" , "None" )) ~= ply:Nick() then
+						ply:ChatPrint("You do not own this!")
+						return
+					end
+				end
+				
 				if team.GetName(ply:Team()) == "Scavenger" then
 					weightCap = GetConVarNumber("pnrp_packCapScav")
 				else
@@ -549,6 +576,50 @@ end
 concommand.Add( "pnrp_GetCar", PNRP.GetCar )
 PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 
+--Some ownership stuff below.
+function PNRP.SetOwnership( ply )
+	local tr = ply:TraceFromEyes(200)
+	local ent = tr.Entity
+	
+	local DoorsOwned = table.Count(PNRP.ListDoors(ply))
+	
+	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		
+		if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
+			ply:ConCommand("pnrp_removeowner")
+		else
+			ent:SetNetworkedString("Owner", ply:Nick())
+			ply:ChatPrint("Admin override of ownership.")
+		end
+		
+		return
+	end
+	
+	if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
+		ply:ConCommand("pnrp_removeowner")
+	else
+		if DoorsOwned < GetConVarNumber("pnrp_maxOwnDoors") then
+			ply:ConCommand("pnrp_addowner")
+		else
+			ply:ChatPrint("You own too many doors!")
+		end
+	end
+end
+concommand.Add( "pnrp_setOwner", PNRP.SetOwnership )
+PNRP.ChatConCmd( "/setowner", "pnrp_setOwner" )
+
+function PNRP.ListDoors( ply )
+	local DoorEntTbl = {}
+	
+	for k, v in pairs(ents.GetAll()) do
+		if v:IsDoor() and v:GetNetworkedString( "Owner" , "None" ) == ply:Nick() then
+			table.insert(DoorEntTbl, v)
+		end
+	end
+	
+	return DoorEntTbl
+end
+
 --This is an override to hide death notices.
 function GM:PlayerDeath( Victim, Inflictor, Attacker )  
 
@@ -557,5 +628,26 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
    Victim.DeathTime = CurTime()
 
 end   
+
+---------------------------------------------------
+---		Health Regen,  Move Later
+---------------------------------------------------
+
+function HealthCheck()
+	for k, v in pairs(player.GetAll()) do
+		if v:Alive() and CurTime() - v:GetTable().LastHealthUpdate > 60 and not v:IsOutside() then
+			local health = v:Health()
+			
+			if not ( health == v:GetMaxHealth() ) then
+				v:SetHealth( health + 1 )
+				if ( v:GetMaxHealth() < health + 1  ) then
+					v:SetHealth( v:GetMaxHealth() )
+				end
+			end
+			v:GetTable().LastHealthUpdate = CurTime()
+		end
+	end
+end
+hook.Add("Think", "HealthCheck", HealthCheck)
 
 --EOF

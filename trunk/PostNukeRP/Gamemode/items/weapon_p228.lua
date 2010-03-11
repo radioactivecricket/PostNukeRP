@@ -1,4 +1,5 @@
 local ITEM = {}
+local WEAPON = {}
 
 
 ITEM.ID = "wep_p228"
@@ -18,6 +19,9 @@ ITEM.Model = "models/weapons/w_pist_p228.mdl"
 ITEM.Script = ""
 ITEM.Weight = 5
 
+WEAPON.ID = ITEM.ID
+WEAPON.AmmoType = "pistol"
+
 function ITEM.Spawn( p )
 	PNRP.BaseItemSpawn( p, ITEM )
 end
@@ -28,3 +32,4 @@ end
 
 
 PNRP.AddItem(ITEM)
+PNRP.AddWeapon(WEAPON)
