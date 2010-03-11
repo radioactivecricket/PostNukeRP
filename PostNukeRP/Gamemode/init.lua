@@ -50,6 +50,11 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	
 	self.LoadCharacter( ply )
 	
+	ply:GetTable().LastHealthUpdate = 0
+	ply:GetTable().LastEndUpdate = 0
+	ply:SetNetworkedInt("Endurance", 100)
+	ply:SetNetworkedBool("IsAsleep", false)
+	
 	--Loads Weapons from Character's Save File
 	timer.Create(tostring(ply:UniqueID()), 5, 1, function()  
 	    self.LoadWeaps( ply )
@@ -60,8 +65,6 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		
 		PNRP.SendInventory( ply )
 		PNRP.SendCarInventory( ply )
-		
-		ply:GetTable().LastHealthUpdate = 0
 		
 		Msg("Load Timer run for "..ply:Nick().."\n")
 	end)
@@ -75,6 +78,7 @@ function GM:PlayerSpawn( ply )  //What happens when the player spawns
     self.BaseClass:PlayerSpawn( ply )   // Lines 12 through 18 are all fixes to the sandbox glitch. Don't change
 										// them unless you know what you're doing.
     ply:SetGravity( 1 )  
+	ply:SetNetworkedInt("Endurance", 100)
  
     ply:SetWalkSpeed( 150 )  
     
@@ -628,26 +632,5 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
    Victim.DeathTime = CurTime()
 
 end   
-
----------------------------------------------------
----		Health Regen,  Move Later
----------------------------------------------------
-
-function HealthCheck()
-	for k, v in pairs(player.GetAll()) do
-		if v:Alive() and CurTime() - v:GetTable().LastHealthUpdate > 60 and not v:IsOutside() then
-			local health = v:Health()
-			
-			if not ( health == v:GetMaxHealth() ) then
-				v:SetHealth( health + 1 )
-				if ( v:GetMaxHealth() < health + 1  ) then
-					v:SetHealth( v:GetMaxHealth() )
-				end
-			end
-			v:GetTable().LastHealthUpdate = CurTime()
-		end
-	end
-end
-hook.Add("Think", "HealthCheck", HealthCheck)
 
 --EOF
