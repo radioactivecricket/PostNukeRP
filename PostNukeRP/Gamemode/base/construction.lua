@@ -5,7 +5,12 @@ function GM.BuildItem( ply, command, arg )
 	for itemname, item in pairs(PNRP.Items) do
 		if tostring( arg[1] ) == itemname then
 			--Class Check
-			if team.GetName(ply:Team()) == item.ClassSpawn or item.ClassSpawn == "All" then
+			local allowed = false
+	
+			if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then allowed = true 
+			else allowed = false end
+			
+			if team.GetName(ply:Team()) == item.ClassSpawn or item.ClassSpawn == "All" or allowed == true then
 				local tr = ply:TraceFromEyes(200)
 				--Verifies Player has the needed Materials to build the item
 				if ply:GetResource("Scrap") >= item.Scrap and ply:GetResource("Chemicals") >= item.Chemicals and ply:GetResource("Small_Parts") >= item.SmallParts then 

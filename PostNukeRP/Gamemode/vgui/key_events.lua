@@ -19,18 +19,32 @@ local function KeyThink( )
 			elseif(KeyEvents[i]==3) then KeyEvents[i] = 0 end
 		end
 		
+		--Key Press
 		if(KeyEvents[i]==1) then 
-			if i == KEY_F6 then LocalPlayer():ChatPrint("You pressed key F6") 
+			if i == KEY_F6 then -- Enter Code Here
 			elseif i == KEY_F7 then -- Enter Code Here
 			elseif i == KEY_F8 then -- Enter Code Here 
 			elseif i == KEY_F9 then -- Enter Code Here 
 			elseif i == KEY_F10 then -- Enter Code Here
 			elseif i == KEY_F11 then -- Enter Code Here
 			elseif i == KEY_F12 then RunConsoleCommand("pnrp_setowner")
+			elseif i == KEY_C then RunConsoleCommand("pnrp_open_voice")
 			end
-		end
---		elseif(KeyEvents[i]==3) then LocalPlayer():ChatPrint("You released key " .. i) end
 		
+		--Key Release
+		elseif(KeyEvents[i]==3) then 
+--			LocalPlayer():ChatPrint("You released key " .. i) end
+			if i == KEY_F6 then -- Enter Code Here 
+			elseif i == KEY_F7 then -- Enter Code Here
+			elseif i == KEY_F8 then -- Enter Code Here 
+			elseif i == KEY_F9 then -- Enter Code Here 
+			elseif i == KEY_F10 then -- Enter Code Here
+			elseif i == KEY_F11 then -- Enter Code Here
+			elseif i == KEY_F12 then -- Enter Code Here
+			elseif i == KEY_C then RunConsoleCommand("pnrp_close_voice")
+			end
+		
+		end
 	end
 end
 hook.Add( "Think", "CheckKeyInput", KeyThink );

@@ -1,18 +1,58 @@
-local chatsounds = {}
+local malechatsounds = {}
+local femalechatsounds = {}
 
-chatsounds["omg"] = "vo/NovaProspekt/al_ohmygod.wav"
+	    
+femalechatsounds["omfg"] = "vo/NovaProspekt/al_ohmygod.wav"
+femalechatsounds["omg"] = "vo/npc/female01/goodgod.wav"
+femalechatsounds["hacks"] = "vo/npc/female01/hacks01.wav"
+femalechatsounds["hax"] = "vo/npc/female01/hacks02.wav"
+femalechatsounds["incoming"] = "vo/canals/female01/stn6_incoming.wav"
+femalechatsounds["get out"] = "vo/npc/female01/gethellout.wav"
+femalechatsounds["get down"] = "vo/npc/female01/getdown02.wav"
+femalechatsounds["excuse me"] = "vo/npc/female01/excuseme01.wav"
+femalechatsounds["fantastic"] = "vo/npc/female01/fantastic01.wav"
+femalechatsounds["im busy"] = "vo/npc/female01/busy02.wav"
+femalechatsounds["behind you"] = "vo/npc/female01/behindyou01.wav"
+
+malechatsounds["omfg"] = "vo/NovaProspekt/al_ohmygod.wav"
+malechatsounds["omg"] = "vo/npc/male01/goodgod.wav"
+malechatsounds["hacks"] = "vo/npc/male01/hacks01.wav"
+malechatsounds["hax"] = "vo/npc/male01/hacks02.wav"
+malechatsounds["incoming"] = "vo/canals/male01/stn6_incoming.wav"
+malechatsounds["get out"] = "vo/npc/male01/gethellout.wav"
+malechatsounds["get down"] = "vo/npc/male01/getdown02.wav"
+malechatsounds["excuse me"] = "vo/npc/male01/excuseme01.wav"
+malechatsounds["fantastic"] = "vo/npc/male01/fantastic01.wav"
+malechatsounds["im busy"] = "vo/npc/male01/busy02.wav"
+malechatsounds["behind you"] = "vo/npc/male01/behindyou01.wav"
 
 
 function PNRP.ChatSounds( ply, text )
-
-	for k, v in pairs( chatsounds ) do
 	
-		if string.find( string.lower( text ), k ) then
+	if string.find(string.lower(ply:GetModel()), "/female") or
+		string.find(string.lower(ply:GetModel()), "mossman") or
+	    string.find(string.lower(ply:GetModel()), "alyx") then
+	
+		for k, v in pairs( femalechatsounds ) do
 		
-			ply:EmitSound( v )
+			if string.find( string.lower( text ), k ) then
+			
+				ply:EmitSound( v )
+				
+			end
 			
 		end
+	else
+	
+		for k, v in pairs( malechatsounds ) do
 		
+			if string.find( string.lower( text ), k ) then
+			
+				ply:EmitSound( v )
+				
+			end
+			
+		end
 	end
 	
 	local chat = string.Explode( " ", string.lower( text ) )
