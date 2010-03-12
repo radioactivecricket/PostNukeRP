@@ -602,9 +602,12 @@ function PNRP.SetOwnership( ply )
 	if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
 		ply:ConCommand("pnrp_removeowner")
 	else
-		if DoorsOwned < GetConVarNumber("pnrp_maxOwnDoors") then
+		if not ent:IsDoor() then
 			ply:ConCommand("pnrp_addowner")
-		else
+		end
+		if DoorsOwned < GetConVarNumber("pnrp_maxOwnDoors") and ent:IsDoor() then
+			ply:ConCommand("pnrp_addowner")
+		elseif ent:IsDoor() then
 			ply:ChatPrint("You own too many doors!")
 		end
 	end

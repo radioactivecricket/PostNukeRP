@@ -55,7 +55,7 @@ function StatCheck()
 			local endur = v:GetNetworkedInt("Endurance")
 			
 			if v:GetNetworkedBool("IsAsleep") then
-				v:SetNetworkedInt("Endurance", endur + 1)
+				v:SetNetworkedInt("Endurance", endur + 2)
 			else
 				v:SetNetworkedInt("Endurance", endur - 1)
 			end
