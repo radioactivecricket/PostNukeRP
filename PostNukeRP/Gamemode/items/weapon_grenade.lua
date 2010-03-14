@@ -6,9 +6,9 @@ ITEM.ID = "wep_grenade"
 
 ITEM.Name = "Frag Grenade"
 ITEM.ClassSpawn = "Science"
-ITEM.Scrap = 10
+ITEM.Scrap = 5
 ITEM.Small_Parts = 2
-ITEM.Chemicals = 20
+ITEM.Chemicals = 5
 ITEM.Chance = 100
 ITEM.Info = ""
 ITEM.Type = "weapon"

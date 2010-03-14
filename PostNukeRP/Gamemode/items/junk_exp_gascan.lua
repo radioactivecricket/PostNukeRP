@@ -5,9 +5,9 @@ ITEM.ID = "exp_gascan"
 
 ITEM.Name = "Explosive Gas Can"
 ITEM.ClassSpawn = "Science"
-ITEM.Scrap = 10
+ITEM.Scrap = 2
 ITEM.Small_Parts = 0
-ITEM.Chemicals = 15
+ITEM.Chemicals = 5
 ITEM.Chance = 100
 ITEM.Info = "Big Bada Boom!"
 ITEM.Type = "junk"

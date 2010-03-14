@@ -5,7 +5,7 @@ ITEM.ID = "sawblade"
 
 ITEM.Name = "Sawblade"
 ITEM.ClassSpawn = "Engineer"
-ITEM.Scrap = 15
+ITEM.Scrap = 10
 ITEM.Small_Parts = 0
 ITEM.Chemicals = 0
 ITEM.Chance = 100

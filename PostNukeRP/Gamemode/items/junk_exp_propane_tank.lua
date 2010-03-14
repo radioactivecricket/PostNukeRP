@@ -5,9 +5,9 @@ ITEM.ID = "exp_propane_tank"
 
 ITEM.Name = "Explosive Propane Tank"
 ITEM.ClassSpawn = "Science"
-ITEM.Scrap = 12
+ITEM.Scrap = 5
 ITEM.Small_Parts = 0
-ITEM.Chemicals = 15
+ITEM.Chemicals = 8
 ITEM.Chance = 100
 ITEM.Info = "Big Bada Boom!"
 ITEM.Type = "junk"
