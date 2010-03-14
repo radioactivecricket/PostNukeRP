@@ -5,9 +5,9 @@ ITEM.ID = "exp_oil_drum"
 
 ITEM.Name = "Explosive Oil Drum"
 ITEM.ClassSpawn = "Science"
-ITEM.Scrap = 15
+ITEM.Scrap = 5
 ITEM.Small_Parts = 0
-ITEM.Chemicals = 30
+ITEM.Chemicals = 10
 ITEM.Chance = 100
 ITEM.Info = "Big Bada Boom!"
 ITEM.Type = "junk"
