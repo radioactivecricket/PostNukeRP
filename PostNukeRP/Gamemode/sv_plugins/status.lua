@@ -89,7 +89,32 @@ function EnterSleep ( ply )
 		ply:SetNetworkedBool("IsAsleep", true)
 		ply:GetTable().SleepSound:PlayEx(0.10, 100)
 		
-		ply:Freeze(true)
+		
+		if ply:InVehicle() then
+			ply:Freeze(true)
+		else
+			ply:GetTable().WeaponsForSleep = {}
+			for k,v in pairs(ply:GetWeapons( )) do
+				ply:GetTable().WeaponsForSleep[k] = v:GetClass()
+			end
+			local ragdoll = ents.Create("prop_ragdoll")
+			ragdoll:SetPos(ply:GetPos())
+			ragdoll:SetAngles(Angle(0,ply:GetAngles().Yaw,0))
+			ragdoll:SetModel(ply:GetModel())
+			ragdoll:Spawn()
+			ragdoll:Activate()
+			ragdoll:SetVelocity(ply:GetVelocity())
+			--ragdoll.OwnerINT = player:EntIndex()
+			
+			ply:StripWeapons()
+			ply:Spectate(OBS_MODE_CHASE)
+			ply:SpectateEntity(ragdoll)
+			ply:GetTable().SleepRagdoll = ragdoll
+			ragdoll:GetTable().OwnerID = ply:UniqueID()
+			ragdoll.Owner = player
+			ragdoll:SetNetworkedString("Owner", ply:Nick())
+		end
+		
 		
 		local rfilter = RecipientFilter()
 		rfilter:RemoveAllPlayers()
@@ -124,8 +149,30 @@ function ExitSleep( ply )
 		if ply:GetTable().SleepSound then
 			ply:GetTable().SleepSound:Stop()
 		end
-		
-		ply:Freeze(false)
+		if ply:InVehicle() then
+			ply:Freeze(false)
+		else
+			local ragdoll = ply:GetTable().SleepRagdoll
+			local health = ply:Health()
+			ply:Spawn()
+			ply:SetHealth(health)
+			ply:SetPos(ragdoll:GetPos())
+			ply:SetAngles(Angle(0, ragdoll:GetPhysicsObjectNum(10):GetAngles().Yaw, 0))
+			ply:UnSpectate()
+			ply:StripWeapons()
+			ragdoll:Remove()
+			if ply:GetTable().WeaponsForSleep then
+				for k,v in pairs(ply.WeaponsForSleep) do
+					ply:Give(v)
+				end
+				local cl_defaultweapon = ply:GetInfo( "cl_defaultweapon" )
+				if ( ply:HasWeapon( cl_defaultweapon )  ) then
+					ply:SelectWeapon( cl_defaultweapon ) 
+				end
+			else
+				GAMEMODE:PlayerLoadout(player)
+			end 
+		end
 		
 		local rfilter = RecipientFilter()
 		rfilter:RemoveAllPlayers()
@@ -146,3 +193,28 @@ function ExitSleepCmd( ply )
 end
 concommand.Add( "pnrp_wake", ExitSleepCmd )
 PNRP.ChatConCmd( "/wake", "pnrp_wake" )
+
+local function DamageSleepers(ent, inflictor, attacker, amount, dmginfo)
+	local ownerid = ent:GetTable().OwnerID
+	if ownerid and ownerid ~= 0 then
+		for k,v in pairs(player.GetAll()) do 
+			if v:UniqueID() == ownerid then
+				if attacker == GetWorldEntity() then
+					amount = 10
+					dmginfo:ScaleDamage(0.1)
+				end
+				v:SetHealth(v:Health() - amount)
+				if v:Health() <= 0 and v:Alive() then
+					ExitSleep(v)
+					v:SetHealth(1)
+					v:TakeDamage(1, inflictor, attacker)
+					if v:GetTable().SleepSound then
+						v:GetTable().SleepSound:Stop()
+					end
+					ent:Remove()
+				end
+			end
+		end
+	end
+end
+hook.Add("EntityTakeDamage", "Sleepdamage", DamageSleepers)

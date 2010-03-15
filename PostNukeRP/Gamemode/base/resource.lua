@@ -35,6 +35,13 @@ end
 
 function PlayerMeta:DecResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 return end
+	
+	
+	if self:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+		Msg("Admin No Cost\n")
+		return
+	end
+	
 	Msg(tostring(int).."\n")
 	self.Resources[resource] = self.Resources[resource] - int
 	umsg.Start("pnrp_SetResource",self)

@@ -315,6 +315,7 @@ function PROCESS:OnStop()
 				ent:SetPos(pos)
 				ent:Spawn()
 				ent:SetNetworkedString("Owner", "World")
+--				PNRP.AddWorldCache( self.Owner, self.Data.ID )
 			end
 			
 			Msg(self.Owner:Nick().." created "..tostring(self.Data.Name)..".\n")
@@ -409,6 +410,7 @@ function PROCESS:OnStop()
 				if self.Data.Ent == "weapon_seat" then
 					ent:SetNetworkedString("Type", "1")
 				end
+--				PNRP.AddWorldCache( self.Owner, self.Data.ID )
 			end
          else
             --self.Owner:SendMessage("Failed.",3,Color(200,0,0,255))

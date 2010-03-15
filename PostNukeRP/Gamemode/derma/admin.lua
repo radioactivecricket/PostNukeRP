@@ -71,6 +71,12 @@ function GM.open_admin(ply)
 					adminTouchAllTgl:SizeToContents() 
 				GModeSettingsList:AddItem( adminTouchAllTgl )
 				
+				local adminNoCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
+					adminNoCostTgl:SetText( "Admin No Cost." )
+					adminNoCostTgl:SetValue( GetConVar("pnrp_adminNoCost"):GetInt() )
+					adminNoCostTgl:SizeToContents() 
+				GModeSettingsList:AddItem( adminNoCostTgl )
+				
 				local propBanningTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					propBanningTgl:SetText( "Prop Banning." )
 					propBanningTgl:SetValue( GetConVar("pnrp_propBanning"):GetInt() )
@@ -158,6 +164,7 @@ function GM.open_admin(ply)
 				    GModeSettingsSaveBTN.DoClick = function()
 				    	local adminCreateAllOnOff
 				    	local adminTouchAllOnOff
+				    	local adminNoCostOnOff
 				    	local propBanningOnOff
 				    	local propAllowingOnOff
 				    	local propPayOnOff
@@ -173,6 +180,11 @@ function GM.open_admin(ply)
 				    		adminTouchAllOnOff = 1
 				    	else
 				    		adminTouchAllOnOff = 0
+				    	end
+				    	if adminNoCostTgl:GetChecked(true) then
+				    		adminNoCostOnOff = 1
+				    	else
+				    		adminNoCostOnOff = 0
 				    	end
 				    	if propBanningTgl:GetChecked(true) then
 				    		propBanningOnOff = 1
@@ -208,6 +220,7 @@ function GM.open_admin(ply)
 				    	RunConsoleCommand("pnrp_RunCommand","pnrp_toolLevel",tostring(ToolRestrictSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminCreateAll",tostring(adminCreateAllOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminTouchAll",tostring(adminTouchAllOnOff))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminNoCost",tostring(adminNoCostOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propBanning",tostring(propBanningOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propAllowing",tostring(propAllowingOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propPay",tostring(propPayOnOff))

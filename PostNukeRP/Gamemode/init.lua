@@ -66,6 +66,8 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		PNRP.SendInventory( ply )
 		PNRP.SendCarInventory( ply )
 		
+		PNRP.ReturnWorldCache( ply )
+		
 		Msg("Load Timer run for "..ply:Nick().."\n")
 	end)
 		
@@ -78,7 +80,7 @@ function GM:PlayerSpawn( ply )  //What happens when the player spawns
     self.BaseClass:PlayerSpawn( ply )   // Lines 12 through 18 are all fixes to the sandbox glitch. Don't change
 										// them unless you know what you're doing.
     ply:SetGravity( 1 )  
-	ply:SetNetworkedInt("Endurance", 100)
+	--ply:SetNetworkedInt("Endurance", 100)
  
     ply:SetWalkSpeed( 150 )  
     
@@ -379,15 +381,21 @@ function GM:ShowTeam( ply )
 				
 				if weight <= weightCap then
 					PNRP.AddToInentory( ply, ItemID )
+					PNRP.TakeFromWorldCache( ply, ItemID )
 					ent:Remove()
 				else
 					ply:ChatPrint("You're pack is too full and cannot carry this.")
 				end
 			else
+				local myModel = ent:GetModel()			
+				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
+				
 				if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
 					ply:ConCommand("pnrp_removeowner")
+--					PNRP.TakeFromWorldCache( ply, ItemID )
 				else
 					ply:ConCommand("pnrp_addowner")
+--					PNRP.AddWorldCache( ply, ItemID )
 				end
 			end
 		else
@@ -409,6 +417,7 @@ function GM:ShowTeam( ply )
 					if tonumber(ent:GetNetworkedString("Ammo")) > 0 then
 						ply:GiveAmmo(tonumber(ent:GetNetworkedString("Ammo")), PNRP.FindAmmoType( ItemID, nil))
 					end
+					
 					ent:Remove()
 				else
 					ply:ChatPrint("You're pack is too full and cannot carry this.")
@@ -457,6 +466,7 @@ function GM:ShowTeam( ply )
 				if ammoLeft > 0 and boxes > 0 and not overweight then
 					ply:ChatPrint("You have loaded the rest of your ammo onto your combat vest.  "..tostring(ammoLeft).." extra rounds taken.")
 					ply:GiveAmmo(ammoLeft, ammoType)
+					
 					ent:Remove()
 				elseif ammoLeft > 0 and boxes > 0 and overweight then
 					ply:ChatPrint("The rest stays on the ground.")
@@ -465,6 +475,7 @@ function GM:ShowTeam( ply )
 					ply:ChatPrint("This isn't enough to worry about.  Only "..tostring(ammoLeft).." rounds here.")
 				else
 					ply:ChatPrint("You have picked up all of this ammo.")
+					
 					ent:Remove()
 				end
 			elseif myType == "medical" or myType == "food" or myType == "tool" then
@@ -486,6 +497,9 @@ function GM:ShowTeam( ply )
 				
 				if weight <= weightCap then
 					PNRP.AddToInentory( ply, ItemID )
+					if myType == "tool" then
+						PNRP.TakeFromWorldCache( ply, ItemID )
+					end
 					ent:Remove()
 				else
 					ply:ChatPrint("You're pack is too full and cannot carry this.")

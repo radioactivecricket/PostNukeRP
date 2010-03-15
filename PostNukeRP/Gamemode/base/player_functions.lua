@@ -24,6 +24,7 @@ PNRP.ChatCmd( "/test", PNRP.chtTest )
 PNRP.ChatConCmd( "/classmenu", "pnrp_classmenu" )
 PNRP.ChatConCmd( "/shop", "pnrp_buy_shop" )
 PNRP.ChatConCmd( "/inv", "pnrp_inv" )
+PNRP.ChatConCmd( "/salvage", "pnrp_salvage" )
 
 /*---------------------------------------------------------
   Save/Load
@@ -445,7 +446,8 @@ function PNRP.GetSpawnflags ( ply )
 --	ply:ChatPrint("Class: "..tostring(ent:GetClass()))
 	EntityKeyValueInfo( ent )
 --	Msg(EntityKeyValueInfo( ent, 0 ).."\n")
-	ply:ChatPrint(tostring(ent:GetTable().HandleAnimation) )
+	ply:ChatPrint("Handle Animation: "..tostring(ent:GetTable().HandleAnimation) )
+	ply:ChatPrint("Model: "..tostring(ent:GetModel()) )
 end
 concommand.Add( "pnrp_getinfo", PNRP.GetSpawnflags )
 
