@@ -10,6 +10,8 @@
 
 --CreateConVar("pnrp_exp2Level", "1", FCVAR_ARCHIVE)
 
+local EntityMeta = FindMetaTable("Entity")
+
 BannedProps = { }
 function AddBannedProp(mdl) table.insert(BannedProps, mdl) end
 
@@ -293,7 +295,11 @@ function ToolCheck( ply, tr, toolmode )
 	end
 	
 	if string.find(ent:GetClass(), "pc_") == 2 then
-		return false
+		if string.find(ent:GetClass(),"turret") > 1 then
+		
+		else
+			return false
+		end
 	end
 	
 	searchPos = string.find(ent:GetClass(), "door_")
@@ -362,3 +368,5 @@ function ToolCheck( ply, tr, toolmode )
 	--return false
 end
 hook.Add( "CanTool", "ToolCheck", ToolCheck )
+
+--EOF

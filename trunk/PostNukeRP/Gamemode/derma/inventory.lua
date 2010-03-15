@@ -136,8 +136,9 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet)
 									
 										pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
 								 		pnlPanel.sendCarInv:SetPos(450, 55)
+								 		pnlPanel.sendCarInv:SetSize(100,18)
 								    	pnlPanel.sendCarInv:SetText( "Send to Car Inv" )
-								    	pnlPanel.sendCarInv:SizeToContents() 
+--								    	pnlPanel.sendCarInv:SizeToContents() 
 								    	pnlPanel.sendCarInv.DoClick = function()
 								    		
 								    		local weight = CurCarInvWeight + item.Weight
@@ -162,6 +163,11 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet)
 					    	end
 						end
 						
+						pnlPanel.salvageItem = vgui.Create("DButton", pnlPanel )
+						pnlPanel.salvageItem:SetPos(555, 55)
+				 		pnlPanel.salvageItem:SetSize(100,17)
+				    	pnlPanel.salvageItem:SetText( "Salvage Item" )
+				    	pnlPanel.salvageItem.DoClick = function() RunConsoleCommand("pnrp_dosalvage",item.ID) parent_frame:Close() end
 				 	end
 				end
 			end

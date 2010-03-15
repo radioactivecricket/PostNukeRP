@@ -78,6 +78,7 @@ function PNRP.DropSpawn( ply, ID, q )
 					local pos = data.Pos + Vector(0,0,20)
 					if item.Type == "tool" then
 						item.Create(ply, item.Ent, pos)
+						
 					else
 						local ent = ents.Create(data.Ent)
 						ent:SetModel(data.Model)
@@ -92,6 +93,7 @@ function PNRP.DropSpawn( ply, ID, q )
 						
 						end
 						ent:SetNetworkedString("Owner", "World")
+						
 					end
 					
 					PNRP.TakeFromInventory( ply, data.ID )
@@ -115,7 +117,7 @@ function PNRP.DropSpawn( ply, ID, q )
 					ent:Activate()
 					ent:SetNetworkedString("Owner", ply:Nick())
 					PNRP.TakeFromInventory( ply, data.ID )
-				
+					PNRP.AddWorldCache( ply, data.ID )
 				end	
 				
 			end
@@ -151,6 +153,7 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					local pos = data.Pos + Vector(0,0,20)
 					if item.Type == "tool" then
 						item.Create(ply, item.Ent, pos)
+						
 					else
 						local ent = ents.Create(data.Ent)
 						ent:SetModel(data.Model)
@@ -165,6 +168,7 @@ function PNRP.DropCarSpawn( ply, ID, q )
 						
 						end
 						ent:SetNetworkedString("Owner", "World")
+						
 					end
 					
 					PNRP.TakeFromCarInventory( ply, data.ID )
@@ -188,7 +192,7 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					ent:Activate()
 					ent:SetNetworkedString("Owner", ply:Nick())
 					PNRP.TakeFromCarInventory( ply, data.ID )
-				
+					PNRP.AddWorldCache( ply, data.ID )
 				end
 				
 			end
@@ -198,3 +202,80 @@ function PNRP.DropCarSpawn( ply, ID, q )
 		end
 	end
 end
+
+function PNRP.Salvage( ply, command, arg )
+	local ent
+	local ItemID
+	local allowed = false
+	local playerNick = ply:Nick()
+	
+	if tostring(command) == "pnrp_dosalvage" then
+		ItemID = arg[1]
+		allowed = true
+	else
+		local tr = ply:TraceFromEyes(400)
+		ent = tr.Entity
+
+		if ent:GetNetworkedString("Owner") == playerNick then
+			allowed = true
+		else
+			allowed = false
+		end
+		
+		if ent:GetClass() == "prop_vehicle_prisoner_pod" then
+			myClass = "weapon_seat"
+		else
+			myClass = ent:GetClass()
+		end
+		
+		if myClass == "prop_physics" then return end
+		
+		ItemID = PNRP.FindItemID( myClass )
+	end
+	
+	local myClass
+	--Added to remove the Null Entity error
+	if tostring(ent) == "[NULL Entity]" then return end
+	
+	if allowed == true then
+		
+		if ItemID != nil then
+			local scrap
+			local smallparts
+			local chemicals
+			
+			if team.GetName(ply:Team()) == "Wastelander" or team.GetName(ply:Team()) == "Scavenger" then
+				scrap = math.Round(PNRP.Items[ItemID].Scrap * 0.25)
+				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * 0.25) 
+				chemicals = math.Round(PNRP.Items[ItemID].Chemicals * 0.25)
+			else	
+				scrap = math.Round(PNRP.Items[ItemID].Scrap * 0.5)
+				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * 0.5) 
+				chemicals = math.Round(PNRP.Items[ItemID].Chemicals * 0.5)
+			end	
+			
+			Msg(ply:Nick().."Salvaged "..tostring(scrap).." "..tostring(smallparts).." "..tostring(chemicals).."\n")
+			ply:IncResource("Scrap", scrap)
+			ply:IncResource("Small_Parts", smallparts)
+			ply:IncResource("Chemicals", chemicals)
+			
+			if tostring(command) == "pnrp_dosalvage" then
+				PNRP.TakeFromInventory( ply, ItemID )
+			else
+				ent:Remove()
+			end
+			
+			ply:ChatPrint("You have salvaged: "..tostring(scrap).." Scrap "..tostring(smallparts).." Small Parts and"..tostring(chemicals).." Chemicals")
+		end
+	else
+	
+		ply:ChatPrint("You do not own this.")
+		
+	end
+
+end
+concommand.Add( "pnrp_salvage", PNRP.Salvage)
+concommand.Add( "pnrp_dosalvage", PNRP.Salvage)
+
+
+--EOF

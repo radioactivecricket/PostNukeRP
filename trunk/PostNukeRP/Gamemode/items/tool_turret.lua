@@ -29,6 +29,7 @@ function ITEM.Create( ply, class, pos )
 	
 	ent:AddRelationship("npc_floor_turret D_LI 99")
 	ent:AddRelationship("player D_LI 99")
+	PNRP.AddWorldCache( ply,ITEM.ID )
 end
 
 function ITEM.Spawn( p )

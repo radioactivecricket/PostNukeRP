@@ -15,6 +15,19 @@ function AddOwner(ply, args)
 	if ent:GetNetworkedString("Owner") == "World" or ent:GetNetworkedString("Owner") == "None" or ent:GetNetworkedString("Owner") == "" then
 		ent:SetNetworkedString("Owner", "" )
 		ent:SetNetworkedString("Owner", playerNick )
+		
+		local myClass = ent:GetClass()
+		local ItemID = PNRP.FindItemID( myClass )
+		
+		if ItemID != nil then
+			local myType = PNRP.Items[ItemID].Type
+			if myType == "vehicle" then
+				local myModel = ent:GetModel()			
+				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
+			end		
+			PNRP.AddWorldCache( ply, ItemID )
+		end
+		
 	else
 		ply:ChatPrint("Object allready owned by "..tostring(ent:GetNetworkedString( "Owner" , "None" )))
 	end
@@ -37,6 +50,19 @@ function removeOwner(ply, args)
 	if ent:GetNetworkedString("Owner") == playerNick then
 		ent:SetNetworkedString("Owner", "" )
 		ent:SetNetworkedString("Owner", "World" )
+		
+		local myClass = ent:GetClass()
+		local ItemID = PNRP.FindItemID( myClass )
+		
+		if ItemID != nil then
+			local myType = PNRP.Items[ItemID].Type
+			if myType == "vehicle" then
+				local myModel = ent:GetModel()			
+				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
+			end		
+			PNRP.TakeFromWorldCache( ply, ItemID )
+		end
+		
 	else
 		ply:ChatPrint("You do not own this object.")
 	end
