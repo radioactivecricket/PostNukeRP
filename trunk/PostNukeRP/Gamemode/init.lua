@@ -559,6 +559,7 @@ function PNRP.GetAllCars( ply )
 				
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 				PNRP.AddToInentory( ply, ItemID )
+				PNRP.TakeFromWorldCache( ply, ItemID )
 				v:Remove()
 				
 			end
@@ -585,6 +586,7 @@ function PNRP.GetCar( ply )
 				
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 				PNRP.AddToInentory( ply, ItemID )
+				PNRP.TakeFromWorldCache( ply, ItemID )
 				ent:Remove()
 				
 			end

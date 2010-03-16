@@ -75,14 +75,14 @@ function DrawTopHud()
 	
 	surface.SetTextColor( 255, 255, 255, 255 )
 	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos + 25, 3 )
+	surface.SetTextPos( hudPos, 3 )
 	surface.DrawText( "Small Parts:  "..smallparts )
 	
 	hudPos = hudPos + 120
 	
 	surface.SetTextColor( 255, 255, 255, 255 )
 	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos + 25, 3 )
+	surface.SetTextPos( hudPos, 3 )
 	surface.DrawText( "Chemicals:  "..chems )
 	
 	hudPos = hudPos + 120
@@ -96,17 +96,45 @@ function DrawTopHud()
 	
 	surface.SetTextColor( 255, 255, 255, 255 )
 	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos + 25, 3 )
+	surface.SetTextPos( hudPos, 3 )
 	surface.DrawText( "Location:  "..plLocation )
 	
 	hudPos = hudPos + 120
 	
 	surface.SetTextColor( team.GetColor(person:Team()) )
 	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos + 25, 3 )
+	surface.SetTextPos( hudPos, 3 )
 	surface.DrawText( "Class:  "..team.GetName(person:Team()) )
 	
 	hudPos = hudPos + 120
+	
+	local vlimit
+	if GetConVarNumber("pnrp_voiceLimit") == 1 then
+		vlimit = "On @ "..GetConVarNumber("pnrp_voiceDist")
+	else
+		vlimit = "Off"
+	end
+	
+	surface.SetTextColor( 255, 255, 255, 255 )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos, 3 )
+	surface.DrawText( "Voice Limiter:  "..vlimit )
+	
+	hudPos = hudPos + 175
+	
+	local pcost
+	if GetConVarNumber("pnrp_propPay") == 1 then
+		pcost = "On @ "..GetConVarNumber("pnrp_propCost").."%"
+	else
+		pcost = "Off"
+	end
+	
+	surface.SetTextColor( 255, 255, 255, 255 )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos, 3 )
+	surface.DrawText( "Prop Cost:  "..pcost )
+	
+		hudPos = hudPos + 150
 	
 	local trace = {}
 	trace.start = person:EyePos()
@@ -118,7 +146,7 @@ function DrawTopHud()
 	
 	surface.SetTextColor( 255, 255, 255, 255 )
 	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos + 25, 3 )
+	surface.SetTextPos( hudPos, 3 )
 	surface.DrawText( "Owner:  "..ent:GetNWString( "Owner", "None" ))
 	
 	--Quick Key Referance

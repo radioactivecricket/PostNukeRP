@@ -295,7 +295,7 @@ function ToolCheck( ply, tr, toolmode )
 	end
 	
 	if string.find(ent:GetClass(), "pc_") == 2 then
-		if string.find(ent:GetClass(),"turret") > 1 then
+		if string.find(tostring(ent:GetClass()),"turret") then
 		
 		else
 			return false
