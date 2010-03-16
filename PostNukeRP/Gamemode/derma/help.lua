@@ -29,6 +29,7 @@ local help = 	{
 				"/sleep - When the players Endurance reaches a certin point the player is able to sleep.",
 				"          Players also get a bonus to HP recovery while asleep and the player will automatically wake back up when Endurance is full. ",
 				"/wake - Wakes the player from the sleeping state.",
+				"/salvage - Salvages the item that you are looking at.",
 				"",
 				"Hands (Weapon):",
 				"          Left Click - Gather Resources.",

@@ -110,8 +110,24 @@ function PNRP.ReturnWorldCache( ply )
 --			PNRP.RemoveWorldCache( v["worldid"] )
 --		end
 	end
+	PNRP.CleanWorldAfterReturn( ply )
 end
-concommand.Add( "debug_runcache", PNRP.ReturnWorldCache )
+
+function PNRP.CleanWorldAfterReturn( ply )
+	for k,v in pairs(ents.GetAll()) do
+		local myClass = v:GetClass()
+		local ItemID = PNRP.FindItemID( myClass )
+		if ItemID != nil then
+			local myType = PNRP.Items[ItemID].Type
+			if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
+				if myType == "vehicle" or myType == "tool" then
+					v:Remove()
+				end
+			end
+		end
+	end
+end
+
 
 
 --EOF

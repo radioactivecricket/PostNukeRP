@@ -125,7 +125,7 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet)
 				 		
 				 		pnlPanel.sendToInv = vgui.Create("DButton", pnlPanel )
 				 		pnlPanel.sendToInv:SetPos(450, 55)
-				 		pnlPanel.sendCarInv:SetSize(100,18)
+				 		pnlPanel.sendToInv:SetSize(100,18)
 				    	pnlPanel.sendToInv:SetText( "Send to To Inventory" )
 --				    	pnlPanel.sendToInv:SizeToContents() 
 				    	pnlPanel.sendToInv.DoClick = function()
