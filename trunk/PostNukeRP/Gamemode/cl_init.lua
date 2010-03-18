@@ -48,12 +48,12 @@ function DrawTopHud()
 	local endPerc = endur / 100
 	
 	--Endurance Bar
-	draw.RoundedBox(2, 5, 30, 150, 30, Color(51, 58, 51, 175))
-	draw.RoundedBox(0, 10, 35, 130*endPerc, 20, Color(255-(255*endPerc), 255*endPerc, 30, 155))
+--	draw.RoundedBox(2, 5, 30, 150, 30, Color(51, 58, 51, 175))
+--	draw.RoundedBox(0, 10, 35, 130*endPerc, 20, Color(255-(255*endPerc), 255*endPerc, 30, 155))
 	
-	draw.RoundedBox(0, 114, 35, 1, 20, Color(255, 255, 255, 150))
+--	draw.RoundedBox(0, 114, 35, 1, 20, Color(255, 255, 255, 150))
 	
-	draw.SimpleTextOutlined("Endurance", "ScoreboardText", 30, 30, Color(255,255,255,255), 0, 0, 3, Color(0,0,0,255))
+--	draw.SimpleTextOutlined("Endurance", "ScoreboardText", 30, 30, Color(255,255,255,255), 0, 0, 3, Color(0,0,0,255))
 	--draw.SimpleText("Endurance", "ScoreboardText", 30, 50, Color(255, 255, 255, 255), 0, 0)
 	
 	--Top bar
@@ -85,19 +85,19 @@ function DrawTopHud()
 	surface.SetTextPos( hudPos, 3 )
 	surface.DrawText( "Chemicals:  "..chems )
 	
-	hudPos = hudPos + 120
+--	hudPos = hudPos + 120
 	
-	local plLocation = nil
-	if person:IsOutside() then
-		plLocation = "Outside"
-	else
-		plLocation = "Inside"
-	end
+--	local plLocation = nil
+--	if person:IsOutside() then
+--		plLocation = "Outside"
+--	else
+--		plLocation = "Inside"
+--	end
 	
-	surface.SetTextColor( 255, 255, 255, 255 )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Location:  "..plLocation )
+--	surface.SetTextColor( 255, 255, 255, 255 )
+--	surface.SetFont( "CenterPrintText" )
+--	surface.SetTextPos( hudPos, 3 )
+--	surface.DrawText( "Location:  "..plLocation )
 	
 	hudPos = hudPos + 120
 	
@@ -110,7 +110,7 @@ function DrawTopHud()
 	
 	local vlimit
 	if GetConVarNumber("pnrp_voiceLimit") == 1 then
-		vlimit = "On @ "..GetConVarNumber("pnrp_voiceDist")
+		vlimit = "On"
 	else
 		vlimit = "Off"
 	end
@@ -120,7 +120,7 @@ function DrawTopHud()
 	surface.SetTextPos( hudPos, 3 )
 	surface.DrawText( "Voice Limiter:  "..vlimit )
 	
-	hudPos = hudPos + 175
+	hudPos = hudPos + 120
 	
 	local pcost
 	if GetConVarNumber("pnrp_propPay") == 1 then
@@ -134,7 +134,7 @@ function DrawTopHud()
 	surface.SetTextPos( hudPos, 3 )
 	surface.DrawText( "Prop Cost:  "..pcost )
 	
-		hudPos = hudPos + 150
+		hudPos = hudPos + 145
 	
 	local trace = {}
 	trace.start = person:EyePos()

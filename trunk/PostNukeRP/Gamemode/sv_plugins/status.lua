@@ -94,9 +94,17 @@ function EnterSleep ( ply )
 			ply:Freeze(true)
 		else
 			ply:GetTable().WeaponsForSleep = {}
+			ply:GetTable().ClipsForSleep = {}
+			ply:GetTable().AmmoForSleep = {}
 			for k,v in pairs(ply:GetWeapons( )) do
 				ply:GetTable().WeaponsForSleep[k] = v:GetClass()
+				ply:GetTable().ClipsForSleep[k] = v:Clip1()
 			end
+			
+			for i = 1, 22 do
+				ply:GetTable().AmmoForSleep[i] = ply:GetAmmoCount(PNRP.ConvertAmmoType(i))
+			end
+			
 			local ragdoll = ents.Create("prop_ragdoll")
 			ragdoll:SetPos(ply:GetPos())
 			ragdoll:SetAngles(Angle(0,ply:GetAngles().Yaw,0))
@@ -105,6 +113,7 @@ function EnterSleep ( ply )
 			ragdoll:Activate()
 			ragdoll:SetVelocity(ply:GetVelocity())
 			--ragdoll.OwnerINT = player:EntIndex()
+			ragdoll:GetTable().PrevPos = ply:GetPos()
 			
 			ply:StripWeapons()
 			ply:Spectate(OBS_MODE_CHASE)
@@ -128,10 +137,14 @@ end
 
 function EnterSleepCmd( ply )
 	if not ply:IsOutside() then
-		if ply:GetNetworkedInt("Endurance") < 80 then
-			EnterSleep( ply )
+		if not ply:Crouching() then
+			if ply:GetNetworkedInt("Endurance") < 80 then
+				EnterSleep( ply )
+			else
+				ply:ChatPrint("You aren't tired enough to sleep!")
+			end
 		else
-			ply:ChatPrint("You aren't tired enough to sleep!")
+			ply:ChatPrint("You cannot sleep while crouched!")
 		end
 	else
 		ply:ChatPrint("You must be inside to sleep!")
@@ -154,9 +167,24 @@ function ExitSleep( ply )
 		else
 			local ragdoll = ply:GetTable().SleepRagdoll
 			local health = ply:Health()
+			local oldPos = false
+			
+			local entsearch = ents.FindInSphere( ragdoll:GetTable().PrevPos , 100 )
+			
+			for k,v in pairs(entsearch) do
+				if v:GetClass() == "prop_ragdoll" then
+					oldPos = true
+				end
+			end
+			
 			ply:Spawn()
 			ply:SetHealth(health)
-			ply:SetPos(ragdoll:GetPos())
+			if oldPos then
+				ply:SetPos(ragdoll:GetTable().PrevPos)
+			else
+				ply:SetPos(ragdoll:GetPos())
+			end
+			
 			ply:SetAngles(Angle(0, ragdoll:GetPhysicsObjectNum(10):GetAngles().Yaw, 0))
 			ply:UnSpectate()
 			ply:StripWeapons()
@@ -164,11 +192,17 @@ function ExitSleep( ply )
 			if ply:GetTable().WeaponsForSleep then
 				for k,v in pairs(ply.WeaponsForSleep) do
 					ply:Give(v)
+					ply:GetWeapon(v):SetClip1(ply:GetTable().ClipsForSleep[k])
+				end
+				ply:StripAmmo()
+				for i = 1, 22 do
+					ply:GiveAmmo(ply:GetTable().AmmoForSleep[i], PNRP.ConvertAmmoType(i), false)
 				end
 				local cl_defaultweapon = ply:GetInfo( "cl_defaultweapon" )
 				if ( ply:HasWeapon( cl_defaultweapon )  ) then
 					ply:SelectWeapon( cl_defaultweapon ) 
 				end
+				
 			else
 				GAMEMODE:PlayerLoadout(player)
 			end 
@@ -200,8 +234,12 @@ local function DamageSleepers(ent, inflictor, attacker, amount, dmginfo)
 		for k,v in pairs(player.GetAll()) do 
 			if v:UniqueID() == ownerid then
 				if attacker == GetWorldEntity() then
-					amount = 10
-					dmginfo:ScaleDamage(0.1)
+					amount = 1
+					dmginfo:ScaleDamage(0.01)
+				end
+				if attacker:IsPlayer() and not (dmginfo:IsBulletDamage() or dmginfo:IsExplosionDamage()) then
+					amount = 0
+					dmginfo:ScaleDamage(0)
 				end
 				v:SetHealth(v:Health() - amount)
 				if v:Health() <= 0 and v:Alive() then

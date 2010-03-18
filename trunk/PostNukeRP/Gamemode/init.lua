@@ -86,13 +86,14 @@ function GM:PlayerSpawn( ply )  //What happens when the player spawns
     
     if ply:Team() == TEAM_WASTELANDER then
     	ply:SetMaxHealth( 150, true )
+    	ply:SetHealth(150)
     elseif ply:Team() == TEAM_SCAVENGER then
     	ply:SetMaxHealth( 75, true )
     	ply:SetHealth(75)
     else 
     	ply:SetMaxHealth( 100, true )
     end
-    
+    ply:SetNetworkedInt("MaxHealth", ply:GetMaxHealth())
     if ply:Team() == TEAM_SCAVENGER then
 		ply:SetRunSpeed( 325 ) 
 	else

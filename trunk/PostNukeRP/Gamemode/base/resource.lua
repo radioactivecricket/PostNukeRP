@@ -233,6 +233,16 @@ function GM.ReproduceRes()
 	local GM = GAMEMODE
 	spawnTbl = GM.spawnTbl
 	local info = {}
+	
+	local PlayerNum = table.Count(player.GetAll())
+	local iterations = 5
+	if PlayerNum < 4 then
+		iterations = 5
+	else
+		iterations = 5 + (PlayerNum - 3) 
+	end
+	if iterations > 20 then iterations = 20 end
+	
 --	print("Res reproduction called.")
 	if GetConVarNumber("pnrp_ReproduceRes") == 1 then
 		local piles = {}
@@ -318,7 +328,7 @@ function GM.ReproduceRes()
 				end
 			end
 			if #piles < GetConVarNumber("pnrp_MaxReproducedRes") then
-				for i = 1, 5 do
+				for i = 1, iterations do
 					local num = math.random(1,2)
 					if num == 1 then
 						
