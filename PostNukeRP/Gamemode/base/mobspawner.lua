@@ -22,10 +22,18 @@ local spawnTbl = GM.spawnTbl
 
 function GM.SpawnMobs()
 	local GM = GAMEMODE
+	local PlayerNum = table.Count(player.GetAll())
+	local iterations = 5
+	if PlayerNum < 4 then
+		iterations = 5
+	else
+		iterations = 5 + (PlayerNum - 3)
+	end
+	if iterations > 20 then iterations = 20 end
 	spawnTbl = GM.spawnTbl
 	if GetConVarNumber("pnrp_SpawnMobs") == 1 then
 		local info = {}
-		for i = 1,5 do
+		for i = 1,iterations do
 			local piles = {}
 			local zombies = {}
 			local fastzoms = {}

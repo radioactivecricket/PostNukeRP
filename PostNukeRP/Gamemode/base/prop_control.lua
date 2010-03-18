@@ -296,7 +296,12 @@ function ToolCheck( ply, tr, toolmode )
 	
 	if string.find(ent:GetClass(), "pc_") == 2 then
 		if string.find(tostring(ent:GetClass()),"turret") then
-		
+			if toolmode == "weld" or toolmode == "weld_ez" 
+			  or toolmode == "easy_precision" or toolmode == "nocollide" then
+				
+			else
+				return false
+			end
 		else
 			return false
 		end
