@@ -244,6 +244,26 @@ function PickupCheck( ply, ent)
 		return false
 	end
 	
+	local searchPos
+	
+	searchPos = string.find(ent:GetClass(), "door_")
+	
+	if not searchPos then
+		searchPos = 0
+	end
+	if searchPos > 1 then
+		return false
+	end
+	
+	searchPos = string.find(ent:GetClass(), "dynam")
+	
+	if not searchPos then
+		searchPos = 0
+	end
+	if searchPos > 1 then
+		return false
+	end
+	
 	local owner = ent:GetNWString( "Owner", "None" )
 	
 	local playerPos = ply:GetShootPos()
