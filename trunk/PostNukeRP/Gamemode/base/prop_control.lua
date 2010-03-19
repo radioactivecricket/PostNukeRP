@@ -72,30 +72,36 @@ function GM:PlayerSpawnProp(ply, model)
 	
 	local allowed = false
 	
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then allowed = true end
-
-	model = string.gsub(model, "\\", "/")
-	if string.find(model,  "//") then return false end
-	-- Banned props take precedence over allowed props
-	if GetConVarNumber("pnrp_propBanning") == 1 then
-		for k, v in pairs(BannedProps) do
-			if string.lower(v) == string.lower(model) then 
-				ply:ChatPrint("This prop is not allowed.")
-				return false 
+	--Admin Create All Overide
+	if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then 
+		
+		allowed = true 
+	
+	else
+	--Normal Allowed system
+		model = string.gsub(model, "\\", "/")
+		if string.find(model,  "//") then return false end
+		-- Banned props take precedence over allowed props
+		if GetConVarNumber("pnrp_propBanning") == 1 then
+			for k, v in pairs(BannedProps) do
+				if string.lower(v) == string.lower(model) then 
+					ply:ChatPrint("This prop is not allowed.")
+					return false 
+				end
 			end
 		end
-	end
-
-	if GetConVarNumber("pnrp_propAllowing") == 1 then
-	-- If we are specifically allowing certain props, if it's not in the list, allowed will remain false
-		for k, v in pairs(AllowedProps) do
-			if v == model then allowed = true end
+	
+		if GetConVarNumber("pnrp_propAllowing") == 1 then
+		-- If we are specifically allowing certain props, if it's not in the list, allowed will remain false
+			for k, v in pairs(AllowedProps) do
+				if v == model then allowed = true end
+			end
+		else
+			-- allowedprops is not enabled, so assume that if it wasn't banned above, it's allowed
+			allowed = true
 		end
-	else
-		-- allowedprops is not enabled, so assume that if it wasn't banned above, it's allowed
-		allowed = true
 	end
-
+	
 	if allowed then
 		if GetConVarNumber("pnrp_propPay") == 1 then
 			local ent = ents.Create("prop_physics")
@@ -108,7 +114,15 @@ function GM:PlayerSpawnProp(ply, model)
 			if price < 1 then price = 1 end
 			--ply:ChatPrint("Price:  "..tostring(price))
 			
-			if ply:GetResource("Scrap") >= price then
+			--Admin No Cost Overide
+			local adminCostOveride = false
+			if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+				adminCostOveride = true 
+			else
+				adminCostOveride = false
+			end
+			
+			if ply:GetResource("Scrap") >= price or adminCostOveride == true then
 				ply:ChatPrint(tostring(price).." scrap used to create this prop.")
 				ply:DecResource("Scrap", price)
 				return true

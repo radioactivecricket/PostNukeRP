@@ -75,8 +75,21 @@ function hidehud(name)
 end
 hook.Add("HUDShouldDraw", "hidehud", hidehud)
 
-local function HUDPaint( )
+CreateConVar("pnrp_DeathNotice","1",FCVAR_NOTIFY + FCVAR_ARCHIVE)
+function GM:DrawDeathNotice(x, y)
+	local deathnotice = GetConVarNumber("pnrp_DeathNotice")
+	local th = PNRP_HUD:TextSize( "TEXT", vars.font )
+	local height = vars.bar_height + ( vars.padding * 4 ) + th
+	y = height / ScrH()
+	if deathnotice == 1 then 
+		self.BaseClass:DrawDeathNotice(x, y)
+	else
+		return
+	end
+end
 
+local function HUDPaint( )
+	
 	client = client or LocalPlayer( )				-- set a shortcut to the client
 	if( !client:Alive( ) ) then return end				-- don't draw if the client is dead
  	local person = LocalPlayer()
@@ -88,7 +101,7 @@ local function HUDPaint( )
 	local width = ( ScrW() - vars.padding * 2 )
 	local bar_width = (width / i ) - vars.bar_spacing - vars.padding
 	local height = vars.bar_height + ( vars.padding * 2 ) + th
- 
+	
  	local x = 2
  	local y = 25
  	
@@ -96,20 +109,23 @@ local function HUDPaint( )
 	local cy = y + vars.padding
  
 	PNRP_HUD:PaintRoundedPanel( 6, x, y, width, height, colors.background )	-- paint the background panel
- 
+ 	
+	--Draws the Health Bar
 	local by = vars.padding;
  	local MaxHealth = LocalPlayer():GetNetworkedInt( "MaxHealth" )
  	
 	local text = string.format( "Health: %iHP", client:Health( ) )	-- get health text
  	PNRP_HUD:PaintText( cx, cy, text, vars.font, colors.text )	-- paint health text and health bar
 	PNRP_HUD:PaintBar( cx, cy + th + vars.text_spacing, bar_width, vars.bar_height, colors.health_bar, client:Health( ) / MaxHealth )
-
+	
+	--Draws Suite Armor Bar
  	by = by +bar_width + vars.bar_spacing
  	
 	local text = string.format( "Suit: %iSP", client:Armor( ) )	-- get suit text
 	PNRP_HUD:PaintText( cx + by, cy, text, vars.font, colors.text )	-- paint suit text and suit bar
 	PNRP_HUD:PaintBar( cx + by, cy + th + vars.text_spacing, bar_width, vars.bar_height, colors.suit_bar, client:Armor( ) / 100 )
-		
+	
+	--Draws the Endurance Bar
 	by = by + bar_width + vars.bar_spacing + vars.bar_spacing
 	
 	local endur = person:GetNetworkedInt("Endurance")
@@ -129,8 +145,10 @@ local function HUDPaint( )
  	
  	PNRP_HUD:PaintText( cx + by, cy, text, vars.font, colors.text )	
  	PNRP_HUD:PaintBar( cx + by, cy + th + vars.text_spacing, bar_width, vars.bar_height, end_bar, endPerc )
+ 	--Draws the sleep indication line
  	draw.RoundedBox(0, cx + bar_width * 0.8 + by, cy + th + vars.text_spacing, 1, vars.bar_height, Color(255, 255, 255, 150))
  	
+ 	--Draws Location Indicator
  	local indW = 10
  	local indH = 10
  	

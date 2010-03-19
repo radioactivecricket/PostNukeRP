@@ -167,6 +167,7 @@ function ExitSleep( ply )
 		else
 			local ragdoll = ply:GetTable().SleepRagdoll
 			local health = ply:Health()
+			local armor = ply:Armor()
 			local oldPos = false
 			
 			local entsearch = ents.FindInSphere( ragdoll:GetTable().PrevPos , 100 )
@@ -179,6 +180,7 @@ function ExitSleep( ply )
 			
 			ply:Spawn()
 			ply:SetHealth(health)
+			ply:SetArmor(armor)
 			if oldPos then
 				ply:SetPos(ragdoll:GetTable().PrevPos)
 			else
