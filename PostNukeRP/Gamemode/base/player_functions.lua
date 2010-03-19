@@ -32,9 +32,14 @@ PNRP.ChatConCmd( "/salvage", "pnrp_salvage" )
 function GM.SaveCharacter(ply,cmd,args)
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/Saves") then file.CreateDir("PostNukeRP/Saves") end
-
+	
+	local curEndurance = ply:GetNetworkedInt("Endurance")
+	
 	local tbl = {}
 	tbl["class"] = ply:Team()
+	tbl["health"] = ply:Health()
+	tbl["armor"] = ply:Armor()
+	tbl["endurance"] = curEndurance
 	tbl["resources"] = {}
 	tbl["date"] = os.date("%A %m/%d/%y")
 	tbl["name"] = ply:Nick()
@@ -96,6 +101,17 @@ function PNRP:LoadRecources(ply, tbl)
 		for k,v in pairs(tbl["resources"]) do
 			ply:SetResource(string.Capitalize(k),v)
 		end
+	end
+end
+
+function GM.LoadStatus( ply )
+	if file.Exists("PostNukeRP/Saves/"..ply:UniqueID()..".txt") then
+		local tbl = util.KeyValuesToTable(file.Read("PostNukeRP/Saves/"..ply:UniqueID()..".txt"))
+		
+		if tbl["health"] then ply:SetHealth( tbl["health"] ) end
+		if tbl["armor"] then ply:SetArmor( tbl["armor"] ) end
+		if tbl["endurance"] then ply:SetNetworkedInt("Endurance", tbl["endurance"] ) end
+		
 	end
 end
 

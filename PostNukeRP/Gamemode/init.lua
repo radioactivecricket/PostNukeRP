@@ -58,6 +58,8 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	--Loads Weapons from Character's Save File
 	timer.Create(tostring(ply:UniqueID()), 5, 1, function()  
 	    self.LoadWeaps( ply )
+	    
+	    self.LoadStatus( ply )
 	    	
 	    ply:IncResource("Scrap",0)
 		ply:IncResource("Small_Parts",0)

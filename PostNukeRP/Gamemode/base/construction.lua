@@ -6,7 +6,8 @@ function GM.BuildItem( ply, command, arg )
 		if tostring( arg[1] ) == itemname then
 			--Class Check
 			local allowed = false
-	
+			local enough = false
+			
 			if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then allowed = true 
 			else allowed = false end
 			
@@ -14,6 +15,14 @@ function GM.BuildItem( ply, command, arg )
 				local tr = ply:TraceFromEyes(200)
 				--Verifies Player has the needed Materials to build the item
 				if ply:GetResource("Scrap") >= item.Scrap and ply:GetResource("Chemicals") >= item.Chemicals and ply:GetResource("Small_Parts") >= item.SmallParts then 
+					enough = true
+				elseif ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+					enough = true
+				else
+					enough = false
+				end
+				
+				if enough == true then
 					--If Enough
 					
 					ply:ChatPrint("Creating "..item.Name)
