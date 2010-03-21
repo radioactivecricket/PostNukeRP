@@ -107,8 +107,15 @@ end
 function GM.LoadStatus( ply )
 	if file.Exists("PostNukeRP/Saves/"..ply:UniqueID()..".txt") then
 		local tbl = util.KeyValuesToTable(file.Read("PostNukeRP/Saves/"..ply:UniqueID()..".txt"))
-		
-		if tbl["health"] then ply:SetHealth( tbl["health"] ) end
+		--Fix for the odd negative HP issue that happens some times.
+		if tbl["health"] then 
+			if tbl["health"] <= 0 then
+				setHP = 100
+			else
+				setHP = tbl["health"]
+			end
+			ply:SetHealth( setHP ) 
+		end
 		if tbl["armor"] then ply:SetArmor( tbl["armor"] ) end
 		--if tbl["endurance"] then ply:SetNetworkedInt("Endurance", tbl["endurance"] ) end
 		if tbl["endurance"] then ply:GetTable().Endurance = tbl["endurance"] end
