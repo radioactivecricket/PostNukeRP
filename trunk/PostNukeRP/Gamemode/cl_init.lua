@@ -9,6 +9,7 @@ for k, v in pairs(file.FindInLua("PostNukeRP/gamemode/derma/*.lua")) do
 end
 
 Resources = {}
+Endurance = 100
 local PrevHealth
 local LastDraw
 local dynaset = {}
