@@ -8,7 +8,7 @@
 function StatCheck()
 	for k, v in pairs(player.GetAll()) do
 		local UpdateTime = 0
-		if v:GetNetworkedBool("IsAsleep") then
+		if v:GetTable().IsAsleep then
 			UpdateTime = 5
 		else
 			UpdateTime = 60
@@ -41,36 +41,37 @@ function StatCheck()
 		local EndUpdateTime 
 		if v:Team() == TEAM_WASTELANDER then
 			EndUpdateTime = UpdateTime / (3 + runModifier)
-			if v:GetNetworkedBool("IsAsleep") then
+			if v:GetTable().IsAsleep then
 				EndUpdateTime = UpdateTime / 5 
 			end
 		else
 			EndUpdateTime = UpdateTime / (5 + runModifier)
-			if v:GetNetworkedBool("IsAsleep") then
+			if v:GetTable().IsAsleep then
 				EndUpdateTime = UpdateTime / 5 
 			end
 		end
 		--Endurance checks
 		if v:Alive() and CurTime() - v:GetTable().LastEndUpdate > EndUpdateTime then
-			local endur = v:GetNetworkedInt("Endurance")
+			local endur = v:GetTable().Endurance
 			
-			if v:GetNetworkedBool("IsAsleep") then
-				v:SetNetworkedInt("Endurance", endur + 2)
+			if v:GetTable().IsAsleep then
+				v:GetTable().Endurance = endur + 2
 			else
-				v:SetNetworkedInt("Endurance", endur - 1)
+				v:GetTable().Endurance = endur - 1
 			end
 			
-			if v:GetNetworkedInt("Endurance") <= 0 then
+			if v:GetTable().Endurance <= 0 then
 				v:ChatPrint("You've fallen unconcious due to fatigue!")
 				EnterSleep(v)
-			elseif v:GetNetworkedInt("Endurance") >= 100 then
-				if v:GetNetworkedBool("IsAsleep") then
+			elseif v:GetTable().Endurance >= 100 then
+				if v:GetTable().IsAsleep then
 					ExitSleep(v)
 				end
-				v:SetNetworkedInt("Endurance", 100)
+				v:GetTable().Endurance = 100
 			end
 			v:GetTable().LastEndUpdate = CurTime()
 		end
+		SendEndurance( v )
 	end
 end
 hook.Add("Think", "StatCheck", StatCheck)
@@ -79,14 +80,14 @@ hook.Add("Think", "StatCheck", StatCheck)
 ---	Exit/Enter Sleep
 -----------------------------
 function EnterSleep ( ply )
-	local IsSleeping = ply:GetNetworkedBool("IsAsleep")
-	local curEndurance = ply:GetNetworkedInt("Endurance")
+	local IsSleeping = ply:GetTable().IsAsleep
+	local curEndurance = ply:GetTable().Endurance
 	
 	if IsSleeping == false and curEndurance < 100 then
 		if not ply:GetTable().SleepSound then
 			ply:GetTable().SleepSound = CreateSound(ply, "npc/ichthyosaur/water_breath.wav")
 		end
-		ply:SetNetworkedBool("IsAsleep", true)
+		ply:GetTable().IsAsleep = true
 		ply:GetTable().SleepSound:PlayEx(0.10, 100)
 		
 		
@@ -138,7 +139,7 @@ end
 function EnterSleepCmd( ply )
 	if not ply:IsOutside() then
 		if not ply:Crouching() then
-			if ply:GetNetworkedInt("Endurance") < 80 then
+			if ply:GetTable().Endurance < 80 then
 				EnterSleep( ply )
 			else
 				ply:ChatPrint("You aren't tired enough to sleep!")
@@ -154,11 +155,11 @@ concommand.Add( "pnrp_sleep", EnterSleepCmd )
 PNRP.ChatConCmd( "/sleep", "pnrp_sleep" )
 
 function ExitSleep( ply )
-	local IsSleeping = ply:GetNetworkedBool("IsAsleep")
-	local curEndurance = ply:GetNetworkedInt("Endurance")
+	local IsSleeping = ply:GetTable().IsAsleep
+	local curEndurance = ply:GetTable().Endurance
 	--ply:GetTable().SleepSound
 	if IsSleeping == true then
-		ply:SetNetworkedBool("IsAsleep", false)
+		ply:GetTable().IsAsleep = false
 		if ply:GetTable().SleepSound then
 			ply:GetTable().SleepSound:Stop()
 		end
@@ -221,7 +222,7 @@ function ExitSleep( ply )
 end
 
 function ExitSleepCmd( ply )
-	if ply:GetNetworkedBool("IsAsleep") then
+	if ply:GetTable().IsAsleep then
 		ExitSleep( ply )
 	else
 		ply:ChatPrint("You're not asleep!")
@@ -258,3 +259,22 @@ local function DamageSleepers(ent, inflictor, attacker, amount, dmginfo)
 	end
 end
 hook.Add("EntityTakeDamage", "Sleepdamage", DamageSleepers)
+
+------------------------------
+-- Variable sends
+------------------------------
+
+function SendEndurance( ply )
+	local rfilter = RecipientFilter()
+	rfilter:RemoveAllPlayers()
+	rfilter:AddPlayer( ply )
+	
+	umsg.Start("endurancemsg", rfilter)
+		umsg.Short(ply:GetTable().Endurance)
+	umsg.End()
+end
+
+function EndDebug( ply )
+	ply:ChatPrint("Your endurance is at "..tostring(ply:GetTable().Endurance)..".")
+end
+concommand.Add( "pnrp_enddebug", EndDebug )

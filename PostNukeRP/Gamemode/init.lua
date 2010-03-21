@@ -52,8 +52,8 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	
 	ply:GetTable().LastHealthUpdate = 0
 	ply:GetTable().LastEndUpdate = 0
-	ply:SetNetworkedInt("Endurance", 100)
-	ply:SetNetworkedBool("IsAsleep", false)
+	ply:GetTable().Endurance = 100
+	ply:GetTable().IsAsleep = false
 	
 	--Loads Weapons from Character's Save File
 	timer.Create(tostring(ply:UniqueID()), 5, 1, function()  

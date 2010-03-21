@@ -33,13 +33,13 @@ function GM.SaveCharacter(ply,cmd,args)
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/Saves") then file.CreateDir("PostNukeRP/Saves") end
 	
-	local curEndurance = ply:GetNetworkedInt("Endurance")
+--	local curEndurance = ply:GetNetworkedInt("Endurance")
 	
 	local tbl = {}
 	tbl["class"] = ply:Team()
 	tbl["health"] = ply:Health()
 	tbl["armor"] = ply:Armor()
-	tbl["endurance"] = curEndurance
+	tbl["endurance"] = ply:GetTable().Endurance
 	tbl["resources"] = {}
 	tbl["date"] = os.date("%A %m/%d/%y")
 	tbl["name"] = ply:Nick()
@@ -110,7 +110,9 @@ function GM.LoadStatus( ply )
 		
 		if tbl["health"] then ply:SetHealth( tbl["health"] ) end
 		if tbl["armor"] then ply:SetArmor( tbl["armor"] ) end
-		if tbl["endurance"] then ply:SetNetworkedInt("Endurance", tbl["endurance"] ) end
+		--if tbl["endurance"] then ply:SetNetworkedInt("Endurance", tbl["endurance"] ) end
+		if tbl["endurance"] then ply:GetTable().Endurance = tbl["endurance"] end
+		SendEndurance( ply )
 		
 	end
 end
