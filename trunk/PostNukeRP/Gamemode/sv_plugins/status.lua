@@ -4,6 +4,8 @@
 ---		endurance drain and regen outside of items.
 ---		Also controls the sleep systems (of course).
 ----------------------------------------------------
+local PlayerMeta = FindMetaTable("Player")
+
 
 function StatCheck()
 	for k, v in pairs(player.GetAll()) do
@@ -40,12 +42,12 @@ function StatCheck()
 		
 		local EndUpdateTime 
 		if v:Team() == TEAM_WASTELANDER then
-			EndUpdateTime = UpdateTime / (3 + runModifier)
+			EndUpdateTime = UpdateTime / (2)
 			if v:GetTable().IsAsleep then
 				EndUpdateTime = UpdateTime / 5 
 			end
 		else
-			EndUpdateTime = UpdateTime / (5 + runModifier)
+			EndUpdateTime = UpdateTime / (3)
 			if v:GetTable().IsAsleep then
 				EndUpdateTime = UpdateTime / 5 
 			end
@@ -72,6 +74,30 @@ function StatCheck()
 			v:GetTable().LastEndUpdate = CurTime()
 		end
 		SendEndurance( v )
+		
+		--Hunger checks
+		local HunUpdateTime 
+		HunUpdateTime = 60 / (5 + runModifier)
+		if v:Alive() and CurTime() - v:GetTable().LastHunUpdate > HunUpdateTime and not (v:GetTable().IsAsleep) then
+			local hunger = v:GetTable().Hunger
+			
+			v:GetTable().Hunger = hunger - 1
+			
+			if v:GetTable().Hunger <= 0 then
+				v:GetTable().Hunger = 0
+				
+				v:SetHealth( v:Health() - 5 )
+				if v:Health() <= 0 then
+					timer.Create("kill_timer",  1, 1, function()
+							v:Kill()
+						end )
+				end
+			end
+			v:GetTable().LastHunUpdate = CurTime()
+		end
+		SendHunger( v )
+		
+		
 	end
 end
 hook.Add("Think", "StatCheck", StatCheck)
@@ -272,6 +298,48 @@ function SendEndurance( ply )
 	umsg.Start("endurancemsg", rfilter)
 		umsg.Short(ply:GetTable().Endurance)
 	umsg.End()
+end
+
+function SendHunger( ply )
+	local rfilter = RecipientFilter()
+	rfilter:RemoveAllPlayers()
+	rfilter:AddPlayer( ply )
+	
+	umsg.Start("hungermsg", rfilter)
+		umsg.Short(ply:GetTable().Hunger)
+	umsg.End()
+end
+
+function PlayerMeta:GiveEndurance( amount )
+	self:GetTable().Endurance = self:GetTable().Endurance + amount
+	if self:GetTable().Endurance > 100 then 
+		self:GetTable().Endurance = 100
+	end
+	SendEndurance( self )
+end
+
+function PlayerMeta:TakeEndurance( amount )
+	self:GetTable().Endurance = self:GetTable().Endurance - amount
+	if self:GetTable().Endurance < 0 then
+		self:GetTable().Endurance = 0
+	end
+	SendEndurance( self )
+end
+
+function PlayerMeta:GiveHunger( amount )
+	self:GetTable().Hunger = self:GetTable().Hunger + amount
+	if self:GetTable().Hunger > 100 then
+		self:GetTable().Hunger = 100
+	end
+	SendHunger( self )
+end
+
+function PlayerMeta:TakeHunger( amount )
+	self:GetTable().Hunger = self:GetTable().Hunger - amount
+	if self:GetTable().Hunger < 0 then
+		self:GetTable().Hunger = 0
+	end
+	SendHunger( self )
 end
 
 function EndDebug( ply )

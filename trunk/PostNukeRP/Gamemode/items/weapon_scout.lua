@@ -17,7 +17,7 @@ ITEM.Energy = 10
 ITEM.Ent = "wep_scout"
 ITEM.Model = "models/weapons/w_snip_scout.mdl"
 ITEM.Script = ""
-ITEM.Weight = 15
+ITEM.Weight = 8
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "357"

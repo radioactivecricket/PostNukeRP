@@ -17,7 +17,7 @@ ITEM.Energy = 30
 ITEM.Ent = "wep_tmp"
 ITEM.Model = "models/weapons/w_smg_tmp.mdl"
 ITEM.Script = ""
-ITEM.Weight = 12
+ITEM.Weight = 5
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "smg1"

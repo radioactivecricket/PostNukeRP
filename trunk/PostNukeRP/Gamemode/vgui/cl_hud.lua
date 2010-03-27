@@ -46,6 +46,24 @@ local colors =
 		onhighlight = Color( 200, 255, 200, 125 ),
 		onfill = Color( 0, 175, 0, 255 )
 	 
+	},
+	end_bar =
+	{
+ 
+		border = Color( 200, 0, 200, 255 ),
+		background = Color( 200, 0, 200, 75 ),
+		shade = Color( 165, 4, 255, 255 ),
+		fill = Color(112, 4, 168, 155)
+ 
+	},
+	hunger_bar =
+	{
+ 
+		border = Color( 0, 255, 0, 255 ),
+		background = Color( 0, 255, 0, 75 ),
+		shade = Color( 136, 255, 136, 255 ),
+		fill = Color(0, 255, 30, 155)
+ 
 	}
 	
  
@@ -64,7 +82,7 @@ local vars =
  
 	bar_height = 8,
  
-	width = 0.25
+	width = 0.15
  
 };
 
@@ -125,7 +143,7 @@ function HUD1( )
  	
 	local _, th = PNRP_HUD:TextSize( "TEXT", vars.font )		-- get text size( height in this case )
  
-	local i = 3				-- shortcut to how many items( bars + text ) we have
+	local i = 4			-- shortcut to how many items( bars + text ) we have
  
 	local width = ( ScrW() - vars.padding * 2 )
 	local bar_width = (width / i ) - vars.bar_spacing - vars.padding
@@ -161,22 +179,24 @@ function HUD1( )
 	local endur = Endurance
  	local endPerc = endur / 100
  	
- 	end_bar =
-	{
- 
-		border = Color( 0, 255, 0, 255 ),
-		background = Color( 0, 255, 0, 75 ),
-		shade = Color( 136, 255, 136, 255 ),
-		fill = Color(0, 255, 30, 155)
- 
-	}
- 	
 	local text = string.format( "Endurance: %i", endur )
  	
  	PNRP_HUD:PaintText( cx + by, cy, text, vars.font, colors.text )	
- 	PNRP_HUD:PaintBar( cx + by, cy + th + vars.text_spacing, bar_width, vars.bar_height, end_bar, endPerc )
+ 	PNRP_HUD:PaintBar( cx + by, cy + th + vars.text_spacing, bar_width, vars.bar_height, colors.end_bar, endPerc )
  	--Draws the sleep indication line
  	draw.RoundedBox(0, cx + bar_width * 0.8 + by, cy + th + vars.text_spacing, 1, vars.bar_height, Color(255, 255, 255, 150))
+ 	
+ 	--Draws the Hunger Bar
+	by = by + bar_width + vars.bar_spacing + vars.bar_spacing
+	
+ 	local hung = Hunger
+ 	local hungPerc = hung / 100
+ 	
+	local text = string.format( "Hunger: %i", hung )
+ 	
+ 	PNRP_HUD:PaintText( cx + by, cy, text, vars.font, colors.text )	
+ 	PNRP_HUD:PaintBar( cx + by, cy + th + vars.text_spacing, bar_width, vars.bar_height, colors.hunger_bar, hungPerc )
+ 	
  	
  	--Draws Location Indicator
  	local indW = 10
@@ -230,22 +250,23 @@ function HUD2( )
 	local endur = Endurance
  	local endPerc = endur / 100
  	
- 	end_bar =
-	{
- 
-		border = Color( 0, 255, 0, 255 ),
-		background = Color( 0, 255, 0, 75 ),
-		shade = Color( 136, 255, 136, 255 ),
-		fill = Color(0, 255, 30, 155)
- 
-	}
- 	
 	local text = string.format( "Endurance: %i", endur )
  	
  	PNRP_HUD:PaintText( cx + by, cy, text, vars2.font, colors.text )	
- 	PNRP_HUD:PaintBar( cx + by, cy + th + vars2.text_spacing, bar_width, vars2.bar_height, end_bar, endPerc )
+ 	PNRP_HUD:PaintBar( cx + by, cy + th + vars2.text_spacing, bar_width, vars2.bar_height, colors.end_bar, endPerc )
  	--Draws the sleep indication line
  	draw.RoundedBox(0, cx + bar_width * 0.8 + by, cy + th + vars2.text_spacing, 1, vars2.bar_height, Color(255, 255, 255, 150))
+ 	
+ 	--Draws the Hunger Bar
+	by = by + bar_width + vars.bar_spacing + vars.bar_spacing
+	
+ 	local hung = Hunger
+ 	local hungPerc = hung / 100
+ 	
+	local text = string.format( "Hunger: %i", hung )
+ 	
+ 	PNRP_HUD:PaintText( cx + by, cy, text, vars2.font, colors.text )	
+ 	PNRP_HUD:PaintBar( cx + by, cy + th + vars2.text_spacing, bar_width, vars2.bar_height, colors.hunger_bar, hungPerc )
  	
  	--Draws Location Indicator
  	local indW = 10

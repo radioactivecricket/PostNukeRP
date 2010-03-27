@@ -17,7 +17,7 @@ ITEM.Energy = 8
 ITEM.Ent = "wep_pumpshotgun"
 ITEM.Model = "models/weapons/w_shot_m3super90.mdl"
 ITEM.Script = ""
-ITEM.Weight = 15
+ITEM.Weight = 9
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "buckshot"
