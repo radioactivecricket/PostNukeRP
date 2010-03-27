@@ -40,6 +40,15 @@ function GM.BuildItem( ply, command, arg )
 					data.Model = item.Model
 					data.Energy = item.Energy
 					data.Create = item.Create
+					data.ToolCheck = item.ToolCheck
+					
+					if data.Type == "food" then
+						if not data.ToolCheck( ply ) then
+							ply:ChatPrint("You don't have the proper tool to make this!")
+							return
+						end
+					end
+					
 					if item.Type != "vehicle" then
 						ply:DoProcess("ConstructItem",2,data)
 					else
@@ -79,6 +88,7 @@ function PNRP.DropSpawn( ply, ID, q )
 			data.Ent = item.Ent
 			data.Model = item.Model
 			data.Create = item.Create
+			data.ToolCheck = item.ToolCheck
 			for i = 1, q do
 				
 				if item.Type ~= "vehicle" then
@@ -154,6 +164,7 @@ function PNRP.DropCarSpawn( ply, ID, q )
 			data.Script = item.Script
 			data.Ent = item.Ent
 			data.Model = item.Model
+			data.ToolCheck = item.ToolCheck
 			for i = 1, q do
 				
 				if item.Type ~= "vehicle" then

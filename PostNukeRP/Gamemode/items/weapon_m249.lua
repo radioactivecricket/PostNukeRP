@@ -17,7 +17,7 @@ ITEM.Energy = 200
 ITEM.Ent = "wep_m249"
 ITEM.Model = "models/weapons/w_mach_m249para.mdl"
 ITEM.Script = ""
-ITEM.Weight = 20
+ITEM.Weight = 16
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "smg1"

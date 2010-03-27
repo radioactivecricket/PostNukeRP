@@ -40,6 +40,7 @@ function GM.SaveCharacter(ply,cmd,args)
 	tbl["health"] = ply:Health()
 	tbl["armor"] = ply:Armor()
 	tbl["endurance"] = ply:GetTable().Endurance
+	tbl["hunger"] = ply:GetTable().Hunger
 	tbl["resources"] = {}
 	tbl["date"] = os.date("%A %m/%d/%y")
 	tbl["name"] = ply:Nick()
@@ -75,7 +76,7 @@ function GM.SaveCharacter(ply,cmd,args)
 		end
 	end 
 	Msg("Player Data Saved.\n")
-	
+	ply:ChatPrint("Player Saved.")
 	file.Write("PostNukeRP/Saves/"..ply:UniqueID()..".txt",util.TableToKeyValues(tbl))
 end
 
@@ -119,6 +120,7 @@ function GM.LoadStatus( ply )
 		if tbl["armor"] then ply:SetArmor( tbl["armor"] ) end
 		--if tbl["endurance"] then ply:SetNetworkedInt("Endurance", tbl["endurance"] ) end
 		if tbl["endurance"] then ply:GetTable().Endurance = tbl["endurance"] end
+		if tbl["hunger"] then ply:GetTable().Hunger = tbl["hunger"] end
 		SendEndurance( ply )
 		
 	end
@@ -184,7 +186,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
 				local ent = ents.Create(myItem.Ent)
 				--ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
-				ply:SendHint( "Dropped "..myItem.Name,5)
+				--ply:ChatPrint( "Dropped "..myItem.Name)
 				ent:SetModel(myItem.Model)
 				ent:SetAngles(Angle(0,0,0))
 				ent:SetPos(pos)
@@ -198,7 +200,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 					local entClass
 					local entModel
 				--	ply:ChatPrint(myAmmoType)
-					ply:SendHint( "Dropped "..myItem.Name,5)
+				--	ply:SendHint( "Dropped "..myItem.Name,5)
 					local ammoFType
 					--grenade fix
 					if myItem.ID == "wep_grenade" then

@@ -42,6 +42,7 @@ function PNRP.AddItem( itemtable )
 		Script = itemtable.Script,
 		Weight = itemtable.Weight,
 		Create = itemtable.Create,
+		ToolCheck = itemtable.ToolCheck,
 	}
 	
 	AddBannedProp(itemtable.Model)

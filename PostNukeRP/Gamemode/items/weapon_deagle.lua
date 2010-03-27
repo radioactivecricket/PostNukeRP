@@ -16,7 +16,7 @@ ITEM.Energy = 7
 ITEM.Ent = "wep_deagle"
 ITEM.Model = "models/weapons/w_pist_deagle.mdl"
 ITEM.Script = ""
-ITEM.Weight = 7
+ITEM.Weight = 5
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "357"

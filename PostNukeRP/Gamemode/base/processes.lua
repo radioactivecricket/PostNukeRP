@@ -274,7 +274,7 @@ function PROCESS:OnStart()
          self.Owner:Freeze(true)
          if self.Owner:GetResource("Scrap") < self.Data.Scrap and self.Owner:GetResource("Small_Parts") < self.Data.SmallParts and self.Owner:GetResource("Chemicals") < self.Data.Chems then
 			return end
-         self.StartTime = CurTime()
+        self.StartTime = CurTime()
          
 end
 
@@ -293,7 +293,11 @@ function PROCESS:OnStop()
          local num = math.random(1,100)
 
          if num < self.Data.Chance then
-            self.Owner:EmitSound(Sound("items/ammo_pickup.wav"))
+			if self.Data.Type == "food" then
+				self.Owner:EmitSound(Sound("ambient/materials/dinnerplates5.wav"))
+			else
+				self.Owner:EmitSound(Sound("items/ammo_pickup.wav"))
+			end
 			
 			self.Owner:DecResource("Scrap", self.Data.Scrap)
 			self.Owner:DecResource("Small_Parts", self.Data.SmallParts)

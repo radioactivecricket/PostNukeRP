@@ -17,7 +17,7 @@ ITEM.Energy = 1
 ITEM.Ent = "wep_grenade"
 ITEM.Model = "models/weapons/w_grenade.mdl"
 ITEM.Script = ""
-ITEM.Weight = 3
+ITEM.Weight = 1
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "grenade"

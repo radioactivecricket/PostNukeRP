@@ -1,5 +1,7 @@
 PNRP.Items = {}
 
+local PlayerMeta = FindMetaTable("Player")
+
 function PNRP.AddItem( itemtable )
 
 	PNRP.Items[itemtable.ID] =
@@ -22,6 +24,7 @@ function PNRP.AddItem( itemtable )
 		Script = itemtable.Script,
 		Weight = itemtable.Weight,
 		Create = itemtable.Create,
+		ToolCheck = itemtable.ToolCheck,
 	}
 	
 end	
@@ -59,6 +62,31 @@ function PNRP.Inventory( p )
 	
 end	
 
+function PlayerMeta:HasInInventory( theitem )
+	local ILoc = PNRP.GetInventoryLocation( self )		
+	
+	if !file.Exists( ILoc ) then return false end
+	
+	local decoded = PNRP.Inventory( self )		
+
+	if decoded[theitem] != nil then
+	
+		if decoded[theitem] > 0 then
+		
+			return true
+		
+		else
+			
+			return false
+			
+		end
+		
+	else
+		
+		return false
+
+	end	
+end
 
 function PNRP.CarInventory( p )
 	

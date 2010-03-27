@@ -17,7 +17,7 @@ ITEM.Energy = 6
 ITEM.Ent = "wep_shotgun"
 ITEM.Model = "models/weapons/w_shot_xm1014.mdl"
 ITEM.Script = ""
-ITEM.Weight = 15
+ITEM.Weight = 10
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "buckshot"

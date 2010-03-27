@@ -52,7 +52,9 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	
 	ply:GetTable().LastHealthUpdate = 0
 	ply:GetTable().LastEndUpdate = 0
+	ply:GetTable().LastHunUpdate = 0
 	ply:GetTable().Endurance = 100
+	ply:GetTable().Hunger = 100
 	ply:GetTable().IsAsleep = false
 	
 	--Loads Weapons from Character's Save File
@@ -85,6 +87,9 @@ function GM:PlayerSpawn( ply )  //What happens when the player spawns
 	--ply:SetNetworkedInt("Endurance", 100)
  
     ply:SetWalkSpeed( 150 )  
+	if ply:GetTable().Hunger == 0 then
+		ply:GetTable().Hunger = 100
+	end
     
     if ply:Team() == TEAM_WASTELANDER then
     	ply:SetMaxHealth( 150, true )
@@ -116,6 +121,10 @@ function GM:PlayerDisconnected(ply)
 	local DoorList = PNRP.ListDoors( ply )
 	for k, v in pairs(DoorList) do
 		v:SetNetworkedString("Owner", "World")
+	end
+	
+	for k, v in pairs(player.GetAll()) do
+		v:ChatPrint(ply:Nick().." has left the server.")
 	end
 	
 	Msg("Saved character of disconnecting player "..ply:Nick()..".\n")

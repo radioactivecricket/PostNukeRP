@@ -1,25 +1,29 @@
 local ITEM = {}
 
 
-ITEM.ID = "coke"
+ITEM.ID = "food_cookedbeans"
 
-ITEM.Name = "Can of coke"
+ITEM.Name = "Well-cooked Beans"
 ITEM.ClassSpawn = "Cultivator"
-ITEM.Scrap = 2
+ITEM.Scrap = 3
 ITEM.Small_Parts = 0
 ITEM.Chemicals = 2
 ITEM.Chance = 100
-ITEM.Info = "Food system not empimented yet."
+ITEM.Info = "Beans are a staple of wasteland life, made even better by someone who knows how to cook."
 ITEM.Type = "food"
 ITEM.Remove = true
-ITEM.Energy = 18
-ITEM.Ent = "prop_physics"
-ITEM.Model = "models/props_junk/popcan01a.mdl"
+ITEM.Energy = 10
+ITEM.Ent = "food_beans"
+ITEM.Model = "models/props_junk/garbage_metalcan001a.mdl"
 ITEM.Script = ""
 ITEM.Weight = 1
 
 function ITEM.Spawn( p )
 	PNRP.BaseItemSpawn( p, ITEM )
+end
+
+function ITEM.ToolCheck( p )
+	return true
 end
 
 function ITEM.Use( p, ent )

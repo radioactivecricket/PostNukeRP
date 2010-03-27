@@ -17,7 +17,7 @@ ITEM.Energy = 12
 ITEM.Ent = "wep_p228"
 ITEM.Model = "models/weapons/w_pist_p228.mdl"
 ITEM.Script = ""
-ITEM.Weight = 5
+ITEM.Weight = 2
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "pistol"
