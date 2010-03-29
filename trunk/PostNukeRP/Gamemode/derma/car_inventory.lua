@@ -124,8 +124,8 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet)
 				 		pnlPanel.ItemWeight:SetContentAlignment( 5 )
 				 		
 				 		pnlPanel.sendToInv = vgui.Create("DButton", pnlPanel )
-				 		pnlPanel.sendToInv:SetPos(450, 55)
-				 		pnlPanel.sendToInv:SetSize(100,18)
+				 		pnlPanel.sendToInv:SetPos(435, 55)
+				 		pnlPanel.sendToInv:SetSize(115,18)
 				    	pnlPanel.sendToInv:SetText( "Send to To Inventory" )
 --				    	pnlPanel.sendToInv:SizeToContents() 
 				    	pnlPanel.sendToInv.DoClick = function()
@@ -139,7 +139,7 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet)
 						pnlPanel.salvageItem:SetPos(555, 55)
 				 		pnlPanel.salvageItem:SetSize(100,17)
 				    	pnlPanel.salvageItem:SetText( "Salvage Item" )
-				    	pnlPanel.salvageItem.DoClick = function() RunConsoleCommand("pnrp_dosalvage",item.ID) parent_frame:Close() end
+				    	pnlPanel.salvageItem.DoClick = function() RunConsoleCommand("pnrp_docarsalvage",item.ID) parent_frame:Close() end
 				 	end
 				end
 			end
