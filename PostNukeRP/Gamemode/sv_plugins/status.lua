@@ -42,12 +42,12 @@ function StatCheck()
 		
 		local EndUpdateTime 
 		if v:Team() == TEAM_WASTELANDER then
-			EndUpdateTime = UpdateTime / (2)
+			EndUpdateTime = UpdateTime / (1)
 			if v:GetTable().IsAsleep then
 				EndUpdateTime = UpdateTime / 5 
 			end
 		else
-			EndUpdateTime = UpdateTime / (3)
+			EndUpdateTime = UpdateTime / (2)
 			if v:GetTable().IsAsleep then
 				EndUpdateTime = UpdateTime / 5 
 			end
@@ -77,7 +77,7 @@ function StatCheck()
 		
 		--Hunger checks
 		local HunUpdateTime 
-		HunUpdateTime = 60 / (5 + runModifier)
+		HunUpdateTime = 60 / (2 + ( runModifier / 2 ) )
 		if v:Alive() and CurTime() - v:GetTable().LastHunUpdate > HunUpdateTime and not (v:GetTable().IsAsleep) then
 			local hunger = v:GetTable().Hunger
 			
@@ -227,6 +227,7 @@ function ExitSleep( ply )
 				for i = 1, 22 do
 					ply:GiveAmmo(ply:GetTable().AmmoForSleep[i], PNRP.ConvertAmmoType(i), false)
 				end
+				
 				local cl_defaultweapon = ply:GetInfo( "cl_defaultweapon" )
 				if ( ply:HasWeapon( cl_defaultweapon )  ) then
 					ply:SelectWeapon( cl_defaultweapon ) 

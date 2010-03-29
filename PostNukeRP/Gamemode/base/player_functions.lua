@@ -316,7 +316,8 @@ end
 
 function PNRP.DropWeapon (ply, command, args)
 	local myWep = ply:GetActiveWeapon()
-	if ( myWep ) then
+	
+	if ( myWep ) and myWep:GetClass() !=  "weapon_frag" then
 		local curAmmo = myWep:Clip1()
 		
 		if PNRP.CheckDefWeps(myWep) then return end
@@ -341,6 +342,10 @@ function PNRP.DropWeapon (ply, command, args)
 		ent:SetNetworkedString("Ammo", myWep:Clip1())
 		
 		ply:StripWeapon(myWep:GetClass())
+	end
+	
+	if myWep:GetClass() ==  "weapon_frag" then
+		ply:ChatPrint("Use /dropammo to drop grenades.")
 	end
 end
 concommand.Add( "pnrp_dropWep", PNRP.DropWeapon )
@@ -368,9 +373,14 @@ function PNRP.StowWeapon (ply, command, args)
 			end
 			
 			if weight <= weightCap then
-				PNRP.AddToInentory( ply, ItemID.ID )
-				ply:GiveAmmo(myWep:Clip1(), myWep:GetPrimaryAmmoType())
-				ply:StripWeapon(myWep:GetClass())
+				if ItemID.ID == "wep_grenade" then
+					PNRP.AddToInentory( ply, ItemID.ID )
+					ply:RemoveAmmo( 1, "grenade" )
+				else
+					PNRP.AddToInentory( ply, ItemID.ID )
+					ply:GiveAmmo(myWep:Clip1(), myWep:GetPrimaryAmmoType())
+					ply:StripWeapon(myWep:GetClass())
+				end
 			else
 				ply:ChatPrint("You're pack is too full and cannot carry this.")
 			end
@@ -380,20 +390,22 @@ function PNRP.StowWeapon (ply, command, args)
 	end
 end
 concommand.Add( "pnrp_stowWep", PNRP.StowWeapon )
-PNRP.ChatConCmd( "/stowpwep", "pnrp_stowWep" )
+PNRP.ChatConCmd( "/stowwep", "pnrp_stowWep" )
 PNRP.ChatConCmd( "/stowgun", "pnrp_stowWep" )
 PNRP.ChatConCmd( "/putawaygun", "pnrp_stowWep" )
 
+
 function PNRP.DropAmmo (ply, command, args)
 	local ammoType = args[1]
-	ply:ChatPrint("Ammo Type:  "..ammoType)
+	if ammoType then ply:ChatPrint("Ammo Type:  "..ammoType) end
 	local ammoAmt = tonumber(args[2])
 	local entClass
 	local entModel
-	
+	local ammoFTyp
 	
 	if ammoType and ammoAmt then
-		local ammoFType = "ammo_"..ammoType
+		ammoFType = "ammo_"..ammoType
+		if ammoFType == "ammo_grenade" then ammoFType = "wep_grenade" end
 		local ItemID = PNRP.FindItemID( ammoFType )
 		if ItemID then
 			entClass = ammoFType
@@ -403,7 +415,8 @@ function PNRP.DropAmmo (ply, command, args)
 			return
 		end
 	elseif ammoType then
-		local ammoFType = "ammo_"..ammoType
+		ammoFType = "ammo_"..ammoType
+		if ammoFType == "ammo_grenade" then ammoFType = "wep_grenade" end
 		local ItemID = PNRP.FindItemID( ammoFType )
 		if ItemID then
 			entClass = ammoFType
@@ -414,8 +427,14 @@ function PNRP.DropAmmo (ply, command, args)
 			return
 		end
 	else
-		ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
-		local ammoFType = "ammo_"..ammoType
+		--Grenade Check
+		if ply:GetActiveWeapon():GetClass() == "weapon_frag" then 
+			ammoFType = "wep_grenade"
+			ammoType = "grenade" 
+		else
+			ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
+			ammoFType = "ammo_"..ammoType
+		end
 		
 		local ItemID = PNRP.FindItemID( ammoFType )
 		if ItemID then
@@ -427,6 +446,7 @@ function PNRP.DropAmmo (ply, command, args)
 			return
 		end
 	end
+	
 	
 	if ply:GetAmmoCount(ammoType) < ammoAmt then
 		ply:ChatPrint("You cannot drop that much.  All ammo dropped instead.")
@@ -438,6 +458,7 @@ function PNRP.DropAmmo (ply, command, args)
 		ply:ChatPrint("You don't have any of this type!")
 		return
 	end
+	
 	
 	local tr = ply:TraceFromEyes(200)
 	local trPos = tr.HitPos
@@ -454,7 +475,7 @@ function PNRP.DropAmmo (ply, command, args)
 	local prevAmmo = ply:GetAmmoCount(ammoType)
 	
 	ply:RemoveAmmo( ammoAmt, ammoType )
-	ply:ChatPrint(tostring(prevAmmo).."  -  "..tostring(ammoAmt).." = "..tostring(prevAmmo - ammoAmt))
+--	ply:ChatPrint(tostring(prevAmmo).."  -  "..tostring(ammoAmt).." = "..tostring(prevAmmo - ammoAmt))
 end
 concommand.Add( "pnrp_dropAmmo", PNRP.DropAmmo )
 PNRP.ChatConCmd( "/dropammo", "pnrp_dropAmmo" )

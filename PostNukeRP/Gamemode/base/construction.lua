@@ -229,7 +229,7 @@ function PNRP.Salvage( ply, command, arg )
 	local allowed = false
 	local playerNick = ply:Nick()
 	
-	if tostring(command) == "pnrp_dosalvage" then
+	if tostring(command) == "pnrp_dosalvage"  or tostring(command) == "pnrp_docarsalvage" then
 		ItemID = arg[1]
 		allowed = true
 	else
@@ -278,11 +278,15 @@ function PNRP.Salvage( ply, command, arg )
 			ply:IncResource("Scrap", scrap)
 			ply:IncResource("Small_Parts", smallparts)
 			ply:IncResource("Chemicals", chemicals)
-			
+
 			if tostring(command) == "pnrp_dosalvage" then
 				PNRP.TakeFromInventory( ply, ItemID )
 			else
-				ent:Remove()
+				if tostring(command) == "pnrp_docarsalvage" then
+					PNRP.TakeFromCarInventory( ply, ItemID )
+				else
+					ent:Remove()
+				end
 			end
 			
 			ply:ChatPrint("You have salvaged: "..tostring(scrap).." Scrap "..tostring(smallparts).." Small Parts and"..tostring(chemicals).." Chemicals")
@@ -296,6 +300,7 @@ function PNRP.Salvage( ply, command, arg )
 end
 concommand.Add( "pnrp_salvage", PNRP.Salvage)
 concommand.Add( "pnrp_dosalvage", PNRP.Salvage)
+concommand.Add( "pnrp_docarsalvage", PNRP.Salvage)
 
 
 --EOF

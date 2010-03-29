@@ -209,6 +209,9 @@ function PNRP.CarInventoryWeight( p )
 	return weightSum
 end
 
+function PlayerMeta:AddToInventory( theitem )
+	PNRP.AddToInentory( self, theitem )
+end
 	
 function PNRP.AddToInentory( p, theitem )
 	
