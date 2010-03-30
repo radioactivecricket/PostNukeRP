@@ -29,12 +29,8 @@ function ITEM.Create( ply, class, pos )
 	PNRP.AddWorldCache( ply,ITEM.ID )
 end
 
-function ITEM.Spawn( p )
-	PNRP.BaseItemSpawn( p, ITEM )
-end
-
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	return true	
 end
 
 

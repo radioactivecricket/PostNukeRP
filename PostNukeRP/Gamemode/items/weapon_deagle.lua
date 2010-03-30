@@ -21,12 +21,20 @@ ITEM.Weight = 5
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "357"
 
-function ITEM.Spawn( p )
-	PNRP.BaseItemSpawn( p, ITEM )
-end
-
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	local WepName = "weapon_real_cs_desert_eagle"
+	local gotWep = false
+	for k, v in pairs(ply:GetWeapons()) do
+		if v:GetClass() == WepName then gotWep = true end
+	end
+	if gotWep == false then 
+		ply:Give(WepName) 
+		ply:GetWeapon(WepName):SetClip1(0)
+		return true
+	else
+		ply:ChatPrint("Weapon allready equipped.")
+		return false
+	end
 end
 
 

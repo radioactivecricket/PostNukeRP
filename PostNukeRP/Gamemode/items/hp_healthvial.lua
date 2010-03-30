@@ -22,8 +22,21 @@ function ITEM.Spawn( p )
 	PNRP.BaseItemSpawn( p, ITEM )
 end
 
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	local health = ply:Health()
+		
+	if not ( health == ply:GetMaxHealth() ) then
+		local sound = Sound("items/smallmedkit1.wav")
+		ply:EmitSound( sound )
+		
+		ply:SetHealth( health + 10 )
+		if ( ply:GetMaxHealth() < health + 10  ) then
+			ply:SetHealth( ply:GetMaxHealth() )
+		end
+		return true	
+	else
+		return false
+	end
 end
 
 

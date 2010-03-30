@@ -18,10 +18,6 @@ ITEM.Model = "models/props_junk/garbage_milkcarton002a.mdl"
 ITEM.Script = ""
 ITEM.Weight = 1
 
-function ITEM.Spawn( p )
-	PNRP.BaseItemSpawn( p, ITEM )
-end
-
 function ITEM.ToolCheck( p )
 	if p:HasInInventory("tool_saucepan") then
 		return true
@@ -30,8 +26,24 @@ function ITEM.ToolCheck( p )
 	end
 end
 
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	local hunger = ply:GetTable().Hunger
+	if not ( hunger == 100 ) then
+		local sound = Sound("npc/ichthyosaur/snap.wav")
+		ply:EmitSound( sound )
+		
+		ply:GiveHunger( 25 )
+		
+		if not ( health == ply:GetMaxHealth() ) then
+			ply:SetHealth( health + 5 )
+			if ( ply:GetMaxHealth() < health + 5  ) then
+				ply:SetHealth( ply:GetMaxHealth() )
+			end
+		end
+		return true	
+	else
+		return false
+	end
 end
 
 

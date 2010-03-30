@@ -474,6 +474,7 @@ function PNRP.DropAmmo (ply, command, args)
 	
 	local prevAmmo = ply:GetAmmoCount(ammoType)
 	
+	if ammoType == "grenade" then ammoAmt = 1 end
 	ply:RemoveAmmo( ammoAmt, ammoType )
 --	ply:ChatPrint(tostring(prevAmmo).."  -  "..tostring(ammoAmt).." = "..tostring(prevAmmo - ammoAmt))
 end

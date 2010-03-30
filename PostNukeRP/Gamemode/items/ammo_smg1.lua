@@ -18,12 +18,12 @@ ITEM.Model = "models/items/boxmrounds.mdl"
 ITEM.Script = ""
 ITEM.Weight = 3
 
-function ITEM.Spawn( p )
-	PNRP.BaseItemSpawn( p, ITEM )
-end
 
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	local ammoType = ITEM.ID
+	ammoType = string.gsub(ammoType, "ammo_", "")
+	ply:GiveAmmo(ITEM.Energy, ammoType)
+	return true
 end
 
 

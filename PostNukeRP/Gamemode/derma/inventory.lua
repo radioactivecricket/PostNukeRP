@@ -105,6 +105,17 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet)
 						pnlPanel.Count:SizeToContents() 
 				 		pnlPanel.Count:SetContentAlignment( 5 )	
 				 		
+				 		if item.Type == "food" or item.Type == "medical" or item.Type == "weapon" or item.Type == "ammo" then
+					 		pnlPanel.salvageItem = vgui.Create("DButton", pnlPanel )
+							pnlPanel.salvageItem:SetPos(200, 55)
+					 		pnlPanel.salvageItem:SetSize(100,17)
+					    	pnlPanel.salvageItem:SetText( "Use Item" )
+					    	pnlPanel.salvageItem.DoClick = function() 
+					    		datastream.StreamToServer( "UseFromInv", {item.ID, 1} ) 
+					    		parent_frame:Close() 
+					    	end
+					    end
+				 		
 				 		pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
 						pnlPanel.ClassBuild:SetPos(350, 5)
 						pnlPanel.ClassBuild:SetText("Required Class for Creation: "..item.ClassSpawn)

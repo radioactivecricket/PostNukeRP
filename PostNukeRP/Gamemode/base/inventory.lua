@@ -420,40 +420,26 @@ end
 
 concommand.Add( "carinventory_drop", PNRP.DropCarItem )
 
-
-function PNRP.InventoryUse( p, c, a )
-
-	for itemname, item in pairs( PNRP.Items ) do
-	
-		for k, v in pairs( PNRP.Inventory( p ) ) do
-		
-			if k == itemname && k == a[1] then
-			
-				if PNRP.UseLimit( p ) then
-				
-					if item.Remove then
-					
-						item.Use( p )
-						PNRP.TakeFromInventory( p, a[1] )
-						
-					end
-					
-					p.NextInventoryUse = CurTime() + 3
-					
-				end
-				
-			end
-			
-		end
-		
-	end	
-	
-end	
-
-concommand.Add( "inventory_use", PNRP.InventoryUse )
-
 function PNRP.ReportWeight( p, c, a )
 	p:ChatPrint( "Inventory Weight:  "..tostring(PNRP.InventoryWeight( p )) )
 end
 
 concommand.Add( "debug_weight", PNRP.ReportWeight )
+
+function PNRP.UseFromInv(ply, handler, id, encoded, decoded )
+	local ItemID = decoded[1]
+	
+	if PNRP.Items[ItemID] == nil then return end
+	local item = PNRP.Items[ItemID]
+	if item.Type == "weapon" or item.Type == "ammo" or item.Type == "medical" or item.Type == "food" then
+		local useCheck	
+		useCheck = item.Use( ply )
+		if useCheck == true then
+			PNRP.TakeFromInventory( ply, ItemID )
+		end
+	end
+		
+end
+datastream.Hook( "UseFromInv", PNRP.UseFromInv )
+
+--EOF

@@ -38,7 +38,7 @@ function DoSmelt( pl, handler, id, encoded, decoded )
 		pl:ChatPrint( "Not enough small parts to do this!" )
 		return
 	end
-	if pl:GetResource( "Chemicals" ) < smallparts then
+	if pl:GetResource( "Chemicals" ) < chems then
 		pl:ChatPrint( "Not enough chemicals to do this!" )
 		return
 	end
