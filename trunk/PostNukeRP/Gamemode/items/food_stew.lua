@@ -18,9 +18,6 @@ ITEM.Model = "models/gibs/antlion_gib_large_2.mdl"
 ITEM.Script = ""
 ITEM.Weight = 1
 
-function ITEM.Spawn( p )
-	PNRP.BaseItemSpawn( p, ITEM )
-end
 
 function ITEM.ToolCheck( p )
 	if p:HasInInventory("tool_saucepan") and p:HasInInventory("tool_deeppot") then
@@ -30,8 +27,23 @@ function ITEM.ToolCheck( p )
 	end
 end
 
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	local hunger = ply:GetTable().Hunger
+	if not ( hunger == 100 ) then
+		local sound = Sound("npc/ichthyosaur/snap.wav")
+		ply:EmitSound( sound )
+		
+		ply:GiveHunger( 40 )
+		if not ( health == ply:GetMaxHealth() ) then
+			ply:SetHealth( health + 10 )
+			if ( ply:GetMaxHealth() < health + 10  ) then
+				ply:SetHealth( ply:GetMaxHealth() )
+			end
+		end
+		return true	
+	else
+		return false
+	end
 end
 
 

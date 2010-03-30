@@ -18,12 +18,8 @@ ITEM.Model = "models/vehicle.mdl"
 ITEM.Script = "scripts/vehicles/jalopy.txt"
 ITEM.Weight = 250
 
-function ITEM.Spawn( p )
-	PNRP.BaseVehicle( p, "models/vehicle.mdl", "prop_vehicle_jeep", "scripts/vehicles/jalopy.txt", ITEM )
-end
-
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	return true	
 end
 
 

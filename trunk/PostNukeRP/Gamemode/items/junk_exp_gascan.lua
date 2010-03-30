@@ -18,12 +18,8 @@ ITEM.Model = "models/props_junk/gascan001a.mdl"
 ITEM.Script = ""
 ITEM.Weight = 4
 
-function ITEM.Spawn( p )
-	PNRP.BaseItemSpawn( p, ITEM )
-end
-
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	return true	
 end
 
 

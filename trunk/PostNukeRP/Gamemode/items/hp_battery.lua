@@ -22,8 +22,21 @@ function ITEM.Spawn( p )
 	PNRP.BaseItemSpawn( p, ITEM )
 end
 
-function ITEM.Use( p, ent )
-	PNRP.BaseUse( p, ITEM )
+function ITEM.Use( ply )
+	local armor = ply:Armor()
+		
+	if not ( armor == 100 ) then
+		local sound = Sound("items/battery_pickup.wav")
+		ply:EmitSound( sound )
+		
+		ply:SetArmor( armor + 20 )
+		if ( 100 < armor + 20 ) then
+			ply:SetArmor( 100 )
+		end
+		return true	
+	else
+		return false
+	end
 end
 
 
