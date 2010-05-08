@@ -33,7 +33,7 @@ function ITEM.Use( ply )
 		ply:EmitSound( sound )
 		
 		ply:GiveHunger( 25 )
-		
+		local health = ply:Health()
 		if not ( health == ply:GetMaxHealth() ) then
 			ply:SetHealth( health + 5 )
 			if ( ply:GetMaxHealth() < health + 5  ) then

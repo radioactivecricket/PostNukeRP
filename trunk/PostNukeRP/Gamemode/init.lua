@@ -5,6 +5,8 @@ AddCSLuaFile( "cl_init.lua" ) --Tell the server that the client needs to downloa
 AddCSLuaFile( "shared.lua" ) --Tell the server that the client needs to download shared.lua
 AddCSLuaFile("itembase.lua")
 
+require("datastream")
+
 --include('keymap.lua')
 
 --CreateConVar("pnrp_ReproduceRes","1", FCVAR_ARCHIVE + FCVAR_NOTIFY)
@@ -399,16 +401,32 @@ function GM:ShowTeam( ply )
 					ply:ChatPrint("You're pack is too full and cannot carry this.")
 				end
 			else
-				local myModel = ent:GetModel()			
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
+				local myModel = ent:GetModel()	
 				
-				if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
-					ply:ConCommand("pnrp_removeowner")
---					PNRP.TakeFromWorldCache( ply, ItemID )
-				else
-					ply:ConCommand("pnrp_addowner")
---					PNRP.AddWorldCache( ply, ItemID )
+				
+				if tostring(ent:GetNetworkedString( "Owner" , "None" )) ~= ply:Nick() then
+					ply:ChatPrint("You do not own this!")
+					return
 				end
+						
+				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
+				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
+				
+				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
+				PNRP.AddToInentory( ply, ItemID )
+				PNRP.TakeFromWorldCache( ply, ItemID )
+				ply:ChatPrint("You picked up your car")
+				ent:Remove()
+				
+--				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
+				
+--				if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
+--					ply:ConCommand("pnrp_removeowner")
+----				PNRP.TakeFromWorldCache( ply, ItemID )
+--				else
+--					ply:ConCommand("pnrp_addowner")
+----				PNRP.AddWorldCache( ply, ItemID )
+--				end
 			end
 		else
 			if myType == "weapon" then

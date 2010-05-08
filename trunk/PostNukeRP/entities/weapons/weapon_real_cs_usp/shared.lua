@@ -13,7 +13,7 @@ end
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType 		= "pistol"
+--	SWEP.HoldType 		= "pistol"
 end
 
 if (CLIENT) then
@@ -45,6 +45,8 @@ SWEP.Base 				= "weapon_real_base_special_aim"
 SWEP.Spawnable 			= true
 SWEP.AdminSpawnable 		= true
 
+SWEP.HoldType 		= "pistol" --Moved here to fix animation issue
+
 SWEP.ViewModel 			= "models/weapons/v_pist_usp.mdl"
 SWEP.WorldModel 			= "models/weapons/w_pist_usp.mdl"
 
@@ -69,9 +71,9 @@ Initialize
 ---------------------------------------------------------*/
 function SWEP:Initialize()
 
-	if (SERVER) then
+--	if (SERVER) then
 		self:SetWeaponHoldType(self.HoldType)
-	end
+--	end
 
 	self.Reloadaftershoot = 0
 

@@ -32,7 +32,7 @@ function ITEM.Use( ply )
 	if not ( hunger == 100 ) then
 		local sound = Sound("npc/ichthyosaur/snap.wav")
 		ply:EmitSound( sound )
-		
+		local health = ply:Health()
 		ply:GiveHunger( 40 )
 		if not ( health == ply:GetMaxHealth() ) then
 			ply:SetHealth( health + 10 )

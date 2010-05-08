@@ -94,9 +94,9 @@ local sndCycleZoom = Sound("Default.Zoom")
 
 function SWEP:Initialize()
 
-	if (SERVER) then
+--	if (SERVER) then
 		self:SetWeaponHoldType(self.HoldType)
-	end
+--	end
 
 	if CLIENT then
 	

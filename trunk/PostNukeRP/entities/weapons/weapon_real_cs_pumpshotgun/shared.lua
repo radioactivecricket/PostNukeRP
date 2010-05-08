@@ -19,7 +19,7 @@ end
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType 		= "shotgun"
+--	SWEP.HoldType 		= "shotgun"
 end
 
 if (CLIENT) then
@@ -91,6 +91,8 @@ SWEP.data.semi 			= {}		-- Slug Rounds
 SWEP.data.semi.Cone 		= 0.015	-- Cone of the slug rounds
 SWEP.data.semi.NumShots 	= 1		-- 1 big lead
 SWEP.data.semi.Damage 		= 88		-- Damage of the big lead
+
+SWEP.HoldType 		= "shotgun"
 
 /*---------------------------------------------------------
 PrimaryAttack

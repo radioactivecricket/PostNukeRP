@@ -2,7 +2,7 @@
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType		= "pistol"
+--	SWEP.HoldType		= "pistol"
 end
 
 if (CLIENT) then
@@ -40,6 +40,8 @@ SWEP.Secondary.ClipSize 	= -1
 SWEP.Secondary.DefaultClip 	= -1
 SWEP.Secondary.Automatic 	= false
 SWEP.Secondary.Ammo 		= "none"
+
+SWEP.HoldType		= "pistol"
 
 SWEP.IronSightsPos 		= Vector (4.334, -4.5101, 2.8296)
 SWEP.IronSightsAng 		= Vector (0.7354, 0.0593, 0)

@@ -34,7 +34,7 @@ SWEP.NextKnock = 0
 ---------------------------------------------------------*/
 function SWEP:Initialize()
 
-    if (!SERVER) then return end
+--    if (!SERVER) then return end
 	
     self:SetWeaponHoldType("normal")	
 						
