@@ -2,7 +2,7 @@
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType 		= "ar2"
+--	SWEP.HoldType 		= "ar2"
 end
 
 if (CLIENT) then
@@ -58,6 +58,8 @@ SWEP.data.snipefov 		= 0
 SWEP.data.semi 			= {}
 
 SWEP.data.auto 			= {}
+
+SWEP.HoldType 		= "ar2"
 
 /*---------------------------------------------------------
 	PrimaryAttack

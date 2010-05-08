@@ -3,7 +3,10 @@
 local class_Frame
 
 function PNRP.ClassMenu(ply)
-	
+	if ply:InVehicle() then
+		ply:ChatPrint("Can not change classes while in a vehicle.")
+		return
+	end
 	class_Frame = vgui.Create( "DFrame" )
 		class_Frame:SetSize( 700, 500 ) --Set the size
 		class_Frame:SetPos(ScrW() / 2 - class_Frame:GetWide() / 2, ScrH() / 2 - class_Frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
@@ -141,7 +144,7 @@ function PNRP.ClassMenu(ply)
 				scavengerPanel.Info4:SizeToContents() 
 		 		scavengerPanel.Info4:SetContentAlignment( 5 )	 
 		 		scavengerPanel.Info5 = vgui.Create("DLabel", scavengerPanel)
-				scavengerPanel.Info5:SetPos(450, 22)
+				scavengerPanel.Info5:SetPos(215, 58)
 				scavengerPanel.Info5:SetText("Bonus to Salvage")
 				scavengerPanel.Info5:SetColor(Color( 0, 0, 0, 255 ))
 				scavengerPanel.Info5:SizeToContents() 
@@ -286,16 +289,11 @@ function PNRP.ClassMenu(ply)
 		 		cultivatorPanel.Info1:SetContentAlignment( 5 )
 		 		cultivatorPanel.Info2 = vgui.Create("DLabel", cultivatorPanel)
 				cultivatorPanel.Info2:SetPos(215, 22)
-				cultivatorPanel.Info2:SetText("This class has not been finished yet.")
+				cultivatorPanel.Info2:SetText("Able to create a variety of foods.")
 				cultivatorPanel.Info2:SetColor(Color( 0, 0, 0, 255 ))
 				cultivatorPanel.Info2:SizeToContents() 
 		 		cultivatorPanel.Info2:SetContentAlignment( 5 )
-		 		cultivatorPanel.Info3 = vgui.Create("DLabel", cultivatorPanel)
-				cultivatorPanel.Info3:SetPos(215, 34)
-				cultivatorPanel.Info3:SetText("Hunger system has not been added yet.")
-				cultivatorPanel.Info3:SetColor(Color( 0, 0, 0, 255 ))
-				cultivatorPanel.Info3:SizeToContents() 
-		 		cultivatorPanel.Info3:SetContentAlignment( 5 )	
+		 		
 end
 
 

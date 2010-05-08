@@ -362,6 +362,12 @@ function ToolCheck( ply, tr, toolmode )
 	
 	local owner = ent:GetNWString( "Owner", "None" )
 	if owner == "Unownable" then return false end
+	if owner != ply:Nick() then 
+		if owner != "None" then
+			ply:ChatPrint("You do not own this.")
+			return false 
+		end
+	end
 	
 	if toolmode == "wire_expression" or toolmode == "wire_expression2" or toolmode == "wire_gate_expression" or toolmode == "wire_debugger" or toolmode == "wire_adv" then
 		if GetConVarNumber("pnrp_exp2Level") == 0 then 

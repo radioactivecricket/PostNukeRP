@@ -76,6 +76,8 @@ function GM:ScoreboardShow()
 end
 
 function PNRP.buildMenu(parent_frame)
+	
+	local ply = LocalPlayer()
 
 	classmenu = vgui.Create("DButton") -- Create the button 	
 		classmenu:SetParent( parent_frame ) -- parent the button to the frame
@@ -104,13 +106,14 @@ function PNRP.buildMenu(parent_frame)
 			trademenu:SetPos(320, 25) -- set the button position in the frame
 			trademenu:SetSize( 100, 20 ) -- set the button size
 			trademenu.DoClick = function() RunConsoleCommand( "pnrp_trade_window" ) SCFrame=false parent_frame:Close() end 	
-			
-		local adminmenu = vgui.Create("DButton") -- Create the button
-			adminmenu:SetParent( parent_frame ) -- parent the button to the frame
-			adminmenu:SetText( "Admin Menu >" ) -- set the button text
-			adminmenu:SetPos(580, 25) -- set the button position in the frame
-			adminmenu:SetSize( 100, 20 ) -- set the button size
-			adminmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_window" ) SCFrame=false parent_frame:Close() end 
+		if ply:IsAdmin() then	
+			local adminmenu = vgui.Create("DButton") -- Create the button
+				adminmenu:SetParent( parent_frame ) -- parent the button to the frame
+				adminmenu:SetText( "Admin Menu >" ) -- set the button text
+				adminmenu:SetPos(580, 25) -- set the button position in the frame
+				adminmenu:SetSize( 100, 20 ) -- set the button size
+				adminmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_window" ) SCFrame=false parent_frame:Close() end
+		end		 
 end
 
 function GM:ScoreboardHide()

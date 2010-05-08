@@ -2,7 +2,7 @@
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType 		= "ar2"
+--	SWEP.HoldType 		= "ar2"
 end
 
 if (CLIENT) then
@@ -50,6 +50,8 @@ SWEP.Primary.Delay 		= 1
 SWEP.Primary.DefaultClip 	= 10
 SWEP.Primary.Automatic 		= false
 SWEP.Primary.Ammo 		= "smg1"
+
+SWEP.HoldType 		= "ar2"
 
 ---------------------------
 -- Ironsight/Scope --

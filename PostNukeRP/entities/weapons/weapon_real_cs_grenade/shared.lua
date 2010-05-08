@@ -52,9 +52,9 @@ SWEP.PrimaryThrow				= true
 Initialize
 ---------------------------------------------------------*/
 function SWEP:Initialize()
-	if (SERVER) then
+--	if (SERVER) then
 		self:SetWeaponHoldType("grenade")
-	end
+--	end
 end
 
 /*---------------------------------------------------------

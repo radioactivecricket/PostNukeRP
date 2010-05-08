@@ -2,7 +2,7 @@
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType = "ar2"
+--	SWEP.HoldType = "ar2"
 end
 
 
@@ -47,6 +47,8 @@ SWEP.Secondary.ClipSize 	= 0
 SWEP.Secondary.DefaultClip 	= 0
 SWEP.Secondary.Automatic 	= false
 SWEP.Secondary.Ammo 		= "none"
+
+SWEP.HoldType = "ar2"
 
 /*---------------------------------------------------------
 Think

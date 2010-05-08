@@ -2,7 +2,7 @@
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType 			= "ar2"
+--	SWEP.HoldType 			= "ar2"
 end
 
 
@@ -54,3 +54,5 @@ SWEP.data.newclip 		= false		-- Do not change this
 SWEP.data.semi 			= {}
 
 SWEP.data.auto 			= {}
+
+SWEP.HoldType 			= "ar2"

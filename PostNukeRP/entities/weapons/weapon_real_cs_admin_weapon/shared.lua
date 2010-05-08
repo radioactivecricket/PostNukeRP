@@ -26,7 +26,7 @@ end
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType 		= "ar2"
+--	SWEP.HoldType 		= "ar2"
 end
 
 if (CLIENT) then
@@ -50,6 +50,8 @@ SWEP.AdminSpawnable 		= true	-- Admin only!
 
 SWEP.ViewModel			= "models/weapons/v_rif_ak47.mdl"
 SWEP.WorldModel			= "models/weapons/w_rif_ak47.mdl"
+
+SWEP.HoldType 		= "ar2" --Moved here to fix animation issue
 
 SWEP.Primary.Recoil 		= 0
 SWEP.Primary.Damage 		= 1000
@@ -93,9 +95,9 @@ Initialize
 ---------------------------------------------------------*/
 function SWEP:Initialize() 
    
- 	if ( SERVER ) then 
+-- 	if ( SERVER ) then 
  		self:SetWeaponHoldType( self.HoldType ) 
- 	end 
+-- 	end 
 
 	util.PrecacheSound("npc/strider/strider_minigun.wav")
 	util.PrecacheSound("weapons/shotgun/shotgun_fire7.wav")

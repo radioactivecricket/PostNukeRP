@@ -16,7 +16,7 @@ end
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
 	SWEP.Weight 		= 5
-	SWEP.HoldType		= "ar2"		-- Hold type style ("ar2" "pistol" "shotgun" "rpg" "normal" "melee" "grenade" "smg")
+--	SWEP.HoldType		= "ar2"		-- Hold type style ("ar2" "pistol" "shotgun" "rpg" "normal" "melee" "grenade" "smg")
 end
 
 
@@ -97,6 +97,8 @@ SWEP.data.auto.FireMode		= "ppppp"
 SWEP.data.burst			= {}
 SWEP.data.burst.FireMode	= "ppp"
 
+SWEP.HoldType 		= "ar2" --Moved here to fix animation issue
+
 /*---------------------------------------------------------
 Auto/Semi/Burst Configuration
 ---------------------------------------------------------*/
@@ -166,9 +168,9 @@ Initialize
 ---------------------------------------------------------*/
 function SWEP:Initialize()
 
-	if (SERVER) then
+--	if (SERVER) then
 		self:SetWeaponHoldType(self.HoldType) 	-- Hold type of the 3rd person animation
-	end
+--	end
 
 	self.Reloadaftershoot = 0 				-- Can't reload when firering
 

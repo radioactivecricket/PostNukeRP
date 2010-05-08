@@ -2,7 +2,7 @@
 
 if (SERVER) then
 	AddCSLuaFile("shared.lua")
-	SWEP.HoldType 			= "ar2"
+--	SWEP.HoldType 			= "ar2"
 end
 
 
@@ -54,6 +54,8 @@ SWEP.data.semi.FireMode		= "p"
 
 SWEP.data.auto 			= {}
 SWEP.data.auto.FireMode		= "ppppp"
+
+SWEP.HoldType 			= "ar2"
 
 /*---------------------------------------------------------
 SecondaryAttack
