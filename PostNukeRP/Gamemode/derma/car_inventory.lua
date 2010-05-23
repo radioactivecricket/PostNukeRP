@@ -1,16 +1,19 @@
 --Build Inventory Window
 
-MyCarInventory = {}
+--MyCarInventory = {}
 
 local inventory_frame
 -- local PropertySheet = vgui.Create( "DPropertySheet" )
 
-function GM.car_inventory_window(ply)
-				 		
+--function GM.car_inventory_window(ply)
+function GM.car_inventory_window( handler, id, encoded, decoded )
+	local MyCarInventory = decoded[1]		
+	local CurCarInvWeight = decoded[2]	
+	local ply = LocalPlayer()			 		
 	inventory_frame = vgui.Create( "DFrame" )
 		inventory_frame:SetSize( 700, 700 ) --Set the size
 		inventory_frame:SetPos(ScrW() / 2 - inventory_frame:GetWide() / 2, ScrH() / 2 - inventory_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
-		inventory_frame:SetTitle( "Inventory Menu" ) --Set title
+		inventory_frame:SetTitle( "Car Inventory Menu" ) --Set title
 		inventory_frame:SetVisible( true )
 		inventory_frame:SetDraggable( true )
 		inventory_frame:ShowCloseButton( true )
@@ -23,11 +26,11 @@ function GM.car_inventory_window(ply)
 			PropertySheet:SetPos( 5, 50 )
 			PropertySheet:SetSize( inventory_frame:GetWide() - 10 , inventory_frame:GetTall() - 60 )
 			
-			local weaponPanel = PNRP.build_car_inv_List(ply, "weapon", inventory_frame, PropertySheet)
-			local ammoPanel = PNRP.build_car_inv_List(ply, "ammo", inventory_frame, PropertySheet)
-			local medicalPanel = PNRP.build_car_inv_List(ply, "medical", inventory_frame, PropertySheet)
-			local foodPanel = PNRP.build_car_inv_List(ply, "food", inventory_frame, PropertySheet)
-			local toolsPanel = PNRP.build_car_inv_List(ply, "tool", inventory_frame, PropertySheet)
+			local weaponPanel = PNRP.build_car_inv_List(ply, "weapon", inventory_frame, PropertySheet, MyCarInventory)
+			local ammoPanel = PNRP.build_car_inv_List(ply, "ammo", inventory_frame, PropertySheet, MyCarInventory)
+			local medicalPanel = PNRP.build_car_inv_List(ply, "medical", inventory_frame, PropertySheet, MyCarInventory)
+			local foodPanel = PNRP.build_car_inv_List(ply, "food", inventory_frame, PropertySheet, MyCarInventory)
+			local toolsPanel = PNRP.build_car_inv_List(ply, "tool", inventory_frame, PropertySheet, MyCarInventory)
 						
 			PropertySheet:AddSheet( "Weapons", weaponPanel, "gui/silkicons/bomb", false, false, "Build Weapons" )
 			PropertySheet:AddSheet( "Ammo", ammoPanel, "gui/silkicons/box", false, false, "Create Ammo" )
@@ -46,7 +49,7 @@ function GM.car_inventory_window(ply)
 			InvWeight:SizeToContents() 
 end
 
-function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet)
+function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyCarInventory)
 
 	local sc = 0
 	local sp = 0
@@ -149,6 +152,15 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet)
 
 end
 
-concommand.Add( "pnrp_carinv", GM.car_inventory_window )
+datastream.Hook( "pnrp_OpenCarInvWindow", GM.car_inventory_window )
+
+function GM.initCarInventory(ply)
+
+	RunConsoleCommand("pnrp_OpenCarInventory")
+
+end
+concommand.Add( "pnrp_carinv",  GM.initCarInventory )
+
+--concommand.Add( "pnrp_carinv", GM.car_inventory_window )
 
 --EOF

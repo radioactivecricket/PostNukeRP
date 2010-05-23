@@ -17,14 +17,19 @@ function ENT:Initialize()
 	self.Fertilized = false
 	self.Airator = false
 	self.CanPrune = true
-	timer.Create( "plantupdate_"..tostring(self.Entity:EntIndex()), 60, 0, PlantUpdate, self.Entity )
+	timer.Create( "plantupdate_"..tostring(self.Entity:EntIndex()), 120, 0, PlantUpdate, self.Entity )
 end
 
 function PlantUpdate( ent )
-	local statusChange = -15
+	local statusChange = -10
 	
 	if ent.PlantStatus > 75 and ent.FruitLevel < 3 then
-		ent.FruitLevel = ent.FruitLevel + 1
+		-- ent.FruitLevel = ent.FruitLevel + 1
+		local fruitent = ents.Create("food_orange")
+		fruitent:SetModel("models/props/cs_italy/orange.mdl")
+		fruitent:SetAngles(Angle(0,0,0))
+		fruitent:SetPos(ent:LocalToWorld(Vector(0,0,20)))
+		fruitent:Spawn()
 	end
 	
 	if ent.Filtered then
@@ -32,11 +37,11 @@ function PlantUpdate( ent )
 	end
 	
 	if ent.Fertilized then
-		statusChange = statusChange + 4
+		statusChange = statusChange + 3
 	end
 	
 	if ent.Airator then
-		statusChange = statusChange + 4
+		statusChange = statusChange + 3
 	end
 	
 	ent.PlantStatus = ent.PlantStatus + statusChange
@@ -79,7 +84,7 @@ function DoFertilize( pl, handler, id, encoded, decoded )
 		pl:DecResource( "Chemicals", 5 )
 		
 		ent.Fertilized = true
-		timer.Create( "unfertilize_"..tostring(ent:EntIndex()), 300, 1, function()
+		timer.Create( "unfertilize_"..tostring(ent:EntIndex()), 600, 1, function()
 			ent.Fertilized = false
 		end )
 		pl:ChatPrint("Fertilized!")
@@ -127,15 +132,16 @@ datastream.Hook( "harvest_stream", DoHarvest )
 	
 function DoPrune( pl, handler, id, encoded, decoded )
 	local ent = decoded[1]
+	local amount = decoded[2]
 	ent.CanPrune = false
 	pl:Freeze(true)
 	pl:ChatPrint("Pruning...")
 	
-	timer.Simple( 10, function ()
+	timer.Simple( amount/2, function ()
 		pl:Freeze(false)
 		ent.CanPrune = true
 		
-		ent.PlantStatus = ent.PlantStatus + 10
+		ent.PlantStatus = ent.PlantStatus + amount
 		if ent.PlantStatus > 100 then ent.PlantStatus = 100 end
 		pl:ChatPrint("It looks much better!")
 	end )

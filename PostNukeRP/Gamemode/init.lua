@@ -69,12 +69,13 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		ply:IncResource("Small_Parts",0)
 		ply:IncResource("Chemicals",0)
 		
-		PNRP.SendInventory( ply )
-		PNRP.SendCarInventory( ply )
+--		PNRP.SendInventory( ply )
+--		PNRP.SendCarInventory( ply )
 		
 		PNRP.ReturnWorldCache( ply )
 		
 		Msg("Load Timer run for "..ply:Nick().."\n")
+		ply:ChatPrint("Welcome to the Wasteland, Press F1 for Help!")
 	end)
 		
 --	PNRP.SendInventory( ply )

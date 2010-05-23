@@ -65,7 +65,7 @@ function GM:ScoreboardShow()
 		 		PlayerPanel.Health:SetContentAlignment( 5 )
 		 		
 		 		PlayerPanel.Ping = vgui.Create("DLabel", PlayerPanel)		
-				PlayerPanel.Ping:SetPos(580, 5)
+				PlayerPanel.Ping:SetPos(575, 5)
 				PlayerPanel.Ping:SetText("Ping: "..idiot:Ping())
 				PlayerPanel.Ping:SetColor(team.GetColor(idiot:Team()))
 				PlayerPanel.Ping:SizeToContents() 
