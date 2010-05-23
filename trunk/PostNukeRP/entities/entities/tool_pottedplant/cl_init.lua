@@ -105,27 +105,49 @@ function PlantMenu( um )
 	end
 	
 	if plantStatus < 100 and canPrune then
+		local amountLabel = vgui.Create("Label", plant_frame)
+		amountLabel:SetPos( 160, 250 )
+		amountLabel:SetText( "How long to work:" )
+		amountLabel:SizeToContents()
+			
+		local amountText = vgui.Create( "DTextEntry", plant_frame )
+		amountText:SetPos( 160,270 )
+		amountText:SetTall( 20 )
+		amountText:SetWide( 75 )
+		amountText:SetEnterAllowed( true )
+		amountText.OnEnter = function()
+			local amount = math.Round(tonumber(amountText:GetValue()))
+			if amount < 1 then return end
+			datastream.StreamToServer( "prune_stream", { plantEnt, amount } )
+			plant_frame:Close()
+		end
+	
 		local PruneButton = vgui.Create( "DButton" )
 		PruneButton:SetParent( plant_frame )
 		PruneButton:SetText( "Prune and Water" )
 		PruneButton:SetPos( 25, 250 )
 		PruneButton:SetSize( 125, 30 )
 		PruneButton.DoClick = function ()
-			datastream.StreamToServer( "prune_stream", { plantEnt } )
+			local amount = math.Round(tonumber(amountText:GetValue()))
+			if amount < 1 then return end
+			datastream.StreamToServer( "prune_stream", { plantEnt, amount } )
 			plant_frame:Close()
 		end
 	end
 	
-	if fruitLevel > 0 then
-		local HarvestButton = vgui.Create( "DButton" )
-		HarvestButton:SetParent( plant_frame )
-		HarvestButton:SetText( "Harvest Fruits" )
-		HarvestButton:SetPos( 25, 300 )
-		HarvestButton:SetSize( 125, 30 )
-		HarvestButton.DoClick = function ()
-			datastream.StreamToServer( "harvest_stream", { plantEnt } )
-			plant_frame:Close()
-		end
-	end
+	
+
+	
+	-- if fruitLevel > 0 then
+		-- local HarvestButton = vgui.Create( "DButton" )
+		-- HarvestButton:SetParent( plant_frame )
+		-- HarvestButton:SetText( "Harvest Fruits" )
+		-- HarvestButton:SetPos( 25, 300 )
+		-- HarvestButton:SetSize( 125, 30 )
+		-- HarvestButton.DoClick = function ()
+			-- datastream.StreamToServer( "harvest_stream", { plantEnt } )
+			-- plant_frame:Close()
+		-- end
+	-- end
 end
 usermessage.Hook("plant_menu", PlantMenu)

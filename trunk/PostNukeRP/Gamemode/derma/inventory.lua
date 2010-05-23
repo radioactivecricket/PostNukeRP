@@ -1,11 +1,15 @@
 --Build Inventory Window
 
-MyInventory = {}
-
+--MyInventory = {}
+local CurCarInvWeight
 local inventory_frame
 
-function GM.inventory_window(ply)
-				 		
+--function GM.inventory_window(ply)
+function GM.inventory_window( handler, id, encoded, decoded )
+	local MyInventory = decoded[1]		
+	local CurWeight = decoded[2]	
+	CurCarInvWeight = decoded[3]
+	local ply = LocalPlayer()	
 	inventory_frame = vgui.Create( "DFrame" )
 		inventory_frame:SetSize( 700, 700 ) --Set the size
 		inventory_frame:SetPos(ScrW() / 2 - inventory_frame:GetWide() / 2, ScrH() / 2 - inventory_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
@@ -22,12 +26,12 @@ function GM.inventory_window(ply)
 			PropertySheet:SetPos( 5, 50 )
 			PropertySheet:SetSize( inventory_frame:GetWide() - 10 , inventory_frame:GetTall() - 60 )
 			
-			local weaponPanel = PNRP.build_inv_List(ply, "weapon", inventory_frame, PropertySheet)
-			local ammoPanel = PNRP.build_inv_List(ply, "ammo", inventory_frame, PropertySheet)
-			local medicalPanel = PNRP.build_inv_List(ply, "medical", inventory_frame, PropertySheet)
-			local foodPanel = PNRP.build_inv_List(ply, "food", inventory_frame, PropertySheet)
-			local vehiclePanel = PNRP.build_inv_List(ply, "vehicle", inventory_frame, PropertySheet)
-			local toolsPanel = PNRP.build_inv_List(ply, "tool", inventory_frame, PropertySheet)
+			local weaponPanel = PNRP.build_inv_List(ply, "weapon", inventory_frame, PropertySheet, MyInventory)
+			local ammoPanel = PNRP.build_inv_List(ply, "ammo", inventory_frame, PropertySheet, MyInventory)
+			local medicalPanel = PNRP.build_inv_List(ply, "medical", inventory_frame, PropertySheet, MyInventory)
+			local foodPanel = PNRP.build_inv_List(ply, "food", inventory_frame, PropertySheet, MyInventory)
+			local vehiclePanel = PNRP.build_inv_List(ply, "vehicle", inventory_frame, PropertySheet, MyInventory)
+			local toolsPanel = PNRP.build_inv_List(ply, "tool", inventory_frame, PropertySheet, MyInventory)
 						
 			PropertySheet:AddSheet( "Weapons", weaponPanel, "gui/silkicons/bomb", false, false, "Build Weapons" )
 			PropertySheet:AddSheet( "Ammo", ammoPanel, "gui/silkicons/box", false, false, "Create Ammo" )
@@ -49,7 +53,7 @@ function GM.inventory_window(ply)
 			InvWeight:SizeToContents() 
 end
 
-function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet)
+function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInventory)
 
 	local sc = 0
 	local sp = 0
@@ -187,7 +191,14 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet)
 	return pnlList
 
 end
+datastream.Hook( "pnrp_OpenInvWindow", GM.inventory_window )
 
-concommand.Add( "pnrp_inv",  GM.inventory_window )
+function GM.initInventory(ply)
+
+	RunConsoleCommand("pnrp_OpenInventory")
+
+end
+concommand.Add( "pnrp_inv",  GM.initInventory )
+--concommand.Add( "pnrp_inv",  GM.inventory_window )
 
 --EOF

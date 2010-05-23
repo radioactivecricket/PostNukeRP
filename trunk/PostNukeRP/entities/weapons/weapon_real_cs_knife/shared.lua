@@ -199,7 +199,7 @@ function SWEP:PrimaryAttack()
 
 	self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
 	self.Owner:SetAnimation( PLAYER_ATTACK1 )
-	Msg(tostring(PLAYER_ATTACK1).."\n")
+--	Msg(tostring(PLAYER_ATTACK1).."\n")
 	if ( trace.Hit ) then
 
 		if trace.Entity:IsPlayer() or string.find(trace.Entity:GetClass(),"npc") or string.find(trace.Entity:GetClass(),"prop_ragdoll") then

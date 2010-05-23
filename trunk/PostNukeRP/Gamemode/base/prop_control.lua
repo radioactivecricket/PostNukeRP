@@ -199,17 +199,20 @@ function GM:PlayerSpawnSENT( p, classname )
 	return true
 end
 
-function GM:PlayerSpawnSWEP( p, classname )
+function GM:PlayerSpawnSWEP( ply, class, wep )
 
-	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	ply:ChatPrint( "Spawning the F-ing Weapon" )
 
-		p:ChatPrint( "SWEP spawning is disabled." )
+	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	
+		ply:ChatPrint( "SWEP spawning is disabled." )
 	
 		return false
 		
 	end	
 
 	return true
+		
 	
 end
 
