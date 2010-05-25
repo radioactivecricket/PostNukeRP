@@ -112,7 +112,7 @@ function PNRP.OpenMainInventory(ply)
 	local tbl = { }
 	if !file.Exists( ILoc ) then 
 		print( "Inventory file doesn't exist !" ) 
-		--datastream.StreamToClients(ply, "OpenInv", { 0,0 })
+		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
 	else
 	--	local Inv = PNRP.Inventory( p )
 		tbl = util.KeyValuesToTable(file.Read(ILoc))
@@ -188,7 +188,7 @@ function PNRP.OpenMainCarInventory(ply)
 	local tbl = { }
 	if !file.Exists( ILoc ) then 
 		print( "Inventory file doesn't exist !" ) 
-		--datastream.StreamToClients(ply, "OpenInv", { 0,0 })
+		datastream.StreamToClients(ply, "pnrp_OpenCarInvWindow", { tbl, tostring(PNRP.CarInventoryWeight( ply )) })
 	else
 	--	local Inv = PNRP.Inventory( p )
 		tbl = util.KeyValuesToTable(file.Read(ILoc))
