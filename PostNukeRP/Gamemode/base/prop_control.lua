@@ -321,7 +321,7 @@ function ToolCheck( ply, tr, toolmode )
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 		return true
 	end
-	
+	--ply:ChatPrint(tostring(toolmode))
 	local searchPos
 	
 	if string.find(ent:GetClass(), "ep_") == 2 then
@@ -371,6 +371,15 @@ function ToolCheck( ply, tr, toolmode )
 			return false 
 		end
 	end
+	
+	if toolmode == "colour" then
+		if ent:IsWorld() then return false end
+		if ent:IsPlayer() then return false end
+		if owner != ply:Nick() then
+			ply:ChatPrint("You do not own this.")
+			return false
+		end
+	end	
 	
 	if toolmode == "wire_expression" or toolmode == "wire_expression2" or toolmode == "wire_gate_expression" or toolmode == "wire_debugger" or toolmode == "wire_adv" then
 		if GetConVarNumber("pnrp_exp2Level") == 0 then 
