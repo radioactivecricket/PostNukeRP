@@ -634,6 +634,9 @@ function PNRP.SetOwnership( ply )
 	
 	local DoorsOwned = table.Count(PNRP.ListDoors(ply))
 	
+	if ent:IsWorld() then return end
+	if ent:IsPlayer() then return end
+	
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 		
 		if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
@@ -645,7 +648,7 @@ function PNRP.SetOwnership( ply )
 		
 		return
 	end
-	
+		
 	if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
 		ply:ConCommand("pnrp_removeowner")
 	else

@@ -135,6 +135,8 @@ local function HUDPaint( )
 end
 hook.Add( "HUDPaint", "PaintHud", HUDPaint )
 
+local HungSoundSW --Sound Switch to keep sound from repeating.
+
 function HUD1( )
 	
 	client = client or LocalPlayer( )				-- set a shortcut to the client
@@ -163,8 +165,17 @@ function HUD1( )
  	
 	local text = string.format( "Health: %iHP", client:Health( ) )	-- get health text
  	PNRP_HUD:PaintText( cx, cy, text, vars.font, colors.text )	-- paint health text and health bar
+ 	--Flashes the HP bar when low
+ 	if client:Health( ) < 40 then
+ 		colors.health_bar.fill = Color( 232 * math.abs(math.sin(CurTime()*2)), 0, 0, 255 )
+ 		colors.health_bar.shade = Color( 255 * math.abs(math.sin(CurTime()*2)), 104, 104, 255 )
+ 	else
+ 		colors.health_bar.shade = Color( 255, 104, 104, 255 )
+		colors.health_bar.fill = Color( 232, 0, 0, 255 )
+	end
 	PNRP_HUD:PaintBar( cx, cy + th + vars.text_spacing, bar_width, vars.bar_height, colors.health_bar, client:Health( ) / MaxHealth )
-	
+
+		
 	--Draws Suite Armor Bar
  	by = by +bar_width + vars.bar_spacing
  	
@@ -185,6 +196,24 @@ function HUD1( )
  	PNRP_HUD:PaintBar( cx + by, cy + th + vars.text_spacing, bar_width, vars.bar_height, colors.end_bar, endPerc )
  	--Draws the sleep indication line
  	draw.RoundedBox(0, cx + bar_width * 0.8 + by, cy + th + vars.text_spacing, 1, vars.bar_height, Color(255, 255, 255, 150))
+ 	--When the players End drops below 20
+ 	if endur < 20 then
+ 		local ehx
+ 		local ehy
+ 		ehx = ScrW( ) / 2 -20
+ 		ehy = ScrH( ) - th - 40
+ 		eh_font = "TargetID"
+ 		local eh_text = { }
+ 		eh_text.shadow = Color( 0, 0, 0, 200 )
+		eh_text.text = Color( 255, 255, 255, 255 * math.abs(math.sin(CurTime()*1.2)) )
+ 		
+ 		PNRP_HUD:PaintText( ehx, ehy, "You need to rest!", eh_font, eh_text )	
+ 		colors.end_bar.fill = Color( 112 * math.abs(math.sin(CurTime()*2)), 4, 168, 255 )
+ 		colors.end_bar.shade = Color( 165 * math.abs(math.sin(CurTime()*2)), 4, 255, 255 )
+ 	else
+ 		colors.end_bar.shade = Color( 165, 4, 255, 255 )
+		colors.end_bar.fill = Color(112, 4, 168, 155)
+ 	end
  	
  	--Draws the Hunger Bar
 	by = by + bar_width + vars.bar_spacing + vars.bar_spacing
@@ -196,6 +225,41 @@ function HUD1( )
  	
  	PNRP_HUD:PaintText( cx + by, cy, text, vars.font, colors.text )	
  	PNRP_HUD:PaintBar( cx + by, cy + th + vars.text_spacing, bar_width, vars.bar_height, colors.hunger_bar, hungPerc )
+ 	
+ 	if hung < 20 then
+ 		local ehx
+ 		local ehy
+ 		hux = ScrW( ) / 2 -20
+ 		huy = ScrH( ) - th - 60
+ 		hu_font = "TargetID"
+ 		local hu_text = { }
+ 		hu_text.shadow = Color( 0, 0, 0, 200 )
+ 		hu_text.text = Color( 255, 255, 255, 255 * math.abs(math.sin(CurTime()*1.2)) )
+		
+ 		PNRP_HUD:PaintText( hux, huy, "You need to eat!", hu_font, hu_text )
+ 		colors.hunger_bar.fill = Color( 0, 255 * math.abs(math.sin(CurTime()*2)), 30, 255 )
+ 		colors.hunger_bar.shade = Color( 136, 255 * math.abs(math.sin(CurTime()*2)), 136, 255 )
+ 		--Plays hunger sound
+ 		if HungSoundSW == 1 then
+ 			--checks if the player is femail
+			if string.find(string.lower(client:GetModel()), "/female") or
+				string.find(string.lower(client:GetModel()), "mossman") or
+			    string.find(string.lower(client:GetModel()), "alyx") then
+	 			
+			    client:EmitSound( "vo/npc/female01/question28.wav" )
+	 		else
+	 			client:EmitSound( "vo/npc/male01/question28.wav" )
+	 		end
+ 			HungSoundSW = 0
+ 		end
+ 	else
+ 		colors.hunger_bar.shade = Color( 136, 255, 136, 255 )
+		colors.hunger_bar.fill = Color(0, 255, 30, 155)
+ 	end
+ 	--Restes the sound switch
+ 	if hung >= 21 then
+ 		HungSoundSW = 1
+ 	end
  	
  	
  	--Draws Location Indicator
@@ -215,7 +279,7 @@ function HUD2( )
  	
 	local _, th = PNRP_HUD:TextSize( "TEXT", vars2.font )		-- get text size( height in this case )
  
-	local i = 3				-- shortcut to how many items( bars + text ) we have
+	local i = 4				-- shortcut to how many items( bars + text ) we have
  
 	local width = ( ScrW() - vars2.padding * 2 )
 	local bar_width = (width / i ) - vars2.bar_spacing - vars2.padding
@@ -235,6 +299,13 @@ function HUD2( )
  	
 	local text = string.format( "Health: %iHP", client:Health( ) )	-- get health text
  	PNRP_HUD:PaintText( cx, cy, text, vars2.font, colors.text )	-- paint health text and health bar
+ 	if client:Health( ) < 40 then
+ 		colors.health_bar.fill = Color( 232 * math.abs(math.sin(CurTime()*2)), 0, 0, 255 )
+ 		colors.health_bar.shade = Color( 255 * math.abs(math.sin(CurTime()*2)), 104, 104, 255 )
+ 	else
+ 		colors.health_bar.shade = Color( 255, 104, 104, 255 )
+		colors.health_bar.fill = Color( 232, 0, 0, 255 )
+	end
 	PNRP_HUD:PaintBar( cx, cy + th + vars2.text_spacing, bar_width, vars2.bar_height, colors.health_bar, client:Health( ) / MaxHealth )
 	
 	--Draws Suite Armor Bar
@@ -257,6 +328,24 @@ function HUD2( )
  	--Draws the sleep indication line
  	draw.RoundedBox(0, cx + bar_width * 0.8 + by, cy + th + vars2.text_spacing, 1, vars2.bar_height, Color(255, 255, 255, 150))
  	
+ 	if endur < 20 then
+ 		local ehx
+ 		local ehy
+ 		ehx = ScrW( ) / 2 -20
+ 		ehy = ScrH( ) - th - 40
+ 		eh_font = "TargetID"
+ 		local eh_text = { }
+ 		eh_text.shadow = Color( 0, 0, 0, 200 )
+		eh_text.text = Color( 255, 255, 255, 255 * math.abs(math.sin(CurTime()*1.2)) )
+ 		
+ 		PNRP_HUD:PaintText( ehx, ehy, "You need to rest!", eh_font, eh_text )	
+ 		colors.end_bar.fill = Color( 112 * math.abs(math.sin(CurTime()*2)), 4, 168, 255 )
+ 		colors.end_bar.shade = Color( 165 * math.abs(math.sin(CurTime()*2)), 4, 255, 255 )
+ 	else
+ 		colors.end_bar.shade = Color( 165, 4, 255, 255 )
+		colors.end_bar.fill = Color(112, 4, 168, 155)
+ 	end
+ 	
  	--Draws the Hunger Bar
 	by = by + bar_width + vars.bar_spacing + vars.bar_spacing
 	
@@ -267,6 +356,40 @@ function HUD2( )
  	
  	PNRP_HUD:PaintText( cx + by, cy, text, vars2.font, colors.text )	
  	PNRP_HUD:PaintBar( cx + by, cy + th + vars2.text_spacing, bar_width, vars2.bar_height, colors.hunger_bar, hungPerc )
+ 	
+ 	if hung < 20 then
+ 		local ehx
+ 		local ehy
+ 		hux = ScrW( ) / 2 -20
+ 		huy = ScrH( ) - th - 60
+ 		hu_font = "TargetID"
+ 		local hu_text = { }
+ 		hu_text.shadow = Color( 0, 0, 0, 200 )
+ 		hu_text.text = Color( 255, 255, 255, 255 * math.abs(math.sin(CurTime()*1.2)) )
+		
+ 		PNRP_HUD:PaintText( hux, huy, "You need to eat!", hu_font, hu_text )
+ 		colors.hunger_bar.fill = Color( 0, 255 * math.abs(math.sin(CurTime()*2)), 30, 255 )
+ 		colors.hunger_bar.shade = Color( 136, 255 * math.abs(math.sin(CurTime()*2)), 136, 255 )
+ 		--Plays hunger sound
+ 		if HungSoundSW == 1 then
+ 			--checks if the player is femail
+			if string.find(string.lower(client:GetModel()), "/female") or
+				string.find(string.lower(client:GetModel()), "mossman") or
+			    string.find(string.lower(client:GetModel()), "alyx") then
+	 			
+			    client:EmitSound( "vo/npc/female01/question28.wav" )
+	 		else
+	 			client:EmitSound( "vo/npc/male01/question28.wav" )
+	 		end
+ 			HungSoundSW = 0
+ 		end
+ 	else
+ 		colors.hunger_bar.shade = Color( 136, 255, 136, 255 )
+		colors.hunger_bar.fill = Color(0, 255, 30, 155)
+ 	end
+ 	if hung >= 21 then
+ 		HungSoundSW = 1
+ 	end
  	
  	--Draws Location Indicator
  	local indW = 10
@@ -282,6 +405,7 @@ function PNRP_HUD:PaintInsideIndic(x, y, w, h, font, color )
 	
 	surface.SetFont( font )
 	surface.SetTextPos( x+w+5, y-6 )
+	surface.color = Color(255,255,255,255)
 	
 	if (LocalPlayer():IsOutside()) then
 	

@@ -256,6 +256,8 @@ function GM:PlayerCanHearPlayersVoice( pListener, pTalker )
 end
 
 function GM:PlayerCanSeePlayersChat( strText, bTeamOnly, pListener, pTalker )
+	if not pTalker:IsPlayer() then return true end
+
 	local curDistance = pListener:GetShootPos():Distance(pTalker:GetShootPos())
 	local maxDistance = GetConVarNumber("pnrp_voiceDist")
 	

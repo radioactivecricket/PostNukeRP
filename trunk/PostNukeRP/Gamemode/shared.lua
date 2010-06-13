@@ -41,7 +41,27 @@ PNRP.DefWeps = {"weapon_physcannon",
 				"weapon_real_cs_knife",
 				"gmod_camera",
 				"gmod_tool"}
-
+				
+PNRP.WastelanderSkill={	"Skill_1",
+						"Skill_2",
+						"Skill_3"}
+							
+PNRP.ScavengerSkill = {	"Skill_1",
+					   	"Skill_2",
+					   	"Skill_3"}
+							
+PNRP.ScienceSkill = {	"Skill_1",
+					 	"Skill_2",
+					 	"Skill_3"}
+							
+PNRP.EngineerSkill = {	"Skill_1",
+					  	"Skill_2",
+					  	"Skill_3"}
+							
+PNRP.CultivatorSkill = {"Skill_1",
+						"Skill_2",
+						"Skill_3"}
+														
 CreateConVar("pnrp_SpawnMobs","1",FCVAR_REPLICATED + FCVAR_NOTIFY)
 CreateConVar("pnrp_MaxZombies","30",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_MaxFastZombies","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)

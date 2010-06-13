@@ -1,10 +1,11 @@
---if (SERVER) then
+SWEP.HoldType			= "normal"
+if (SERVER) then
 
 	AddCSLuaFile( "shared.lua" )
 	SWEP.Weight				= 5
 	SWEP.AutoSwitchTo			= false
 	SWEP.AutoSwitchFrom		= false
-	SWEP.HoldType			= "knife"
+--	SWEP.HoldType			= "knife"
 
 	local ActIndex = {}
 		ActIndex[ "knife" ]		= ACT_HL2MP_IDLE_KNIFE
@@ -30,7 +31,7 @@
 	
 		self:SetupWeaponHoldTypeForAI( t )
 	end
---end
+end
 
 if ( CLIENT ) then
 	SWEP.PrintName			= "KNIFE"	
@@ -65,8 +66,6 @@ SWEP.AdminSpawnable			= true
 
 SWEP.ViewModel 				= "models/weapons/v_knife_t.mdl"
 SWEP.WorldModel 				= "models/weapons/w_knife_t.mdl" 
-
---SWEP.HoldType 		= "knife" --Moved here to fix animation issue
 
 SWEP.Weight					= 5
 SWEP.AutoSwitchTo				= false
@@ -124,9 +123,9 @@ Initialize
 ---------------------------------------------------------*/
 function SWEP:Initialize() 
    
--- 	if ( SERVER ) then 
+ 	if ( SERVER ) then 
  		self:SetWeaponHoldType( self.HoldType ) 
--- 	end 
+ 	end 
 	util.PrecacheSound("weapons/iceaxe/iceaxe_swing1.wav")
 	util.PrecacheSound("weapons/knife/knife_hit1.wav")
 	util.PrecacheSound("weapons/knife/knife_hit2.wav")
@@ -158,7 +157,7 @@ function SWEP:SecondaryAttack()
 	self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
 	self.Owner:RemoveAmmo(1,self.Primary.Ammo)
 
---	if SERVER then
+	if SERVER then
 		local knife = ents.Create("ent_knife")
 		knife:SetAngles(self.Owner:EyeAngles())
 
@@ -182,7 +181,7 @@ function SWEP:SecondaryAttack()
 		local phys = knife:GetPhysicsObject()
 		phys:SetVelocity(self.Owner:GetAimVector() * 3000)
 		phys:AddAngleVelocity(Vector(0, 500, 0))
---	end
+	end
 end
 
 /*---------------------------------------------------------
@@ -199,7 +198,7 @@ function SWEP:PrimaryAttack()
 
 	self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
 	self.Owner:SetAnimation( PLAYER_ATTACK1 )
---	Msg(tostring(PLAYER_ATTACK1).."\n")
+
 	if ( trace.Hit ) then
 
 		if trace.Entity:IsPlayer() or string.find(trace.Entity:GetClass(),"npc") or string.find(trace.Entity:GetClass(),"prop_ragdoll") then
