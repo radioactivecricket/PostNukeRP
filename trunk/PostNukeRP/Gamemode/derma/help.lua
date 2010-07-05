@@ -196,22 +196,27 @@ function HelpPanel()
 			"WASTELANDER:",	
 			"Bonus to HP",
 			"Bonus to Endurance",
+			"Radar HUD Tool",
 			"",
 			"SCAVENGER:",
 			"Bonus to Run Speed",
 			"Bonus to Gathering Speed",
+			"Automated Sonic Miner",
 			"",
 			"ENGINEER:",	
 			"Ability to create Weapons and Ammo",
 			"Ability to create Vehicles",
+			"Smelter (Able to convert Scrap/Small Parts)",
 			"",
 			"SCIENCE:",		
 			"Ability to create Med Kits",
 			"Ability to create Explosives",
 			"Ability to create Turrets",
+			"Ability to breed Wasteland Worms",
 			"",
 			"CULTIVATOR:",	
-			"Ability to create higher quality food with additional bonuses."
+			"Ability to create higher quality food with additional bonuses",
+			"Ability to cultivate plants"
 			}
 			
 				for k, v in pairs( helpClass ) do
@@ -378,7 +383,7 @@ function HelpPanel()
 		local BuildDCats = vgui.Create("DCollapsibleCategory", pnlList)
 			BuildDCats:SetSize( pnlList:GetWide()-50, 50 ) -- Keep the second number at 50
 			BuildDCats:SetExpanded( 0 ) -- Expanded when popped up
-			BuildDCats:SetLabel( "Buuilding/Shop" )
+			BuildDCats:SetLabel( "Building/Shop" )
 			 
 			BuildList = vgui.Create( "DPanelList" )
 			BuildList:SetAutoSize( true )
@@ -424,7 +429,7 @@ function HelpPanel()
 			"In order for a player to reciover health while asleep, they will need to be inside.",
 			"",
 			"Player Death:",
-			"When you die, you will drop all your equiped weapons and ammo to the ground",
+			"When you die, you will drop all your equiped weapons and ammo to the ground.",
 			"This does not affect the items in your inventory.",
 			"If enabled, there is a % cost to your resources when you die."
 			}
@@ -472,6 +477,55 @@ function HelpPanel()
 				end	
 		pnlList:AddItem(EndHungerDCats)
 		
+		local ToolDCats = vgui.Create("DCollapsibleCategory", pnlList)
+			ToolDCats:SetSize( pnlList:GetWide()-50, 50 ) -- Keep the second number at 50
+			ToolDCats:SetExpanded( 0 ) -- Expanded when popped up
+			ToolDCats:SetLabel( "Player Tools" )
+			 
+			ToolList = vgui.Create( "DPanelList" )
+			ToolList:SetAutoSize( true )
+			ToolList:SetSpacing( 0 )
+			ToolList:EnableHorizontal( false )
+			ToolList:EnableVerticalScrollbar( true )
+			 
+			ToolDCats:SetContents( ToolList )
+			
+			local helpTool = 	{
+			"Wastelander Radar:",
+			"This tool can only be used by the Wastelander class. The tool must be placed outside in order to use. The Radar",
+			"must be attached to the players HUD before the player can synch to it. This device can be dissabled by other",
+			"players. Once activated the unit can not be moved.",
+			"",
+			"Wasteland Worm:",
+			"These worms will produce chemicals once every minute, and if the owner is a Scientist they have a 20% chance of",
+			"breeding every 10 minutes. These grubs are fragil and must be taken care of.",
+			"",
+			"Potted Plant:",
+			"The Potted Plant will produce oranges based on its condition. Only the cultivator knows how to take care of these",
+			"and how to improve thier condition.",
+			"",
+			"Automated Sonic Miner:",
+			"This can only be used by the Scavinger Class. This device will prodice 1 scrap or small part every minut. The miner",
+			"will also fend off regular antlions as well. This device can also be dissabled.",
+			"",
+			"Smelting Furnace:",
+			"This device is used by the Engineer to melt small parts into scrap.",
+			"",
+			"Pot, Pan, Skillet, and Coffee Pot:",
+			"These are used by the Cultivator to make higher end food.",
+			"",
+			"Portable Turret:",
+			"Can only be made by the Scientist, but can be used by any class.",
+			""
+			}
+			
+				for k, v in pairs( helpTool ) do
+					local ReadThis = vgui.Create( "DLabel" )
+						ReadThis:SetText( v )
+						ToolList:AddItem( ReadThis )
+				end	
+		pnlList:AddItem(ToolDCats)
+		
 		local helpEnd = 	{
 		"PostNukeRP Site: http://postnukerp.com/",
 		"PostNukeRP Forums: http://gmdev.thercs.net/",
@@ -494,6 +548,8 @@ function HelpPanel()
 				ReadThis:SetText( v )
 				EndHelpList:AddItem( ReadThis )
 		end	
+		
+		
 end				
 function HelpPanel_Old() 
 	local HelpFrame = vgui.Create("DFrame")

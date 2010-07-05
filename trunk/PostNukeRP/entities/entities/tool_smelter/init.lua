@@ -27,10 +27,9 @@ end
 
 function DoSmelt( pl, handler, id, encoded, decoded )
 	local smallparts = tonumber(decoded[1])
-	local chems = math.Round(smallparts / 2)
 	
-	if pl:Team() ~= 3 then
-		pl:ChatPrint( "You must be a scientist to use a smelter!" )
+	if pl:Team() ~= 4 then
+		pl:ChatPrint( "You must be a engineer to use a smelter!" )
 		return
 	end
 	
@@ -38,18 +37,14 @@ function DoSmelt( pl, handler, id, encoded, decoded )
 		pl:ChatPrint( "Not enough small parts to do this!" )
 		return
 	end
-	if pl:GetResource( "Chemicals" ) < chems then
-		pl:ChatPrint( "Not enough chemicals to do this!" )
-		return
-	end
 	
-	local amount = math.Round(smallparts / 2)
+	local amount = math.Round(smallparts / 3)
 	--pl:SetResource( "Small_Parts", pl:GetResource( "Small_Parts") - smallparts )
 	pl:DecResource( "Small_Parts", smallparts )
 	pl:DecResource( "Chemicals", chems )
 	pl:IncResource( "Scrap", amount )
 	
-	pl:ChatPrint( "You have smelted "..tostring(smallparts).." Small Parts and "..tostring(chems).." Chemicals into "..tostring(amount).." Scrap!" )
+	pl:ChatPrint( "You have smelted "..tostring(smallparts).." Small Parts into "..tostring(amount).." Scrap!" )
 end
 datastream.Hook( "smelt_stream", DoSmelt )
 

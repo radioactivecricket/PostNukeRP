@@ -1,4 +1,4 @@
-GM.Name 	= "PostNukeRP 0.32a" --Set the gamemode name
+GM.Name 	= "PostNukeRP v38" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird Gmod Addict" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://radioactivecricket.com" --Set the author website

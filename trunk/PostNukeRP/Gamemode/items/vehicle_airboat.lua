@@ -16,7 +16,7 @@ ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_airboat"
 ITEM.Model = "models/airboat.mdl"
 ITEM.Script = "scripts/vehicles/airboat.txt"
-ITEM.Weight = 100
+ITEM.Weight = 200
 
 function ITEM.Use( ply )
 	return true	
