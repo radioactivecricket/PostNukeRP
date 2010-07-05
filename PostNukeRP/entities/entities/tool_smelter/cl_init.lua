@@ -23,7 +23,7 @@ function SmeltMenu()
 	
 	local InfoLabel = vgui.Create( "Label", smelt_frame )
 	InfoLabel:SetPos( 10, 30 )
-	InfoLabel:SetText(" 2 Small Parts + 1 Chemicals = 1 Scrap")
+	InfoLabel:SetText(" 3 Small Parts = 1 Scrap")
 	InfoLabel:SizeToContents()
 	
 	local ScrapSlider = vgui.Create( "DNumSlider", smelt_frame )

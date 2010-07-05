@@ -1,24 +1,24 @@
 local ITEM = {}
 
 
-ITEM.ID = "tool_smelter"
+ITEM.ID = "tool_radar"
 
-ITEM.Name = "Smelting Furnace"
-ITEM.ClassSpawn = "Engineer"
-ITEM.Scrap = 200
-ITEM.Small_Parts = 75
-ITEM.Chemicals = 300
+ITEM.Name = "Wastelander Radar"
+ITEM.ClassSpawn = "Wastelander"
+ITEM.Scrap = 250
+ITEM.Small_Parts = 175
+ITEM.Chemicals = 75
 ITEM.Chance = 100
-ITEM.Info = "A metal smelting furnace.  Can convert small parts into scrap."
+ITEM.Info = "The SCXU 8034. The machine that goes... Ping!"
 ITEM.Type = "tool"
 ITEM.Remove = true
 ITEM.Energy = 0
-ITEM.Ent = "tool_smelter"
-ITEM.Model = "models/props_forest/furnace01.mdl"
+ITEM.Ent = "tool_radar"
+ITEM.Model = "models/props_mining/antlion_detector.mdl"
 ITEM.Script = ""
-ITEM.Weight = 20
+ITEM.Weight = 15
 
-function ITEM.Create( ply, class, pos )
+function ITEM.Create( ply, class, pos )	
 	local ent = ents.Create(class)
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetPos(pos)
@@ -28,6 +28,7 @@ function ITEM.Create( ply, class, pos )
 	
 	PNRP.AddWorldCache( ply,ITEM.ID )
 end
+
 
 function ITEM.Use( ply )
 	return true	

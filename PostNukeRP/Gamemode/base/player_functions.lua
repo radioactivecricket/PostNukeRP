@@ -500,6 +500,25 @@ function PNRP.GetSpawnflags ( ply )
 end
 concommand.Add( "pnrp_getinfo", PNRP.GetSpawnflags )
 
+function PNRP.GetRepelSpawnflags ( ply )
+	
+	local repelpoints = ents.FindByClass("point_antlion_repellant")
+	for k, v in pairs(repelpoints) do
+		for k2,v2 in pairs(v:GetKeyValues()) do
+	--		if string.lower(v) == wep:GetClass() then
+	--		Msg( tostring(k).." "..tostring(v).."\n")
+			ply:ChatPrint(tostring(k2)..": ["..tostring(v2).."] \n")
+	--			return true
+	--		end
+		end
+		ply:ChatPrint("Pos:  "..tostring(v:GetPos()))
+		ply:ChatPrint("------------------------------------------------------")
+	end
+--	ply:ChatPrint("Class: "..tostring(ent:GetClass()))
+--	Msg(EntityKeyValueInfo( ent, 0 ).."\n")
+end
+concommand.Add( "pnrp_getrepels", PNRP.GetRepelSpawnflags )
+
 function EntityKeyValueInfo( ent, key, value )
 
 --return tostring(key).." "..tostring(value)

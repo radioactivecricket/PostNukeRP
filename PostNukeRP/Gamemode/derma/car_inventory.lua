@@ -25,6 +25,7 @@ function GM.car_inventory_window( handler, id, encoded, decoded )
 			PropertySheet:SetParent( inventory_frame )
 			PropertySheet:SetPos( 5, 50 )
 			PropertySheet:SetSize( inventory_frame:GetWide() - 10 , inventory_frame:GetTall() - 60 )
+			PropertySheet:SetFadeTime( 0.5 )
 			
 			local weaponPanel = PNRP.build_car_inv_List(ply, "weapon", inventory_frame, PropertySheet, MyCarInventory)
 			local ammoPanel = PNRP.build_car_inv_List(ply, "ammo", inventory_frame, PropertySheet, MyCarInventory)

@@ -174,3 +174,7 @@ function ENT:Use( activator, caller )
 		umsg.End()
 	end
 end
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end

@@ -686,4 +686,5 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
 
 end   
 
+
 --EOF
