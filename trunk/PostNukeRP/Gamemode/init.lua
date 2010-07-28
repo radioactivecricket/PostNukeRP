@@ -76,6 +76,12 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		
 		Msg("Load Timer run for "..ply:Nick().."\n")
 		ply:ChatPrint("Welcome to the Wasteland, Press F1 for Help!")
+		
+		ConVarExists("pnrp_classChangePay")
+		ConVarExists("pnrp_toolLevel")
+		ConVarExists("pnrp_exp2Level")
+		ConVarExists("pnrp_adminNoCost")
+		ConVarExists("pnrp_propPay")
 	end)
 		
 --	PNRP.SendInventory( ply )

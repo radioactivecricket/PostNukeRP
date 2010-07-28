@@ -242,6 +242,7 @@ function RADAR_HUD:DrawRadar()
 	local inerC = Color( 204, 121, 44, 75 )
 	local npcC = Color( 0, 0, 229, 100 )
 	local playerC = Color( 0, 229, 0, 100 )
+	local recC = Color( 0, 225, 225, 100 )
 	local npcHostileC = Color( 229 * math.abs(math.sin(CurTime()*2)), 0, 0, 125 )
 	local dotSize = 6
 	local radar_x = 15
@@ -293,6 +294,48 @@ function RADAR_HUD:DrawRadar()
 				tx = math.cos(phi)*z
 				ty = math.sin(phi)*z
 				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, playerC )
+			end
+		end
+		for k,v in pairs(PNRP.JunkModels) do
+			if v == ent:GetModel() then 
+				--Calculates in relation to the local player
+				local loc_diff = ent:GetPos()-ply_pos
+				local tx = (loc_diff.x/radar_r)
+				local ty = (loc_diff.y/radar_r)
+				--Code for radar rotation
+				local z = math.sqrt( tx*tx + ty*ty )
+				local phi = math.Deg2Rad( math.Rad2Deg( math.atan2( tx, ty ) ) - math.Rad2Deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
+				tx = math.cos(phi)*z
+				ty = math.sin(phi)*z
+				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, recC )
+			end
+		end
+		for k,v in pairs(PNRP.ChemicalModels) do
+			if v == ent:GetModel() then 
+				--Calculates in relation to the local player
+				local loc_diff = ent:GetPos()-ply_pos
+				local tx = (loc_diff.x/radar_r)
+				local ty = (loc_diff.y/radar_r)
+				--Code for radar rotation
+				local z = math.sqrt( tx*tx + ty*ty )
+				local phi = math.Deg2Rad( math.Rad2Deg( math.atan2( tx, ty ) ) - math.Rad2Deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
+				tx = math.cos(phi)*z
+				ty = math.sin(phi)*z
+				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, recC )
+			end
+		end
+		for k,v in pairs(PNRP.SmallPartsModels) do
+			if v == ent:GetModel() then 
+				--Calculates in relation to the local player
+				local loc_diff = ent:GetPos()-ply_pos
+				local tx = (loc_diff.x/radar_r)
+				local ty = (loc_diff.y/radar_r)
+				--Code for radar rotation
+				local z = math.sqrt( tx*tx + ty*ty )
+				local phi = math.Deg2Rad( math.Rad2Deg( math.atan2( tx, ty ) ) - math.Rad2Deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
+				tx = math.cos(phi)*z
+				ty = math.sin(phi)*z
+				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, recC )
 			end
 		end
 	end

@@ -15,6 +15,12 @@ function GM:ScoreboardShow()
 		ScoreFrame:MakePopup()
 		
 		PNRP.buildMenu(ScoreFrame)
+		
+		local PlayerCount = table.getn( player.GetAll() )
+		local PlayerCountTxt = vgui.Create("DLabel", ScoreFrame)		
+			PlayerCountTxt:SetPos(580, 45 )
+			PlayerCountTxt:SetText("Player Online: "..tostring(PlayerCount))
+			PlayerCountTxt:SizeToContents() 
 			
 		local PlayerList = vgui.Create("DPanelList", ScoreFrame)
 			PlayerList:SetPos(20, 60)

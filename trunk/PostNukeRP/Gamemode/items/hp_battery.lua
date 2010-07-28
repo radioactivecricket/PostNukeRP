@@ -5,9 +5,9 @@ ITEM.ID = "battery"
 
 ITEM.Name = "Armor Battery"
 ITEM.ClassSpawn = "Science"
-ITEM.Scrap = 20
+ITEM.Scrap = 10
 ITEM.Small_Parts = 0
-ITEM.Chemicals = 50
+ITEM.Chemicals = 25
 ITEM.Chance = 100
 ITEM.Info = ""
 ITEM.Type = "medical"

@@ -5,9 +5,9 @@ ITEM.ID = "healthkit"
 
 ITEM.Name = "Health Kit"
 ITEM.ClassSpawn = "Science"
-ITEM.Scrap = 10
+ITEM.Scrap = 5
 ITEM.Small_Parts = 0
-ITEM.Chemicals = 20
+ITEM.Chemicals = 10
 ITEM.Chance = 100
 ITEM.Info = ""
 ITEM.Type = "medical"

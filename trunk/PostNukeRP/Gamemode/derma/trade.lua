@@ -26,8 +26,9 @@ function open_trade(ply)
 		TradeComboBox:SetMultiple( false ) -- <removed sarcastic and useless comment>
 
 		for k,v in pairs(ents.FindInSphere( ply:GetPos(), 500 )) do
+--		for k,v in pairs(ents.GetAll()) do
 			if v:GetClass()=="player" then
-				if v:GetName() != ply:Nick() then
+				if v:GetName() ~= ply:Nick() then
 					TradeComboBox:AddItem( v:GetName())
 				end
 			end
