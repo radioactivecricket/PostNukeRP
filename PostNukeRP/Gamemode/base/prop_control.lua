@@ -398,16 +398,16 @@ function ToolCheck( ply, tr, toolmode )
 	end
 	
 	--check for globally allowed tools (Admins can use all tools)
-	local DoToolCheck = false
+	local DoClassToolCheck = false
 	if GetConVarNumber("pnrp_toolLevel") == 1 and not ply:IsAdmin() then
-		DoToolCheck = true
+		DoClassToolCheck = true
 	elseif GetConVarNumber("pnrp_toolLevel") == 2 and ply:Team() ~= TEAM_ENGINEER then
-		DoToolCheck = true
+		DoClassToolCheck = true
 	elseif GetConVarNumber("pnrp_toolLevel") == 3 and not (ply:Team() == TEAM_ENGINEER or ply:Team() == TEAM_SCIENCE) then
-		DoToolCheck = true
+		DoClassToolCheck = true
 	end
 	
-	if DoToolCheck then
+	if DoClassToolCheck then
 		if not (toolmode == "remover" or toolmode == "weld" or toolmode == "weld_ez" 
 		  or toolmode == "easy_precision" or toolmode == "duplicator" 
 		  or toolmode == "adv_duplicator" or toolmode == "weld_ez2"
@@ -416,14 +416,34 @@ function ToolCheck( ply, tr, toolmode )
 			return false
 		end
 	end
-	--check for class (Engineers can use all tools right now)
-	--if team.GetName(ply:Team()) == "Engineer" then
-	--	return true
-	--end
 	
-	--delegate to assmod
-	--if you don't meet any of these, you can go to hell.
-	--return false
+	--Restricts most tools on items in the item base
+	local DoToolCheck = false
+	local myClass = ent:GetClass()
+	--Checks for weapon seats
+	if ent:GetClass() == "prop_vehicle_prisoner_pod" then
+		myClass = "weapon_seat"
+	end
+	--If prop_physics then check by model
+	if myClass == "prop_physics" then
+		local myModel = ent:GetModel()
+		for itemname, item in pairs( PNRP.Items ) do
+			if myModel == item.Model then DoToolCheck = true end
+		end		
+	else
+		--Checks the itembase for the item
+		local ItemID = PNRP.FindItemID( myClass )
+		if ItemID != nil then DoToolCheck = true end
+	end
+	--If Item is found in item base, do a tool check
+	if DoToolCheck then
+		if not (toolmode == "weld" or toolmode == "weld_ez" 
+		  or toolmode == "easy_precision" or toolmode == "weld_ez2"
+		  or toolmode == "nocollide")
+		   then 
+			return false
+		end
+	end
 end
 hook.Add( "CanTool", "ToolCheck", ToolCheck )
 
