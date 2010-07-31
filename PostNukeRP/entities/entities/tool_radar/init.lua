@@ -14,6 +14,7 @@ function ENT:Initialize()
 	self.Entity:PhysWake()
 	self.playbackRate = 0
 	self.Ready = 0
+	self.SyncTime = 60
 	self.entOwner = "none"
 	
 	local Radar_Sound = Sound("plats/tram_move.wav")
@@ -42,14 +43,30 @@ function ENT:Use( activator, caller )
 			self.entOwner = activator:Nick()
 		end
 		
+		local foundGPR = "false"
+		local constrs = constraint.FindConstraints( self, "Weld" )
+		for k, v in pairs( constrs ) do
+			if v.Entity[1].Entity:GetClass() == "tool_gpr" then 
+				local ownerGRP = self:GetNWString( "Owner", "None" )
+				if ownerGRP ~= self.entOwner then
+					constraint.RemoveConstraints( v.Entity[1].Entity, "Weld" )
+					foundGPR = "false"
+				else
+					foundGPR = "true"
+				end
+			end
+		end
+		
 		local rp = RecipientFilter()
 		rp:RemoveAllPlayers()
 		rp:AddPlayer( activator )
 		
 		umsg.Start("radar_menu", rp)
-		umsg.Short(self:Health())
-		umsg.Short(self.Entity:EntIndex())
-		umsg.Entity(self.Entity)
+			umsg.Short(self:Health())
+			umsg.Short(self.Entity:EntIndex())
+			umsg.Entity(self.Entity)
+			umsg.String(foundGPR)
+			umsg.Short(self.SyncTime)
 		umsg.End()
 	end
 end
@@ -59,8 +76,8 @@ function ENT:Think()
 		local owner = self:GetNWString( "Owner", "None" )
 		if owner ~= self.entOwner then
 			umsg.Start("radar_state", rp)
-			umsg.String("none")
-			umsg.Short(self.Entity:EntIndex())
+				umsg.String("none")
+				umsg.Short(self.Entity:EntIndex())
 			umsg.End()
 			self.entOwner = "none"
 			self.Ready = 0 
@@ -81,18 +98,22 @@ function ENT:Think()
 		end
 	end
 	
-	if self:Health() <= 0 then self.Ready = 0 end
+	if self:Health() <= 0 then self.Ready = -1 end
 	
 	if self.Ready == 1 then
 		--self:EmitSound("plats/tram_move.wav", 60, 50 )
 		self.Entity:SetPlaybackRate(self.playbackRate)
 		self:GetPhysicsObject():EnableMotion(false)
-	else
+	elseif self.Ready == -1 then
 		--self:StopRunningSound()
 		self.playbackRate = 0
 		self.RadarAmb:Stop()
 		self:GetPhysicsObject():EnableMotion(true)
 		constraint.RemoveAll(self.Entity)
+	else
+		self.playbackRate = 0
+		self.RadarAmb:Stop()
+		self:GetPhysicsObject():EnableMotion(true)
 	end
 	
 	if !self:IsOutside() then
@@ -123,16 +144,18 @@ function DoRepair( pl, handler, id, encoded, decoded )
 		
 		pl:ChatPrint("Repair compleate!")
 		if State == "dead" then
-			umsg.Start("radar_state", rp)
-			umsg.String("Standby")
-			umsg.Short(ent.Entity:EntIndex())
+			umsg.Start("radar_state", pl)
+				umsg.String("Standby")
+				umsg.Short(ent.Entity:EntIndex())
 			umsg.End()
 		else
-			umsg.Start("radar_state", rp)
-			umsg.String("Ready")
-			umsg.Short(ent.Entity:EntIndex())
+			umsg.Start("radar_state", pl)
+				umsg.String("Ready")
+				umsg.Short(ent.Entity:EntIndex())
 			umsg.End()
 		end
+		
+		self.Ready = 0
 	end )
 end
 datastream.Hook( "radar_repair_stream", DoRepair )
@@ -142,13 +165,13 @@ function DoSync( pl, handler, id, encoded, decoded )
 
 	pl:ChatPrint("Syncing Radar...")
 	
-	timer.Simple( 60, function ()
+	timer.Simple( ent.SyncTime, function ()
 		
 		pl:ChatPrint("Sync complete!")
 		
-		umsg.Start("radar_state", rp)
-		umsg.String("Ready")
-		umsg.Short(ent.Entity:EntIndex())
+		umsg.Start("radar_state", pl)
+			umsg.String("Ready")
+			umsg.Short(ent.Entity:EntIndex())
 		umsg.End()
 		
 		ent.RadarAmb:Play()
@@ -156,6 +179,25 @@ function DoSync( pl, handler, id, encoded, decoded )
 		ent.Entity:SetPlaybackRate(ent.playbackRate)
 		ent.RadarAmb:ChangePitch( 20 )
 		ent.RadarAmb:ChangeVolume( 50 )
+		
+		local foundGPR = "false"
+		local constrs = constraint.FindConstraints( ent, "Weld" )
+		for k, v in pairs( constrs ) do
+			if v.Entity[1].Entity:GetClass() == "tool_gpr" then 
+				local owner = ent:GetNWString( "Owner", "None" )
+				if owner ~= ent.entOwner then
+					constraint.RemoveConstraints( v.Entity[1].Entity, "Weld" )
+					foundGPR = "false"
+				else
+					foundGPR = "true"
+				end
+			end
+		end
+		
+		umsg.Start("radar_upgrade", pl)
+			umsg.String(foundGPR)
+			umsg.Short(ent.Entity:EntIndex())
+		umsg.End()
 		
 		ent:GetPhysicsObject():EnableMotion(false)
 		for k, v in pairs( ents.GetAll() ) do

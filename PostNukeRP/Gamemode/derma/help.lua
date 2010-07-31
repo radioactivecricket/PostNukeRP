@@ -495,6 +495,8 @@ function HelpPanel()
 			"This tool can only be used by the Wastelander class. The tool must be placed outside in order to use. The Radar",
 			"must be attached to the players HUD before the player can synch to it. This device can be dissabled by other",
 			"players. Once activated the unit can not be moved.",
+			"Ground-Penetrating Radar (GPR)",
+			"Upgrade for the Wastelander Radar, just weld to the unit then sync the Radar",
 			"",
 			"Wasteland Worm:",
 			"These worms will produce chemicals once every minute, and if the owner is a Scientist they have a 20% chance of",
