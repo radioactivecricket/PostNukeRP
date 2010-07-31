@@ -398,6 +398,13 @@ function HUD2( )
  	PNRP_HUD:PaintRoundedPanel( 6, x, y + height, indW + (vars2.padding * 2) + 60, indH + (vars2.padding * 2), colors.background )
  	PNRP_HUD:PaintInsideIndic(x + vars2.padding, y + height + vars2.padding, indW, indH, vars2.font, colors.inside_indic )
  	
+ 	local MoveText = "The PostNuleRP server is moving to a new hosting service."
+	PNRP_HUD:PaintText( 100, 150, MoveText, vars.font, colors.text )
+	MoveText = "New address: 206.217.143.17:27015"
+	PNRP_HUD:PaintText( 100, 175, MoveText, vars.font, colors.text )
+	MoveText = "For more info, visit http://postnukerp.com or http://radioactivecricket.com"
+	PNRP_HUD:PaintText( 100, 200, MoveText, vars.font, colors.text )
+	
 end
 
 

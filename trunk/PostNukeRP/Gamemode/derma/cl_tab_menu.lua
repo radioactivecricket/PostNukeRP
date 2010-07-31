@@ -19,7 +19,7 @@ function GM:ScoreboardShow()
 		local PlayerCount = table.getn( player.GetAll() )
 		local PlayerCountTxt = vgui.Create("DLabel", ScoreFrame)		
 			PlayerCountTxt:SetPos(580, 45 )
-			PlayerCountTxt:SetText("Player Online: "..tostring(PlayerCount))
+			PlayerCountTxt:SetText("Players Online: "..tostring(PlayerCount))
 			PlayerCountTxt:SizeToContents() 
 			
 		local PlayerList = vgui.Create("DPanelList", ScoreFrame)

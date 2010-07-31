@@ -3,6 +3,8 @@ include('shared.lua')
 local radarHUD_Switch = "false"
 local radarState = "none"
 local syncedENTIndex
+local radarGPR_Upgrade = "false"
+local syncMaxTime = 60
 
 function ENT:Draw()
 	self.Entity:DrawModel()
@@ -13,6 +15,8 @@ function RadarMenu( um )
 	local radarHP = um:ReadShort()
 	local endIndex = um:ReadShort()
 	local radarEnt = um:ReadEntity()
+	local radarGPR = um:ReadString()
+	syncMaxTime = um:ReadShort()
 	local Allowed = "true"
 	local entMSG = "none"
 	ply = LocalPlayer( )
@@ -70,6 +74,34 @@ function RadarMenu( um )
 			amtLabel:SetText( tostring(radarHP).."%" )
 			amtLabel:SizeToContents()
 			amtLabel:SetPos(StatusBar:GetWide() - 75, 3 )
+		end
+		
+		if radarGPR == "true" then
+			local GPR_Upgrad = vgui.Create( "DPanel", radar_frame )
+				GPR_Upgrad:SetPos( 155, 100 )
+				GPR_Upgrad:SetSize( 80, 20 )
+				GPR_Upgrad.Paint = function()
+					surface.SetDrawColor( 10, 100, 10, 255 )
+					surface.DrawRect( 0, 0, GPR_Upgrad:GetWide(), GPR_Upgrad:GetTall() )
+				end
+			local UpgradeLabel = vgui.Create("DLabel", GPR_Upgrad)
+				UpgradeLabel:SetColor( Color( 0, 0, 0, 255 ) )
+				UpgradeLabel:SetText( "GPR Installed" )
+				UpgradeLabel:SizeToContents()
+				UpgradeLabel:SetPos( 3, 3 )	
+		else
+			local GPR_Upgrad = vgui.Create( "DPanel", radar_frame )
+				GPR_Upgrad:SetPos( 155, 100 )
+				GPR_Upgrad:SetSize( 80, 20 )
+				GPR_Upgrad.Paint = function()
+					surface.SetDrawColor( 100, 10, 15, 255 )
+					surface.DrawRect( 0, 0, GPR_Upgrad:GetWide(), GPR_Upgrad:GetTall() )
+				end
+			local UpgradeLabel = vgui.Create("DLabel", GPR_Upgrad)
+				UpgradeLabel:SetColor( Color( 0, 0, 0, 255 ) )
+				UpgradeLabel:SetText( "GPR Not Found" )
+				UpgradeLabel:SizeToContents()
+				UpgradeLabel:SetPos( 3, 3 )
 		end
 		
 		if Allowed == "true" then
@@ -161,7 +193,6 @@ function RadarState( um )
 
 	local getState = um:ReadString()
 	local endIndex = um:ReadShort()
-	
 	if endIndex == syncedENTIndex then
 		if getState == "none" then		
 			radarHUD_Switch = "false"
@@ -170,6 +201,16 @@ function RadarState( um )
 	end
 end
 usermessage.Hook("radar_state", RadarState)
+
+function RadarUpgrade( um )
+
+	local getState = um:ReadString()
+	local endIndex = um:ReadShort()
+	if endIndex == syncedENTIndex then
+		radarGPR_Upgrade = getState
+	end
+end
+usermessage.Hook("radar_upgrade", RadarUpgrade)
 
 RADAR_HUD = { }
 local syncTimer = 0
@@ -214,12 +255,12 @@ function pnrpHUD_DrawRadar()
 			
 			if syncTimerSW == "off" then
 				syncTimerSW = "on"
-				timer.Create( "synch_Timer", 1, 60, function()
+				timer.Create( "synch_Timer", 1, syncMaxTime, function()
 					syncTimer = syncTimer + 1 
 				end)
 			end
 			
-			RADAR_HUD:PaintRoundedPanel( 0, 6, 225, 150 * ( syncTimer / 60 ), 25, Color( 204, 121, 44, 50 ) )
+			RADAR_HUD:PaintRoundedPanel( 0, 6, 225, 150 * ( syncTimer / syncMaxTime ), 25, Color( 204, 121, 44, 50 ) )
 		else
 			syncTimer = 0
 			syncTimerSW = "off"
@@ -230,6 +271,7 @@ function pnrpHUD_DrawRadar()
 			--RADAR_HUD:PaintRoundedPanel( 50, 15, 200, 100, 100, inerC )
 			RADAR_HUD:DrawRadar()
 		end
+		
 	end
 end
 
@@ -296,8 +338,10 @@ function RADAR_HUD:DrawRadar()
 				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, playerC )
 			end
 		end
-		for k,v in pairs(PNRP.JunkModels) do
-			if v == ent:GetModel() then 
+		if radarGPR_Upgrade == "true" then
+			
+			local isREC = RADAR_HUD:IsRecModel( ent:GetModel() ) 
+			if 	isREC then
 				--Calculates in relation to the local player
 				local loc_diff = ent:GetPos()-ply_pos
 				local tx = (loc_diff.x/radar_r)
@@ -309,36 +353,28 @@ function RADAR_HUD:DrawRadar()
 				ty = math.sin(phi)*z
 				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, recC )
 			end
-		end
-		for k,v in pairs(PNRP.ChemicalModels) do
-			if v == ent:GetModel() then 
-				--Calculates in relation to the local player
-				local loc_diff = ent:GetPos()-ply_pos
-				local tx = (loc_diff.x/radar_r)
-				local ty = (loc_diff.y/radar_r)
-				--Code for radar rotation
-				local z = math.sqrt( tx*tx + ty*ty )
-				local phi = math.Deg2Rad( math.Rad2Deg( math.atan2( tx, ty ) ) - math.Rad2Deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
-				tx = math.cos(phi)*z
-				ty = math.sin(phi)*z
-				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, recC )
-			end
-		end
-		for k,v in pairs(PNRP.SmallPartsModels) do
-			if v == ent:GetModel() then 
-				--Calculates in relation to the local player
-				local loc_diff = ent:GetPos()-ply_pos
-				local tx = (loc_diff.x/radar_r)
-				local ty = (loc_diff.y/radar_r)
-				--Code for radar rotation
-				local z = math.sqrt( tx*tx + ty*ty )
-				local phi = math.Deg2Rad( math.Rad2Deg( math.atan2( tx, ty ) ) - math.Rad2Deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
-				tx = math.cos(phi)*z
-				ty = math.sin(phi)*z
-				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, recC )
-			end
+			
 		end
 	end
+end
+
+function RADAR_HUD:IsRecModel( mdl )
+	for k,v in pairs(PNRP.JunkModels) do
+		if string.lower(mdl) == string.lower(v) then
+			return true
+		end
+	end
+	for k,v in pairs(PNRP.ChemicalModels) do
+		if string.lower(mdl) == string.lower(v) then
+			return true
+		end
+	end
+	for k,v in pairs(PNRP.SmallPartsModels) do
+		if string.lower(mdl) == string.lower(v) then
+			return true
+		end
+	end
+	return false
 end
 
 function RADAR_HUD:PaintText( x, y, text, font, color )
