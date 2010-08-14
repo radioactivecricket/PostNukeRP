@@ -49,6 +49,24 @@ function ENT:OnTakeDamage(dmg)
 		grubGib:SetSolid(SOLID_VPHYSICS)
 		grubGib:Activate()
 		
+		--Remove Grub from World Cache
+		local MyPlayer = NullEntity()
+	
+		if self:GetNetworkedString("Owner", "none") ~= "World" and self:GetNetworkedString("Owner", "none") ~= "none" then
+			for k, v in pairs(player.GetAll()) do
+				if v:Nick() == self:GetNetworkedString("Owner", "none") then
+					MyPlayer = v
+					break
+				end
+			end
+		end
+		if MyPlayer ~= NullEntity() then
+			ItemID = PNRP.FindItemID( self:GetClass() )
+			if ItemID then
+				PNRP.TakeFromWorldCache( MyPlayer, ItemID )
+			end
+		end
+		
 		timer.Simple(10, function ()
 			self:Remove()
 			grubGib:Remove()
@@ -125,13 +143,22 @@ function ENT.GrubUpdate( ent )
 						newGrub:Spawn()
 						newGrub:Activate()
 						newGrub:SetNetworkedString("Owner", ent:GetNetworkedString("Owner", "none"))
+						
+						--Adds new grub to the World Cache
+						if MyPlayer ~= NullEntity() then
+							ItemID = PNRP.FindItemID( newGrub:GetClass() )
+							if ItemID then
+								PNRP.AddWorldCache( MyPlayer,ItemID )
+							end
+						end
 					end
 				end
 			end
 		end
 	end
 
-	local howMany = math.random(3)
+	--local howMany = math.random(3)
+	local howMany = 1
 	
 	for i = 1, howMany do
 		local chemnug_ent = ents.Create( "msc_chemnug" )

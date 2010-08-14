@@ -60,7 +60,7 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	ply:GetTable().IsAsleep = false
 	
 	--Loads Weapons from Character's Save File
-	timer.Create(tostring(ply:UniqueID()), 5, 1, function()  
+	timer.Create(tostring(ply:UniqueID()), 6, 1, function()  
 	    self.LoadWeaps( ply )
 	    
 	    self.LoadStatus( ply )
@@ -126,6 +126,7 @@ function GM:PlayerDisconnected(ply)
 	
 	self.SaveCharacter(ply)
 	PNRP.GetAllCars( ply )
+	PNRP.GetAllTools( ply )
 	
 	local DoorList = PNRP.ListDoors( ply )
 	for k, v in pairs(DoorList) do
@@ -343,7 +344,7 @@ function GM:ShowTeam( ply )
 	local ent = tr.Entity
 	local myClass
 	--Added to remove the Null Entity error
-	if tostring(ent) == "[NULL Entity]" then return end
+	if tostring(ent) == "[NULL Entity]" or ent == nil then return end
 	
 	if ent:GetClass() == "prop_vehicle_prisoner_pod" then
 		myClass = "weapon_seat"
@@ -378,10 +379,8 @@ function GM:ShowTeam( ply )
 	end
 	
 	local ItemID = PNRP.FindItemID( myClass )
-	print("This is the ItemID:  "..ItemID)
-	
+		
 	if ItemID != nil then
-		print("This is the type:  "..PNRP.Items[ItemID].Type)
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
 			if tonumber(ent:GetNetworkedString( "Type" , "0" )) == 1 then
@@ -582,6 +581,24 @@ function GM:ShowSpare2( ply )
 	ply:ConCommand("pnrp_buy_shop")
 end
 
+function PNRP.GetAllTools( ply )
+	for k,v in pairs(ents.GetAll()) do
+		local myClass = v:GetClass()
+		local ItemID = PNRP.FindItemID( myClass )
+		if ItemID != nil then
+			local myType = PNRP.Items[ItemID].Type
+			if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "tool" then
+															
+				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
+				PNRP.AddToInentory( ply, ItemID )
+				PNRP.TakeFromWorldCache( ply, ItemID )
+				v:Remove()
+				
+			end
+		end	
+	end
+end
+
 function PNRP.GetAllCars( ply )
 	for k,v in pairs(ents.GetAll()) do
 		local myClass = v:GetClass()
@@ -637,7 +654,8 @@ PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 function PNRP.SetOwnership( ply )
 	local tr = ply:TraceFromEyes(200)
 	local ent = tr.Entity
-	
+	--Added to remove the Null Entity error
+	if tostring(ent) == "[NULL Entity]" or ent == nil then return end
 	local DoorsOwned = table.Count(PNRP.ListDoors(ply))
 	
 	if ent:IsWorld() then return end

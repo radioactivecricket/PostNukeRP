@@ -202,4 +202,8 @@ end
 concommand.Add( "pnrp_inv",  GM.initInventory )
 --concommand.Add( "pnrp_inv",  GM.inventory_window )
 
+function GM.EquipmentWindow(ply)
+
+end
+
 --EOF
