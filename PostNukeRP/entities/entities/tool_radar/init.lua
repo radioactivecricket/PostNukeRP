@@ -155,7 +155,7 @@ function DoRepair( pl, handler, id, encoded, decoded )
 			umsg.End()
 		end
 		
-		self.Ready = 0
+		ent.Ready = 0
 	end )
 end
 datastream.Hook( "radar_repair_stream", DoRepair )

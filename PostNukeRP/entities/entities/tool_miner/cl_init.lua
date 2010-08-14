@@ -10,11 +10,18 @@ function MinerMenu( um )
 	local smallparts = GetResource("Small_Parts")
 	local minerHP = um:ReadShort()
 	local endIndex = um:ReadShort()
+	local minerPower = um:ReadShort()
 	local minerEnt = um:ReadEntity()
 	local Allowed = "true"
 	local entMSG = "none"
 	ply = LocalPlayer( )
 	local owner = minerEnt:GetNWString( "Owner", "None" )
+	--Verifies the miners state
+	if minerPower == 0 then
+		minerState = "off"
+	else
+		minerState = "on"
+	end
 	
 	if owner ~= ply:Nick() then
 		entMSG = "You do not own this unit."

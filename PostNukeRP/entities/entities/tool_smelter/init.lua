@@ -41,7 +41,7 @@ function DoSmelt( pl, handler, id, encoded, decoded )
 	local amount = math.Round(smallparts / 3)
 	--pl:SetResource( "Small_Parts", pl:GetResource( "Small_Parts") - smallparts )
 	pl:DecResource( "Small_Parts", smallparts )
-	pl:DecResource( "Chemicals", chems )
+	--pl:DecResource( "Chemicals", chems )
 	pl:IncResource( "Scrap", amount )
 	
 	pl:ChatPrint( "You have smelted "..tostring(smallparts).." Small Parts into "..tostring(amount).." Scrap!" )

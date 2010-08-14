@@ -112,6 +112,7 @@ function ENT:Use( activator, caller )
 		umsg.Start("miner_menu", rp)
 		umsg.Short(self:Health())
 		umsg.Short(self.Entity:EntIndex())
+		umsg.Short(self.Power)
 		umsg.Entity(self.Entity)
 		umsg.End()
 	end
