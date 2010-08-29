@@ -1,4 +1,4 @@
-GM.Name 	= "PostNukeRP v40" --Set the gamemode name
+GM.Name 	= "PostNukeRP v41" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird Gmod Addict" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://radioactivecricket.com" --Set the author website
@@ -25,6 +25,8 @@ PNRP.Resources = { }
 table.insert(PNRP.Resources,"Scrap")
 table.insert(PNRP.Resources,"Small_Parts")
 table.insert(PNRP.Resources,"Chemicals")
+
+local PlayerMeta = FindMetaTable("Player")
 
 PNRP.JunkModels = { "models/props_junk/TrashCluster01a.mdl",
 	"models/Gibs/helicopter_brokenpiece_03.mdl"}
@@ -179,6 +181,15 @@ function PNRP.FindAmmoType( id, class )
 --			return "smg1"
 --		end
 	end
+end
+
+function PlayerMeta:TraceFromEyes(dist)
+	local trace = {}
+	trace.start = self:GetShootPos()
+	trace.endpos = trace.start + (self:GetAimVector() * dist)
+	trace.filter = self
+
+	return util.TraceLine(trace)
 end
 
 --EOF
