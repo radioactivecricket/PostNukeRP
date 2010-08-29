@@ -1,4 +1,5 @@
 local admin_frame
+local pp_frame
 
 function GM.open_admin(ply)
 	local GM = GAMEMODE
@@ -17,8 +18,15 @@ function GM.open_admin(ply)
 			shopmenu:SetText( "Admin Trade >" ) -- set the button text
 			shopmenu:SetPos(20, 25) -- set the button position in the frame
 			shopmenu:SetSize( 100, 20 ) -- set the button size
-			shopmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_trade_window" ) SCFrame=false admin_frame:Close() end 		
-						
+			shopmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_trade_window" ) SCFrame=false admin_frame:Close() end 	
+			
+		local ppmenu = vgui.Create("DButton") -- Create the button
+			ppmenu:SetParent( admin_frame ) -- parent the button to the frame
+			ppmenu:SetText( "Prop Control >" ) -- set the button text
+			ppmenu:SetPos(120, 25) -- set the button position in the frame
+			ppmenu:SetSize( 100, 20 ) -- set the button size
+			ppmenu.DoClick = function() datastream.StreamToServer( "Start_open_PropProtection" ) SCFrame=false admin_frame:Close() end 
+			
 		local AdminTabSheet = vgui.Create( "DPropertySheet" )
 			AdminTabSheet:SetParent( admin_frame )
 			AdminTabSheet:SetPos( 5, 50 )
@@ -451,8 +459,191 @@ function GM.open_admin(ply)
 		ply:ChatPrint("You are not an admin on this server!")
 	end
 end
-
-
 concommand.Add( "pnrp_admin_window", GM.open_admin )
 
+function GM.OpenPropProtectWindow( handler, id, encoded, decoded )
+	local BannedPropList = decoded[1]
+	local AllowedPropList = decoded[2]		
+	local GM = GAMEMODE
+	local ply = LocalPlayer()
+	local tr = ply:TraceFromEyes(400)
+	local ent = tr.Entity
+	local model
+	if ply:IsAdmin() then	
+		pp_frame = vgui.Create( "DFrame" )
+				pp_frame:SetSize( 500, 450 ) --Set the size
+				pp_frame:SetPos(ScrW() / 2 - pp_frame:GetWide() / 2, ScrH() / 2 - pp_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
+				pp_frame:SetTitle( " " ) --Set title
+				pp_frame:SetVisible( true )
+				pp_frame:SetDraggable( true )
+				pp_frame:ShowCloseButton( false )
+				pp_frame:MakePopup()
+				pp_frame.Paint = function() -- Paint function
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+			
+		local pp_TabSheet = vgui.Create( "DPropertySheet" )
+			pp_TabSheet:SetParent( pp_frame )
+			pp_TabSheet:SetPos( 5, 25 )
+			pp_TabSheet:SetSize( pp_frame:GetWide() - 10, pp_frame:GetTall() - 55 )
+			
+		--	local ppvLabel = vgui.Create("DLabel", pp_frame)
+		--		ppvLabel:SetPos(10, 25)
+		--		ppvLabel:SetColor( Color( 0, 0, 0, 255 ) )
+		--		ppvLabel:SetText( "Blocked Props" )
+		--		ppvLabel:SizeToContents()
+			local pBanPanel = vgui.Create( "DPanel", pp_TabSheet )
+				pBanPanel:SetPos( 5, 5 )
+				pBanPanel:SetSize( pp_TabSheet:GetWide(), pp_TabSheet:GetTall() )
+				pBanPanel.Paint = function() -- Paint function
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+			--//Banned Prop List//--
+			local pnlBList = vgui.Create("DPanelList", pBanPanel)
+				pnlBList:SetPos(5, 5)
+				pnlBList:SetSize(pBanPanel:GetWide() - 125, pBanPanel:GetTall() - 40)
+				pnlBList:EnableVerticalScrollbar(false) 
+				pnlBList:EnableHorizontal(true) 
+				pnlBList:SetSpacing(1)
+				pnlBList:SetPadding(10)
+				if BannedPropList != nil then
+					for k, v in pairs( BannedPropList ) do		
+						
+						local slot = vgui.Create("SpawnIcon", pBanPanel)
+
+						slot:SetModel(v)
+						slot:SetToolTip(v)
+						slot.DoClick = function()
+							PNRP.RemoveItemVerify(v, 1)
+						end
+						
+						pnlBList:AddItem(slot)
+					end
+				end
+			local pp_add = vgui.Create("DButton") 
+					pp_add:SetParent( pBanPanel ) 
+					pp_add:SetText( "Add Item" ) 
+					pp_add:SetPos(pnlBList:GetWide() + 15, 5)
+					pp_add:SetSize( 100, 20 ) 
+					pp_add.DoClick = function() 
+						if tostring(ent) == "[NULL Entity]" or ent == nil or ent:IsWorld() then 
+							pp_frame:Close()
+							ply:ChatPrint("You are not looking at anything.")
+						else
+							model = tostring(ent:GetModel())
+							ply:ChatPrint(model)
+							datastream.StreamToServer("PropProtect_AddItem", {model, 1} ) 
+							pp_frame:Close()
+							datastream.StreamToServer( "Start_open_PropProtection" )
+						end
+						
+					end	
+			local ppb_exit = vgui.Create("DButton") 
+					ppb_exit:SetParent( pBanPanel ) 
+					ppb_exit:SetText( "Exit" ) 
+					ppb_exit:SetPos(pnlBList:GetWide() + 15, pnlBList:GetTall() - 20)
+					ppb_exit:SetSize( 100, 20 ) 
+					ppb_exit.DoClick = function() 
+						pp_frame:Close()						
+					end	
+			pp_TabSheet:AddSheet( "Banned Props List", pBanPanel, "gui/silkicons/brick_add", false, false, "Banned Props List" )
+			
+			--//Allowed Prop List//--
+			local pAllowedPanel = vgui.Create( "DPanel", pp_TabSheet )
+				pAllowedPanel:SetPos( 5, 5 )
+				pAllowedPanel:SetSize( pp_TabSheet:GetWide(), pp_TabSheet:GetTall() )
+				pAllowedPanel.Paint = function() -- Paint function
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+			local pnlAList = vgui.Create("DPanelList", pAllowedPanel)
+				pnlAList:SetPos(5, 5)
+				pnlAList:SetSize(pAllowedPanel:GetWide() - 125, pAllowedPanel:GetTall() - 40)
+				pnlAList:EnableVerticalScrollbar(false) 
+				pnlAList:EnableHorizontal(true) 
+				pnlAList:SetSpacing(1)
+				pnlAList:SetPadding(10)
+				if AllowedPropList != nil then
+					for k, v in pairs( AllowedPropList ) do		
+						
+						local slot = vgui.Create("SpawnIcon", pAllowedPanel)
+
+						slot:SetModel(v)
+						slot:SetToolTip(v)
+						slot.DoClick = function()
+							PNRP.RemoveItemVerify(v, 2)
+						end
+						
+						pnlAList:AddItem(slot)
+					end
+				end
+			local ppa_add = vgui.Create("DButton") 
+					ppa_add:SetParent( pAllowedPanel ) 
+					ppa_add:SetText( "Add Item" ) 
+					ppa_add:SetPos(pnlAList:GetWide() + 15, 5)
+					ppa_add:SetSize( 100, 20 ) 
+					ppa_add.DoClick = function() 
+						if tostring(ent) == "[NULL Entity]" or ent == nil or ent:IsWorld() then 
+							pp_frame:Close()
+							ply:ChatPrint("You are not looking at anything.")
+						else
+							model = tostring(ent:GetModel())
+							ply:ChatPrint(model)
+							datastream.StreamToServer("PropProtect_AddItem", {model, 2} ) 
+							pp_frame:Close()
+							datastream.StreamToServer( "Start_open_PropProtection" )
+						end
+						
+					end	
+			local ppa_exit = vgui.Create("DButton") 
+					ppa_exit:SetParent( pAllowedPanel ) 
+					ppa_exit:SetText( "Exit" ) 
+					ppa_exit:SetPos(pnlAList:GetWide() + 15, pnlAList:GetTall() - 20)
+					ppa_exit:SetSize( 100, 20 ) 
+					ppa_exit.DoClick = function() 
+						pp_frame:Close()						
+					end	
+			pp_TabSheet:AddSheet( "Allowed Props List", pAllowedPanel, "gui/silkicons/brick_add", false, false, "Allowed Props List" )
+	end
+end
+datastream.Hook( "pnrp_OpenPropProtectWindow", GM.OpenPropProtectWindow )
+
+function PNRP.RemoveItemVerify(model, switch)
+	local ply = LocalPlayer()
+	if ply:IsAdmin() then	
+		local ppv_frame = vgui.Create( "DFrame" )
+				ppv_frame:SetSize( 175, 85 ) --Set the size
+				ppv_frame:SetPos(ScrW() / 2 - ppv_frame:GetWide() / 2, ScrH() / 2 - ppv_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
+				ppv_frame:SetTitle( "Prop Protection Menu" ) --Set title
+				ppv_frame:SetVisible( true )
+				ppv_frame:SetDraggable( true )
+				ppv_frame:ShowCloseButton( true )
+				ppv_frame:MakePopup()
+				
+			local ppvLabel = vgui.Create("DLabel", ppv_frame)
+				ppvLabel:SetPos(15, 30)
+				ppvLabel:SetColor( Color( 0, 0, 0, 255 ) )
+				ppvLabel:SetText( "Delete this item from the list?" )
+				ppvLabel:SizeToContents()
+				
+				local ppv_yes = vgui.Create("DButton") -- Create the button
+					ppv_yes:SetParent( ppv_frame ) -- parent the button to the frame
+					ppv_yes:SetText( "Yes" ) -- set the button text
+					ppv_yes:SetPos(30, 50) -- set the button position in the frame
+					ppv_yes:SetSize( 50, 20 ) -- set the button size
+					ppv_yes.DoClick = function() 
+						datastream.StreamToServer( "PropProtect_RemoveItem", {model, switch}) 
+						ppv_frame:Close() 
+						pp_frame:Close() 
+						datastream.StreamToServer( "Start_open_PropProtection" )
+					end 
+				
+				local ppv_no = vgui.Create("DButton") -- Create the button
+					ppv_no:SetParent( ppv_frame ) -- parent the button to the frame
+					ppv_no:SetText( "No" ) -- set the button text
+					ppv_no:SetPos(85, 50) -- set the button position in the frame
+					ppv_no:SetSize( 50, 20 ) -- set the button size
+					ppv_no.DoClick = function() ppv_frame:Close() end
+					
+	end
+end
 --EOF

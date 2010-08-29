@@ -281,14 +281,6 @@ end
 /*---------------------------------------------------------
   Other
 ---------------------------------------------------------*/
-function PlayerMeta:TraceFromEyes(dist)
-	local trace = {}
-	trace.start = self:GetShootPos()
-	trace.endpos = trace.start + (self:GetAimVector() * dist)
-	trace.filter = self
-
-	return util.TraceLine(trace)
-end
 
 function EntityMeta:IsDoor()
 	local class = self:GetClass()

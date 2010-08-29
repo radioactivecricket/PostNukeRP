@@ -68,6 +68,160 @@ for k, v in pairs(PNRP.SmallPartsModels) do
 	AddBannedProp(v)
 end
 
+function PNRP.GetBannedPropsList( )
+	local tbl = { }
+	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
+	if file.Exists("PostNukeRP/banned_props.txt") then
+		tbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
+		if tbl ~= nil then
+			for k, v in pairs(tbl) do
+				AddBannedProp(v)
+			end
+		end
+	else
+		file.Write("PostNukeRP/banned_props.txt",util.TableToKeyValues(tbl))
+	end
+end
+PNRP.GetBannedPropsList( )
+
+function PNRP.GetAllowedPropsList( )
+	local tbl = { }
+	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
+	if file.Exists("PostNukeRP/allowed_props.txt") then
+		tbl = glon.decode(file.Read("PostNukeRP/allowed_props.txt"))
+		if tbl ~= nil then
+			for k, v in pairs(tbl) do
+				AddAllowedProp(v)
+			end
+		end
+	else
+		file.Write("PostNukeRP/allowed_props.txt",util.TableToKeyValues(tbl))
+	end
+end
+PNRP.GetAllowedPropsList( )
+
+function PNRP.Start_open_PropPprotection(ply)
+	local bannedtbl = { }
+	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
+	if file.Exists("PostNukeRP/banned_props.txt") then
+		bannedtbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
+	else
+		file.Write("PostNukeRP/banned_props.txt",glon.encode(bannedtbl))
+	end
+	local allowedtbl = { }
+	if file.Exists("PostNukeRP/allowed_props.txt") then
+		allowedtbl = glon.decode(file.Read("PostNukeRP/allowed_props.txt"))
+	else
+		file.Write("PostNukeRP/allowed_props.txt",glon.encode(allowedtbl))
+	end
+	datastream.StreamToClients(ply, "pnrp_OpenPropProtectWindow", { bannedtbl, allowedtbl } )
+end
+datastream.Hook( "Start_open_PropProtection", PNRP.Start_open_PropPprotection )
+
+function PNRP.PropProtect_AddItem(ply, handler, id, encoded, decoded )
+	local model = decoded[1]
+	local switch = decoded[2] --1 is add Prop Block, 2 is add Prop Allowed
+	local tbl = {}
+	if switch == 1 then
+		--Prop Blocking 
+		if file.Exists("PostNukeRP/banned_props.txt") then
+			tbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
+			if tbl ~= nil then
+				for k, v in pairs( tbl ) do	
+					if model == v then return end
+				end	
+			else
+				tbl = {}
+			end
+			table.insert(tbl, model)
+			AddBannedProp(model)
+			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
+		else
+			AddBannedProp(model)
+			table.insert(tbl, model)
+			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
+		end
+	else
+		--Prop Allowing
+		if file.Exists("PostNukeRP/allowed_props.txt") then
+			tbl = glon.decode(file.Read("PostNukeRP/allowed_props.txt"))
+			if tbl ~= nil then
+				for k, v in pairs( tbl ) do	
+					if model == v then return end
+				end	
+			else
+				tbl = {}
+			end
+			table.insert(tbl, model)
+			AddAllowedProp(model)
+			file.Write("PostNukeRP/allowed_props.txt",glon.encode(tbl))
+		else
+			table.insert(tbl, model)
+			AddAllowedProp(model)
+			file.Write("PostNukeRP/allowed_props.txt",glon.encode(tbl))
+		end
+	end
+end
+datastream.Hook(  "PropProtect_AddItem", PNRP.PropProtect_AddItem )
+
+function PNRP.PropProtect_RemoveItem(ply, handler, id, encoded, decoded )
+	local model = decoded[1]
+	local switch = decoded[2] --1 is add Prop Block, 2 is add Prop Allowed
+	local tbl = { }
+	if switch == 1 then
+		--Prop Banning
+		if file.Exists("PostNukeRP/banned_props.txt") then
+			tbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
+			if tbl ~= nil then
+				for k, v in pairs( tbl ) do	
+					if model == v then
+						table.remove(tbl, k)
+					end
+				end
+				file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
+			end
+			for k, v in pairs( BannedProps ) do	
+				if model == v then
+					table.remove(BannedProps, k)
+				end
+			end
+		else
+			for k, v in pairs( BannedProps ) do	
+				if model == v then
+					table.remove(BannedProps, k)
+				end
+			end
+			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
+		end
+	else
+		--Prop Allowing
+		if file.Exists("PostNukeRP/allowed_props.txt") then
+			tbl = glon.decode(file.Read("PostNukeRP/allowed_props.txt"))
+			if tbl ~= nil then
+				for k, v in pairs( tbl ) do	
+					if model == v then
+						table.remove(tbl, k)
+					end
+				end
+				file.Write("PostNukeRP/allowed_props.txt",glon.encode(tbl))
+			end
+			for k, v in pairs( AllowedProps ) do	
+				if model == v then
+					table.remove(AllowedProps, k)
+				end
+			end
+		else
+			for k, v in pairs( AllowedProps ) do	
+				if model == v then
+					table.remove(AllowedProps, k)
+				end
+			end
+			file.Write("PostNukeRP/allowed_props.txt",glon.encode(tbl))
+		end
+	end
+end
+datastream.Hook( "PropProtect_RemoveItem", PNRP.PropProtect_RemoveItem )
+
 function GM:PlayerSpawnProp(ply, model)
 	if not self.BaseClass:PlayerSpawnProp(ply, model) then return false end
 	
