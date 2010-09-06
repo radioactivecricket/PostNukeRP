@@ -154,9 +154,15 @@ end
 
 function ENT:Use( activator, caller )
 	if activator:KeyPressed( IN_USE ) then
-		if activator:Team() ~= TEAM_CULTIVATOR then
-			activator:ChatPrint("You don't have any idea how to take care of this plant.")
-			return
+		if activator:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+			if activator:Team() ~= TEAM_CULTIVATOR then
+				activator:ChatPrint("Admin overide.")
+			end
+		else
+			if activator:Team() ~= TEAM_CULTIVATOR then
+				activator:ChatPrint("You don't have any idea how to take care of this plant.")
+				return
+			end
 		end
 		
 		local rp = RecipientFilter()

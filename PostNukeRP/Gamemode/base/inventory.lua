@@ -296,8 +296,7 @@ function PNRP.AddToInentory( p, theitem )
 	
 end
 
-
-function PNRP.AddToInvFromCar( p, command, arg )
+function PNRP.AddToInvFrom( p, command, arg )
 	local theitem = arg[1]
 	
 	local weight = PNRP.InventoryWeight( p ) + PNRP.Items[theitem].Weight
@@ -317,9 +316,21 @@ function PNRP.AddToInvFromCar( p, command, arg )
 		return
 	end
 	
-	p:ConCommand("pnrp_carinv")
+	if command == "pnrp_addtoinvfromeq" then
+		p:ConCommand("pnrp_eqipment")
+	elseif command == "pnrp_addtoinvfromcar" then
+		p:ConCommand("pnrp_carinv")
+	elseif command == "pnrp_addtoinvfromceq-ammo" then
+		local ammoAmt = PNRP.Items[theitem].Energy
+		theitem = string.gsub(theitem, "ammo_", "")
+		p:RemoveAmmo( ammoAmt, theitem )
+		p:ConCommand("pnrp_eqipment")
+	end
+	
 end
-concommand.Add( "pnrp_addtoinvfromcar", PNRP.AddToInvFromCar )
+concommand.Add( "pnrp_addtoinvfromcar", PNRP.AddToInvFrom )
+concommand.Add( "pnrp_addtoinvfromeq", PNRP.AddToInvFrom )
+concommand.Add( "pnrp_addtoinvfromceq-ammo", PNRP.AddToInvFrom )
 
 
 function PNRP.AddToCarInentory( p, command, arg )
@@ -360,9 +371,12 @@ function PNRP.AddToCarInentory( p, command, arg )
 		
 		Msg("["..tostring(theitem).."] added to "..p:Nick().."'s car inventory.  \n")
 	end
-	p:ConCommand("pnrp_inv")
+	if command ~= "pnrp_addtocarinentoryFromEQ" then
+		p:ConCommand("pnrp_inv")
+	end
 end	
 concommand.Add( "pnrp_addtocarinentory", PNRP.AddToCarInentory )
+concommand.Add( "pnrp_addtocarinentoryFromEQ", PNRP.AddToCarInentory )
 
 
 function PNRP.TakeFromInventory( p, theitem )

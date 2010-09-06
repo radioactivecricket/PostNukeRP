@@ -252,93 +252,108 @@ function GM.ReproduceRes()
 			end
 		end
 		
+		local newSpawnTbl = {}
 		local mySP = {}
 		
-		if GetConVarNumber("pnrp_ResUsesNodes") == 1 and #spawnTbl > 0 then
-			mySP = spawnTbl[math.random(1,#spawnTbl)]
+		for _, node in pairs(spawnTbl) do
+			if util.tobool(node["spwnsRes"]) then
+				table.insert(newSpawnTbl, node)
+			end
+		end
+		
+		if GetConVarNumber("pnrp_ResUsesNodes") == 1 and #newSpawnTbl > 0 then
 			if #piles == 0 then
 				
 				for i = 1,20 do
-					mySP = spawnTbl[math.random(1,#spawnTbl)]
-					info.pos = Vector(mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"]),mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"]),1000)
-					info.Retries = 50
-
-					--Find pos in world
-					while util.IsInWorld(info.pos) == false and info.Retries > 0 do
-						info.pos = Vector(mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"]),mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"]),1000)
-						info.Retries = info.Retries - 1
-					end
-
-					--Find ground
-					local trace = {}
-					trace.start = info.pos
-					trace.endpos = trace.start + Vector(0,0,-100000)
-					trace.mask = MASK_SOLID_BRUSHONLY
-
-					local groundtrace = util.TraceLine(trace)
-
-					--Assure space
-					local nearby = ents.FindInSphere(groundtrace.HitPos,200)
-					info.HasSpace = true
-
-					for k,v in pairs(nearby) do
-						if v:IsProp() then
-							info.HasSpace = false
+					local HeightPos = 1000
+					local validSpawn = true
+					local isActive = true
+					local retries = 50
+					
+					repeat
+						isActive = true
+						mySP = newSpawnTbl[math.random(1,#newSpawnTbl)]
+						retries = retries - 1
+								
+						if not util.tobool(mySP["infIndoor"]) then
+							isActive = true
+							break
 						end
-					end
-
-					--Find sky
-					local trace = {}
-					trace.start = groundtrace.HitPos
-					trace.endpos = trace.start + Vector(0,0,100000)
-
-					local skytrace = util.TraceLine(trace)
-
-					--Find water?
-					local trace = {}
-					trace.start = groundtrace.HitPos
-					trace.endpos = trace.start + Vector(0,0,1)
-					trace.mask = MASK_WATER
-
-					local watertrace = util.TraceLine(trace)
-
-					--All a go, make entity
-					--removed "and (groundtrace.MatType == MAT_DIRT or groundtrace.MatType == MAT_GRASS or groundtrace.MatType == MAT_SAND)"
-					if info.HasSpace and skytrace.HitSky and !watertrace.Hit then
-						local ent = ents.Create("prop_physics")
-						ent:SetAngles(Angle(0,math.random(1,360),0))
 						
-						local pileType = math.random(1,3)
-						if pileType == 1 then
-							ent:SetModel(PNRP.JunkModels[math.random(1,#PNRP.JunkModels)])
+						local doorEnt = mySP["infLinked"]
+						if doorEnt:IsValid() then
+							if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+								isActive = false
+							end
 						end
-						if pileType == 2 then
-							ent:SetModel(PNRP.ChemicalModels[math.random(1,#PNRP.ChemicalModels)])
-						end
-						if pileType == 3 then
-							ent:SetModel(PNRP.SmallPartsModels[math.random(1,#PNRP.SmallPartsModels)])
-						end
-						ent:SetPos(groundtrace.HitPos)
-						ent:DropToGround()
-						ent:Spawn()
-						ent:SetNetworkedString("Owner", "Unownable")
-						ent:GetPhysicsObject():EnableMotion(false)
-						ent:SetMoveType(MOVETYPE_NONE)
-					end
-				end
-			end
-			if #piles < GetConVarNumber("pnrp_MaxReproducedRes") then
-				for i = 1, iterations do
-					local num = math.random(1,2)
-					if num == 1 then
 						
-						mySP = spawnTbl[math.random(1,#spawnTbl)]
-						info.pos = Vector(mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"]),mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"]),1000)
+						local spawnBounds1 = ClampWorldVector(Vector(mySP["x"]-mySP["distance"], mySP["y"]-mySP["distance"], mySP["z"]-mySP["distance"]))
+						local spawnBounds2 = ClampWorldVector(Vector(mySP["x"]+mySP["distance"], mySP["y"]+mySP["distance"], mySP["z"]+mySP["distance"]))
+						
+						local entsInBounds = ents.FindInBox(spawnBounds1, spawnBounds2)
+						local propCount = 0
+						
+						local resModels = {}
+						table.Add(resModels, PNRP.JunkModels)
+						table.Add(resModels, PNRP.ChemicalModels)
+						table.Add(resModels, PNRP.SmallPartsModels)
+						
+						for _, item in pairs(entsInBounds) do
+							if item:IsValid() then
+								if item:GetClass() == "prop_physics" then
+									propCount = propCount + 1
+									for _, model in pairs(resModels) do
+										if model == item:GetModel() then
+											propCount = propCount - 1
+											break
+										end
+									end
+								end
+							end
+						end
+						
+						if propCount > 3 then
+							isActive = false
+						end
+					until isActive or retries < 0
+					
+					if isActive then
+						local randX = mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"])
+						local randY = mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"])
+						
+						if util.tobool(mySP["infIndoor"]) then
+							local trace = {}
+							trace.start = Vector(randX,randY,mySP["z"])
+							trace.endpos = trace.start + Vector(0, 0, 1000)
+
+							local roofTrace = util.TraceLine(trace)
+							HeightPos = roofTrace.HitPos.z - 10
+							if 72 < (HeightPos - mySP["z"]) then
+								validSpawn = false
+							end
+						end
+						
+						info.pos = Vector(randX,randY,HeightPos)
 						info.Retries = 50
 
 						--Find pos in world
-						while util.IsInWorld(info.pos) == false and info.Retries > 0 do
-							info.pos = Vector(mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"]),mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"]),1000)
+						while (util.IsInWorld(info.pos) == false or validSpawn == false) and info.Retries > 0 do
+							randX = mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"])
+							randY = mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"])
+							
+							if util.tobool(mySP["infIndoor"]) then
+								local trace = {}
+								trace.start = Vector(randX,randY,mySP["z"])
+								trace.endpos = trace.start + Vector(0, 0, 1000)
+
+								local roofTrace = util.TraceLine(trace)
+								HeightPos = roofTrace.HitPos.z - 10
+								if 72 < (HeightPos - mySP["z"]) then
+									validSpawn = false
+								end
+							end
+						
+							info.pos = Vector(randX,randY,HeightPos)
 							info.Retries = info.Retries - 1
 						end
 
@@ -366,6 +381,10 @@ function GM.ReproduceRes()
 						trace.endpos = trace.start + Vector(0,0,100000)
 
 						local skytrace = util.TraceLine(trace)
+						
+						if util.tobool(mySP["infIndoor"]) then
+							skytrace.HitSky = true
+						end
 
 						--Find water?
 						local trace = {}
@@ -397,6 +416,165 @@ function GM.ReproduceRes()
 							ent:SetNetworkedString("Owner", "Unownable")
 							ent:GetPhysicsObject():EnableMotion(false)
 							ent:SetMoveType(MOVETYPE_NONE)
+						end
+					end
+				end
+			end
+			if #piles < GetConVarNumber("pnrp_MaxReproducedRes") then
+				for i = 1, iterations do
+					local num = math.random(1,2)
+					if num == 1 then
+						local HeightPos = 1000
+						local validSpawn = true
+						local isActive = true
+						local retries = 50
+						
+						repeat
+							isActive = true
+							mySP = newSpawnTbl[math.random(1,#newSpawnTbl)]
+							retries = retries - 1
+									
+							if not util.tobool(mySP["infIndoor"]) then
+								isActive = true
+								break
+							end
+							
+							local doorEnt = mySP["infLinked"]
+							if doorEnt:IsValid() then
+								if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+									isActive = false
+								end
+							end
+							
+							local spawnBounds1 = ClampWorldVector(Vector(mySP["x"]-mySP["distance"], mySP["y"]-mySP["distance"], mySP["z"]-mySP["distance"]))
+							local spawnBounds2 = ClampWorldVector(Vector(mySP["x"]+mySP["distance"], mySP["y"]+mySP["distance"], mySP["z"]+mySP["distance"]))
+							
+							local entsInBounds = ents.FindInBox(spawnBounds1, spawnBounds2)
+							local propCount = 0
+							
+							local resModels = {}
+							table.Add(resModels, PNRP.JunkModels)
+							table.Add(resModels, PNRP.ChemicalModels)
+							table.Add(resModels, PNRP.SmallPartsModels)
+							
+							for _, item in pairs(entsInBounds) do
+								if item:IsValid() then
+									if item:GetClass() == "prop_physics" then
+										propCount = propCount + 1
+										for _, model in pairs(resModels) do
+											if model == item:GetModel() then
+												propCount = propCount - 1
+												break
+											end
+										end
+									end
+								end
+							end
+							
+							if propCount > 3 then
+								isActive = false
+							end
+						until isActive or retries < 0
+						
+						if isActive then
+							local randX = mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"])
+							local randY = mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"])
+							
+							if util.tobool(mySP["infIndoor"]) then
+								local trace = {}
+								trace.start = Vector(randX,randY,mySP["z"])
+								trace.endpos = trace.start + Vector(0, 0, 1000)
+
+								local roofTrace = util.TraceLine(trace)
+								HeightPos = roofTrace.HitPos.z - 10
+								if 72 < (HeightPos - mySP["z"]) then
+									validSpawn = false
+								end
+							end
+							
+							info.pos = Vector(randX,randY,HeightPos)
+							info.Retries = 50
+
+							--Find pos in world
+							while (util.IsInWorld(info.pos) == false or validSpawn == false) and info.Retries > 0 do
+								randX = mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"])
+								randY = mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"])
+								
+								if util.tobool(mySP["infIndoor"]) then
+									local trace = {}
+									trace.start = Vector(randX,randY,mySP["z"])
+									trace.endpos = trace.start + Vector(0, 0, 1000)
+
+									local roofTrace = util.TraceLine(trace)
+									HeightPos = roofTrace.HitPos.z - 10
+									if 72 < (HeightPos - mySP["z"]) then
+										validSpawn = false
+									end
+								end
+								
+								info.pos = Vector(randX,randY,HeightPos)
+								info.Retries = info.Retries - 1
+							end
+
+							--Find ground
+							local trace = {}
+							trace.start = info.pos
+							trace.endpos = trace.start + Vector(0,0,-100000)
+							trace.mask = MASK_SOLID_BRUSHONLY
+
+							local groundtrace = util.TraceLine(trace)
+
+							--Assure space
+							local nearby = ents.FindInSphere(groundtrace.HitPos,200)
+							info.HasSpace = true
+
+							for k,v in pairs(nearby) do
+								if v:IsProp() then
+									info.HasSpace = false
+								end
+							end
+
+							--Find sky
+							local trace = {}
+							trace.start = groundtrace.HitPos
+							trace.endpos = trace.start + Vector(0,0,100000)
+
+							local skytrace = util.TraceLine(trace)
+							if util.tobool(mySP["infIndoor"]) then
+								skytrace.HitSky = true
+							end
+
+							--Find water?
+							local trace = {}
+							trace.start = groundtrace.HitPos
+							trace.endpos = trace.start + Vector(0,0,1)
+							trace.mask = MASK_WATER
+
+							local watertrace = util.TraceLine(trace)
+
+							--All a go, make entity
+							--removed "and (groundtrace.MatType == MAT_DIRT or groundtrace.MatType == MAT_GRASS or groundtrace.MatType == MAT_SAND)"
+							if info.HasSpace and skytrace.HitSky and !watertrace.Hit then
+								local ent = ents.Create("prop_physics")
+								ent:SetAngles(Angle(0,math.random(1,360),0))
+								
+								local pileType = math.random(1,3)
+								if pileType == 1 then
+									ent:SetModel(PNRP.JunkModels[math.random(1,#PNRP.JunkModels)])
+								end
+								if pileType == 2 then
+									ent:SetModel(PNRP.ChemicalModels[math.random(1,#PNRP.ChemicalModels)])
+								end
+								if pileType == 3 then
+									ent:SetModel(PNRP.SmallPartsModels[math.random(1,#PNRP.SmallPartsModels)])
+								end
+								ent:SetPos(groundtrace.HitPos)
+								ent:DropToGround()
+								ent:Spawn()
+								ent:SetNetworkedString("Owner", "Unownable")
+								ent:GetPhysicsObject():EnableMotion(false)
+								ent:SetMoveType(MOVETYPE_NONE)
+							end
 						end
 					end
 				end

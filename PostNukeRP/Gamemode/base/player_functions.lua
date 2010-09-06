@@ -352,6 +352,43 @@ concommand.Add( "pnrp_dropWep", PNRP.DropWeapon )
 PNRP.ChatConCmd( "/dropwep", "pnrp_dropWep" )
 PNRP.ChatConCmd( "/dropgun", "pnrp_dropWep" )
 
+function PNRP.OpenEquipment(ply)
+	ply:ConCommand("pnrp_eqipment")
+end
+PNRP.ChatCmd( "/eq", PNRP.OpenEquipment )
+PNRP.ChatCmd( "/equipment", PNRP.OpenEquipment )
+
+--Will evntually build this to replace the above function
+function PNRP.DropWep(ply, handler, id, encoded, decoded )
+	
+	local myWep = PNRP.Items[decoded[1]]
+	local curWepAmmo = decoded[2]
+		
+	local tr = ply:TraceFromEyes(200)
+	local trPos = tr.HitPos
+	
+	local ent = ents.Create(myWep.Ent)
+	local pos = trPos + Vector(0,0,20)
+	ent:SetModel(myWep.Model)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+	ent:SetNetworkedString("Owner", "World")
+	ent:SetNetworkedString("Ammo", curWepAmmo)
+		
+end
+datastream.Hook( "pnrp_dropWepFromEQ", PNRP.DropWep )
+
+function PNRP.StripWep (ply, command, args)
+	local wep = args[1]
+	if wep == "weapon_frag" then 
+		ply:RemoveAmmo( 1, "grenade" )
+	else
+		ply:StripWeapon(wep)
+	end
+end
+concommand.Add( "pnrp_stripWep", PNRP.StripWep )
+
 function PNRP.StowWeapon (ply, command, args)
 	local myWep = ply:GetActiveWeapon()
 	if ( myWep ) then
@@ -492,6 +529,7 @@ function PNRP.GetSpawnflags ( ply )
 --			return true
 --		end
 	end
+
 --	ply:ChatPrint("Class: "..tostring(ent:GetClass()))
 	EntityKeyValueInfo( ent )
 --	Msg(EntityKeyValueInfo( ent, 0 ).."\n")

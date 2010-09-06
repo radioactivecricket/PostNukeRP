@@ -1,4 +1,4 @@
-GM.Name 	= "PostNukeRP v41" --Set the gamemode name
+GM.Name 	= "PostNukeRP v43" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird Gmod Addict" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://radioactivecricket.com" --Set the author website
@@ -71,12 +71,23 @@ CreateConVar("pnrp_MaxPoisonZombs","2",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_A
 CreateConVar("pnrp_MaxAntlions","10",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_MaxAntGuards","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
+--Mound Spawner Vars
+CreateConVar("pnrp_MaxMounds","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_MoundRate","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_MoundChance","15",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_MaxMoundAntlions","10",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_MoundAntlionsPerCycle","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_MaxMoundGuards","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_MoundMobRate","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_MoundGuardChance","10",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
 CreateConVar("pnrp_packCap","75",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_packCapScav","110",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_ReproduceRes","1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_MaxReproducedRes","20", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
+CreateConVar("pnrp_propSpawnpointProtection", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_propBanning", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_propAllowing", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 

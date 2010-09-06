@@ -24,8 +24,12 @@ function MinerMenu( um )
 	end
 	
 	if owner ~= ply:Nick() then
-		entMSG = "You do not own this unit."
-		Allowed = "false"
+		if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+			ply:ChatPrint("Admin overide.")
+		else
+			entMSG = "You do not own this unit."
+			Allowed = "false"
+		end
 	end
 	
 	if minerHP <= 0 then minerState = "off" end
