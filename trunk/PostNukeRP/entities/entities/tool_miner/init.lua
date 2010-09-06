@@ -96,11 +96,17 @@ function ENT:Use( activator, caller )
 --		elseif self.Power == 1 then
 --			self.Entity:ThumperDisable()
 --		end
-		if activator:Team() ~= TEAM_SCAVENGER then
-			activator:ChatPrint("You don't have any idea how to use this.")
-			return
+		if activator:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+			if activator:Team() ~= TEAM_SCAVENGER then
+				activator:ChatPrint("Admin overide.")
+			end
+		else
+			if activator:Team() ~= TEAM_SCAVENGER then
+				activator:ChatPrint("You don't have any idea how to take care of this plant.")
+				return
+			end
 		end
-		
+				
 		if self.entOwner == "none" then
 			self.entOwner = activator:Nick()
 		end

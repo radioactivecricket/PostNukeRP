@@ -146,6 +146,7 @@ function HelpPanel()
 				"",
 				"/save - save's your characters data.",
 				"/getallcars - picks up any and all cars that belong to you in the world",
+				"/eq /equipment - Opens the Equipment Menu",
 				"/getcar - picks up the car that you are looking at within 200 units. You must own the car to pick it up.",
 				"/stowgun /stowwep or /putawaygun - Moved your active gun to inventory.",
 				"/dropwep or /dropgun - drops your current weapon.",

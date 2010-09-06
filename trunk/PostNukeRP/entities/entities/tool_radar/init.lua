@@ -165,6 +165,13 @@ function DoSync( pl, handler, id, encoded, decoded )
 
 	pl:ChatPrint("Syncing Radar...")
 	
+	ent:GetPhysicsObject():EnableMotion(false)
+	for k, v in pairs( ents.GetAll() ) do
+		if v:IsWorld() then
+			constraint.Weld(ent.Entity, v, 0, 0, 0, true)
+		end
+	end
+	
 	timer.Simple( ent.SyncTime, function ()
 		
 		pl:ChatPrint("Sync complete!")
@@ -198,14 +205,7 @@ function DoSync( pl, handler, id, encoded, decoded )
 			umsg.String(foundGPR)
 			umsg.Short(ent.Entity:EntIndex())
 		umsg.End()
-		
-		ent:GetPhysicsObject():EnableMotion(false)
-		for k, v in pairs( ents.GetAll() ) do
-			if v:IsWorld() then
-				constraint.Weld(ent.Entity, v, 0, 0, 0, true)
-			end
-		end
-		
+				
 		ent.Ready = 1
 	end )
 end

@@ -195,6 +195,7 @@ function ExitSleep( ply )
 			local ragdoll = ply:GetTable().SleepRagdoll
 			local health = ply:Health()
 			local armor = ply:Armor()
+			local hunger = ply:GetTable().Hunger
 			local oldPos = false
 			
 			local entsearch = ents.FindInSphere( ragdoll:GetTable().PrevPos , 100 )
@@ -208,6 +209,7 @@ function ExitSleep( ply )
 			ply:Spawn()
 			ply:SetHealth(health)
 			ply:SetArmor(armor)
+			ply:GetTable().Hunger = hunger
 			if oldPos then
 				ply:SetPos(ragdoll:GetTable().PrevPos)
 			else
@@ -218,24 +220,29 @@ function ExitSleep( ply )
 			ply:UnSpectate()
 			ply:StripWeapons()
 			ragdoll:Remove()
-			if ply:GetTable().WeaponsForSleep then
-				for k,v in pairs(ply.WeaponsForSleep) do
-					ply:Give(v)
-					ply:GetWeapon(v):SetClip1(ply:GetTable().ClipsForSleep[k])
-				end
-				ply:StripAmmo()
-				for i = 1, 22 do
-					ply:GiveAmmo(ply:GetTable().AmmoForSleep[i], PNRP.ConvertAmmoType(i), false)
-				end
-				
-				local cl_defaultweapon = ply:GetInfo( "cl_defaultweapon" )
-				if ( ply:HasWeapon( cl_defaultweapon )  ) then
-					ply:SelectWeapon( cl_defaultweapon ) 
-				end
-				
-			else
-				GAMEMODE:PlayerLoadout(player)
-			end 
+			--Runs this a little after spawn to help with lag issues
+			ply:ChatPrint("Picking up gear...")
+			timer.Create(tostring(os.time())..tostring(os.date()), 3, 1, function()  
+				if ply:GetTable().WeaponsForSleep then
+					for k,v in pairs(ply.WeaponsForSleep) do
+						ply:Give(v)
+						ply:GetWeapon(v):SetClip1(ply:GetTable().ClipsForSleep[k])
+					end
+					ply:StripAmmo()
+					for i = 1, 22 do
+						ply:GiveAmmo(ply:GetTable().AmmoForSleep[i], PNRP.ConvertAmmoType(i), false)
+					end
+					
+					local cl_defaultweapon = ply:GetInfo( "cl_defaultweapon" )
+					if ( ply:HasWeapon( cl_defaultweapon )  ) then
+						ply:SelectWeapon( cl_defaultweapon ) 
+					end
+					
+				else
+					GAMEMODE:PlayerLoadout(player)
+				end 
+				ply:ConCommand("pnrp_save")
+			end)
 		end
 		
 		local rfilter = RecipientFilter()

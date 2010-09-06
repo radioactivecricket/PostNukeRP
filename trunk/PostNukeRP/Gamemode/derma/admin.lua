@@ -30,12 +30,12 @@ function GM.open_admin(ply)
 		local AdminTabSheet = vgui.Create( "DPropertySheet" )
 			AdminTabSheet:SetParent( admin_frame )
 			AdminTabSheet:SetPos( 5, 50 )
-			AdminTabSheet:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 60 )
+			AdminTabSheet:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 60 ) 
 --Server Settings
 			local GModeSettingsList = vgui.Create( "DPanelList", AdminTabSheet )
 				GModeSettingsList:SetPos( 10,10 )
 				GModeSettingsList:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 10 )
-				GModeSettingsList:SetSpacing( 5 ) -- Spacing between items
+				GModeSettingsList:SetSpacing( 3 ) -- Spacing between items
 				GModeSettingsList:EnableHorizontal( false ) -- Only vertical items
 				GModeSettingsList:EnableVerticalScrollbar( true ) -- Allow scrollbar if you exceed the Y axis	
 				
@@ -96,6 +96,12 @@ function GM.open_admin(ply)
 					propAllowingTgl:SetValue( GetConVar("pnrp_propAllowing"):GetInt() )
 					propAllowingTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propAllowingTgl )
+				
+				local propSpawnProtectTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
+					propSpawnProtectTgl:SetText( "Player Spawn Prtection." )
+					propSpawnProtectTgl:SetValue( GetConVar("pnrp_propSpawnpointProtection"):GetInt() )
+					propSpawnProtectTgl:SizeToContents() 
+				GModeSettingsList:AddItem( propSpawnProtectTgl )
 				
 				local propPayTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					propPayTgl:SetText( "Pay for Props from Q Menu.." )
@@ -204,6 +210,11 @@ function GM.open_admin(ply)
 				    	else
 				    		propAllowingOnOff = 0
 				    	end
+						if propSpawnProtectTgl:GetChecked(true) then
+				    		propSpawnProtectOnOff = 1
+				    	else
+				    		propSpawnProtectOnOff = 0
+				    	end
 				    	if propPayTgl:GetChecked(true) then
 				    		propPayOnOff = 1
 				    	else
@@ -231,6 +242,7 @@ function GM.open_admin(ply)
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminNoCost",tostring(adminNoCostOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propBanning",tostring(propBanningOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propAllowing",tostring(propAllowingOnOff))
+						RunConsoleCommand("pnrp_RunCommand","pnrp_propSpawnpointProtection",tostring(propSpawnProtectOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propPay",tostring(propPayOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propCost",tostring(propCostSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceLimit",tostring(voiceLimitOnOff))
@@ -332,6 +344,101 @@ function GM.open_admin(ply)
 				
 				SpawnerList:AddItem( MobSpawnerSettingsCats )
 		--End Mob Spawn Settings
+		--Start Mound Settings
+				local MoundSpawnerSettingsCats = vgui.Create("DCollapsibleCategory", SpawnerList)
+					MoundSpawnerSettingsCats:SetSize( SpawnerList:GetWide()-4, 50 ) -- Keep the second number at 50
+					MoundSpawnerSettingsCats:SetExpanded( 0 ) -- Expanded when popped up
+					MoundSpawnerSettingsCats:SetLabel( "Antlion Mound Spawner Settings" )
+					 
+					MoundCategoryList = vgui.Create( "DPanelList" )
+					MoundCategoryList:SetAutoSize( true )
+					MoundCategoryList:SetSpacing( 3 )
+					MoundCategoryList:EnableHorizontal( false )
+					MoundCategoryList:EnableVerticalScrollbar( true )
+					 
+					MoundSpawnerSettingsCats:SetContents( MoundCategoryList )
+					
+				local clearMoundsBTN = vgui.Create("DButton", MobCategoryList )
+				    clearMoundsBTN:SetText( "Clear Antlion Mounds" )
+				    clearMoundsBTN.DoClick = function()
+				        RunConsoleCommand( "pnrp_clearmounds" )
+				    end
+				MoundCategoryList:AddItem( clearMoundsBTN )
+				
+				local maxMounds = vgui.Create( "DNumSlider", MoundCategoryList )
+				    maxMounds:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    maxMounds:SetText( "Max Ant Lion Mounds (Default 1)" )
+				    maxMounds:SetMin( 0 )
+				    maxMounds:SetMax( 100 )
+				    maxMounds:SetDecimals( 0 )
+				    maxMounds:SetValue( GetConVar("pnrp_MaxMounds"):GetInt() )
+				MoundCategoryList:AddItem( maxMounds )
+				
+				local moundSpawnRate = vgui.Create( "DNumSlider", MoundCategoryList )
+				    moundSpawnRate:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    moundSpawnRate:SetText( "Mound Spawn Rate (Default 5min)" )
+				    moundSpawnRate:SetMin( 0 )
+				    moundSpawnRate:SetMax( 100 )
+				    moundSpawnRate:SetDecimals( 0 )
+				    moundSpawnRate:SetValue( GetConVar("pnrp_MoundRate"):GetInt() )
+				MoundCategoryList:AddItem( moundSpawnRate )
+				
+				local moundSpawnChance = vgui.Create( "DNumSlider", MoundCategoryList )
+				    moundSpawnChance:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    moundSpawnChance:SetText( "Mound Spawn Chance (Default 15%)" )
+				    moundSpawnChance:SetMin( 0 )
+				    moundSpawnChance:SetMax( 100 )
+				    moundSpawnChance:SetDecimals( 0 )
+				    moundSpawnChance:SetValue( GetConVar("pnrp_MoundChance"):GetInt() )
+				MoundCategoryList:AddItem( moundSpawnChance )
+				
+				local moundMaxAntlions = vgui.Create( "DNumSlider", MoundCategoryList )
+				    moundMaxAntlions:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    moundMaxAntlions:SetText( "Mound Max Antlions (Default 10)" )
+				    moundMaxAntlions:SetMin( 0 )
+				    moundMaxAntlions:SetMax( 100 )
+				    moundMaxAntlions:SetDecimals( 0 )
+				    moundMaxAntlions:SetValue( GetConVar("pnrp_MaxMoundAntlions"):GetInt() )
+				MoundCategoryList:AddItem( moundMaxAntlions )
+				
+				local moundAntlionsPerCycle = vgui.Create( "DNumSlider", MoundCategoryList )
+				    moundAntlionsPerCycle:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    moundAntlionsPerCycle:SetText( "Mound Antlions Spawned Per Cycle (Default 5)" )
+				    moundAntlionsPerCycle:SetMin( 0 )
+				    moundAntlionsPerCycle:SetMax( 100 )
+				    moundAntlionsPerCycle:SetDecimals( 0 )
+				    moundAntlionsPerCycle:SetValue( GetConVar("pnrp_MoundAntlionsPerCycle"):GetInt() )
+				MoundCategoryList:AddItem( moundAntlionsPerCycle )
+				
+				local moundMaxAntlionGuards = vgui.Create( "DNumSlider", MoundCategoryList )
+				    moundMaxAntlionGuards:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    moundMaxAntlionGuards:SetText( "Mound Max Antlion Guards (Default 1)" )
+				    moundMaxAntlionGuards:SetMin( 0 )
+				    moundMaxAntlionGuards:SetMax( 100 )
+				    moundMaxAntlionGuards:SetDecimals( 0 )
+				    moundMaxAntlionGuards:SetValue( GetConVar("pnrp_MaxMoundGuards"):GetInt() )
+				MoundCategoryList:AddItem( moundMaxAntlionGuards )
+				
+				local moundMobRate = vgui.Create( "DNumSlider", MoundCategoryList )
+				    moundMobRate:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    moundMobRate:SetText( "Mound NPC Spawn Rate (Default 5min)" )
+				    moundMobRate:SetMin( 0 )
+				    moundMobRate:SetMax( 100 )
+				    moundMobRate:SetDecimals( 0 )
+				    moundMobRate:SetValue( GetConVar("pnrp_MoundMobRate"):GetInt() )
+				MoundCategoryList:AddItem( moundMobRate )
+				
+				local moundGuardChance = vgui.Create( "DNumSlider", MoundCategoryList )
+				    moundGuardChance:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
+				    moundGuardChance:SetText( "Mound Guard Spawn Chance (Default 10%)" )
+				    moundGuardChance:SetMin( 0 )
+				    moundGuardChance:SetMax( 100 )
+				    moundGuardChance:SetDecimals( 0 )
+				    moundGuardChance:SetValue( GetConVar("pnrp_MoundGuardChance"):GetInt() )
+				MoundCategoryList:AddItem( moundGuardChance )
+				
+				SpawnerList:AddItem( MoundSpawnerSettingsCats )
+		--End Mound Settings
 		--Start Resource Settings
 				local RecSpawnerSettingsCats = vgui.Create("DCollapsibleCategory", SpawnerList)
 					RecSpawnerSettingsCats:SetSize( SpawnerList:GetWide()-4, 50 ) -- Keep the second number at 50
@@ -393,6 +500,15 @@ function GM.open_admin(ply)
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxPoisonZombs",tostring(maxPoisonZombiesSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxAntlions",tostring(maxAntlionsSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxAntGuards",tostring(maxAntGuardSlider:GetValue()))
+						
+						RunConsoleCommand("pnrp_RunCommand","pnrp_MaxMounds",tostring(maxMounds:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_MoundRate",tostring(moundSpawnRate:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_MoundChance",tostring(moundSpawnChance:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxMoundAntlions",tostring(moundMaxAntlions:GetValue()))
+						RunConsoleCommand("pnrp_RunCommand","pnrp_MoundAntlionsPerCycle",tostring(moundAntlionsPerCycle:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxMoundGuards",tostring(moundMaxAntlionGuards:GetValue()))
+						RunConsoleCommand("pnrp_RunCommand","pnrp_MoundMobRate",tostring(moundMobRate:GetValue()))
+				        RunConsoleCommand("pnrp_RunCommand","pnrp_MoundGuardChance",tostring(moundGuardChance:GetValue()))
 				        
 				        local rcOnOff
 				    	if recSpawnerTgl:GetChecked(true) then
@@ -416,22 +532,22 @@ function GM.open_admin(ply)
 				mobGridSetup:EnableHorizontal( false ) -- Only vertical items
 				mobGridSetup:EnableVerticalScrollbar( true ) -- Allow scrollbar if you exceed the Y axis
 				
-			local maxMobGridRangeSlider = vgui.Create( "DNumSlider", mobGridSetup )
-				    maxMobGridRangeSlider:SetSize( mobGridSetup:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    maxMobGridRangeSlider:SetText( "Max Mob Grid Range (Default 1000)" )
-				    maxMobGridRangeSlider:SetMin( 0 )
-				    maxMobGridRangeSlider:SetMax( 10000 )
-				    maxMobGridRangeSlider:SetDecimals( 0 )
-				    maxMobGridRangeSlider:SetValue( mobGridRange )
-				mobGridSetup:AddItem( maxMobGridRangeSlider )
+		--	local maxMobGridRangeSlider = vgui.Create( "DNumSlider", mobGridSetup )
+		--		    maxMobGridRangeSlider:SetSize( mobGridSetup:GetWide() - 20, 50 ) -- Keep the second number at 50
+		--		    maxMobGridRangeSlider:SetText( "Max Mob Grid Range (Default 1000)" )
+		--		    maxMobGridRangeSlider:SetMin( 0 )
+		--		    maxMobGridRangeSlider:SetMax( 10000 )
+		--		    maxMobGridRangeSlider:SetDecimals( 0 )
+		--		    maxMobGridRangeSlider:SetValue( mobGridRange )
+		--		mobGridSetup:AddItem( maxMobGridRangeSlider )
 				
-			local mPGridBTN = vgui.Create("DButton", mobGridSetup )
-				    mPGridBTN:SetText( "Place Grid Node" )
-				    mPGridBTN.DoClick = function()
-				    	mobGridRange=maxMobGridRangeSlider:GetValue()
-				        RunConsoleCommand("pnrp_mobsp" , mobGridRange)
-				    end
-				mobGridSetup:AddItem( mPGridBTN )
+		--	local mPGridBTN = vgui.Create("DButton", mobGridSetup )
+		--		    mPGridBTN:SetText( "Place Grid Node" )
+		--		    mPGridBTN.DoClick = function()
+		--		    	mobGridRange=maxMobGridRangeSlider:GetValue()
+		--		        RunConsoleCommand("pnrp_mobsp" , mobGridRange)
+		--		    end
+		--		mobGridSetup:AddItem( mPGridBTN )
 				
 			local mSGridBTN = vgui.Create("DButton", mobGridSetup )
 				    mSGridBTN:SetText( "Save Grid" )
@@ -453,6 +569,13 @@ function GM.open_admin(ply)
 				        RunConsoleCommand("pnrp_editgrid" )
 				    end
 				mobGridSetup:AddItem( mSPGridBTN )
+			
+			local mDLGridBTN = vgui.Create("DButton", mobGridSetup )
+				    mDLGridBTN:SetText( "Remove Grid Entities" )
+				    mDLGridBTN.DoClick = function()
+				        RunConsoleCommand("pnrp_clearspawnnodes" )
+				    end
+				mobGridSetup:AddItem( mDLGridBTN )
 		
 		AdminTabSheet:AddSheet( "Mob Grid Settings", mobGridSetup, "gui/silkicons/bomb", false, false, "Mob Grid Settings" )
 	else

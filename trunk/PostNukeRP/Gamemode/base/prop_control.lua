@@ -79,7 +79,7 @@ function PNRP.GetBannedPropsList( )
 			end
 		end
 	else
-		file.Write("PostNukeRP/banned_props.txt",util.TableToKeyValues(tbl))
+		file.Write("PostNukeRP/banned_props.txt",glon.encode(bannedtbl))
 	end
 end
 PNRP.GetBannedPropsList( )
@@ -95,7 +95,7 @@ function PNRP.GetAllowedPropsList( )
 			end
 		end
 	else
-		file.Write("PostNukeRP/allowed_props.txt",util.TableToKeyValues(tbl))
+		file.Write("PostNukeRP/allowed_props.txt",glon.encode(bannedtbl))
 	end
 end
 PNRP.GetAllowedPropsList( )
@@ -222,6 +222,30 @@ function PNRP.PropProtect_RemoveItem(ply, handler, id, encoded, decoded )
 end
 datastream.Hook( "PropProtect_RemoveItem", PNRP.PropProtect_RemoveItem )
 
+--Checks spawn for props and removes them
+function PNRP.spawnPropProtect()
+	timer.Create( "spawnCheckTimer", 20, 0, function ()
+		if GetConVarNumber("pnrp_propSpawnpointProtection") == 1 then
+			local fountEnts = ents.FindByClass("info_player_start")
+			table.Add(fountEnts,ents.FindByClass("info_player_terrorist"))
+			table.Add(fountEnts,ents.FindByClass("info_player_counterterrorist"))
+			for k, v in pairs( fountEnts ) do
+				local found_ents = ents.FindInSphere( v:GetPos(), 135)
+				for i, ent in ipairs(found_ents) do
+					local myClass = ent:GetClass()
+					if myClass == "prop_physics" then
+						ent:Remove()
+					end
+					if ent:IsDoor() then
+						ent:SetNetworkedString("Owner", "Unownable")
+					end
+				end
+			end
+		end
+	end)
+end
+PNRP.spawnPropProtect()
+
 function GM:PlayerSpawnProp(ply, model)
 	if not self.BaseClass:PlayerSpawnProp(ply, model) then return false end
 	
@@ -233,6 +257,7 @@ function GM:PlayerSpawnProp(ply, model)
 		allowed = true 
 	
 	else
+	
 	--Normal Allowed system
 		model = string.gsub(model, "\\", "/")
 		if string.find(model,  "//") then return false end

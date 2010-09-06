@@ -112,6 +112,14 @@ function PNRP.buildMenu(parent_frame)
 			trademenu:SetPos(320, 25) -- set the button position in the frame
 			trademenu:SetSize( 100, 20 ) -- set the button size
 			trademenu.DoClick = function() RunConsoleCommand( "pnrp_trade_window" ) SCFrame=false parent_frame:Close() end 	
+		
+		local equipmentmenu = vgui.Create("DButton") -- Create the button
+			equipmentmenu:SetParent( parent_frame ) -- parent the button to the frame
+			equipmentmenu:SetText( "Equipment Menu >" ) -- set the button text
+			equipmentmenu:SetPos(420, 25) -- set the button position in the frame
+			equipmentmenu:SetSize( 100, 20 ) -- set the button size
+			equipmentmenu.DoClick = function() RunConsoleCommand( "pnrp_eqipment" ) SCFrame=false parent_frame:Close() end		
+			
 		if ply:IsAdmin() then	
 			local adminmenu = vgui.Create("DButton") -- Create the button
 				adminmenu:SetParent( parent_frame ) -- parent the button to the frame

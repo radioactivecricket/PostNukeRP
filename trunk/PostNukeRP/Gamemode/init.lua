@@ -598,6 +598,11 @@ function PNRP.GetAllCars( ply )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
 			if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
+				
+				--Forces the player out of the vehicle (Nolcip exploit fix)
+				local passenger = v:GetPassenger( )
+				if passenger then passenger:ExitVehicle( ) end
+				
 				local myModel = v:GetModel()
 								
 				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
@@ -665,6 +670,11 @@ function PNRP.SetOwnership( ply )
 		return
 	end
 		
+	if tostring(ent:GetNetworkedString( "pnrp_spawndoor" , "None" )) == "1" then
+		ply:ChatPrint("You can not own this door.")
+		return
+	end
+	
 	if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
 		ply:ConCommand("pnrp_removeowner")
 	else
@@ -701,6 +711,5 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
    Victim.DeathTime = CurTime()
 
 end   
-
 
 --EOF
