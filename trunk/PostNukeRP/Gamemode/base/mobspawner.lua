@@ -165,9 +165,9 @@ function GM.SpawnMobs()
 						
 						local doorEnt = mySP["infLinked"]
 						if doorEnt:IsValid() then
-							for _, us in pairs(player.GetAll()) do
-								us:ChatPrint("Door is valid.")
-							end
+							--for _, us in pairs(player.GetAll()) do
+								--us:ChatPrint("Door is valid.")
+							--end
 							if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
 								isActive = false
 							end
@@ -344,60 +344,193 @@ function SpawnMounds()
 	if #moundsTbl < GetConVarNumber("pnrp_MaxMounds") then
 		local randomizer = math.random(1, 100)
 		if randomizer <= GetConVarNumber("pnrp_MoundChance") then
+			local newSpawnTbl = {}
 			local mySP = {}
 			local canSpawn = false
 			local retries = 50
-			repeat
-				mySP = spawnTbl[math.random(1,#spawnTbl)]
-				retries = retries - 1
-				if util.tobool(mySP["infMound"]) and not util.tobool(mySP["infIndoor"]) then
-					canSpawn = true
+			
+			for _, node in pairs(spawnTbl) do
+				if util.tobool(node["infMound"]) then
+					table.insert(newSpawnTbl, node)
 				end
-			until canSpawn or retries <= 0
+			end
 			
-			if not canSpawn then return end
+			if #newSpawnTbl <= 0 then 
+				timer.Simple(GetConVarNumber("pnrp_MoundRate")*60,SpawnMounds)
+				return
+			end
 			
+			local isActive = true
+				
 			local retries = 50
-			local hasSpace = true
-			local spawnPos
-			
 			repeat
+				isActive = true
+				mySP = newSpawnTbl[math.random(1,#newSpawnTbl)]
 				retries = retries - 1
-				local randX = mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"])
-				local randY = mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"])
 				
-				local trace = {}
-				trace.start = Vector(randX, randY, 1000)
-				trace.endpos = trace.start + Vector(0, 0, -10000)
-				trace.mask = MASK_SOLID_BRUSHONLY
-
-				local groundtrace = util.TraceLine(trace)
+				if not util.tobool(mySP["infIndoor"]) then
+					isActive = true
+					break
+				end
 				
-				--Assure space
-				local nearby = ents.FindInSphere(groundtrace.HitPos,150)
-				local hasSpace = true
-
-				for k,v in pairs(nearby) do
-					if v:IsProp() then
-						hasSpace = false
+				local doorEnt = mySP["infLinked"]
+				if doorEnt:IsValid() then
+					if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+						isActive = false
 					end
 				end
-				spawnPos = groundtrace.HitPos - Vector(0,0,50)
-			until hasSpace or retries <= 0
+				
+				local spawnBounds1 = ClampWorldVector(Vector(mySP["x"]-mySP["distance"], mySP["y"]-mySP["distance"], mySP["z"]-mySP["distance"]))
+				local spawnBounds2 = ClampWorldVector(Vector(mySP["x"]+mySP["distance"], mySP["y"]+mySP["distance"], mySP["z"]+mySP["distance"]))
+				
+				local entsInBounds = ents.FindInBox(spawnBounds1, spawnBounds2)
+				local propCount = 0
+				
+				local resModels = {}
+				table.Add(resModels, PNRP.JunkModels)
+				table.Add(resModels, PNRP.ChemicalModels)
+				table.Add(resModels, PNRP.SmallPartsModels)
+				
+				for _, item in pairs(entsInBounds) do
+					if item:IsValid() then
+						if item:GetClass() == "prop_physics" then
+							propCount = propCount + 1
+							for _, model in pairs(resModels) do
+								if model == item:GetModel() then
+									propCount = propCount - 1
+									break
+								end
+							end
+						end
+					end
+				end
+				
+				if propCount > 3 then
+					isActive = false
+				end
+				
+			until isActive or retries < 0
 			
-			if hasSpace then
-				local ent = ents.Create("pnrp_antmound")
-				ent:SetPos(spawnPos)
-				ent:Spawn()
-				ent:SetNetworkedString("Owner", "Unownable")
-				ent:GetPhysicsObject():EnableMotion(false)
-				ent:SetMoveType(MOVETYPE_NONE)
-				
-				
-				
-				for k, v in pairs(player.GetAll()) do
-					v:ChatPrint("You feel a strange rumbling from the ground below you...")
-					v:EmitSound( "ambient/atmosphere/terrain_rumble1.wav", 45, 100 )
+			if isActive then
+				if util.tobool(mySP["infMound"]) then
+					local HeightPos = 1000
+					local retries = 50
+					local hasSpace = true
+					local validSpawn = true
+					local spawnPos
+					
+					local randX = mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"])
+					local randY = mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"])
+
+					spawnPos = Vector(randX,randY,mySP["z"])
+					--Find pos in world
+					while (util.IsInWorld(spawnPos) == false or validSpawn == false) and info.Retries > 0 do
+						validSpawn = true
+						randX = mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"])
+						randY = mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"])
+						
+						--Find roof
+						local trace = {}
+						trace.start = Vector(randX,randY,mySP["z"])
+						trace.endpos = trace.start + Vector(0, 0, 2000)
+
+						local roofTrace = util.TraceLine(trace)
+						
+						
+						--Find floor
+						local trace = {}
+						trace.start = Vector(randX,randY,roofTrace.HitPos.z)
+						trace.endpos = trace.start + Vector(0, 0, -5000)
+
+						local floorTrace = util.TraceLine(trace)
+						
+						--Find water?
+						local trace = {}
+						trace.start = groundtrace.HitPos
+						trace.endpos = trace.start + Vector(0,0,1)
+						trace.mask = MASK_WATER
+
+						local watertrace = util.TraceLine(trace)
+						
+						HeightPos = roofTrace.HitPos.z - 10
+						if 300 < (HeightPos - floorTrace.HitPos.z) then
+							validSpawn = false
+						end
+						
+						if watertrace.Hit then
+							validSpawn = false
+						end
+						
+						--Assure space
+						local nearby = ents.FindInSphere(floorTrace.HitPos,150)
+
+						for k,v in pairs(nearby) do
+							if v:IsProp() then
+								validSpawn = false
+							end
+						end
+						
+						spawnPos = Vector(randX,randY,floorTrace.HitPos.z)
+						retries = retries - 1
+					end
+					
+					if validSpawn then
+						local ent = ents.Create("pnrp_antmound")
+						ent:SetPos(spawnPos-Vector(0,0,50))
+						ent:Spawn()
+						ent:SetNetworkedString("Owner", "Unownable")
+						ent:GetPhysicsObject():EnableMotion(false)
+						ent:SetMoveType(MOVETYPE_NONE)
+						
+						for k, v in pairs(player.GetAll()) do
+							v:ChatPrint("You feel a strange rumbling from the ground below you...")
+							v:EmitSound( "ambient/atmosphere/terrain_rumble1.wav", 45, 100 )
+						end
+					end
+				else
+					local retries = 50
+					local hasSpace = true
+					local spawnPos
+					
+					repeat
+						retries = retries - 1
+						local randX = mySP["x"] + math.random(mySP["distance"]*-1,mySP["distance"])
+						local randY = mySP["y"] + math.random(mySP["distance"]*-1,mySP["distance"])
+						
+						local trace = {}
+						trace.start = Vector(randX, randY, 1000)
+						trace.endpos = trace.start + Vector(0, 0, -10000)
+						trace.mask = MASK_SOLID_BRUSHONLY
+
+						local groundtrace = util.TraceLine(trace)
+						
+						--Assure space
+						local nearby = ents.FindInSphere(groundtrace.HitPos,150)
+						local hasSpace = true
+
+						for k,v in pairs(nearby) do
+							if v:IsProp() then
+								hasSpace = false
+							end
+						end
+						spawnPos = groundtrace.HitPos - Vector(0,0,50)
+					until hasSpace or retries <= 0
+					
+					if hasSpace then
+						local ent = ents.Create("pnrp_antmound")
+						ent:SetPos(spawnPos)
+						ent:Spawn()
+						ent:SetNetworkedString("Owner", "Unownable")
+						ent:GetPhysicsObject():EnableMotion(false)
+						ent:SetMoveType(MOVETYPE_NONE)
+						
+						
+						
+						for k, v in pairs(player.GetAll()) do
+							v:ChatPrint("You feel a strange rumbling from the ground below you...")
+							v:EmitSound( "ambient/atmosphere/terrain_rumble1.wav", 45, 100 )
+						end
+					end
 				end
 			end
 		end

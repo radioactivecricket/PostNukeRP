@@ -107,14 +107,12 @@ function PNRP.OpenMainInventory(ply)
 	
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
---	ply:SendLua( "CurWeight = "..tostring(PNRP.InventoryWeight( ply ) ) )
 	
 	local tbl = { }
 	if !file.Exists( ILoc ) then 
 		print( "Inventory file doesn't exist !" ) 
 		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
 	else
-	--	local Inv = PNRP.Inventory( p )
 		tbl = util.KeyValuesToTable(file.Read(ILoc))
 		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
 	end
@@ -123,28 +121,16 @@ function PNRP.OpenMainInventory(ply)
 end
 concommand.Add("pnrp_OpenInventory", PNRP.OpenMainInventory)
 
-
---function PNRP.SendInventory( p )
-
---	local ILoc = PNRP.GetInventoryLocation( p )
-	
---	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
---	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
-	
---	p:SendLua( "CurWeight = "..tostring(PNRP.InventoryWeight( p ) ) )
---	if !file.Exists( ILoc ) then print( "Inventory file doesn't exist !" ) return end	
-	
---	p:SendLua( "MyInventory = {}" )
-
---	local Inv = PNRP.Inventory( p )
-
---	for k, v in pairs( Inv ) do
-	
---		p:SendLua( "MyInventory['" ..k.. "'] = "..v ) --SendLua ftw
-		
---	end	
-	
---end
+function PNRP.OpenEQWindow(ply)
+	local weightCap
+	if team.GetName(ply:Team()) == "Scavenger" then
+		weightCap = GetConVarNumber("pnrp_packCapScav")
+	else
+		weightCap = GetConVarNumber("pnrp_packCap")
+	end
+	datastream.StreamToClients(ply, "pnrp_OpenEquipmentWindow", { tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )), weightCap })
+end
+concommand.Add("pnrp_initEQ", PNRP.OpenEQWindow)
 
 function PNRP.InventoryWeight( p )
 	
@@ -183,14 +169,12 @@ function PNRP.OpenMainCarInventory(ply)
 	
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
---	ply:SendLua( "CurWeight = "..tostring(PNRP.InventoryWeight( ply ) ) )
 	
 	local tbl = { }
 	if !file.Exists( ILoc ) then 
 		print( "Inventory file doesn't exist !" ) 
 		datastream.StreamToClients(ply, "pnrp_OpenCarInvWindow", { tbl, tostring(PNRP.CarInventoryWeight( ply )) })
 	else
-	--	local Inv = PNRP.Inventory( p )
 		tbl = util.KeyValuesToTable(file.Read(ILoc))
 		datastream.StreamToClients(ply, "pnrp_OpenCarInvWindow", { tbl, tostring(PNRP.CarInventoryWeight( ply )) })
 	end
@@ -198,31 +182,6 @@ function PNRP.OpenMainCarInventory(ply)
 
 end
 concommand.Add("pnrp_OpenCarInventory", PNRP.OpenMainCarInventory)
-
---function PNRP.SendCarInventory( p )
-
---	local ILoc = PNRP.GetCarInventoryLocation( p )
-	
---	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
---	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
-	
---	p:SendLua( "CurCarInvWeight = "..tostring(PNRP.CarInventoryWeight( p ) ) )
---	if !file.Exists( ILoc ) then print( "Car Inventory file doesn't exist !" ) return end	
-	
---	p:SendLua( "MyCarInventory = {}" )
-
---	local Inv = PNRP.CarInventory( p )
-
---	for k, v in pairs( Inv ) do
-	
---		p:SendLua( "MyCarInventory['" ..k.. "'] = "..v ) --SendLua ftw
-		
---	end	
-	
-	
-	
---end
-
 
 function PNRP.CarInventoryWeight( p )
 	
@@ -290,13 +249,11 @@ function PNRP.AddToInentory( p, theitem )
 			
 		end
 		
---		PNRP.SendInventory( p )
-		
 	end
 	
 end
 
-function PNRP.AddToInvFrom( p, command, arg )
+function PNRP.AddToInvFromCar( p, command, arg )
 	local theitem = arg[1]
 	
 	local weight = PNRP.InventoryWeight( p ) + PNRP.Items[theitem].Weight
@@ -316,10 +273,32 @@ function PNRP.AddToInvFrom( p, command, arg )
 		return
 	end
 	
+	p:ConCommand("pnrp_carinv")	
+end
+concommand.Add( "pnrp_addtoinvfromcar", PNRP.AddToInvFromCar )
+
+function PNRP.AddToInvFromEQ( p, command, arg )
+	local theitem = arg[1]
+	
+	local weight = PNRP.InventoryWeight( p ) + PNRP.Items[theitem].Weight
+	local weightCap
+	
+	if team.GetName(p:Team()) == "Scavenger" then
+		weightCap = GetConVarNumber("pnrp_packCapScav")
+	else
+		weightCap = GetConVarNumber("pnrp_packCap")
+	end
+	
+	if weight <= weightCap then
+		PNRP.AddToInentory( p, theitem )
+		
+	else
+		p:ChatPrint("You're pack is too full and cannot carry this.")
+		return
+	end
+	
 	if command == "pnrp_addtoinvfromeq" then
 		p:ConCommand("pnrp_eqipment")
-	elseif command == "pnrp_addtoinvfromcar" then
-		p:ConCommand("pnrp_carinv")
 	elseif command == "pnrp_addtoinvfromceq-ammo" then
 		local ammoAmt = PNRP.Items[theitem].Energy
 		theitem = string.gsub(theitem, "ammo_", "")
@@ -328,10 +307,8 @@ function PNRP.AddToInvFrom( p, command, arg )
 	end
 	
 end
-concommand.Add( "pnrp_addtoinvfromcar", PNRP.AddToInvFrom )
-concommand.Add( "pnrp_addtoinvfromeq", PNRP.AddToInvFrom )
-concommand.Add( "pnrp_addtoinvfromceq-ammo", PNRP.AddToInvFrom )
-
+concommand.Add( "pnrp_addtoinvfromeq", PNRP.AddToInvFromEQ )
+concommand.Add( "pnrp_addtoinvfromceq-ammo", PNRP.AddToInvFromEQ )
 
 function PNRP.AddToCarInentory( p, command, arg )
 	local theitem = arg[1]
@@ -366,11 +343,16 @@ function PNRP.AddToCarInentory( p, command, arg )
 			
 		end
 		
-		--PNRP.SendCarInventory( p )
 		PNRP.TakeFromInventory( p, theitem )
 		
 		Msg("["..tostring(theitem).."] added to "..p:Nick().."'s car inventory.  \n")
 	end
+	if command == "pnrp_addtocarinentoryFromEQ" then
+		local ammoAmt = PNRP.Items[theitem].Energy
+		theitem = string.gsub(theitem, "ammo_", "")
+		p:RemoveAmmo( ammoAmt, theitem )
+	end
+	
 	if command ~= "pnrp_addtocarinentoryFromEQ" then
 		p:ConCommand("pnrp_inv")
 	end
@@ -400,8 +382,6 @@ function PNRP.TakeFromInventory( p, theitem )
 		end
 		
 		file.Write( ILoc, util.TableToKeyValues( decoded ) )
-		
---		PNRP.SendInventory( p )
 
 	end	
 
@@ -429,8 +409,6 @@ function PNRP.TakeFromCarInventory( p, theitem )
 		end
 		
 		file.Write( ILoc, util.TableToKeyValues( decoded ) )
-		
-	--	PNRP.SendCarInventory( p )
 
 	end	
 
@@ -446,8 +424,7 @@ function PNRP.DropItem( p, c, a )
 			if k == itemname && k == a[1] then
 			
 				PNRP.DropSpawn(p, itemname, 1)
-				-- PNRP.TakeFromInventory( p, a[1] )
-				
+
 			end
 			
 		end
@@ -467,8 +444,7 @@ function PNRP.DropCarItem( p, c, a )
 			if k == itemname && k == a[1] then
 			
 				PNRP.DropCarSpawn(p, itemname, 1)
-				-- PNRP.TakeFromInventory( p, a[1] )
-				
+
 			end
 			
 		end

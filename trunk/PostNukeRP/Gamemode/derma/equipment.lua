@@ -29,7 +29,12 @@ function ConvertWepEnt( weaponModel )
 	return nil
 end
 
-function GM.EquipmentWindow(ply)
+function GM.EquipmentWindow( handler, id, encoded, decoded )
+	local ply = LocalPlayer() 
+	local MyWeight = decoded[1]
+	local CarWeight = decoded[2]
+	local MyWeightCap = decoded[3]
+	
 	local eq_frame = vgui.Create( "DFrame" )
 		eq_frame:SetSize( 500, 200 ) --Set the size
 		eq_frame:SetPos(ScrW() / 2 - eq_frame:GetWide() / 2, ScrH() / 2 - eq_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
@@ -124,29 +129,35 @@ function GM.EquipmentWindow(ply)
 				    	pnlPanel.sendToInv:SetText( ">>Inv" )
 --				    	pnlPanel.sendToInv:SizeToContents() 
 				    	pnlPanel.sendToInv.DoClick = function()
-				    	
-							RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID)
-							RunConsoleCommand("pnrp_stripWep",v:GetClass())
+							
+							local weight = MyWeight + myItem.Weight
+							
+							if weight <= MyWeightCap then
+								RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID,v:GetClass())
+								RunConsoleCommand("pnrp_stripWep",v:GetClass())
+							else
+								ply:ChatPrint("You're pack is full.")
+							end
 							eq_frame:Close()
 							
 						end	
 						
-						for k,v in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
-							local ItemID = PNRP.FindItemID( v:GetClass() )
-							if ItemID != nil then
-								local myType = PNRP.Items[ItemID].Type
-								if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then	
+						for n,c in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
+							local CarItemID = PNRP.FindItemID( c:GetClass() )
+							if CarItemID != nil then
+								local myCarType = PNRP.Items[CarItemID].Type
+								if tostring(c:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myCarType == "vehicle" then	
 									pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
 									pnlPanel.sendCarInv:SetPos(5, 120)
 									pnlPanel.sendCarInv:SetSize(pnlPanel:GetWide() - 10,18)
 									pnlPanel.sendCarInv:SetText( ">>Car Inv" )							    	 
 									pnlPanel.sendCarInv.DoClick = function()
 									
-										local weight = CurCarInvWeight + myItem.Weight
+										local weight = CarWeight + myItem.Weight
 										local weightCap
 										
 										
-										weightCap = PNRP.Items[ItemID].Weight
+										weightCap = PNRP.Items[CarItemID].Weight
 										
 										if weight <= weightCap then
 											RunConsoleCommand("pnrp_addtocarinentoryFromEQ",myItem.ID)
@@ -164,15 +175,16 @@ function GM.EquipmentWindow(ply)
 									ammoToCar:SetText( ">>Car Inv" )							    	 
 									ammoToCar.DoClick = function()
 									
-										local weight = CurCarInvWeight + myItem.Weight
+										local weight = CarWeight + myItem.Weight
 										local weightCap
 										
 										
-										weightCap = PNRP.Items[ItemID].Weight
+										weightCap = PNRP.Items[CarItemID].Weight
 										
 										if weight <= weightCap then
-											RunConsoleCommand("pnrp_addtocarinentoryFromEQ",myItem.ID)
-											RunConsoleCommand("pnrp_stripAmmo",v:GetClass())
+											local ammoID = "ammo_"..AmmoComboBox:GetSelectedItems()[1]:GetValue()
+											RunConsoleCommand("pnrp_addtocarinentoryFromEQ",ammoID)
+											RunConsoleCommand("pnrp_stripAmmo",ammoID)
 											eq_frame:Close()
 										else
 											eq_frame:Close()
@@ -225,6 +237,13 @@ function GM.EquipmentWindow(ply)
 				end
 			end
 end
-concommand.Add( "pnrp_eqipment",  GM.EquipmentWindow )
+datastream.Hook( "pnrp_OpenEquipmentWindow", GM.EquipmentWindow )
+
+function GM.initEquipment(ply)
+
+	RunConsoleCommand("pnrp_initEQ")
+
+end
+concommand.Add( "pnrp_eqipment",  GM.initEquipment )
 
 --EOF
