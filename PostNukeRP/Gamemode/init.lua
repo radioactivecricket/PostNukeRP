@@ -601,7 +601,7 @@ function PNRP.GetAllCars( ply )
 				
 				--Forces the player out of the vehicle (Nolcip exploit fix)
 				local passenger = v:GetPassenger( )
-				if passenger then passenger:ExitVehicle( ) end
+				if passenger:IsValid() then passenger:ExitVehicle( ) end
 				
 				local myModel = v:GetModel()
 								
