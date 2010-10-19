@@ -107,7 +107,7 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 				 		pnlPanel.Count:SetContentAlignment( 5 )	
 				 		
 				 		pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
-						pnlPanel.ClassBuild:SetPos(350, 5)
+						pnlPanel.ClassBuild:SetPos(250, 5)
 						pnlPanel.ClassBuild:SetText("Required Class for Creation: "..item.ClassSpawn)
 						pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
 						pnlPanel.ClassBuild:SizeToContents() 
@@ -128,7 +128,7 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 				 		pnlPanel.ItemWeight:SetContentAlignment( 5 )
 				 		
 				 		pnlPanel.sendToInv = vgui.Create("DButton", pnlPanel )
-				 		pnlPanel.sendToInv:SetPos(435, 55)
+				 		pnlPanel.sendToInv:SetPos(420, 55)
 				 		pnlPanel.sendToInv:SetSize(115,18)
 				    	pnlPanel.sendToInv:SetText( "Send to To Inventory" )
 --				    	pnlPanel.sendToInv:SizeToContents() 
@@ -139,11 +139,33 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 							
 						end	
 						
+						if item.Type == "tool" or item.Type == "junk" then
+							--Since GMod does not like Not or's
+						else
+							pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
+							pnlPanel.bulkSlider:SetPos(435, 5)
+							pnlPanel.bulkSlider:SetSize( 100, 50 ) 
+							pnlPanel.bulkSlider:SetText( " " )
+							pnlPanel.bulkSlider:SetMin( 1 )
+							pnlPanel.bulkSlider:SetMax( v )
+							pnlPanel.bulkSlider:SetDecimals( 0 )
+							pnlPanel.bulkSlider:SetValue( 1 )
+							
+							pnlPanel.BulkBtn = vgui.Create("DButton", pnlPanel )
+							pnlPanel.BulkBtn:SetPos(540, 5)
+							pnlPanel.BulkBtn:SetSize(100,17)
+							pnlPanel.BulkBtn:SetText( "Drop Bulk" )
+							pnlPanel.BulkBtn.DoClick = function() 
+								datastream.StreamToServer( "DropBulkCrateCar", {itemname, pnlPanel.bulkSlider:GetValue() } )
+								parent_frame:Close()
+							end
+						end
+						
 						pnlPanel.salvageItem = vgui.Create("DButton", pnlPanel )
-						pnlPanel.salvageItem:SetPos(555, 55)
+						pnlPanel.salvageItem:SetPos(540, 55)
 				 		pnlPanel.salvageItem:SetSize(100,17)
 				    	pnlPanel.salvageItem:SetText( "Salvage Item" )
-				    	pnlPanel.salvageItem.DoClick = function() RunConsoleCommand("pnrp_docarsalvage",item.ID) parent_frame:Close() end
+				    	pnlPanel.salvageItem.DoClick = function() PNRP.OptionVerify( "pnrp_docarsalvage", item.ID, nil) parent_frame:Close() end
 				 	end
 				end
 			end

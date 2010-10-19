@@ -5,7 +5,7 @@ if (SERVER) then
 	SWEP.Weight				= 5
 	SWEP.AutoSwitchTo			= false
 	SWEP.AutoSwitchFrom		= false
---	SWEP.HoldType			= "knife"
+	SWEP.HoldType			= "slam"
 
 	local ActIndex = {}
 		ActIndex[ "knife" ]		= ACT_HL2MP_IDLE_KNIFE

@@ -161,7 +161,7 @@ function PNRP.ChatSounds( ply, text )
 		end
 	end
 	
-	local chat = string.Explode( " ", string.lower( text ) )
+	local chat = string.Explode( " ", text )
 	local chatArray = {  }
 	
  	for i,v in ipairs(chat) do table.insert(chatArray,v) end
@@ -170,7 +170,7 @@ function PNRP.ChatSounds( ply, text )
 	for cmd, func in pairs( PNRP.ChatCommands ) do
 		--Runs Console Commands
 		
-		if chat[1] == "/run" then
+		if string.lower(chat[1]) == "/run" then
 		
 			local sayString
 			if chatArray != nil then
@@ -187,7 +187,7 @@ function PNRP.ChatSounds( ply, text )
 				return ""
 				
 			end
-		elseif chat[1] == cmd then --Runs /Commands
+		elseif string.lower(chat[1]) == cmd then --Runs /Commands
 				
 			if chat[2] != "" then
 				
@@ -215,7 +215,7 @@ function PNRP.ChatSounds( ply, text )
 	
 	for cmd, cnCmd in pairs( PNRP.ChatConCommands ) do
 		
-		if chat[1] == cmd then --Runs /ConCommands
+		if string.lower(chat[1]) == cmd then --Runs /ConCommands
 			local sayString
 			if chatArray != nil then
 				
@@ -244,9 +244,15 @@ hook.Add("PlayerSay", "PNRPChatSounds", PNRP.ChatSounds)
 function GM:PlayerCanHearPlayersVoice( pListener, pTalker )
 	local curDistance = pListener:GetShootPos():Distance(pTalker:GetShootPos())
 	local maxDistance = GetConVarNumber("pnrp_voiceDist")
+	local senderChnl = pTalker.Channel
+	local listenerChnl = pListener.Channel
+	local senderRdioOn = (pTalker.RdioPower and pTalker:HasWeapon("weapon_radio"))
+	local listenerRdioOn = (pListener.RdioPower and pListener:HasWeapon("weapon_radio"))
 	
 	if GetConVarNumber("pnrp_voiceLimit") == 1 then
 		if curDistance < maxDistance then
+			return true
+		elseif senderRdioOn and listenerRdioOn and senderChnl == listenerChnl then
 			return true
 		else
 			return false
@@ -260,9 +266,17 @@ function GM:PlayerCanSeePlayersChat( strText, bTeamOnly, pListener, pTalker )
 
 	local curDistance = pListener:GetShootPos():Distance(pTalker:GetShootPos())
 	local maxDistance = GetConVarNumber("pnrp_voiceDist")
+	local senderChnl = pTalker.Channel
+	local listenerChnl = pListener.Channel
+	local senderRdioOn = (pTalker.RdioPower and pTalker:HasWeapon("weapon_radio"))
+	local listenerRdioOn = (pListener.RdioPower and pListener:HasWeapon("weapon_radio"))
+	
+	if string.lower(string.sub(strText, 1, 4 )) == "/ooc" or string.lower(string.sub(strText, 1, 2 )) == "//" then return true end
 	
 	if GetConVarNumber("pnrp_voiceLimit") == 1 then
 		if curDistance < maxDistance then
+			return true
+		elseif senderRdioOn and listenerRdioOn and senderChnl == listenerChnl then
 			return true
 		else
 			return false

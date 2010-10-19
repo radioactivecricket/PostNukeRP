@@ -87,117 +87,121 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 			for k, v in pairs(ply:GetWeapons()) do
 			--	local wepCheck = CheckDefWeps(v)
 			--	if !wepCheck then
-				if PNRP.FindWepItem(v:GetModel()) then
-					local myItem = PNRP.FindWepItem(v:GetModel())
-					local pnlPanel = vgui.Create("DPanel", Scroller)
-					--	pnlPanel:SetTall(pnlList:GetTall() - 20)
-						pnlPanel:SetSize( 75, eqPanel:GetTall() - 20 )
-						pnlPanel.Paint = function()
-							draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
-						end
-						
-						pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
-						pnlPanel.Icon:SetModel(myItem.Model)
-						pnlPanel.Icon:SetPos(pnlPanel:GetWide() / 2 - pnlPanel.Icon:GetWide() / 2, 5 )
-						pnlPanel.Icon:SetToolTip( nil )
-						pnlPanel.Icon.DoClick = function()	
-						
-							if ( v ) then
-								if v:GetClass() == "weapon_frag" then
-									RunConsoleCommand("pnrp_dropAmmo", "grenade")
-									eq_frame:Close()
-								else
-									local curWepAmmo = v:Clip1()																
-									datastream.StreamToServer("pnrp_dropWepFromEQ", {myItem.ID, curWepAmmo} )
-									eq_frame:Close()
+				if string.lower(v:GetModel()) == "models/weapons/v_hands.mdl" and string.lower(v:GetClass()) ~= "weapon_radio" then
+					--Do Nothing
+				else
+					if PNRP.FindWepItem(v:GetModel()) then
+						local myItem = PNRP.FindWepItem(v:GetModel())
+						local pnlPanel = vgui.Create("DPanel", Scroller)
+						--	pnlPanel:SetTall(pnlList:GetTall() - 20)
+							pnlPanel:SetSize( 75, eqPanel:GetTall() - 20 )
+							pnlPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+							end
+							
+							pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
+							pnlPanel.Icon:SetModel(myItem.Model)
+							pnlPanel.Icon:SetPos(pnlPanel:GetWide() / 2 - pnlPanel.Icon:GetWide() / 2, 5 )
+							pnlPanel.Icon:SetToolTip( nil )
+							pnlPanel.Icon.DoClick = function()	
+							
+								if ( v ) then
+									if v:GetClass() == "weapon_frag" then
+										RunConsoleCommand("pnrp_dropAmmo", "grenade")
+										eq_frame:Close()
+									else
+										local curWepAmmo = v:Clip1()																
+										datastream.StreamToServer("pnrp_dropWepFromEQ", {myItem.ID, curWepAmmo} )
+										eq_frame:Close()
+										RunConsoleCommand("pnrp_stripWep",v:GetClass())
+									end
+								end
+							
+							end
+							
+							pnlPanel.Name = vgui.Create("DLabel", pnlPanel)		
+							pnlPanel.Name:SetPos(5, 80)
+							pnlPanel.Name:SetText(myItem.Name)
+							pnlPanel.Name:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.Name:SizeToContents() 
+							pnlPanel.Name:SetContentAlignment( 5 )
+							
+							pnlPanel.sendToInv = vgui.Create("DButton", pnlPanel )
+							pnlPanel.sendToInv:SetPos(5, 100)
+							pnlPanel.sendToInv:SetSize(pnlPanel:GetWide() - 10,18)
+							pnlPanel.sendToInv:SetText( ">>Inv" )
+	--				    	pnlPanel.sendToInv:SizeToContents() 
+							pnlPanel.sendToInv.DoClick = function()
+								
+								local weight = MyWeight + myItem.Weight
+								
+								if weight <= MyWeightCap then
+									RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID,v:GetClass())
 									RunConsoleCommand("pnrp_stripWep",v:GetClass())
+								else
+									ply:ChatPrint("You're pack is full.")
+								end
+								eq_frame:Close()
+								
+							end	
+							
+							for n,c in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
+								local CarItemID = PNRP.FindItemID( c:GetClass() )
+								if CarItemID != nil then
+									local myCarType = PNRP.Items[CarItemID].Type
+									if tostring(c:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myCarType == "vehicle" then	
+										pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
+										pnlPanel.sendCarInv:SetPos(5, 120)
+										pnlPanel.sendCarInv:SetSize(pnlPanel:GetWide() - 10,18)
+										pnlPanel.sendCarInv:SetText( ">>Car Inv" )							    	 
+										pnlPanel.sendCarInv.DoClick = function()
+										
+											local weight = CarWeight + myItem.Weight
+											local weightCap
+											
+											
+											weightCap = PNRP.Items[CarItemID].Weight
+											
+											if weight <= weightCap then
+												RunConsoleCommand("pnrp_addtocarinentoryFromEQ",myItem.ID)
+												RunConsoleCommand("pnrp_stripWep",v:GetClass())
+												eq_frame:Close()
+											else
+												eq_frame:Close()
+												ply:ChatPrint("You're car trunk is full.")
+											end	
+										end
+										
+										local ammoToCar = vgui.Create("DButton", eq_frame )
+										ammoToCar:SetPos(eqPanel:GetWide() + 20, AmmoComboBox:GetTall() + 105)
+										ammoToCar:SetSize(125,18)
+										ammoToCar:SetText( ">>Car Inv" )							    	 
+										ammoToCar.DoClick = function()
+										
+											local weight = CarWeight + myItem.Weight
+											local weightCap
+											
+											
+											weightCap = PNRP.Items[CarItemID].Weight
+											
+											if weight <= weightCap then
+												local ammoID = "ammo_"..AmmoComboBox:GetSelectedItems()[1]:GetValue()
+												RunConsoleCommand("pnrp_addtocarinentoryFromEQ",ammoID)
+												RunConsoleCommand("pnrp_stripAmmo",ammoID)
+												eq_frame:Close()
+											else
+												eq_frame:Close()
+												ply:ChatPrint("You're car trunk is full.")
+											end	
+										end
+										
+									end
 								end
 							end
-						
-						end
-						
-						pnlPanel.Name = vgui.Create("DLabel", pnlPanel)		
-						pnlPanel.Name:SetPos(5, 80)
-						pnlPanel.Name:SetText(myItem.Name)
-						pnlPanel.Name:SetColor(Color( 0, 0, 0, 255 ))
-						pnlPanel.Name:SizeToContents() 
-						pnlPanel.Name:SetContentAlignment( 5 )
-						
-						pnlPanel.sendToInv = vgui.Create("DButton", pnlPanel )
-				 		pnlPanel.sendToInv:SetPos(5, 100)
-				 		pnlPanel.sendToInv:SetSize(pnlPanel:GetWide() - 10,18)
-				    	pnlPanel.sendToInv:SetText( ">>Inv" )
---				    	pnlPanel.sendToInv:SizeToContents() 
-				    	pnlPanel.sendToInv.DoClick = function()
 							
-							local weight = MyWeight + myItem.Weight
 							
-							if weight <= MyWeightCap then
-								RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID,v:GetClass())
-								RunConsoleCommand("pnrp_stripWep",v:GetClass())
-							else
-								ply:ChatPrint("You're pack is full.")
-							end
-							eq_frame:Close()
-							
-						end	
-						
-						for n,c in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
-							local CarItemID = PNRP.FindItemID( c:GetClass() )
-							if CarItemID != nil then
-								local myCarType = PNRP.Items[CarItemID].Type
-								if tostring(c:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myCarType == "vehicle" then	
-									pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
-									pnlPanel.sendCarInv:SetPos(5, 120)
-									pnlPanel.sendCarInv:SetSize(pnlPanel:GetWide() - 10,18)
-									pnlPanel.sendCarInv:SetText( ">>Car Inv" )							    	 
-									pnlPanel.sendCarInv.DoClick = function()
-									
-										local weight = CarWeight + myItem.Weight
-										local weightCap
-										
-										
-										weightCap = PNRP.Items[CarItemID].Weight
-										
-										if weight <= weightCap then
-											RunConsoleCommand("pnrp_addtocarinentoryFromEQ",myItem.ID)
-											RunConsoleCommand("pnrp_stripWep",v:GetClass())
-											eq_frame:Close()
-										else
-											eq_frame:Close()
-											ply:ChatPrint("You're car trunk is full.")
-										end	
-									end
-									
-									local ammoToCar = vgui.Create("DButton", eq_frame )
-									ammoToCar:SetPos(eqPanel:GetWide() + 20, AmmoComboBox:GetTall() + 105)
-									ammoToCar:SetSize(125,18)
-									ammoToCar:SetText( ">>Car Inv" )							    	 
-									ammoToCar.DoClick = function()
-									
-										local weight = CarWeight + myItem.Weight
-										local weightCap
-										
-										
-										weightCap = PNRP.Items[CarItemID].Weight
-										
-										if weight <= weightCap then
-											local ammoID = "ammo_"..AmmoComboBox:GetSelectedItems()[1]:GetValue()
-											RunConsoleCommand("pnrp_addtocarinentoryFromEQ",ammoID)
-											RunConsoleCommand("pnrp_stripAmmo",ammoID)
-											eq_frame:Close()
-										else
-											eq_frame:Close()
-											ply:ChatPrint("You're car trunk is full.")
-										end	
-									end
-									
-								end
-							end
-						end
-						
-						
-						Scroller:AddPanel(pnlPanel)
+							Scroller:AddPanel(pnlPanel)
+					end
 				end
 			end
 			
