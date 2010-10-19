@@ -144,6 +144,7 @@ function HelpPanel()
 				"F4 - Shop Menu",
 				"F12 - Set / Release Ownership.",
 				"",
+				"/ooc or // - Global Chat. Anyone can see this even when Voice Limiter is on.",
 				"/save - save's your characters data.",
 				"/getallcars - picks up any and all cars that belong to you in the world",
 				"/eq /equipment - Opens the Equipment Menu",
@@ -160,12 +161,33 @@ function HelpPanel()
 				"          Players also get a bonus to HP recovery while asleep and the player will automatically wake back up when Endurance is full. ",
 				"/wake - Wakes the player from the sleeping state.",
 				"/salvage - Salvages the item that you are looking at.",
-				"",
+				"/newcomm communityName - Create a new community.",
+				"/delcomm - Delete Community.",
+				"/leave - Leave a community.",
+				"/invite playerName - Invite a player to the community.",
+				"/remove playerName - Remove someone from the community.",
+				"/accept - Accept community invite.",
+				"/deny - Deny community invite.",
+				"/setrank playerName rankInt - Change the rank of a player.",
+				"/demoteself - Demote yourself in the community.",
+				"/placestock - Place Community Stockpile.",
+				"/remstock - Remove Community Stockpile.",
+				"/placelocker - Place Community Locker.",
+				"/remlocker - Remove Community Locker.",
+				
 				"Hands (Weapon):",
 				"          Left Click - Gather Resources/Punch Player.",
 				"          Right Click - Knock on Door.",
-				"          Alt+Left Click - Unlock Door or Car.",
-				"          Alt+Right Click - Lock Door or Car."
+				"Keys (Weapon):",
+				"          R or F12 - Take Ownership",
+				"          R (After Ownership) - Open Ownership menu",
+				"          Left Click - Unlock Door or Car.",
+				"          Right Click - Lock Door or Car.",
+				"Radio (Weapon)",
+				"          When on, anyone on your frequancy can hear you talk. (Chat or Voice)",
+				"          This is handy when Voice Limiter is on.",
+				"          Left Click - Change Channel.",
+				"          Right Click - Toggle Radio Power."
 				}
 				
 				for k, v in pairs( helpCommands ) do
@@ -173,8 +195,6 @@ function HelpPanel()
 						ReadThis:SetText( v )
 						InGameComList:AddItem( ReadThis )
 				end	
-				
---				InGameComList:AddItem( helpCompnlList )
 			pnlList:AddItem(InGameComDCats)
 			
 		local ClassDCats = vgui.Create("DCollapsibleCategory", pnlList)
@@ -226,6 +246,41 @@ function HelpPanel()
 						ClassList:AddItem( ReadThis )
 				end	
 			pnlList:AddItem(ClassDCats)
+		
+		local CommunityDCats = vgui.Create("DCollapsibleCategory", pnlList)
+			CommunityDCats:SetSize( pnlList:GetWide()-50, 50 ) -- Keep the second number at 50
+			CommunityDCats:SetExpanded( 0 ) -- Expanded when popped up
+			CommunityDCats:SetLabel( "Communities" )
+			 
+			CommunityList = vgui.Create( "DPanelList" )
+			CommunityList:SetAutoSize( true )
+			CommunityList:SetSpacing( 0 )
+			CommunityList:EnableHorizontal( false )
+			CommunityList:EnableVerticalScrollbar( true )
+			 
+			CommunityDCats:SetContents( CommunityList )
+			
+			local helpCommunity = 	{
+			"Communities help people band together and share resources and equipment.",
+			"To open the Community Menu click the Community Menu button in the main menu.",
+			"There are 3 levels in the community; Level 3 has full permissions, level 2 can invite, Level 1 is base membership.",
+			"",
+			"Community Stockpiles:",	
+			"These allow communities to share resources. These can be broken into by other people.",
+			"Anyone in the community can access this.",
+			"",
+			"Community Locker:",
+			"This allows you to store items other than resources, this can also be broken into.",
+			"",
+			"All items in the Stockpile and Lockers are saved."
+			}
+			
+				for k, v in pairs( helpCommunity ) do
+					local ReadThis = vgui.Create( "DLabel" )
+						ReadThis:SetText( v )
+						CommunityList:AddItem( ReadThis )
+				end	
+			pnlList:AddItem(CommunityDCats)
 			
 		local GatheringDCats = vgui.Create("DCollapsibleCategory", pnlList)
 			GatheringDCats:SetSize( pnlList:GetWide()-50, 50 ) -- Keep the second number at 50
@@ -244,7 +299,7 @@ function HelpPanel()
 			"Gathering is done by using your Hands and holding the Mouse 1 button while looking at the resource.",
 			"Resources are scattered throughout the map.",
 			"To trade resources, press TAB and select the Trade Menu button. The players must be within range to trade.",
-			"There are 3 types of recources:",
+			"There are 3 types of resources:",
 			"Scrap:"
 			}
 			
@@ -533,7 +588,7 @@ function HelpPanel()
 		"PostNukeRP Site: http://postnukerp.com/",
 		"PostNukeRP Forums: http://gmdev.thercs.net/",
 		"Radioactive Cricket Site: http://radioactivecricket.com/   (Will post updates here too)",
-		"Team Echo Forums: http://tecgmodgroup.forumotion.com/",
+		"Checkout the MOTD for group information.",
 		"",
 		"You can also look for our PostNukeRP Steam group as well."
 		}

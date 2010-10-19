@@ -15,6 +15,7 @@ function AddOwner(ply, args)
 	if ent:GetNetworkedString("Owner") == "World" or ent:GetNetworkedString("Owner") == "None" or ent:GetNetworkedString("Owner") == "" then
 		ent:SetNetworkedString("Owner", "" )
 		ent:SetNetworkedString("Owner", playerNick )
+		ent:SetNWEntity( "ownerent", ply )
 		
 		local myClass = ent:GetClass()
 		local ItemID = PNRP.FindItemID( myClass )
@@ -35,6 +36,7 @@ function AddOwner(ply, args)
 	return ""
 end
 concommand.Add( "pnrp_addowner", AddOwner )
+
 function removeOwner(ply, args)
 
 	local trace = {}
@@ -50,6 +52,7 @@ function removeOwner(ply, args)
 	if ent:GetNetworkedString("Owner") == playerNick then
 		ent:SetNetworkedString("Owner", "" )
 		ent:SetNetworkedString("Owner", "World" )
+		SK_Srv.ReleaseOwner( ply, nil, nil, nil, {["doorEnt"] = ent} )
 		
 		local myClass = ent:GetClass()
 		local ItemID = PNRP.FindItemID( myClass )
@@ -70,6 +73,7 @@ function removeOwner(ply, args)
 	return ""
 end
 concommand.Add( "pnrp_removeowner", removeOwner )
+
 --AddChatCommand("/addowner", AddOwner)
 function ReadOwner(ply, args)
 	local trace = {}

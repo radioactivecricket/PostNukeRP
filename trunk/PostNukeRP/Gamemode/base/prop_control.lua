@@ -1,19 +1,10 @@
 
---CreateConVar("pnrp_propBanning", "1", FCVAR_ARCHIVE)
---CreateConVar("pnrp_propAllowing", "0", FCVAR_ARCHIVE)
-
---CreateConVar("pnrp_propPay", "1", FCVAR_ARCHIVE)
---CreateConVar("pnrp_propCost", "10", FCVAR_ARCHIVE)
-
---CreateConVar("pnrp_adminCreateAll", "1", FCVAR_ARCHIVE)
---CreateConVar("pnrp_adminTouchAll", "1", FCVAR_ARCHIVE)
-
---CreateConVar("pnrp_exp2Level", "1", FCVAR_ARCHIVE)
-
 local EntityMeta = FindMetaTable("Entity")
 
 BannedProps = { }
+ToolBlockedProps = { }
 function AddBannedProp(mdl) table.insert(BannedProps, mdl) end
+function AddToolBlockedProp(mdl) table.insert(ToolBlockedProps, mdl) end
 
 AllowedProps = { }
 function AddAllowedProp(mdl) table.insert(AllowedProps, mdl) end
@@ -49,15 +40,6 @@ function PNRP.AddItem( itemtable )
 	
 end	
 
--- PNRP.JunkModels = { "models/props_junk/TrashCluster01a.mdl",
-	-- "models/Gibs/helicopter_brokenpiece_03.mdl"}
--- PNRP.ChemicalModels = { "models/props_junk/garbage128_composite001c.mdl",
-	-- "models/Gibs/gunship_gibs_sensorarray.mdl",
-	-- "models/Gibs/gunship_gibs_eye.mdl"}
--- PNRP.SmallPartsModels = { "models/props_combine/combine_binocular01.mdl",
-	-- "models/Gibs/Scanner_gib01.mdl", 
-	-- "models/Gibs/Scanner_gib05.mdl" }
-
 for k, v in pairs(PNRP.JunkModels) do
 	AddBannedProp(v)
 end
@@ -75,6 +57,7 @@ function PNRP.GetBannedPropsList( )
 		tbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
 		if tbl ~= nil then
 			for k, v in pairs(tbl) do
+				AddToolBlockedProp(v)
 				AddBannedProp(v)
 			end
 		end
@@ -135,9 +118,11 @@ function PNRP.PropProtect_AddItem(ply, handler, id, encoded, decoded )
 			end
 			table.insert(tbl, model)
 			AddBannedProp(model)
+			AddToolBlockedProp(model)
 			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
 		else
 			AddBannedProp(model)
+			AddToolBlockedProp(model)
 			table.insert(tbl, model)
 			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
 		end
@@ -183,12 +168,14 @@ function PNRP.PropProtect_RemoveItem(ply, handler, id, encoded, decoded )
 			for k, v in pairs( BannedProps ) do	
 				if model == v then
 					table.remove(BannedProps, k)
+					table.remove(ToolBlockedProps, k)
 				end
 			end
 		else
 			for k, v in pairs( BannedProps ) do	
 				if model == v then
 					table.remove(BannedProps, k)
+					table.remove(ToolBlockedProps, k)
 				end
 			end
 			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
@@ -409,6 +396,14 @@ function GM:PlayerSpawnNPC( p, npc_type, npc_weapon )
 	
 end	
 
+function PuntCheck(ply, ent)
+	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1) then
+		return false
+	end
+	
+	return true
+end
+hook.Add("GravGunPunt", "PuntCheck", PuntCheck)
 
 function PickupCheck( ply, ent)
 	--admin can do whatever they want
@@ -497,8 +492,17 @@ hook.Add("CanPlayerUnfreeze", "PhyUnfreezeCheck", PhysUnfreezeCheck)
 
 function ToolCheck( ply, tr, toolmode )
 	local ent = tr.Entity
+	
+	--If player is admin
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 		return true
+	end
+	--Blocks tool usage to these items
+	for k, v in pairs(ToolBlockedProps) do
+		if string.lower(v) == string.lower(ent:GetModel()) then 
+			ply:ChatPrint("This is not allowed.")
+			return false 
+		end
 	end
 	--ply:ChatPrint(tostring(toolmode))
 	local searchPos
@@ -625,5 +629,6 @@ function ToolCheck( ply, tr, toolmode )
 	end
 end
 hook.Add( "CanTool", "ToolCheck", ToolCheck )
+
 
 --EOF

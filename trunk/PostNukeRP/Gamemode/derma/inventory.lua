@@ -122,7 +122,7 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 					    end
 				 		
 				 		pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
-						pnlPanel.ClassBuild:SetPos(350, 5)
+						pnlPanel.ClassBuild:SetPos(250, 5)
 						pnlPanel.ClassBuild:SetText("Required Class for Creation: "..item.ClassSpawn)
 						pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
 						pnlPanel.ClassBuild:SizeToContents() 
@@ -144,14 +144,14 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 				 		
 				 		if itemtype != "vehicle" then
 				 		
-					    	for k,v in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
-								local ItemID = PNRP.FindItemID( v:GetClass() )
+					    	for _, car in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
+								local ItemID = PNRP.FindItemID( car:GetClass() )
 								if ItemID != nil then
 									local myType = PNRP.Items[ItemID].Type
-									if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
+									if tostring(car:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
 									
 										pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
-								 		pnlPanel.sendCarInv:SetPos(450, 55)
+								 		pnlPanel.sendCarInv:SetPos(435, 55)
 								 		pnlPanel.sendCarInv:SetSize(100,18)
 								    	pnlPanel.sendCarInv:SetText( "Send to Car Inv" )
 --								    	pnlPanel.sendCarInv:SizeToContents() 
@@ -177,13 +177,34 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 								end
 					    	
 					    	end
+							if item.Type == "tool" or item.Type == "junk" then
+								--Since GMod does not like Not or's
+							else
+								pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
+								pnlPanel.bulkSlider:SetPos(435, 5)
+								pnlPanel.bulkSlider:SetSize( 100, 50 ) 
+								pnlPanel.bulkSlider:SetText( " " )
+								pnlPanel.bulkSlider:SetMin( 1 )
+								pnlPanel.bulkSlider:SetMax( v )
+								pnlPanel.bulkSlider:SetDecimals( 0 )
+								pnlPanel.bulkSlider:SetValue( 1 )
+								
+								pnlPanel.BulkBtn = vgui.Create("DButton", pnlPanel )
+								pnlPanel.BulkBtn:SetPos(540, 5)
+								pnlPanel.BulkBtn:SetSize(100,17)
+								pnlPanel.BulkBtn:SetText( "Drop Bulk" )
+								pnlPanel.BulkBtn.DoClick = function() 
+									datastream.StreamToServer( "DropBulkCrate", {itemname, pnlPanel.bulkSlider:GetValue() } )
+									parent_frame:Close()
+								end
+							end
 						end
 						
 						pnlPanel.salvageItem = vgui.Create("DButton", pnlPanel )
-						pnlPanel.salvageItem:SetPos(555, 55)
+						pnlPanel.salvageItem:SetPos(540, 55)
 				 		pnlPanel.salvageItem:SetSize(100,17)
 				    	pnlPanel.salvageItem:SetText( "Salvage Item" )
-				    	pnlPanel.salvageItem.DoClick = function() RunConsoleCommand("pnrp_dosalvage",item.ID) parent_frame:Close() end
+				    	pnlPanel.salvageItem.DoClick = function() PNRP.OptionVerify( "pnrp_dosalvage", item.ID, nil) parent_frame:Close() end
 				 	end
 				end
 			end

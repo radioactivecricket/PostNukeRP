@@ -1,5 +1,5 @@
-GM.Name 	= "PostNukeRP v44" --Set the gamemode name
-GM.Author 	= "EldarStorm LostInTheWird Gmod Addict" --Set the author name
+GM.Name 	= "PostNukeRP v45" --Set the gamemode name
+GM.Author 	= "EldarStorm LostInTheWird MainError(Gmod Addict)" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://radioactivecricket.com" --Set the author website
 
@@ -40,6 +40,7 @@ PNRP.SmallPartsModels = { "models/props_combine/combine_binocular01.mdl",
 PNRP.DefWeps = {"weapon_physcannon",
 				"weapon_physgun",
 				"gmod_rp_hands",
+				"weapon_simplekeys",
 				"weapon_real_cs_knife",
 				"gmod_camera",
 				"gmod_tool"}
@@ -70,6 +71,8 @@ CreateConVar("pnrp_MaxFastZombies","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_A
 CreateConVar("pnrp_MaxPoisonZombs","2",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_MaxAntlions","10",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_MaxAntGuards","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+--Spawns a zombie when the player dies
+CreateConVar("pnrp_PlyDeathZombie","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 --Mound Spawner Vars
 CreateConVar("pnrp_MaxMounds","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
@@ -155,7 +158,15 @@ function PNRP.FindItemID( class )
 end
 
 function PNRP.FindWepItem( model )
-	local fixedModel = string.sub( model, 1, string.find(model, "v_") - 1).."w"..string.sub( model, string.find(model, "v_") + 1 ) 
+	local fixedModel
+	if string.find(model, "v_") then
+		fixedModel = string.sub( model, 1, string.find(model, "v_") - 1).."w"..string.sub( model, string.find(model, "v_") + 1 )
+	else
+		fixedModel = model
+	end
+	if model == "models/Weapons/V_hands.mdl" or model == "models/weapons/v_hands.mdl" then
+		fixedModel = "models/props_citizen_tech/transponder.mdl"
+	end
 	
 	for itemname, item in pairs( PNRP.Items ) do
 		if fixedModel == item.Model then

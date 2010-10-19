@@ -36,6 +36,7 @@ function GM.open_admin(ply)
 				GModeSettingsList:SetPos( 10,10 )
 				GModeSettingsList:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 10 )
 				GModeSettingsList:SetSpacing( 3 ) -- Spacing between items
+				GModeSettingsList:SetPadding( 5 )
 				GModeSettingsList:EnableHorizontal( false ) -- Only vertical items
 				GModeSettingsList:EnableVerticalScrollbar( true ) -- Allow scrollbar if you exceed the Y axis	
 				
@@ -102,6 +103,12 @@ function GM.open_admin(ply)
 					propSpawnProtectTgl:SetValue( GetConVar("pnrp_propSpawnpointProtection"):GetInt() )
 					propSpawnProtectTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propSpawnProtectTgl )
+				
+				local plyDeathZombieTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
+					plyDeathZombieTgl:SetText( "Player Death Zombie Spawn." )
+					plyDeathZombieTgl:SetValue( GetConVar("pnrp_PlyDeathZombie"):GetInt() )
+					plyDeathZombieTgl:SizeToContents() 
+				GModeSettingsList:AddItem( plyDeathZombieTgl )
 				
 				local propPayTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					propPayTgl:SetText( "Pay for Props from Q Menu.." )
@@ -185,6 +192,7 @@ function GM.open_admin(ply)
 				    	local voiceLimitOnOff
 				    	local classCostOnOff
 				    	local deathCostOnOff
+						local plyDeathZombieTglOnOff
 				    	if adminCreateAllTgl:GetChecked(true) then
 				    		adminCreateAllOnOff = 1
 				    	else
@@ -199,6 +207,11 @@ function GM.open_admin(ply)
 				    		adminNoCostOnOff = 1
 				    	else
 				    		adminNoCostOnOff = 0
+				    	end
+						if plyDeathZombieTgl:GetChecked(true) then
+				    		plyDeathZombieTglOnOff = 1
+				    	else
+				    		plyDeathZombieTglOnOff = 0
 				    	end
 				    	if propBanningTgl:GetChecked(true) then
 				    		propBanningOnOff = 1
@@ -245,6 +258,7 @@ function GM.open_admin(ply)
 						RunConsoleCommand("pnrp_RunCommand","pnrp_propSpawnpointProtection",tostring(propSpawnProtectOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propPay",tostring(propPayOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_propCost",tostring(propCostSlider:GetValue()))
+						RunConsoleCommand("pnrp_RunCommand","pnrp_PlyDeathZombie",tostring(plyDeathZombieTglOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceLimit",tostring(voiceLimitOnOff))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceDist",tostring(voiceLimitSlider:GetValue()))
 				        RunConsoleCommand("pnrp_RunCommand","pnrp_classChangePay",tostring(classCostOnOff))

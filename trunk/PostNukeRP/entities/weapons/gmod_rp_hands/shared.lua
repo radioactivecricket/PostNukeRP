@@ -78,18 +78,18 @@ function SWEP:PrimaryAttack()
 	
     if !tr.Entity:IsValid() then return end
 	if self.Owner:KeyDown(IN_WALK) then
-		local owner = tr.Entity:GetNWString( "Owner", "None" )
-		if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
-			tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
-			self.Owner:ChatPrint("Unlocked.")
-			tr.Entity:Fire("unlock", "", 0)
-		elseif tr.Entity:IsVehicle() and self.Owner:Nick() == owner then
-			tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
-			self.Owner:ChatPrint("Unlocked.")
-			tr.Entity:Fire("unlock", "", 0)
-		elseif tr.Entity:IsVehicle() or tr.Entity:IsDoor() then
-			self.Owner:ChatPrint("You do not own it!")
-		end
+		-- local owner = tr.Entity:GetNWString( "Owner", "None" )
+		-- if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
+			-- tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
+			-- self.Owner:ChatPrint("Unlocked.")
+			-- tr.Entity:Fire("unlock", "", 0)
+		-- elseif tr.Entity:IsVehicle() and self.Owner:Nick() == owner then
+			-- tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
+			-- self.Owner:ChatPrint("Unlocked.")
+			-- tr.Entity:Fire("unlock", "", 0)
+		-- elseif tr.Entity:IsVehicle() or tr.Entity:IsDoor() then
+			-- self.Owner:ChatPrint("You do not own it!")
+		-- end
 	else
 		if tr.Entity:IsJunkPile() then
 			local data = {}
@@ -147,16 +147,16 @@ function SWEP:SecondaryAttack()
 	
 	if !tr.Entity:IsValid() then return end
 	if self.Owner:KeyDown(IN_WALK) then
-		local owner = tr.Entity:GetNWString( "Owner", "None" )
-		if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
-			tr.Entity:EmitSound(Sound("doors/latchlocked2.wav"))
-			self.Owner:ChatPrint("Locked.")
-			tr.Entity:Fire("Lock", "", 0)
-		elseif tr.Entity:IsVehicle() and self.Owner:Nick() == owner then
-			tr.Entity:EmitSound(Sound("doors/latchlocked2.wav"))
-			self.Owner:ChatPrint("Locked.")
-			tr.Entity:Fire("Lock", "", 0)
-		end
+		-- local owner = tr.Entity:GetNWString( "Owner", "None" )
+		-- if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
+			-- tr.Entity:EmitSound(Sound("doors/latchlocked2.wav"))
+			-- self.Owner:ChatPrint("Locked.")
+			-- tr.Entity:Fire("Lock", "", 0)
+		-- elseif tr.Entity:IsVehicle() and self.Owner:Nick() == owner then
+			-- tr.Entity:EmitSound(Sound("doors/latchlocked2.wav"))
+			-- self.Owner:ChatPrint("Locked.")
+			-- tr.Entity:Fire("Lock", "", 0)
+		-- end
 	else
 		if !string.find( string.lower( tr.Entity:GetClass() ), "door" ) then return end
 		tr.Entity:EmitSound("physics/flesh/flesh_impact_bullet1.wav")

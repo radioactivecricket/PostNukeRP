@@ -362,58 +362,78 @@ concommand.Add( "pnrp_addtocarinentoryFromEQ", PNRP.AddToCarInentory )
 
 
 function PNRP.TakeFromInventory( p, theitem )
-
 	local ILoc = PNRP.GetInventoryLocation( p )		
 	
 	if !file.Exists( ILoc ) then return print( "Inventory file doesn't exist !" ) end
-	
 	local decoded = PNRP.Inventory( p )		
-
 	if decoded[theitem] != nil then
-	
 		if decoded[theitem] > 1 then
-		
 			decoded[theitem] = decoded[theitem] - 1
-			
 		else
-		
 			decoded[theitem] = nil
-			
 		end
-		
 		file.Write( ILoc, util.TableToKeyValues( decoded ) )
-
 	end	
-
 end
 
+function PNRP.TakeFromInventoryBulk( p, theitem, Count )
+	local ILoc = PNRP.GetInventoryLocation( p )		
+	local Check = false
+	if !file.Exists( ILoc ) then return print( "Inventory file doesn't exist !" ) end
+	local decoded = PNRP.Inventory( p )		
+	if decoded[theitem] != nil then
+		if decoded[theitem] > Count then
+			decoded[theitem] = decoded[theitem] - Count
+			Check = true
+		else
+			if decoded[theitem] == Count then
+				decoded[theitem] = nil
+				Check = true
+			else
+				Check = false
+			end
+		end
+		file.Write( ILoc, util.TableToKeyValues( decoded ) )
+	end	
+	return Check
+end
 
 function PNRP.TakeFromCarInventory( p, theitem )
-
 	local ILoc = PNRP.GetCarInventoryLocation( p )		
 	
 	if !file.Exists( ILoc ) then return print( "Inventory file doesn't exist !" ) end
-	
 	local decoded = PNRP.CarInventory( p )		
-
 	if decoded[theitem] != nil then
-	
 		if decoded[theitem] > 1 then
-		
-			decoded[theitem] = decoded[theitem] - 1
-			
+			decoded[theitem] = decoded[theitem] - 1	
 		else
-		
-			decoded[theitem] = nil
-			
+			decoded[theitem] = nil	
 		end
-		
 		file.Write( ILoc, util.TableToKeyValues( decoded ) )
-
 	end	
-
 end
 
+function PNRP.TakeFromCarInventoryBulk( p, theitem, Count )
+	local ILoc = PNRP.GetCarInventoryLocation( p )		
+	local Check = false
+	if !file.Exists( ILoc ) then return print( "Inventory file doesn't exist !" ) end
+	local decoded = PNRP.CarInventory( p )		
+	if decoded[theitem] != nil then
+		if decoded[theitem] > Count then
+			decoded[theitem] = decoded[theitem] - Count
+			Check = true
+		else
+			if decoded[theitem] == Count then
+				decoded[theitem] = nil
+				Check = true
+			else
+				Check = false
+			end
+		end
+		file.Write( ILoc, util.TableToKeyValues( decoded ) )
+	end	
+	return Check
+end
 
 function PNRP.DropItem( p, c, a )
 

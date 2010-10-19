@@ -132,6 +132,7 @@ function GM:PlayerDisconnected(ply)
 	for k, v in pairs(DoorList) do
 		v:SetNetworkedString("Owner", "World")
 	end
+	SK_Srv.OnDisc_Doors( ply )
 	
 	for k, v in pairs(player.GetAll()) do
 		v:ChatPrint(ply:Nick().." has left the server.")
@@ -144,61 +145,44 @@ function GM:PlayerLoadout( ply ) --Weapon/ammo/item function
 	
     if ply:Team() == TEAM_WASTELANDER then --If player team equals 1
 
-        ply:Give( "weapon_physcannon" ) --Give them the Gravity Gun 
-        ply:Give( "weapon_physgun" ) 
-        ply:Give( "gmod_rp_hands" ) --Give them Hands
-        ply:Give( "weapon_real_cs_knife" ) --Give them the Knife
-        ply:Give( "gmod_camera" )
-        ply:Give( "gmod_tool" )
-        
+--		ply:Give( "weapon_physcannon" ) --Give them the Gravity Gun 
+--		ply:Give( "weapon_physgun" ) 
+--		ply:Give( "gmod_rp_hands" ) --Give them Hands
+--		ply:Give( "weapon_simplekeys" )
+--		ply:Give( "weapon_real_cs_knife" ) --Give them the Knife
+--		ply:Give( "gmod_camera" )
+--		ply:Give( "gmod_tool" )
+        giveDefWep(ply)
 		ply:ChatPrint("You are now in the Wastelander Class")
  
     elseif ply:Team() == TEAM_SCAVENGER then 
  
-        ply:Give( "weapon_physcannon" ) 
-        ply:Give( "weapon_physgun" ) 
-        ply:Give( "gmod_rp_hands" ) 
-        ply:Give( "weapon_real_cs_knife" ) 
-        ply:Give( "gmod_camera" )
-        ply:Give( "gmod_tool" )
-        
+        giveDefWep(ply)        
 		ply:ChatPrint("You are now in the Scavenger Class")
  
     elseif ply:Team() == TEAM_SCIENCE then 
  
-        ply:Give( "weapon_physcannon" ) 
-        ply:Give( "weapon_physgun" ) 
-        ply:Give( "gmod_rp_hands" ) 
-        ply:Give( "weapon_real_cs_knife" ) 
-        ply:Give( "gmod_camera" )
-        ply:Give( "gmod_tool" ) 
-        
+        giveDefWep(ply)        
 		ply:ChatPrint("You are now in the Science Class")
  
     elseif ply:Team() == TEAM_ENGINEER then 
  
-        ply:Give( "weapon_physcannon" ) 
-        ply:Give( "weapon_physgun" ) 
-        ply:Give( "gmod_rp_hands" ) 
-        ply:Give( "weapon_real_cs_knife" ) 
-        ply:Give( "gmod_camera" )
-        ply:Give( "gmod_tool" )
-        
+        giveDefWep(ply)        
 		ply:ChatPrint("You are now in the Engineer Class")
     
     elseif ply:Team() == TEAM_CULTIVATOR then 
  
-        ply:Give( "weapon_physcannon" ) 
-        ply:Give( "weapon_physgun" ) 
-        ply:Give( "gmod_rp_hands" ) 
-        ply:Give( "weapon_real_cs_knife" ) 
-        ply:Give( "gmod_camera" )
-        ply:Give( "gmod_tool" )
-        
+        giveDefWep(ply)        
 		ply:ChatPrint("You are now in the Cultivator Class")
     end 
     
 end --Here we end the Loadout function
+
+function giveDefWep(ply)
+	for _, wep in pairs(PNRP.DefWeps) do
+		ply:Give( wep )
+	end
+end
 
 function team_set_wastelander( ply )
  
@@ -664,6 +648,7 @@ function PNRP.SetOwnership( ply )
 			ply:ConCommand("pnrp_removeowner")
 		else
 			ent:SetNetworkedString("Owner", ply:Nick())
+			ent:SetNWEntity( "ownerent", ply )
 			ply:ChatPrint("Admin override of ownership.")
 		end
 		
@@ -710,6 +695,11 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
    Victim.NextSpawnTime = CurTime() + 2
    Victim.DeathTime = CurTime()
 
-end   
+end
+
+--This is an override to hide NPC death notices.
+function GM:OnNPCKilled( victim, killer, weapon )
+	-- May do some stuff here later.
+end
 
 --EOF

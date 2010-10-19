@@ -1,6 +1,141 @@
 local PlayerMeta = FindMetaTable("Player")
 local EntityMeta = FindMetaTable("Entity")
 
+function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
+	local ItemID = decoded[1]
+	local Count = math.Round(decoded[2])
+	local tr = ply:TraceFromEyes(200)
+	local pos = tr.HitPos
+	for itemname, item in pairs(PNRP.Items) do
+		if tostring( ItemID ) == itemname then
+			local allowed = false
+			local enough = false
+			--Admin overide
+			if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then allowed = true 
+			else allowed = false end
+			--If Right Class
+			if team.GetName(ply:Team()) == item.ClassSpawn or item.ClassSpawn == "All" or allowed == true then
+			
+				--Verifies Player has the needed Materials to build the item
+				local totalScrap = item.Scrap * Count
+				local totalSmall = item.SmallParts * Count
+				local totalChems = item.Chemicals * Count
+				if ply:GetResource("Scrap") >= totalScrap and ply:GetResource("Chemicals") >= totalChems and ply:GetResource("Small_Parts") >= totalSmall then 
+					enough = true
+				elseif ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+					enough = true
+				else
+					enough = false
+				end
+				if enough == true then
+					if item.Type  == "food" then
+						if not item.ToolCheck( ply ) then
+							ply:ChatPrint("You don't have the proper tool to make this!")
+							return
+						end
+					end
+					--Block these from Bulk Build
+					if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" then
+						ply:ChatPrint("You can not create bulk of this type.")
+						return
+					end
+					
+					local totalTime = 0
+					
+					for iteration = 1, Count do
+						totalTime = totalTime + (3 / iteration)
+					end
+					
+					ply:Freeze(true)
+					ply:ChatPrint("Construction in progress...")
+					timer.Simple( totalTime, function() 
+						ply:Freeze(false)
+						local ent = ents.Create("msc_itembox")
+						--Spawns the entity
+						ent:SetPos(pos)
+						ent:SetNWString("itemtype", item.Ent)
+						ent:SetNWInt("amount", Count)
+						ent:SetNWString("Owner", ply:Nick())
+						ent:Spawn()
+						ply:EmitSound(Sound("items/ammo_pickup.wav"))
+					end )
+					
+				else
+					--If Not enough Materials
+					ply:ChatPrint("Insufficient Materials!")
+				end
+				
+			else
+				ply:ChatPrint("Incorrect Class! "..item.ClassSpawn.." class Item.")
+			end
+		end
+	end
+	
+end
+datastream.Hook( "SpawnBulkCrate", PNRP.SpawnBulkCrate )
+
+function PNRP.DropBulkCrate( ply, handler, id, encoded, decoded)
+	local ItemID = decoded[1]
+	local Count = math.Round(decoded[2])
+	local tr = ply:TraceFromEyes(200)
+	local pos = tr.HitPos
+	for itemname, item in pairs(PNRP.Items) do
+		if tostring( ItemID ) == itemname then
+			local BulkCreate = PNRP.TakeFromInventoryBulk( ply, item.ID, Count )
+			if BulkCreate then
+				local ent = ents.Create("msc_itembox")
+				--Spawns the entity
+				ent:SetPos(pos)
+				ent:SetNWString("itemtype", item.Ent)
+				ent:SetNWInt("amount", Count)
+				ent:SetNWString("Owner", ply:Nick())
+				ent:Spawn()
+				ply:EmitSound(Sound("items/ammo_pickup.wav"))
+			else
+				ply:ChatPrint("You do not have enough of this.")
+			end
+		end
+	end
+	
+end
+datastream.Hook( "DropBulkCrate", PNRP.DropBulkCrate )
+
+function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
+	local ItemID = decoded[1]
+	local Count = math.Round(decoded[2])
+	local tr = ply:TraceFromEyes(200)
+	local CarEnt = tr.Entity
+	local pos = tr.HitPos
+	for itemname, item in pairs(PNRP.Items) do
+		if tostring( ItemID ) == itemname then
+			local BulkCreate = PNRP.TakeFromCarInventoryBulk( ply, item.ID, Count )
+			if BulkCreate then
+				local ent = ents.Create("msc_itembox")
+				--If Car is detected then place behind car
+				local CarItemID = PNRP.FindItemID( CarEnt:GetClass() )
+				if CarItemID != nil then
+					if PNRP.Items[CarItemID].Type == "vehicle" then
+						ent:SetAngles(CarEnt:GetAngles())
+						pos = CarEnt:LocalToWorld(Vector(0,-80,40))
+						
+					end
+				end
+				--Spawns the entity
+				ent:SetPos(pos)
+				ent:SetNWString("itemtype", item.Ent)
+				ent:SetNWInt("amount", Count)
+				ent:SetNWString("Owner", ply:Nick())
+				ent:Spawn()
+				ply:EmitSound(Sound("items/ammo_pickup.wav"))
+			else
+				ply:ChatPrint("You do not have enough of this.")
+			end
+		end
+	end
+	
+end
+datastream.Hook( "DropBulkCrateCar", PNRP.DropBulkCrateCar )
+
 function GM.BuildItem( ply, command, arg )
 	for itemname, item in pairs(PNRP.Items) do
 		if tostring( arg[1] ) == itemname then

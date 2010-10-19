@@ -114,7 +114,28 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 				pnlPanel.ItemWeight:SetColor(Color( 0, 0, 0, 255 ))
 				pnlPanel.ItemWeight:SizeToContents() 
 		 		pnlPanel.ItemWeight:SetContentAlignment( 5 )	
-			
+				
+				if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" then
+					--Since GMod does not like Not or's
+				else
+					pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
+					pnlPanel.bulkSlider:SetPos(435, 30)
+					pnlPanel.bulkSlider:SetSize( 100, 50 ) 
+					pnlPanel.bulkSlider:SetText( " " )
+					pnlPanel.bulkSlider:SetMin( 1 )
+					pnlPanel.bulkSlider:SetMax( 100 )
+					pnlPanel.bulkSlider:SetDecimals( 0 )
+					pnlPanel.bulkSlider:SetValue( 1 )
+					
+					pnlPanel.BulkBtn = vgui.Create("DButton", pnlPanel )
+					pnlPanel.BulkBtn:SetPos(540, 30)
+					pnlPanel.BulkBtn:SetSize(100,17)
+					pnlPanel.BulkBtn:SetText( "Create Bulk" )
+					pnlPanel.BulkBtn.DoClick = function() 
+						datastream.StreamToServer( "SpawnBulkCrate", {itemname, pnlPanel.bulkSlider:GetValue() } )
+						parent_frame:Close()
+					end
+				end
 			end
 		end	
 	

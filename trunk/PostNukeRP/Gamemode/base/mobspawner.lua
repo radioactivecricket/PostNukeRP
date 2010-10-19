@@ -3,24 +3,25 @@ local EntityMeta = FindMetaTable("Entity")
 
 require("glon")
 
---CreateConVar("pnrp_SpawnMobs","1",FCVAR_REPLICATED + FCVAR_NOTIFY)
---CreateConVar("pnrp_MaxZombies","30",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
---CreateConVar("pnrp_MaxFastZombies","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
---CreateConVar("pnrp_MaxPoisonZombs","2",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
---CreateConVar("pnrp_MaxAntlions","10",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
---CreateConVar("pnrp_MaxAntGuards","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-
---CreateConVar("pnrp_SpawnMobs","1",FCVAR_REPLICATED)
---CreateConVar("pnrp_MaxZombies","30",FCVAR_REPLICATED + FCVAR_ARCHIVE)
---CreateConVar("pnrp_MaxFastZombies","5",FCVAR_REPLICATED + FCVAR_ARCHIVE)
---CreateConVar("pnrp_MaxPoisonZombs","2",FCVAR_REPLICATED + FCVAR_ARCHIVE)
---CreateConVar("pnrp_MaxAntlions","10",FCVAR_REPLICATED + FCVAR_ARCHIVE)
---CreateConVar("pnrp_MaxAntGuards","1",FCVAR_REPLICATED + FCVAR_ARCHIVE)
-
 CreateConVar("pnrp_ZombieSquads","3",FCVAR_REPLICATED + FCVAR_ARCHIVE)
 
 GM.spawnTbl = {}
 local spawnTbl = GM.spawnTbl
+--Spawns a zombie when player dies
+function PNRP.PlyDeathZombie(ply)
+	if GetConVarNumber("pnrp_PlyDeathZombie") == 1 then
+		local pos = ply:GetPos()
+		timer.Create(tostring(ply:UniqueID()), 5, 1, function()
+			local ent = ents.Create("npc_zombie")
+			ent:SetPos(pos)
+			local squadnum = math.random(1,GetConVarNumber("pnrp_ZombieSquads"))
+			ent:SetKeyValue ("squadname", "npc_zombies"..tostring(squadnum))
+			ent:Spawn()
+			ent:SetNetworkedString("Owner", "Unownable")
+			ent:AddRelationship("pnrp_antmound D_HT 99")
+		end)
+	end
+end
 
 function GM.SpawnMobs()
 	local GM = GAMEMODE
@@ -680,7 +681,9 @@ function GM.SaveSpawnGrid( ply, command, arg )
 				spawnPoint["spwnsZom"] = v:GetNWBool("spwnsZom")
 				spawnPoint["infMound"] = v:GetNWBool("infMound")
 				spawnPoint["infIndoor"] = v:GetNWBool("infIndoor")
-				spawnPoint["infLinked"] = v:GetNWEntity("infLinked")
+				if v:GetNWEntity("infLinked"):IsValid() then
+					spawnPoint["infLinked"] = v:GetNWEntity("infLinked"):GetPos()
+				end
 				tbl[count] = spawnPoint
 				count = count + 1
 			end
@@ -713,6 +716,22 @@ function GM.LoadSpawnGrid( ply, command, arg )
 			count = count + 1
 		end
 		
+		for k, v in pairs(GM.spawnTbl) do
+			local found = false
+			if GM.spawnTbl[k]["infLinked"] then
+				for _, ent in pairs(ents.GetAll()) do
+					if ent:IsDoor() and ent:GetPos() == GM.spawnTbl[k]["infLinked"] then
+						GM.spawnTbl[k]["infLinked"] = ent
+						found = true
+						break
+					end
+				end
+			end
+			if not found then
+				GM.spawnTbl[k]["infLinked"] = NullEntity()
+			end
+		end
+		
 		spawnTbl = GM.spawnTbl
 		
 		ply:ChatPrint("File found with "..#spawnTbl.." entries.")
@@ -738,7 +757,24 @@ function GM.LoadOnStart()
 			table.insert(GM.spawnTbl, unTable[count])
 			count = count + 1
 		end
-		spwnTbl = GM.spawnTbl
+		
+		for k, v in pairs(GM.spawnTbl) do
+			local found = false
+			if GM.spawnTbl[k]["infLinked"] then
+				for _, ent in pairs(ents.GetAll()) do
+					if ent:IsDoor() and ent:GetPos() == GM.spawnTbl[k]["infLinked"] then
+						GM.spawnTbl[k]["infLinked"] = ent
+						found = true
+						break
+					end
+				end
+			end
+			if not found then
+				GM.spawnTbl[k]["infLinked"] = NullEntity()
+			end
+		end
+		
+		spawnTbl = GM.spawnTbl
 		
 		print("File found with "..#spawnTbl.." entries.")
 	else
@@ -782,6 +818,22 @@ function GM.EditSpawnGrid( ply, command, arg )
 				
 				table.insert(GM.spawnTbl, unTable[count])
 				count = count + 1
+			end
+			
+			for k, v in pairs(GM.spawnTbl) do
+				local found = false
+				if GM.spawnTbl[k]["infLinked"] then
+					for _, ent in pairs(ents.GetAll()) do
+						if ent:IsDoor() and ent:GetPos() == GM.spawnTbl[k]["infLinked"] then
+							GM.spawnTbl[k]["infLinked"] = ent
+							found = true
+							break
+						end
+					end
+				end
+				if not found then
+					GM.spawnTbl[k]["infLinked"] = NullEntity()
+				end
 			end
 			
 			spawnTbl = GM.spawnTbl
