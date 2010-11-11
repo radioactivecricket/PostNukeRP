@@ -71,16 +71,23 @@ function GM.SaveCharacter(ply,cmd,args)
 --			tbl["weapons"][tostring(v:GetClass())] = 1
 			if v:GetClass() == "weapon_radio" then
 				tbl["weapons"][tostring(v:GetClass())] = 1
-				tbl["ammo"]["none"] = 0
+			--	tbl["ammo"]["none"] = 0
 			end
 			if ammoType then
 --				ammotbl[ammoType] = ammo
-				tbl["weapons"][tostring(v:GetClass())] = 1
 				--grenade fix
 				if tostring(v:GetClass()) == "weapon_frag" then
-					ammoType = "grenade"
-					tbl["ammo"][ammoType] = ammo - 1  --Removes one since it gives you one as a weapon
+					if ammo > 0 then --Checks to see if player has any
+						tbl["weapons"][tostring(v:GetClass())] = 1
+						tbl["ammo"][ammoType] = ammo - 1  --Removes one since it gives you one as a weapon	
+					end
+				elseif tostring(v:GetClass()) == "weapon_pnrp_charge" then
+					if ammo > 0 then --Checks to see if player has any
+						tbl["weapons"][tostring(v:GetClass())] = 1
+						tbl["ammo"][ammoType] = ammo - 1  --Removes one since it gives you one as a weapon	
+					end
 				else
+					tbl["weapons"][tostring(v:GetClass())] = 1
 					tbl["ammo"][ammoType] = ammo
 				end
 			end
@@ -523,7 +530,7 @@ function PNRP.OpenMainCommunity(ply)
 		tbl = GetCommunityTbl( PlayerCommunityName )
 	end
 	
-	datastream.StreamToClients(ply, "pnrp_OpenCommunityWindow", { PlayerCommunityName, tbl })
+	datastream.StreamToClients(ply, "pnrp_OpenCommunityWindow", { ["CommunityName"] = PlayerCommunityName, ["communityTable"] = tbl })
 		
 
 end
@@ -870,20 +877,20 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	local pos = ply:GetPos() + Vector(0,0,20)	
 	--Drop Weapons
 	for k, v in pairs(ply:GetWeapons()) do
-		ply:ChatPrint(v:GetClass())
 		local wepCheck = PNRP.CheckDefWeps(v) and v != "weapon_real_cs_admin_weapon"
 		if !wepCheck then
 			if PNRP.FindWepItem(v:GetModel()) then
 				local myItem = PNRP.FindWepItem(v:GetModel())
 				Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
-				local ent = ents.Create(myItem.Ent)
+				local ent = ents.Create("ent_weapon")
 				--ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
 				--ply:ChatPrint( "Dropped "..myItem.Name)
 				ent:SetModel(myItem.Model)
 				ent:SetAngles(Angle(0,0,0))
 				ent:SetPos(pos)
 				ent:Spawn()
-				ent:SetNetworkedString("Ammo", v:Clip1())
+				ent:SetNWString("WepClass", myItem.Ent)
+				ent:SetNetworkedInt("Ammo", v:Clip1())
 				ent:SetNetworkedString("Owner", "World")
 				
 				local ammoDrop = ply:GetAmmoCount(v:GetPrimaryAmmoType())
@@ -896,16 +903,14 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 					local ammoFType
 					--grenade fix
 					if myItem.ID == "wep_grenade" then
-						ammoFType = "wep_grenade"
-						local ItemID = PNRP.FindItemID( ammoFType )
-						if ItemID then
-							entClass = ammoFType
-							entModel = PNRP.Items[ItemID].Model
-						end
+						entModel = PNRP.Items[myItem.ID].Model
+						
 						local entAmmo
 						--Starts at 2 since it allready drops one as a weapon
 						for i=2,ammoDrop do
-							entAmmo = ents.Create(entClass)
+							entAmmo = ents.Create("ent_weapon")
+							entAmmo:SetNWString("WepClass", "weapon_frag")
+							entAmmo:SetNWInt("Ammo", 1)
 							entAmmo:SetModel(entModel)
 							entAmmo:SetAngles(Angle(0,0,0))
 							entAmmo:SetPos(pos)
@@ -970,7 +975,7 @@ concommand.Add( "pnrp_SetZombies", GM.set_Zombies )
 function PNRP.ConvertAmmoType(ammoType)
 
 	local sendType = nil
-	
+	--Changed some ammo type numbers to crrectly reflect what they are in game.
 	if ammoType == 1 then sendType = "ar2" end -- Ammunition of the AR2/Pulse Rifle
 	if ammoType == 2 then sendType = "alyxgun" end -- (name in-game "5.7mm Ammo")
 	if ammoType == 3 then sendType = "pistol" end -- Ammunition of the 9MM Pistol 
@@ -980,9 +985,9 @@ function PNRP.ConvertAmmoType(ammoType)
 	if ammoType == 7 then sendType = "buckshot" end -- Ammunition of the Shotgun
 	if ammoType == 8 then sendType = "rpg_round" end -- Ammunition of the RPG/Rocket Launcher
 	if ammoType == 9 then sendType = "smg1_grenade" end -- Ammunition for the SMG/MP7 grenade launcher (secondary fire)
-	if ammoType == 10 then sendType = "sniperround" end 
-	if ammoType == 11 then sendType = "sniperpenetratedround" end -- (name in-game ".45 Ammo")
-	if ammoType == 12 then sendType = "grenade" end -- Note you must be given the grenade weapon (e.g. pl:Give ("weapon_grenade")) before you can throw any grenades
+	if ammoType == 12 then sendType = "sniperround" end 
+	if ammoType == 22 then sendType = "sniperpenetratedround" end -- (name in-game ".45 Ammo")
+	if ammoType == 10 then sendType = "grenade" end -- Note you must be given the grenade weapon (e.g. pl:Give ("weapon_grenade")) before you can throw any grenades
 	if ammoType == 13 then sendType = "thumper" end -- Ammunition cannot exceed 2 (name in-game "Explosive C4 Ammo")
 	if ammoType == 14 then sendType = "gravity" end -- (name in-game "4.6MM Ammo")
 	if ammoType == 15 then sendType = "battery" end -- (name in-game "9MM Ammo")
@@ -992,7 +997,7 @@ function PNRP.ConvertAmmoType(ammoType)
 	if ammoType == 19 then sendType = "striderMinigun" end -- (name in-game "7.62MM Ammo")
 	if ammoType == 20 then sendType = "helicopterGun" end 
 	if ammoType == 21 then sendType = "ar2altfire" end -- Ammunition of the AR2/Pulse Rifle 'combine ball' (secondary fire)
-	if ammoType == 22 then sendType = "slam" end -- See Grenade
+	if ammoType == 11 then sendType = "slam" end -- See Grenade
 
 	return sendType
 end
@@ -1019,7 +1024,7 @@ function PNRP.DropWeapon (ply, command, args)
 			wepModel = "models/weapons/w_"..string.sub(myWep:GetModel(),string.find(myWep:GetModel(), "v_")+2)
 		end
 		
-		local wepEnt = ConvertWepEnt( wepModel )
+		local wepEnt = "ent_weapon"--ConvertWepEnt( wepModel )
 		
 		local tr = ply:TraceFromEyes(200)
 		local trPos = tr.HitPos
@@ -1031,7 +1036,8 @@ function PNRP.DropWeapon (ply, command, args)
 		ent:SetPos(pos)
 		ent:Spawn()
 		ent:SetNetworkedString("Owner", "World")
-		ent:SetNetworkedString("Ammo", myWep:Clip1())
+		ent:SetNWString("WepClass", myWep:GetClass())
+		ent:SetNetworkedInt("Ammo", myWep:Clip1())
 		
 		ply:StripWeapon(myWep:GetClass())
 	end
@@ -1059,14 +1065,15 @@ function PNRP.DropWep(ply, handler, id, encoded, decoded )
 	local tr = ply:TraceFromEyes(200)
 	local trPos = tr.HitPos
 	
-	local ent = ents.Create(myWep.Ent)
+	local ent = ents.Create("ent_weapon")
 	local pos = trPos + Vector(0,0,20)
 	ent:SetModel(myWep.Model)
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetPos(pos)
 	ent:Spawn()
 	ent:SetNetworkedString("Owner", "World")
-	ent:SetNetworkedString("Ammo", curWepAmmo)
+	ent:SetNWString("WepClass", myWep.Ent)
+	ent:SetNetworkedInt("Ammo", curWepAmmo)
 		
 end
 datastream.Hook( "pnrp_dropWepFromEQ", PNRP.DropWep )
@@ -1075,6 +1082,8 @@ function PNRP.StripWep (ply, command, args)
 	local wep = args[1]
 	if wep == "weapon_frag" then 
 		ply:RemoveAmmo( 1, "grenade" )
+	elseif wep == "weapon_pnrp_charge" then 
+		ply:RemoveAmmo( 1, "slam" )
 	else
 		ply:StripWeapon(wep)
 	end
@@ -1132,10 +1141,26 @@ function PNRP.DropAmmo (ply, command, args)
 	local entModel
 	local ammoFTyp
 	
-	if ammoType and ammoAmt then
+	if ammoType == "slam" then
+		ItemID = "wep_shapedcharge"
+		ammoFType = "weapon_pnrp_charge"
+		entClass = PNRP.Items[ItemID].Ent
+		entModel = PNRP.Items[ItemID].Model
+		ammoAmt = PNRP.Items[ItemID].Energy
+	elseif ammoType == "grenade" then
+		ItemID = "wep_grenade"
+		ammoFType = "weapon_frag"
+		entClass = PNRP.Items[ItemID].Ent
+		entModel = PNRP.Items[ItemID].Model
+		ammoAmt = PNRP.Items[ItemID].Energy
+	elseif ammoType and ammoAmt then
 		ammoFType = "ammo_"..ammoType
-		if ammoFType == "ammo_grenade" then ammoFType = "wep_grenade" end
-		local ItemID = PNRP.FindItemID( ammoFType )
+		if ammoFType == "ammo_grenade" then 
+			ammoFType = "wep_grenade" 
+			ItemID = "wep_grenade" 
+		else	
+			local ItemID = PNRP.FindItemID( ammoFType )
+		end
 		if ItemID then
 			entClass = ammoFType
 			entModel = PNRP.Items[ItemID].Model
@@ -1145,8 +1170,12 @@ function PNRP.DropAmmo (ply, command, args)
 		end
 	elseif ammoType then
 		ammoFType = "ammo_"..ammoType
-		if ammoFType == "ammo_grenade" then ammoFType = "wep_grenade" end
-		local ItemID = PNRP.FindItemID( ammoFType )
+		if ammoFType == "ammo_grenade" then 
+			ammoFType = "wep_grenade" 
+			ItemID = "wep_grenade" 
+		else	
+			local ItemID = PNRP.FindItemID( ammoFType )
+		end
 		if ItemID then
 			entClass = ammoFType
 			entModel = PNRP.Items[ItemID].Model
@@ -1159,12 +1188,12 @@ function PNRP.DropAmmo (ply, command, args)
 		--Grenade Check
 		if ply:GetActiveWeapon():GetClass() == "weapon_frag" then 
 			ammoFType = "wep_grenade"
-			ammoType = "grenade" 
+			--ammoType = "grenade" 
 		else
-			ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
+			--ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
 			ammoFType = "ammo_"..ammoType
 		end
-		
+		ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
 		local ItemID = PNRP.FindItemID( ammoFType )
 		if ItemID then
 			entClass = ammoFType
@@ -1175,7 +1204,6 @@ function PNRP.DropAmmo (ply, command, args)
 			return
 		end
 	end
-	
 	
 	if ply:GetAmmoCount(ammoType) < ammoAmt then
 		ply:ChatPrint("You cannot drop that much.  All ammo dropped instead.")
@@ -1192,18 +1220,41 @@ function PNRP.DropAmmo (ply, command, args)
 	local tr = ply:TraceFromEyes(200)
 	local trPos = tr.HitPos
 	
-	local ent = ents.Create(entClass)
-	local pos = trPos + Vector(0,0,20)
-	ent:SetModel(entModel)
-	ent:SetAngles(Angle(0,0,0))
-	ent:SetPos(pos)
-	ent:Spawn()
-	ent:SetNetworkedString("Owner", "World")
-	ent:SetNetworkedString("Ammo", tostring(ammoAmt))
+	if ammoFType == "weapon_pnrp_charge" then
+		local ent = ents.Create("ent_weapon")
+		local pos = trPos + Vector(0,0,20)
+		ent:SetModel(entModel)
+		ent:SetAngles(Angle(0,0,0))
+		ent:SetPos(pos)
+		ent:Spawn()
+		ent:SetNetworkedString("WepClass", entClass)
+		ent:SetNetworkedString("Owner", "World")
+		ent:SetNetworkedString("Ammo", tostring(ammoAmt))
+	elseif ammoFType == "weapon_frag" then
+		local ent = ents.Create("ent_weapon")
+		local pos = trPos + Vector(0,0,20)
+		ent:SetModel(entModel)
+		ent:SetAngles(Angle(0,0,0))
+		ent:SetPos(pos)
+		ent:Spawn()
+		ent:SetNetworkedString("WepClass", entClass)
+		ent:SetNetworkedString("Owner", "World")
+		ent:SetNetworkedString("Ammo", tostring(ammoAmt))
+	else
+		local ent = ents.Create(entClass)
+		local pos = trPos + Vector(0,0,20)
+		ent:SetModel(entModel)
+		ent:SetAngles(Angle(0,0,0))
+		ent:SetPos(pos)
+		ent:Spawn()
+		ent:SetNetworkedString("Owner", "World")
+		ent:SetNetworkedString("Ammo", tostring(ammoAmt))
+	end
+	
 	
 	local prevAmmo = ply:GetAmmoCount(ammoType)
 	
-	if ammoType == "grenade" then ammoAmt = 1 end
+	if ammoType == "grenade" or ammoType == "slam" then ammoAmt = 1 end
 	ply:RemoveAmmo( ammoAmt, ammoType )
 --	ply:ChatPrint(tostring(prevAmmo).."  -  "..tostring(ammoAmt).." = "..tostring(prevAmmo - ammoAmt))
 end

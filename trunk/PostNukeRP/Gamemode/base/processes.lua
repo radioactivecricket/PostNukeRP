@@ -307,6 +307,15 @@ function PROCESS:OnStop()
 			
 			if self.Data.Type == "tool" then
 				self.Data.Create(self.Owner, self.Data.Ent, pos)
+			elseif self.Data.Type == "weapon" then
+				local ent = ents.Create("ent_weapon")
+				ent:SetNetworkedInt("Ammo", self.Data.Energy)
+				ent:SetNWString("WepClass", self.Data.Ent)
+				ent:SetModel(self.Data.Model)
+				ent:SetAngles(Angle(0,0,0))
+				ent:SetPos(pos)
+				ent:Spawn()
+				ent:SetNetworkedString("Owner", "World")
 			else
 				local ent = ents.Create(self.Data.Ent)
 				if self.Data.Type == "ammo" or self.Data.Type == "weapon" then
@@ -411,9 +420,9 @@ function PROCESS:OnStop()
 				ent:Spawn()
 				ent:Activate()
 				ent:SetNetworkedString("Owner", "World")
-				if self.Data.Ent == "weapon_seat" then
-					ent:SetNetworkedString("Type", "1")
-				end
+--				if self.Data.Ent == "weapon_seat" then
+--					ent:SetNetworkedString("Type", "1")
+--				end
 --				PNRP.AddWorldCache( self.Owner, self.Data.ID )
 			end
          else

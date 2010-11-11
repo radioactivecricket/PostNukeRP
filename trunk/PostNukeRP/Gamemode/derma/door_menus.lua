@@ -73,7 +73,7 @@ local function ManageDoor( handle, id, encoded, decoded )
 				end
 			end
 			if v == LocalPlayer() then found = true end
-			if not found then
+			if not found and v:IsValid() then
 				PlyComboBox:AddItem( v:GetName())
 			end
 		end
@@ -85,7 +85,9 @@ local function ManageDoor( handle, id, encoded, decoded )
 		
 		if doorCoowners and doorCoowners[1] then
 			for k, v in pairs(doorCoowners) do
-				COComboBox:AddItem( v:GetName())
+				if v:IsValid() then
+					COComboBox:AddItem( v:GetName())
+				end
 			end
 		end
 	

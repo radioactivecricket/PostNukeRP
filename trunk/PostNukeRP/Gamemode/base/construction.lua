@@ -48,12 +48,21 @@ function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
 					
 					ply:Freeze(true)
 					ply:ChatPrint("Construction in progress...")
+					
+					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+						ply:ChatPrint("Admin No Cost")
+					else
+						ply:DecResource("Scrap", totalScrap)
+						ply:DecResource("Small_Parts", totalSmall)
+						ply:DecResource("Chemicals", totalChems)
+					end
+					
 					timer.Simple( totalTime, function() 
 						ply:Freeze(false)
 						local ent = ents.Create("msc_itembox")
 						--Spawns the entity
 						ent:SetPos(pos)
-						ent:SetNWString("itemtype", item.Ent)
+						ent:SetNWString("itemtype", item.ID)
 						ent:SetNWInt("amount", Count)
 						ent:SetNWString("Owner", ply:Nick())
 						ent:Spawn()
@@ -86,7 +95,7 @@ function PNRP.DropBulkCrate( ply, handler, id, encoded, decoded)
 				local ent = ents.Create("msc_itembox")
 				--Spawns the entity
 				ent:SetPos(pos)
-				ent:SetNWString("itemtype", item.Ent)
+				ent:SetNWString("itemtype", item.ID)
 				ent:SetNWInt("amount", Count)
 				ent:SetNWString("Owner", ply:Nick())
 				ent:Spawn()
@@ -122,7 +131,7 @@ function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
 				end
 				--Spawns the entity
 				ent:SetPos(pos)
-				ent:SetNWString("itemtype", item.Ent)
+				ent:SetNWString("itemtype", item.ID)
 				ent:SetNWInt("amount", Count)
 				ent:SetNWString("Owner", ply:Nick())
 				ent:Spawn()
@@ -234,18 +243,21 @@ function PNRP.DropSpawn( ply, ID, q )
 						item.Create(ply, item.Ent, pos)
 						
 					else
-						local ent = ents.Create(data.Ent)
+						local ent 
+						if item.Type == "weapon" and item.ID ~= "wep_grenade" then
+							ent = ents.Create("ent_weapon")
+							ent:SetNWString("WepClass", data.Ent)
+							ent:SetNetworkedInt("Ammo", 0)
+						elseif item.Type == "ammo" then
+							ent = ents.Create(data.Ent)
+							ent:SetNetworkedString("Ammo", tostring(item.Energy))
+						else
+							ent = ents.Create(data.Ent)
+						end
 						ent:SetModel(data.Model)
 						ent:SetAngles(Angle(0,0,0))
 						ent:SetPos(pos)
 						ent:Spawn()
-						if item.Type == "weapon" and item.ID ~= "wep_grenade" then
-							ent:SetNetworkedString("Ammo", "0")
-						elseif item.Type == "ammo" then
-							
-							ent:SetNetworkedString("Ammo", tostring(item.Energy))
-						
-						end
 						ent:SetNetworkedString("Owner", "World")
 						
 					end
@@ -255,9 +267,9 @@ function PNRP.DropSpawn( ply, ID, q )
 					
 					local ent = ents.Create(data.Ent)
 					local pos = data.Pos + Vector(0,0,20)
-					if data.Ent == "weapon_seat" then
-						ent:SetNetworkedString("Type", "1")
-					end
+--					if data.Ent == "weapon_seat" then
+--						ent:SetNetworkedString("Type", "1")
+--					end
 					ent:SetModel(data.Model)
 					ent:SetKeyValue( "actionScale", 1 ) 
 					ent:SetKeyValue( "VehicleLocked", 0 ) 
@@ -310,18 +322,21 @@ function PNRP.DropCarSpawn( ply, ID, q )
 						item.Create(ply, item.Ent, pos)
 						
 					else
-						local ent = ents.Create(data.Ent)
+						local ent 
+						if item.Type == "weapon" and item.ID ~= "wep_grenade" then
+							ent = ents.Create("ent_weapon")
+							ent:SetNWString("WepClass", data.Ent)
+							ent:SetNetworkedInt("Ammo", 0)
+						elseif item.Type == "ammo" then
+							ent = ents.Create(data.Ent)
+							ent:SetNetworkedString("Ammo", tostring(item.Energy))
+						else
+							ent = ents.Create(data.Ent)
+						end
 						ent:SetModel(data.Model)
 						ent:SetAngles(Angle(0,0,0))
 						ent:SetPos(pos)
 						ent:Spawn()
-						if item.Type == "weapon" and item.ID ~= "wep_grenade" then
-							ent:SetNetworkedString("Ammo", "0")
-						elseif item.Type == "ammo" then
-							
-							ent:SetNetworkedString("Ammo", tostring(item.Energy))
-						
-						end
 						ent:SetNetworkedString("Owner", "World")
 						
 					end
@@ -331,9 +346,9 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					
 					local ent = ents.Create(data.Ent)
 					local pos = data.Pos + Vector(0,0,20)
-					if data.Ent == "weapon_seat" then
-						ent:SetNetworkedString("Type", "1")
-					end
+--					if data.Ent == "weapon_seat" then
+--						ent:SetNetworkedString("Type", "1")
+--					end
 					ent:SetModel(data.Model)
 					ent:SetKeyValue( "actionScale", 1 ) 
 					ent:SetKeyValue( "VehicleLocked", 0 ) 
@@ -377,11 +392,11 @@ function PNRP.Salvage( ply, command, arg )
 			allowed = false
 		end
 		
-		if ent:GetClass() == "prop_vehicle_prisoner_pod" then
-			myClass = "weapon_seat"
-		else
+--		if ent:GetClass() == "prop_vehicle_prisoner_pod" then
+--			myClass = "weapon_seat"
+--		else
 			myClass = ent:GetClass()
-		end
+--		end
 		
 		if myClass == "prop_physics" then return end
 		

@@ -2,28 +2,28 @@ local ITEM = {}
 local WEAPON = {}
 
 
-ITEM.ID = "wep_tmp"
+ITEM.ID = "wep_57luck"
 
-ITEM.Name = "Steyr TMP"
+ITEM.Name = "57 Lucky"
 ITEM.ClassSpawn = "Engineer"
-ITEM.Scrap = 20
-ITEM.Small_Parts = 75
-ITEM.Chemicals = 30
+ITEM.Scrap = 2
+ITEM.Small_Parts = 25
+ITEM.Chemicals = 10
 ITEM.Chance = 100
-ITEM.Info = "Uses SMG Ammo"
+ITEM.Info = "Uses Pistol Ammo."
 ITEM.Type = "weapon"
 ITEM.Remove = true
-ITEM.Energy = 30
-ITEM.Ent = "wep_tmp"
-ITEM.Model = "models/weapons/w_smg_tmp.mdl"
+ITEM.Energy = 20
+ITEM.Ent = "weapon_pnrp_57luck"
+ITEM.Model = "models/weapons/w_pist_fiveseven.mdl"
 ITEM.Script = ""
-ITEM.Weight = 5
+ITEM.Weight = 2
 
 WEAPON.ID = ITEM.ID
-WEAPON.AmmoType = "smg1"
+WEAPON.AmmoType = "pistol"
 
 function ITEM.Use( ply )
-	local WepName = "weapon_real_cs_tmp"
+	local WepName = "weapon_pnrp_57luck"
 	local gotWep = false
 	for k, v in pairs(ply:GetWeapons()) do
 		if v:GetClass() == WepName then gotWep = true end

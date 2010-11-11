@@ -13,8 +13,8 @@ ITEM.Chance = 100
 ITEM.Info = "Uses Pistol Ammo."
 ITEM.Type = "weapon"
 ITEM.Remove = true
-ITEM.Energy = 12
-ITEM.Ent = "wep_p228"
+ITEM.Energy = 13
+ITEM.Ent = "weapon_pnrp_p228"
 ITEM.Model = "models/weapons/w_pist_p228.mdl"
 ITEM.Script = ""
 ITEM.Weight = 2
@@ -24,7 +24,7 @@ WEAPON.AmmoType = "pistol"
 
 
 function ITEM.Use( ply )
-	local WepName = "weapon_real_cs_p228"
+	local WepName = "weapon_pnrp_p228"
 	local gotWep = false
 	for k, v in pairs(ply:GetWeapons()) do
 		if v:GetClass() == WepName then gotWep = true end

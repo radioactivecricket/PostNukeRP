@@ -14,7 +14,7 @@ ITEM.Info = "Uses Shotgun Ammo."
 ITEM.Type = "weapon"
 ITEM.Remove = true
 ITEM.Energy = 8
-ITEM.Ent = "wep_pumpshotgun"
+ITEM.Ent = "weapon_pnrp_pumpshotgun"
 ITEM.Model = "models/weapons/w_shot_m3super90.mdl"
 ITEM.Script = ""
 ITEM.Weight = 9
@@ -23,7 +23,7 @@ WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "buckshot"
 
 function ITEM.Use( ply )
-	local WepName = "weapon_real_cs_pumpshotgun"
+	local WepName = "weapon_pnrp_pumpshotgun"
 	local gotWep = false
 	for k, v in pairs(ply:GetWeapons()) do
 		if v:GetClass() == WepName then gotWep = true end

@@ -133,7 +133,7 @@ function GM.open_admin(ply)
 				
 				local voiceLimitSlider = vgui.Create( "DNumSlider", GModeSettingsList )
 				    voiceLimitSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    voiceLimitSlider:SetText( "Voice Limit Range (Def 500)" )
+				    voiceLimitSlider:SetText( "Voice Limit Range (Def 750)" )
 				    voiceLimitSlider:SetMin( 0 )
 				    voiceLimitSlider:SetMax( 2000 )
 				    voiceLimitSlider:SetDecimals( 0 )

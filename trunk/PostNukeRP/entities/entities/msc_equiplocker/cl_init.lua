@@ -89,29 +89,31 @@ function LockerMenu( handle, id, encoded, decoded )
 				--Generates the locker's inventory
 				for k, v in pairs( itemTble ) do
 					local item = PNRP.Items[k]
-					local pnlLIPanel = vgui.Create("DPanel", pnlLIList)
-						pnlLIPanel:SetSize( 80, 100 )
-						pnlLIPanel.Paint = function()
-							draw.RoundedBox( 6, 0, 0, pnlLIPanel:GetWide(), pnlLIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
-						end
-						
-						pnlLIList:AddItem(pnlLIPanel)
-						
-						pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
-						pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
-						pnlLIPanel.NumberWang:SetMin( 1 )
-						pnlLIPanel.NumberWang:SetMax( v )
-						pnlLIPanel.NumberWang:SetDecimals( 0 )
-						pnlLIPanel.NumberWang:SetValue( 1 )
-						
-						pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
-						pnlLIPanel.Icon:SetModel(item.Model)
-						pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
-						pnlLIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
-						pnlLIPanel.Icon.DoClick = function() 
-							datastream.StreamToServer( "locker_take", {["locker"] = locker, ["item"] = item.ID, ["amount"] = pnlLIPanel.NumberWang:GetValue() } )
-							locker_frame:Close()
-						end							
+					if item then
+						local pnlLIPanel = vgui.Create("DPanel", pnlLIList)
+							pnlLIPanel:SetSize( 80, 100 )
+							pnlLIPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, pnlLIPanel:GetWide(), pnlLIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+							end
+							
+							pnlLIList:AddItem(pnlLIPanel)
+							
+							pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
+							pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
+							pnlLIPanel.NumberWang:SetMin( 1 )
+							pnlLIPanel.NumberWang:SetMax( v )
+							pnlLIPanel.NumberWang:SetDecimals( 0 )
+							pnlLIPanel.NumberWang:SetValue( 1 )
+							
+							pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
+							pnlLIPanel.Icon:SetModel(item.Model)
+							pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
+							pnlLIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
+							pnlLIPanel.Icon.DoClick = function() 
+								datastream.StreamToServer( "locker_take", {["locker"] = locker, ["item"] = item.ID, ["amount"] = pnlLIPanel.NumberWang:GetValue() } )
+								locker_frame:Close()
+							end	
+					end
 				end
 					
 		fi_TabSheet:AddSheet( "Locker Inventory", pnlLIList, "gui/silkicons/brick_add", false, false, "Locker Inventory" )
@@ -132,29 +134,31 @@ function LockerMenu( handle, id, encoded, decoded )
 				if inventoryTble != nil then
 					for k, v in pairs( inventoryTble ) do
 						local item = PNRP.Items[k]
-						local pnlUserIPanel = vgui.Create("DPanel", pnlUserIList)
-							pnlUserIPanel:SetSize( 80, 100 )
-							pnlUserIPanel.Paint = function()
-								draw.RoundedBox( 6, 0, 0, pnlUserIPanel:GetWide(), pnlUserIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
-							end
-							
-							pnlUserIList:AddItem(pnlUserIPanel)
-							
-							pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
-							pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
-							pnlUserIPanel.NumberWang:SetMin( 1 )
-							pnlUserIPanel.NumberWang:SetMax( v )
-							pnlUserIPanel.NumberWang:SetDecimals( 0 )
-							pnlUserIPanel.NumberWang:SetValue( 1 )
-													
-							pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
-							pnlUserIPanel.Icon:SetModel(item.Model)
-							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
-							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
-							pnlUserIPanel.Icon.DoClick = function() 
-								datastream.StreamToServer( "locker_put", {["locker"] = locker, ["item"] = item.ID, ["amount"] = pnlUserIPanel.NumberWang:GetValue() } )
-								locker_frame:Close()
-							end								
+						if item then
+							local pnlUserIPanel = vgui.Create("DPanel", pnlUserIList)
+								pnlUserIPanel:SetSize( 80, 100 )
+								pnlUserIPanel.Paint = function()
+									draw.RoundedBox( 6, 0, 0, pnlUserIPanel:GetWide(), pnlUserIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+								end
+								
+								pnlUserIList:AddItem(pnlUserIPanel)
+								
+								pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
+								pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
+								pnlUserIPanel.NumberWang:SetMin( 1 )
+								pnlUserIPanel.NumberWang:SetMax( v )
+								pnlUserIPanel.NumberWang:SetDecimals( 0 )
+								pnlUserIPanel.NumberWang:SetValue( 1 )
+														
+								pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
+								pnlUserIPanel.Icon:SetModel(item.Model)
+								pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
+								pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
+								pnlUserIPanel.Icon.DoClick = function() 
+									datastream.StreamToServer( "locker_put", {["locker"] = locker, ["item"] = item.ID, ["amount"] = pnlUserIPanel.NumberWang:GetValue() } )
+									locker_frame:Close()
+								end								
+						end
 					end
 				end
 		

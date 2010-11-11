@@ -304,12 +304,15 @@ function GM:PlayerSpawnProp(ply, model)
 	return false
 end
 
-function GM:PlayerSpawnVehicle( p )
+function GM:PlayerSpawnVehicle( p, class, vehtbl )
 
 	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
-	
+		
+		for _, v in pairs(AllowedProps) do
+			if class == v then return true end
+		end
+		
 		p:ChatPrint( "Vehicle spawning is disabled." )
-	
 		return false
 		
 	end	
@@ -493,6 +496,8 @@ hook.Add("CanPlayerUnfreeze", "PhyUnfreezeCheck", PhysUnfreezeCheck)
 function ToolCheck( ply, tr, toolmode )
 	local ent = tr.Entity
 	
+	if (not ent:IsValid()) and (not ent:IsWorld()) then return false end
+
 	--If player is admin
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 		return true
@@ -603,10 +608,11 @@ function ToolCheck( ply, tr, toolmode )
 	--Restricts most tools on items in the item base
 	local DoToolCheck = false
 	local myClass = ent:GetClass()
-	--Checks for weapon seats
-	if ent:GetClass() == "prop_vehicle_prisoner_pod" then
-		myClass = "weapon_seat"
-	end
+	-- Removed and depricated.  Damn seats were too buggy...
+	-- --Checks for weapon seats
+	-- if ent:GetClass() == "prop_vehicle_prisoner_pod" then
+		-- myClass = "weapon_seat"
+	-- end
 	--If prop_physics then check by model
 	if myClass == "prop_physics" then
 		local myModel = ent:GetModel()

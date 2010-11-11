@@ -3,8 +3,8 @@
 local community_frame
 --Main Community Menu
 function GM.community_window(handler, id, encoded, decoded)
-	local communityName = decoded[1]
-	local communityTable = decoded[2]		
+	local communityName = decoded["CommunityName"]
+	local communityTable = decoded["communityTable"]		
 	local ply = LocalPlayer()
 	local communityRank
 	local communityUsers = communityTable["users"]
@@ -482,7 +482,7 @@ function RecCInvite( data )
 			inv_frame:SetTitle( "Do you want to Join?" )
 			inv_frame:SetVisible( true )
 			inv_frame:SetDraggable( true )
-			inv_frame:ShowCloseButton( true )
+			inv_frame:ShowCloseButton( false )
 			inv_frame:MakePopup()
 			
 		local invLabel = vgui.Create("DLabel", inv_frame)
@@ -522,7 +522,7 @@ function PNRP.OptionVerify(Command, Option, returnToMenu)
 			opv_frame:SetTitle( "Verify" )
 			opv_frame:SetVisible( true )
 			opv_frame:SetDraggable( true )
-			opv_frame:ShowCloseButton( true )
+			opv_frame:ShowCloseButton( false )
 			opv_frame:MakePopup()
 			
 		local opvLabel = vgui.Create("DLabel", opv_frame)
