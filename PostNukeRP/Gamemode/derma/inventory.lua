@@ -6,9 +6,9 @@ local inventory_frame
 
 --function GM.inventory_window(ply)
 function GM.inventory_window( handler, id, encoded, decoded )
-	local MyInventory = decoded[1]		
-	local CurWeight = decoded[2]	
-	CurCarInvWeight = decoded[3]
+	local MyInventory = decoded["inventory"]		
+	local CurWeight = decoded["playerweight"]	
+	CurCarInvWeight = decoded["carweight"]
 	local ply = LocalPlayer()	
 	inventory_frame = vgui.Create( "DFrame" )
 		inventory_frame:SetSize( 700, 700 ) --Set the size

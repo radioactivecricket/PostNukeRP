@@ -12,11 +12,13 @@ function ENT:Initialize()
 	
 	self.Item = self.Entity:GetNWString("itemtype")
 	self.Amount = self.Entity:GetNWInt("amount")
+	self.myItem = {}
 	 
 	for _, item in pairs(PNRP.Items) do
-		if self.Item == item.Ent then
+		if self.Item == item.ID then
 			self.Entity:SetNWString("itemname", item.Name)
 			self.Entity:SetNWInt("ammoamount", item.Energy)
+			self.myItem = item
 			break
 		end
 	end
@@ -26,11 +28,20 @@ function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
 		if activator:KeyPressed( IN_USE ) then
 			if self.Amount > 0 then
-				local ent = ents.Create(self.Item)
+				local ent 
+				if self.myItem.Type == "weapon" then
+					ent = ents.Create("ent_weapon")
+					ent:SetNetworkedString("WepClass", self.myItem.Ent)
+					ent:SetNetworkedInt("Ammo", self:GetNWInt("ammoamount", 0))
+				else
+					ent = ents.Create(self.myItem.Ent)
+					ent:SetNetworkedString("Ammo", tostring(self:GetNWInt("ammoamount", 0)))
+				end
+				ent:SetModel(self.myItem.Model)
 				ent:SetAngles(Angle(0,0,0))
 				ent:SetPos(self:GetPos()+Vector(0,0,30))
-				ent:SetNetworkedString("Ammo", tostring(self:GetNWInt("ammoamount", 0)))
 				ent:Spawn()
+				
 				self.Amount = self.Amount - 1
 				self.Entity:SetNWInt("amount", self.Amount )
 				if self.Amount <= 0 then
@@ -47,4 +58,37 @@ function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value
 	self.Entity:SetNWString (key, value)
 	print ("["..key.." = "..value.."] ")
+end
+
+function ENT:F2Use(ply)
+	
+	local Item = self.Item
+	local Amount = self.Amount
+	local weight = PNRP.Items[Item].Weight
+	
+	local weightCap
+	if team.GetName(ply:Team()) == "Scavenger" then
+		weightCap = GetConVarNumber("pnrp_packCapScav")
+	else
+		weightCap = GetConVarNumber("pnrp_packCap")
+	end
+	
+	local AmntTaken = 0
+	for i = 1, Amount do
+		local expWeight = PNRP.InventoryWeight( ply ) + weight
+		if expWeight <= weightCap then
+			ply:AddToInventory( Item )
+			self.Amount = self.Amount - 1
+			self.Entity:SetNWInt("amount", self.Amount )
+			ply:EmitSound(Sound("items/ammo_pickup.wav"))
+			if self.Amount <= 0 then
+				self:Remove()
+			end
+			AmntTaken = AmntTaken + 1
+		else
+			ply:ChatPrint("You were only able to carry "..tostring(AmntTaken).." of these!")
+			break
+		end
+	end
+	
 end

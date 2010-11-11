@@ -322,8 +322,12 @@ function GM:ShowTeam( ply )
 	--Added to remove the Null Entity error
 	if tostring(ent) == "[NULL Entity]" or ent == nil then return end
 	
-	if ent:GetClass() == "prop_vehicle_prisoner_pod" then
-		myClass = "weapon_seat"
+	if ent:GetClass() == "msc_itembox" then
+		ent:F2Use(ply)
+	end
+	
+	if ent:GetClass() == "ent_weapon" then
+		myClass = ent:GetNWString("WepClass", nil)
 	else
 		myClass = ent:GetClass()
 	end
@@ -426,7 +430,7 @@ function GM:ShowTeam( ply )
 				
 				if weight <= weightCap then
 					PNRP.AddToInentory( ply, ItemID )
-					if tonumber(ent:GetNetworkedString("Ammo")) > 0 then
+					if tonumber(ent:GetNetworkedString("Ammo")) > 0 and not ( ItemID == "wep_grenade" or ItemID == "wep_shapedcharge" )then
 						ply:GiveAmmo(tonumber(ent:GetNetworkedString("Ammo")), PNRP.FindAmmoType( ItemID, nil))
 					end
 					

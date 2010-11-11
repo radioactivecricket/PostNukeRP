@@ -111,10 +111,12 @@ function PNRP.OpenMainInventory(ply)
 	local tbl = { }
 	if !file.Exists( ILoc ) then 
 		print( "Inventory file doesn't exist !" ) 
-		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
+		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { ["inventory"] = tbl, ["playerweight"] = tostring(PNRP.InventoryWeight( ply )), ["carweight"] = tostring(PNRP.CarInventoryWeight( ply )) })
+		--datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
 	else
 		tbl = util.KeyValuesToTable(file.Read(ILoc))
-		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
+		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { ["inventory"] = tbl, ["playerweight"] = tostring(PNRP.InventoryWeight( ply )), ["carweight"] = tostring(PNRP.CarInventoryWeight( ply )) })
+		--datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
 	end
 	
 
@@ -122,6 +124,7 @@ end
 concommand.Add("pnrp_OpenInventory", PNRP.OpenMainInventory)
 
 function PNRP.OpenEQWindow(ply)
+
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
 		weightCap = GetConVarNumber("pnrp_packCapScav")

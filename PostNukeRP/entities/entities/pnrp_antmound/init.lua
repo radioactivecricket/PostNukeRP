@@ -246,10 +246,18 @@ function ENT:OnTakeDamage(dmg)
 		local Guards = self.GuardList
 		timer.Simple(20, function ()
 			for _, ant in pairs(Ants) do
-				ant:Remove()
+				if ant then
+					if ant:IsValid() then
+						ant:Remove()
+					end
+				end
 			end
 			for _, guard in pairs(Guards) do
-				guard:Remove()
+				if guard then
+					if guard:IsValid() then
+						guard:Remove()
+					end
+				end
 			end
 		end)
 	end

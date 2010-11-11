@@ -90,7 +90,7 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 				if string.lower(v:GetModel()) == "models/weapons/v_hands.mdl" and string.lower(v:GetClass()) ~= "weapon_radio" then
 					--Do Nothing
 				else
-					if PNRP.FindWepItem(v:GetModel()) then
+					if PNRP.FindWepItem(v:GetModel()) and checkGren(ply, v) then
 						local myItem = PNRP.FindWepItem(v:GetModel())
 						local pnlPanel = vgui.Create("DPanel", Scroller)
 						--	pnlPanel:SetTall(pnlList:GetTall() - 20)
@@ -107,7 +107,18 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 							
 								if ( v ) then
 									if v:GetClass() == "weapon_frag" then
-										RunConsoleCommand("pnrp_dropAmmo", "grenade")
+										if ply:GetAmmoCount( v:GetPrimaryAmmoType() ) > 0 then
+											RunConsoleCommand("pnrp_dropAmmo", "grenade")
+										else
+											RunConsoleCommand("pnrp_stripWep",v:GetClass())
+										end
+										eq_frame:Close()
+									elseif v:GetClass() == "weapon_pnrp_charge" then
+										if ply:GetAmmoCount( v:GetPrimaryAmmoType() ) > 0 then
+											RunConsoleCommand("pnrp_dropAmmo", "slam")
+										else
+											RunConsoleCommand("pnrp_stripWep",v:GetClass())
+										end
 										eq_frame:Close()
 									else
 										local curWepAmmo = v:Clip1()																
@@ -242,6 +253,15 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 			end
 end
 datastream.Hook( "pnrp_OpenEquipmentWindow", GM.EquipmentWindow )
+
+function checkGren(ply, weapon)
+	if weapon:GetClass() == "weapon_frag" then
+		if ply:GetAmmoCount( weapon:GetPrimaryAmmoType() ) <= 0 then
+			return false
+		end
+	end
+	return true
+end
 
 function GM.initEquipment(ply)
 

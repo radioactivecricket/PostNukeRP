@@ -2,39 +2,39 @@ local ITEM = {}
 local WEAPON = {}
 
 
-ITEM.ID = "wep_shotgun"
+ITEM.ID = "wep_shapedcharge"
 
-ITEM.Name = "Shotgun"
-ITEM.ClassSpawn = "Engineer"
-ITEM.Scrap = 20
-ITEM.Small_Parts = 75
-ITEM.Chemicals = 30
+ITEM.Name = "Shaped Charge"
+ITEM.ClassSpawn = "Science"
+ITEM.Scrap = 10
+ITEM.Small_Parts = 5
+ITEM.Chemicals = 10
 ITEM.Chance = 100
 ITEM.Info = "Uses Shotgun Ammo."
 ITEM.Type = "weapon"
 ITEM.Remove = true
-ITEM.Energy = 6
-ITEM.Ent = "wep_shotgun"
-ITEM.Model = "models/weapons/w_shot_xm1014.mdl"
+ITEM.Energy = 1
+ITEM.Ent = "weapon_pnrp_charge"
+ITEM.Model = "models/weapons/w_slam.mdl"
 ITEM.Script = ""
-ITEM.Weight = 10
+ITEM.Weight = 1
 
 WEAPON.ID = ITEM.ID
-WEAPON.AmmoType = "buckshot"
+WEAPON.AmmoType = "slam"
 
 function ITEM.Use( ply )
-	local WepName = "weapon_real_cs_xm1014"
+	local WepName = "weapon_pnrp_charge"
 	local gotWep = false
 	for k, v in pairs(ply:GetWeapons()) do
 		if v:GetClass() == WepName then gotWep = true end
 	end
 	if gotWep == false then 
 		ply:Give(WepName) 
-		ply:GetWeapon(WepName):SetClip1(0)
+		
 		return true
 	else
-		ply:ChatPrint("Weapon allready equipped.")
-		return false
+		ply:GiveAmmo(1, "slam")
+		return true
 	end
 end
 

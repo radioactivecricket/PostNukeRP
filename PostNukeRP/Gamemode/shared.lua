@@ -1,4 +1,4 @@
-GM.Name 	= "PostNukeRP v45" --Set the gamemode name
+GM.Name 	= "PostNukeRP v46" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError(Gmod Addict)" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://radioactivecricket.com" --Set the author website
@@ -41,7 +41,7 @@ PNRP.DefWeps = {"weapon_physcannon",
 				"weapon_physgun",
 				"gmod_rp_hands",
 				"weapon_simplekeys",
-				"weapon_real_cs_knife",
+				"weapon_pnrp_knife",
 				"gmod_camera",
 				"gmod_tool"}
 				
@@ -104,8 +104,8 @@ CreateConVar("pnrp_adminNoCost", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_AR
 CreateConVar("pnrp_exp2Level", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_toolLevel", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_voiceLimit", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_voiceDist", "1000", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_voiceLimit", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_voiceDist", "750", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_classChangePay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_classChangeCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
@@ -213,5 +213,48 @@ function PlayerMeta:TraceFromEyes(dist)
 
 	return util.TraceLine(trace)
 end
+
+----------------------------------------
+--		Weapon HOLDTYPE SWITCH fix	  --
+--____________________________________--
+--	I know this is hacky.  Not much	  --
+--	I can do about that.  Only way I  --
+--	got the stupid shit to work.	  --
+----------------------------------------
+
+local RP_Default_Weapons = {}
+RP_Default_Weapons = { "weapon_pnrp_ak-comp", "weapon_pnrp_badlands", "weapon_pnrp_charge", "weapon_pnrp_knife", 
+		"weapon_pnrp_p228", "weapon_pnrp_precrifle", "weapon_pnrp_pumpshotgun", "weapon_pnrp_revolver", "weapon_pnrp_saw", 
+		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck" }
+
+local function HoldTypeFix()
+	for k, v in pairs(player.GetAll()) do
+		local myWep = v:GetActiveWeapon()
+		if myWep:IsValid() then
+			local wepFound = false
+			for _, wepClass in pairs(RP_Default_Weapons) do
+				if wepClass == myWep:GetClass() then
+					wepFound = true
+					break
+				end
+			end
+		
+			if wepFound then
+				if v:Crouching() then
+					myWep:SetWeaponHoldType(myWep.HoldType)
+				elseif myWep:GetNWBool("IsPassive", false) or v:KeyDown( IN_SPEED ) then
+					if myWep.HoldType == "pistol" or myWep.HoldType == "knife" or myWep.HoldType == "slam" then
+						myWep:SetWeaponHoldType("normal")
+					else
+						myWep:SetWeaponHoldType("passive")
+					end
+				else
+					myWep:SetWeaponHoldType(myWep.HoldType)
+				end
+			end
+		end
+	end
+end
+hook.Add( "Think", "holdtypefix", HoldTypeFix )
 
 --EOF

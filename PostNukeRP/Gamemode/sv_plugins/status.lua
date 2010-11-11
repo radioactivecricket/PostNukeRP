@@ -222,7 +222,7 @@ function ExitSleep( ply )
 			ragdoll:Remove()
 			--Runs this a little after spawn to help with lag issues
 			ply:ChatPrint("Picking up gear...")
-			timer.Create(tostring(os.time())..tostring(os.date()), 3, 1, function()  
+			timer.Create(ply:UniqueID()..tostring(os.time())..tostring(os.date()), 3, 1, function()  
 				if ply:GetTable().WeaponsForSleep then
 					for k,v in pairs(ply.WeaponsForSleep) do
 						ply:Give(v)
@@ -237,11 +237,12 @@ function ExitSleep( ply )
 					if ( ply:HasWeapon( cl_defaultweapon )  ) then
 						ply:SelectWeapon( cl_defaultweapon ) 
 					end
-					
+				
 				else
 					GAMEMODE:PlayerLoadout(player)
 				end 
 				ply:ConCommand("pnrp_save")
+				ply:ChatPrint("Timer has run")
 			end)
 		end
 		
