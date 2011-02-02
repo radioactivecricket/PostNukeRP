@@ -64,12 +64,14 @@ function SWEP:PrimaryAttack()
 	
 	self.Weapon:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 	
+	local handlingSkill = self.Owner:GetSkill("Weapon Handling")
+	
 	if self.Weapon:GetNWBool("IronSights", false) then
-		self.Owner:ViewPunch(Angle(math.Rand(-0.5,-2.5) * (self.Primary.Recoil), math.Rand(-1,1) * (self.Primary.Recoil / 2), 0))
-		self:ShootBullet(self.Primary.Damage, self.Primary.NumShots, self.Primary.Cone, self.Primary.Recoil / 2 )
+		self.Owner:ViewPunch(Angle(math.Rand(-0.5,-2.5) * (self.Primary.Recoil - (0.2 * handlingSkill)), math.Rand(-1,1) * ((self.Primary.Recoil - (0.2 * handlingSkill)) / 2), 0))
+		self:ShootBullet(self.Primary.Damage, self.Primary.NumShots, self.Primary.Cone, (self.Primary.Recoil - (0.2 * handlingSkill)) / 2 )
 	else
-		self.Owner:ViewPunch(Angle(math.Rand(-0.5,-2.5) * (self.Primary.Recoil), math.Rand(-1,1) * (self.Primary.Recoil), 0))
-		self:ShootBullet(self.Primary.Damage, self.Primary.NumShots, self.Primary.Cone, self.Primary.Recoil )
+		self.Owner:ViewPunch(Angle(math.Rand(-0.5,-2.5) * (self.Primary.Recoil - (0.2 * handlingSkill)), math.Rand(-1,1) * (self.Primary.Recoil - (0.2 * handlingSkill)), 0))
+		self:ShootBullet(self.Primary.Damage, self.Primary.NumShots, self.Primary.Cone, (self.Primary.Recoil - (0.2 * handlingSkill)) )
 	end
 	
 	self.LastShoot = CurTime()

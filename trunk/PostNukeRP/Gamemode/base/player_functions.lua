@@ -42,7 +42,9 @@ function GM.SaveCharacter(ply,cmd,args)
 	tbl["armor"] = ply:Armor()
 	tbl["endurance"] = ply:GetTable().Endurance
 	tbl["hunger"] = ply:GetTable().Hunger
+	tbl["experience"] = ply:GetXP()
 	tbl["resources"] = {}
+	tbl["skills"] = {}
 	tbl["date"] = os.date("%A %m/%d/%y")
 	tbl["name"] = ply:Nick()
 	tbl["weapons"] = {}
@@ -60,6 +62,15 @@ function GM.SaveCharacter(ply,cmd,args)
 		end
 		tbl["resources"][k] = v
 	end
+	
+	--Sets Skills
+	for k,v in pairs(ply.Skills) do
+		if v <= 0 then
+			v = 0
+		end
+		tbl["skills"][k] = v
+	end
+	
 	--Sets Weapons
 	for k, v in pairs(ply:GetWeapons()) do
 		local wepCheck = PNRP.CheckDefWeps(v)
@@ -139,6 +150,28 @@ function GM.LoadStatus( ply )
 		--if tbl["endurance"] then ply:SetNetworkedInt("Endurance", tbl["endurance"] ) end
 		if tbl["endurance"] then ply:GetTable().Endurance = tbl["endurance"] end
 		if tbl["hunger"] then ply:GetTable().Hunger = tbl["hunger"] end
+		
+		local function tchelper(first, rest)
+		  return first:upper()..rest:lower()
+		end
+		
+		if tbl["skills"] then
+			for k,v in pairs( tbl["skills"] ) do
+--				ply:ChatPrint(k:gsub("(%a)([%w_']*)", tchelper))
+				ply:SetSkill(k:gsub("(%a)([%w_']*)", tchelper), v)
+			end
+		end
+		
+		if tbl["experience"] then
+			ply:SetXP(tbl["experience"])
+		end
+		
+		if ply:Team() == TEAM_SCAVENGER then
+			ply:SetRunSpeed( 325 + (ply:GetSkill("Athletics") * 10) ) 
+		else
+			ply:SetRunSpeed( 295 + (ply:GetSkill("Athletics") * 10) )
+		end
+		
 		if tbl["community"] then 
 			--ply:GetTable().Community = tbl["community"]
 			LoadCommunityInfo( ply, tbl["community"] )
@@ -179,31 +212,50 @@ PNRP.ChatConCmd( "/save", "pnrp_save" )
 
 -- Loads a player's community information.
 function LoadCommunityInfo( ply, community )
-	if file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
-		local communityTbl = glon.decode(file.Read("PostNukeRP/Communities/"..community..".txt"))
+	if file.Exists("PostNukeRP/Communities/listings.txt") then	
+		local listingsTbl = glon.decode(file.Read("PostNukeRp/Communities/listings.txt"))
 		
-		local found = false
-		--Find player in the community's file.  If they aren't there, they were removed while offline.
-		for k, v in pairs(communityTbl["users"]) do
-			if k == ply:UniqueID() then
-				ply:GetTable().Community = community
-				ply:GetTable().CommunityRank = v["rank"]
-				ply:SetNWString("community", community)
-				if ply:Nick() ~= v["name"] then
-					AmendCommunityInfo( community, ply:Nick(), nil, nil, nil, ply:UniqueID() )
-				end
-				found = true
+		if listingsTbl[ply:UniqueID()] then
+			ply:GetTable().Community = listingsTbl[ply:UniqueID()]["community"] or nil
+			ply:GetTable().CommunityRank = listingsTbl[ply:UniqueID()]["rank"] or nil
+			ply:SetNWString("community", listingsTbl[ply:UniqueID()]["community"] or nil)
+			
+			if ply:Nick() ~= listingsTbl[ply:UniqueID()]["name"] then
+				AmendCommunityInfo( community, ply:Nick(), nil, nil, nil, ply:UniqueID() )
 			end
-		end
-		if not found then
+			-- if file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
+				-- local communityTbl = glon.decode(file.Read("PostNukeRP/Communities/"..community..".txt"))
+				
+				-- local found = false
+				-- --Find player in the community's file.  If they aren't there, they were removed while offline.
+				-- for k, v in pairs(communityTbl["users"]) do
+					-- if k == ply:UniqueID() then
+						-- ply:GetTable().Community = community
+						-- ply:GetTable().CommunityRank = v["rank"]
+						-- ply:SetNWString("community", community)
+						-- if ply:Nick() ~= v["name"] then
+							-- AmendCommunityInfo( community, ply:Nick(), nil, nil, nil, ply:UniqueID() )
+						-- end
+						-- found = true
+					-- end
+				-- end
+				-- if not found then
+					-- ply:GetTable().Community = nil
+					-- ply:GetTable().CommunityRank = nil
+					-- ply:SetNWString("community", "N/A")
+				-- end
+			-- else
+				-- ply:GetTable().Community = nil
+				-- ply:GetTable().CommunityRank = nil
+				-- ply:SetNWString("community", "N/A")
+			-- end
+		else
 			ply:GetTable().Community = nil
 			ply:GetTable().CommunityRank = nil
 			ply:SetNWString("community", "N/A")
 		end
 	else
-		ply:GetTable().Community = nil
-		ply:GetTable().CommunityRank = nil
-		ply:SetNWString("community", "N/A")
+		
 	end
 end
 
@@ -211,19 +263,18 @@ end
 function AmendCommunityInfo( community, name, rank, lastlog, model, uniqueid )
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/Communities") then file.CreateDir("PostNukeRP/Communities") end
-	local communityTbl = {}
+	local listingsTbl = {}
 	
-	if file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
-		communityTbl = glon.decode(file.Read("PostNukeRP/Communities/"..community..".txt"))
+	if file.Exists("PostNukeRP/Communities/listings.txt") then
+		listingsTbl = glon.decode(file.Read("PostNukeRP/Communities/listings.txt"))
 		
-		--UniqueID is optional.  Makes it a quicker, more optimized search.
 		local found = false
 		if uniqueid then
 			if name then
-				communityTbl["users"][uniqueid].name = name
+				listingsTbl[uniqueid]["name"] = name
 			end
 			if rank then
-				communityTbl["users"][uniqueid].rank = rank
+				listingsTbl[uniqueid]["rank"] = rank
 				
 				local target = player.GetByUniqueID(uniqueid)
 				if target then
@@ -231,39 +282,95 @@ function AmendCommunityInfo( community, name, rank, lastlog, model, uniqueid )
 				end
 			end
 			if lastLog then
-				communityTbl["users"][uniqueid].lastlog = lastlog
+				listingsTbl[uniqueid]["lastlog"] = lastlog
 			end
 			if model then
-				communityTbl["users"][uniqueid].model = model
+				listingsTbl[uniqueid]["model"] = model
+			end
+			if community then
+				listingsTbl[uniqueid]["community"] = community
 			end
 			found = true
 		else
-			
-			for k, v in pairs(communityTbl["users"]) do
+			for k, v in pairs(listingsTbl) do
 				if v.name == name then
 					if rank then
-						communityTbl["users"][k].rank = rank
+						listingsTbl[k].rank = rank
 					end
 					if lastLog then
-						communityTbl["users"][k].lastlog = lastlog
+						listingsTbl[k].lastlog = lastlog
 					end
 					if model then
-						communityTbl["users"][k].model = model
+						listingsTbl[k].model = model
+					end
+					if community then
+						listingsTbl[k]["community"] = community
 					end
 					found = true
 					break
 				end
 			end
-			
 		end
-		if not found then
-			ErrorNoHalt("Player not found in community file!\n")
-		end
-		if found then file.Write("PostNukeRP/Communities/"..community..".txt",glon.encode(communityTbl)) end
+		
+		if not found then ErrorNoHalt("Player not found in listings file!\n") end
+		if found then file.Write("PostNukeRP/Communities/listings.txt",glon.encode(listingsTbl)) end
 	else
 		--Throws a lua error without halting the script.
-		ErrorNoHalt("Cannot amend a community file that doesn't exist!\n")
+		ErrorNoHalt("Cannot amend a listings file that doesn't exist!\n")
+		file.Write("PostNukeRP/Communities/listings.txt",glon.encode(listingsTbl))
 	end
+	
+	-- if file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
+		-- communityTbl = glon.decode(file.Read("PostNukeRP/Communities/"..community..".txt"))
+		
+		-- --UniqueID is optional.  Makes it a quicker, more optimized search.
+		-- local found = false
+		-- if uniqueid then
+			-- if name then
+				-- communityTbl["users"][uniqueid].name = name
+			-- end
+			-- if rank then
+				-- communityTbl["users"][uniqueid].rank = rank
+				
+				-- local target = player.GetByUniqueID(uniqueid)
+				-- if target then
+					-- target:GetTable().CommunityRank = rank
+				-- end
+			-- end
+			-- if lastLog then
+				-- communityTbl["users"][uniqueid].lastlog = lastlog
+			-- end
+			-- if model then
+				-- communityTbl["users"][uniqueid].model = model
+			-- end
+			-- found = true
+		-- else
+			
+			-- for k, v in pairs(communityTbl["users"]) do
+				-- if v.name == name then
+					-- if rank then
+						-- communityTbl["users"][k].rank = rank
+					-- end
+					-- if lastLog then
+						-- communityTbl["users"][k].lastlog = lastlog
+					-- end
+					-- if model then
+						-- communityTbl["users"][k].model = model
+					-- end
+					-- found = true
+					-- break
+				-- end
+			-- end
+			
+		-- end
+		-- if not found then
+			-- ErrorNoHalt("Player not found in community file!\n")
+		-- end
+		-- if found then file.Write("PostNukeRP/Communities/"..community..".txt",glon.encode(communityTbl)) end
+	-- else
+		-- --Throws a lua error without halting the script.
+		-- ErrorNoHalt("Cannot amend a community file that doesn't exist!\n")
+	-- end
 end
 
 -- Actually makes new communities, or adds a player to a community.  Can only be done in game, for good reason.
@@ -271,31 +378,46 @@ function NewCommunityInfo( ply, community )
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/Communities") then file.CreateDir("PostNukeRP/Communities") end
 	local communityTbl = {}
+	local listingsTbl = {}
+	
+	if string.find(community, "[%/%\\%!%@%#%$%%%^%&%*%(%)%+%=%.%'%\"]") then
+		ply:ChatPrint("A community name cannot have special characters in it!")
+		return
+	end
 	
 	if file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
-		communityTbl = glon.decode(file.Read("PostNukeRP/Communities/"..community..".txt"))
+		if file.Exists("PostNukeRP/Communities/listings.txt") then
+			listingsTbl = glon.decode(file.Read("PostNukeRP/Communities/listings.txt"))
+		end
 		
-		communityTbl["users"][ply:UniqueID()] = {}
-		communityTbl["users"][ply:UniqueID()].name = ply:Nick()
-		communityTbl["users"][ply:UniqueID()].rank = 1
-		communityTbl["users"][ply:UniqueID()].lastlog = os.date()
-		communityTbl["users"][ply:UniqueID()].model = ply:GetModel()
+		listingsTbl[ply:UniqueID()] = {}
+		listingsTbl[ply:UniqueID()].name = ply:Nick()
+		listingsTbl[ply:UniqueID()].rank = 1
+		listingsTbl[ply:UniqueID()].lastlog = os.date()
+		listingsTbl[ply:UniqueID()].model = ply:GetModel()
+		listingsTbl[ply:UniqueID()].community = community
 		
 		ply:GetTable().Community = community
 		ply:SetNWString("community", community)
 		ply:GetTable().CommunityRank = 1
 		ply:ConCommand("pnrp_save")
+		
+		file.Write("PostNukeRP/Communities/listings.txt",glon.encode(listingsTbl))
 	else
+		if file.Exists("PostNukeRP/Communities/listings.txt") then
+			listingsTbl = glon.decode(file.Read("PostNukeRP/Communities/listings.txt"))
+		end
+		
 		ply:GetTable().Community = community
 		ply:SetNWString("community", community)
 		ply:GetTable().CommunityRank = 3
 		
-		communityTbl["users"] = {}
-		communityTbl["users"][ply:UniqueID()] = {}
-		communityTbl["users"][ply:UniqueID()].name = ply:Nick()
-		communityTbl["users"][ply:UniqueID()].rank = 3
-		communityTbl["users"][ply:UniqueID()].lastlog = os.date()
-		communityTbl["users"][ply:UniqueID()].model = ply:GetModel()
+		listingsTbl[ply:UniqueID()] = {}
+		listingsTbl[ply:UniqueID()].name = ply:Nick()
+		listingsTbl[ply:UniqueID()].rank = 3
+		listingsTbl[ply:UniqueID()].lastlog = os.date()
+		listingsTbl[ply:UniqueID()].model = ply:GetModel()
+		listingsTbl[ply:UniqueID()].community = community
 		
 		communityTbl["res"] = {}
 		communityTbl["res"]["Scrap"] = 0
@@ -304,8 +426,11 @@ function NewCommunityInfo( ply, community )
 		
 		communityTbl["inv"] = {}
 		ply:ConCommand("pnrp_save")
+		
+		file.Write("PostNukeRP/Communities/listings.txt",glon.encode(listingsTbl))
+		file.Write("PostNukeRP/Communities/"..community..".txt",glon.encode(communityTbl))
 	end
-	file.Write("PostNukeRP/Communities/"..community..".txt",glon.encode(communityTbl))
+	
 end
 
 -- Will delete a community automatically when users becomes 0.
@@ -313,93 +438,106 @@ function RemCommunityInfo( community, name, rank, uniqueid )
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/Communities") then file.CreateDir("PostNukeRP/Communities") end
 	local communityTbl = {}
+	local listingsTbl = {}
 	local wasOwner = false
 	
 	if file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
-		communityTbl = glon.decode(file.Read("PostNukeRP/Communities/"..community..".txt"))
+		if file.Exists("PostNukeRP/Communities/listings.txt") then
+			listingsTbl = glon.decode(file.Read("PostNukeRP/Communities/listings.txt"))
 		
-		--UniqueID is optional.  Makes it a quicker, more optimized search.
-		local found = false
-		if uniqueid then
-			communityTbl["users"][uniqueid] = nil
-			local myUser = player.GetByUniqueID(uniqueid)
-			if myUser:GetTable().CommunityRank > 2 then wasOwner = true end
-			wasOwner = (myUser:GetTable().CommunityRank > 2)
-			myUser:GetTable().Community = nil
-			myUser:GetTable().CommunityRank = nil
-			myUser:SetNWString("community", "N/A")
-			myUser:ChatPrint("You've been removed from the community named "..community..".")
-			found = true
-		else
+			--UniqueID is optional.  Makes it a quicker, more optimized search.
+			local found = false
+			if uniqueid then
+				listingsTbl[uniqueid] = nil
+				local myUser = player.GetByUniqueID(uniqueid)
+				
+				wasOwner = (myUser:GetTable().CommunityRank > 2)
+				myUser:GetTable().Community = nil
+				myUser:GetTable().CommunityRank = nil
+				myUser:SetNWString("community", "N/A")
+				myUser:ChatPrint("You've been removed from the community named "..community..".")
+				found = true
+			else
+				
+				for k, v in pairs(listingsTbl) do
+					if v.name == name then
+						if v.rank > 2 then wasOwner = true end
+						listingsTbl[k] = nil
+						for _, myUser in pairs(player.GetAll()) do
+							if myUser:Nick() == name then
+								myUser:GetTable().Community = nil
+								myUser:GetTable().CommunityRank = nil
+								myUser:SetNWString("community", "N/A")
+								myUser:ChatPrint("You've been removed from the community named "..community..".")
+								break
+							end
+						end
+						found = true
+						break
+					end
+				end
+				
+			end
+			if not found then
+				ErrorNoHalt("Player not found in community file!\n")
+			end
+			if found then file.Write("PostNukeRP/Communities/listings.txt",glon.encode(listingsTbl)) end
 			
-			for k, v in pairs(communityTbl["users"]) do
-				if v.name == name then
-					if v.rank > 2 then wasOwner = true end
-					communityTbl["users"][k] = nil
-					for _, myUser in pairs(player.GetAll()) do
-						if myUser:Nick() == name then
-							myUser:GetTable().Community = nil
-							myUser:GetTable().CommunityRank = nil
-							myUser:SetNWString("community", "N/A")
-							myUser:ChatPrint("You've been removed from the community named "..community..".")
+			local communityUsers = {}
+			for k, v in pairs(listingsTbl) do
+				if v.community == community then
+					communityUsers[k] = v
+				end
+			end
+			
+			if table.Count(communityUsers) < 1 then
+				file.Delete("PostNukeRP/Communities/"..string.lower(community)..".txt")
+			else
+				if not wasOwner then return end
+				local hasOwner = false
+				for k, v in pairs(communityUsers) do
+					if v["rank"] == 3 then
+						hasOwner = true
+						break
+					end
+				end
+				if not hasOwner then
+					local hasOfficer = false
+					for k, v in pairs(communityUsers) do
+						if v["rank"] == 2 then
+							hasOfficer = true
+							AmendCommunityInfo( community, nil, 3, nil, nil, k )
+							for _, myUser in pairs(player.GetAll()) do
+								if myUser:UniqueID() == k then
+									myUser:GetTable().CommunityRank = 3
+									myUser:ChatPrint("You've been made leader of "..community..".")
+									break
+								end
+							end
 							break
 						end
 					end
-					found = true
-					break
+					if not hasOfficer then
+						for k, v in pairs(communityUsers) do
+							AmendCommunityInfo( community, nil, 3, nil, nil, k )
+							for _, myUser in pairs(player.GetAll()) do
+								if myUser:UniqueID() == k then
+									myUser:GetTable().CommunityRank = 3
+									myUser:ChatPrint("You've been made leader of "..community..".")
+									break
+								end
+							end
+							break
+						end
+					end
 				end
 			end
-			
-		end
-		if not found then
-			ErrorNoHalt("Player not found in community file!\n")
-		end
-		if found then file.Write("PostNukeRP/Communities/"..community..".txt",glon.encode(communityTbl)) end
-		if table.Count(communityTbl["users"]) < 1 then
-			file.Delete("PostNukeRP/Communities/"..string.lower(community)..".txt")
 		else
-			if not wasOwner then return end
-			local hasOwner = false
-			for k, v in pairs(communityTbl["users"]) do
-				if v["rank"] == 3 then
-					hasOwner = true
-					break
-				end
-			end
-			if not hasOwner then
-				local hasOfficer = false
-				for k, v in pairs(communityTbl["users"]) do
-					if v["rank"] == 2 then
-						hasOfficer = true
-						AmendCommunityInfo( community, v["name"], 3, nil, nil, nil )
-						for _, myUser in pairs(player.GetAll()) do
-							if myUser:Nick() == v["name"] then
-								myUser:GetTable().CommunityRank = 3
-								myUser:ChatPrint("You've been made leader of "..community..".")
-								break
-							end
-						end
-						break
-					end
-				end
-				if not hasOfficer then
-					for k, v in pairs(communityTbl["users"]) do
-						AmendCommunityInfo( community, nil, 3, nil, nil, k )
-						for _, myUser in pairs(player.GetAll()) do
-							if myUser:Nick() == v["name"] then
-								myUser:GetTable().CommunityRank = 3
-								myUser:ChatPrint("You've been made leader of "..community..".")
-								break
-							end
-						end
-						break
-					end
-				end
-			end
+			ErrorNoHalt("Cannot remove a user from a listings file that doesn't exist!\n")
 		end
 	else
 		--Throws a lua error without halting the script.
-		ErrorNoHalt("Cannot remove a user from a community file that doesn't exist!\n")
+		ErrorNoHalt("Cannot remove a user from a community that doesn't exist!\n")
 	end
 end
 
@@ -410,6 +548,25 @@ function DelCommunity( community )
 	
 	if file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
 		file.Delete("PostNukeRP/Communities/"..string.lower(community)..".txt")
+		
+		local listingsTbl = {}
+		if file.Exists("PostNukeRP/Communities/listings.txt") then
+			listingsTbl = glon.decode(file.Read("PostNukeRP/Communities/listings.txt"))
+			
+			for k, v in pairs(listingsTbl) do
+				if v.community == community then
+					for _, myUser in pairs(player.GetAll()) do
+						if myUser:UniqueID() == k then
+							myUser:GetTable().CommunityRank = nil
+							myUser:GetTable().Community = "N/A"
+							myUser:ChatPrint("You've been made leader of "..community..".")
+							break
+						end
+					end
+					listingsTbl[k] = nil
+				end
+			end
+		end
 	end
 end
 
@@ -506,9 +663,21 @@ function GetCommunityTbl( community )
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/Communities") then file.CreateDir("PostNukeRP/Communities") end
 	local communityTbl = {}
+	local listingsTbl = {}
 	
 	if file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
 		communityTbl = glon.decode(file.Read("PostNukeRP/Communities/"..community..".txt"))
+		listingsTbl = glon.decode(file.Read("PostNukeRP/Communities/listings.txt"))
+		
+		local communityUsers = {}
+		for k, v in pairs(listingsTbl) do
+			if v.community == community then
+				communityUsers[k] = v
+			end
+		end
+		
+		communityTbl["users"] = communityUsers
+		
 		return communityTbl
 	else
 		ErrorNoHalt("player_functions.lua:  Line 455  Community table not found!\n")
@@ -1133,133 +1302,46 @@ PNRP.ChatConCmd( "/stowgun", "pnrp_stowWep" )
 PNRP.ChatConCmd( "/putawaygun", "pnrp_stowWep" )
 
 
-function PNRP.DropAmmo (ply, command, args)
+function PNRP.DropAmmo(ply, command, args)
 	local ammoType = args[1]
-	if ammoType then ply:ChatPrint("Ammo Type:  "..ammoType) end
 	local ammoAmt = tonumber(args[2])
-	local entClass
-	local entModel
-	local ammoFTyp
+	local ammoFType
+
+	--Converts into the correct ItemID
+	if ammoType == "slam" then ammoFType = "weapon_pnrp_charge"
+	elseif ammoType == "grenade" then ammoFType = "weapon_frag"
+	else ammoFType = "ammo_"..string.lower(ammoType) end
+	local ItemID = PNRP.FindItemID( ammoFType )
 	
-	if ammoType == "slam" then
-		ItemID = "wep_shapedcharge"
-		ammoFType = "weapon_pnrp_charge"
-		entClass = PNRP.Items[ItemID].Ent
-		entModel = PNRP.Items[ItemID].Model
-		ammoAmt = PNRP.Items[ItemID].Energy
-	elseif ammoType == "grenade" then
-		ItemID = "wep_grenade"
-		ammoFType = "weapon_frag"
-		entClass = PNRP.Items[ItemID].Ent
-		entModel = PNRP.Items[ItemID].Model
-		ammoAmt = PNRP.Items[ItemID].Energy
-	elseif ammoType and ammoAmt then
-		ammoFType = "ammo_"..ammoType
-		if ammoFType == "ammo_grenade" then 
-			ammoFType = "wep_grenade" 
-			ItemID = "wep_grenade" 
-		else	
-			local ItemID = PNRP.FindItemID( ammoFType )
-		end
-		if ItemID then
-			entClass = ammoFType
-			entModel = PNRP.Items[ItemID].Model
-		else
-			ply:ChatPrint("Invalid ammo type.")
-			return
-		end
-	elseif ammoType then
-		ammoFType = "ammo_"..ammoType
-		if ammoFType == "ammo_grenade" then 
-			ammoFType = "wep_grenade" 
-			ItemID = "wep_grenade" 
-		else	
-			local ItemID = PNRP.FindItemID( ammoFType )
-		end
-		if ItemID then
-			entClass = ammoFType
-			entModel = PNRP.Items[ItemID].Model
-			ammoAmt = PNRP.Items[ItemID].Energy
-		else
-			ply:ChatPrint("Invalid ammo type.")
-			return
-		end
-	else
-		--Grenade Check
-		if ply:GetActiveWeapon():GetClass() == "weapon_frag" then 
-			ammoFType = "wep_grenade"
-			--ammoType = "grenade" 
-		else
-			--ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
-			ammoFType = "ammo_"..ammoType
-		end
-		ammoType = PNRP.ConvertAmmoType(ply:GetActiveWeapon():GetPrimaryAmmoType())
-		local ItemID = PNRP.FindItemID( ammoFType )
-		if ItemID then
-			entClass = ammoFType
-			entModel = PNRP.Items[ItemID].Model
-			ammoAmt = PNRP.Items[ItemID].Energy
-		else
-			ply:ChatPrint("Invalid ammo type.")
-			return
-		end
-	end
-	
-	if ply:GetAmmoCount(ammoType) < ammoAmt then
-		ply:ChatPrint("You cannot drop that much.  All ammo dropped instead.")
+	if ItemID then
+		local EntSetting
+		local tr = ply:TraceFromEyes(200)
+		local trPos = tr.HitPos
 		
-		ammoAmt = ply:GetAmmoCount(ammoType)
-	end
-	
-	if ply:GetAmmoCount(ammoType) <= 0 then
-		ply:ChatPrint("You don't have any of this type!")
+		ply:ChatPrint("Dropping "..ammoAmt.." "..PNRP.Items[ItemID].Name)
+		
+		if ammoType == "slam" or ammoType == "grenade" then EntSetting = "ent_weapon"
+		else EntSetting = PNRP.Items[ItemID].Ent end
+		
+		local ent = ents.Create(EntSetting)
+		local pos = trPos + Vector(0,0,20)
+		ent:SetModel(PNRP.Items[ItemID].Model)
+		ent:SetAngles(Angle(0,0,0))
+		ent:SetPos(pos)
+		ent:Spawn()
+		ent:SetNetworkedString("WepClass", PNRP.Items[ItemID].Ent)
+		ent:SetNetworkedString("Owner", "World")
+		ent:SetNetworkedString("Ammo", tostring(ammoAmt))
+	else
+		ply:ChatPrint("Invalid ammo type. "..ammoFType)
 		return
 	end
 	
-	
-	local tr = ply:TraceFromEyes(200)
-	local trPos = tr.HitPos
-	
-	if ammoFType == "weapon_pnrp_charge" then
-		local ent = ents.Create("ent_weapon")
-		local pos = trPos + Vector(0,0,20)
-		ent:SetModel(entModel)
-		ent:SetAngles(Angle(0,0,0))
-		ent:SetPos(pos)
-		ent:Spawn()
-		ent:SetNetworkedString("WepClass", entClass)
-		ent:SetNetworkedString("Owner", "World")
-		ent:SetNetworkedString("Ammo", tostring(ammoAmt))
-	elseif ammoFType == "weapon_frag" then
-		local ent = ents.Create("ent_weapon")
-		local pos = trPos + Vector(0,0,20)
-		ent:SetModel(entModel)
-		ent:SetAngles(Angle(0,0,0))
-		ent:SetPos(pos)
-		ent:Spawn()
-		ent:SetNetworkedString("WepClass", entClass)
-		ent:SetNetworkedString("Owner", "World")
-		ent:SetNetworkedString("Ammo", tostring(ammoAmt))
-	else
-		local ent = ents.Create(entClass)
-		local pos = trPos + Vector(0,0,20)
-		ent:SetModel(entModel)
-		ent:SetAngles(Angle(0,0,0))
-		ent:SetPos(pos)
-		ent:Spawn()
-		ent:SetNetworkedString("Owner", "World")
-		ent:SetNetworkedString("Ammo", tostring(ammoAmt))
-	end
-	
-	
-	local prevAmmo = ply:GetAmmoCount(ammoType)
-	
 	if ammoType == "grenade" or ammoType == "slam" then ammoAmt = 1 end
 	ply:RemoveAmmo( ammoAmt, ammoType )
---	ply:ChatPrint(tostring(prevAmmo).."  -  "..tostring(ammoAmt).." = "..tostring(prevAmmo - ammoAmt))
 end
 concommand.Add( "pnrp_dropAmmo", PNRP.DropAmmo )
-PNRP.ChatConCmd( "/dropammo", "pnrp_dropAmmo" )
+PNRP.ChatConCmd( "/dropammo", "pnrp_eqipment" )
 
 function PNRP.GetSpawnflags ( ply )
 	local tr = ply:TraceFromEyes(400)
@@ -1322,5 +1404,161 @@ function PNRP.Unfreeze(ply)
 end
 concommand.Add( "pnrp_unfreeze", PNRP.Unfreeze )
 PNRP.ChatCmd( "/unfreeze", PNRP.Unfreeze )
+
+function PNRP.OpenMainAdmin(ply)
+	
+	local GMSettingstbl = { }
+	local SpawnSettingstbl = { }
+	
+	if ply:IsAdmin() then	
+		
+		GMSettingstbl = 
+		{
+			E2Restrict = GetConVar("pnrp_exp2Level"):GetInt(),
+			ToolLevel = GetConVar("pnrp_toolLevel"):GetInt(),
+			AdminCreateAll = GetConVar("pnrp_adminCreateAll"):GetInt(),
+			AdminTouchAll = GetConVar("pnrp_adminTouchAll"):GetInt(),
+			AdminNoCost = GetConVar("pnrp_adminNoCost"):GetInt(),
+			PropBanning = GetConVar("pnrp_propBanning"):GetInt(),
+			PropAlowing = GetConVar("pnrp_propAllowing"):GetInt(),
+			PropSpawnProtection = GetConVar("pnrp_propSpawnpointProtection"):GetInt(),
+			PlyDeathZombie = GetConVar("pnrp_PlyDeathZombie"):GetInt(),
+			PropExp = GetConVar("pnrp_propExp"):GetInt(),
+			PropPay = GetConVar("pnrp_propPay"):GetInt(),
+			PropCost = GetConVar("pnrp_propCost"):GetInt(),
+			VoiceLimiter = GetConVar("pnrp_voiceLimit"):GetInt(),
+			VoiceDistance = GetConVar("pnrp_voiceDist"):GetInt(),
+			ClassChangePay = GetConVar("pnrp_classChangePay"):GetInt(),
+			ClassChangeCost = GetConVar("pnrp_classChangeCost"):GetInt(),
+			DeathPay = GetConVar("pnrp_deathPay"):GetInt(),
+			DeathCost = GetConVar("pnrp_deathCost"):GetInt(),
+			MaxOwnDoors = GetConVar("pnrp_maxOwnDoors"):GetInt()			
+		}
+		
+		SpawnSettingstbl = 
+		{
+			SpawnMobs = GetConVar("pnrp_SpawnMobs"):GetInt(),
+			MaxZombies = GetConVar("pnrp_MaxZombies"):GetInt(),
+			MaxFastZombies = GetConVar("pnrp_MaxFastZombies"):GetInt(),
+			MaxPoisonZombs = GetConVar("pnrp_MaxPoisonZombs"):GetInt(),
+			MaxAntlions = GetConVar("pnrp_MaxAntlions"):GetInt(),
+			MaxAntGuards = GetConVar("pnrp_MaxAntGuards"):GetInt(),
+			MaxAntMounds = GetConVar("pnrp_MaxMounds"):GetInt(),
+			AntMoundRate = GetConVar("pnrp_MoundRate"):GetInt(),
+			AntMoundChance = GetConVar("pnrp_MoundChance"):GetInt(),
+			MaxMoundAntlions = GetConVar("pnrp_MaxMoundAntlions"):GetInt(),
+			MoundAntlionsPerCycle = GetConVar("pnrp_MoundAntlionsPerCycle"):GetInt(),
+			MaxMoundGuards = GetConVar("pnrp_MaxMoundGuards"):GetInt(),
+			AntMoundMobRate = GetConVar("pnrp_MoundMobRate"):GetInt(),
+			MoundGuardChance = GetConVar("pnrp_MoundGuardChance"):GetInt(),
+			ReproduceRes = GetConVar("pnrp_ReproduceRes"):GetInt(),
+			MaxReproducedRes = GetConVar("pnrp_MaxReproducedRes"):GetInt()
+		}
+		
+		datastream.StreamToClients(ply, "pnrp_OpenAdminWindow", { ["GMSettings"] = GMSettingstbl, ["SpawnSettings"] = SpawnSettingstbl })
+	else
+		ply:ChatPrint("You are not an admin on this server!")
+	end
+end
+concommand.Add("pnrp_OpenAdmin", PNRP.OpenMainAdmin)
+
+function PNRP.UpdateFromAdminMenu(ply, handler, id, encoded, decoded )
+	local GMSettings = decoded["GMSettings"]
+	local SpawnSettings = decoded["SpawnSettings"]
+	if ply:IsAdmin() then		
+		RunConsoleCommand("pnrp_exp2Level", tostring(GMSettings.E2Restrict))
+		RunConsoleCommand("pnrp_toolLevel", tostring(GMSettings.ToolLevel))
+		RunConsoleCommand("pnrp_adminCreateAll", tostring(GMSettings.AdminCreateAll))
+		RunConsoleCommand("pnrp_adminTouchAll", tostring(GMSettings.AdminTouchAll))
+		RunConsoleCommand("pnrp_adminNoCost", tostring(GMSettings.AdminNoCost))
+		RunConsoleCommand("pnrp_propBanning", tostring(GMSettings.PropBanning))
+		RunConsoleCommand("pnrp_propAllowing", tostring(GMSettings.PropAlowing))
+		RunConsoleCommand("pnrp_propSpawnpointProtection", tostring(GMSettings.PropSpawnProtection))
+		RunConsoleCommand("pnrp_PlyDeathZombie", tostring(GMSettings.PlyDeathZombie))
+		RunConsoleCommand("pnrp_propExp", tostring(GMSettings.PropExp))
+		RunConsoleCommand("pnrp_propPay", tostring(GMSettings.PropPay))
+		RunConsoleCommand("pnrp_propCost", tostring(GMSettings.PropCost))
+		RunConsoleCommand("pnrp_voiceLimit", tostring(GMSettings.VoiceLimiter))
+		RunConsoleCommand("pnrp_voiceDist", tostring(GMSettings.VoiceDistance))
+		RunConsoleCommand("pnrp_classChangePay", tostring(GMSettings.ClassChangePay))
+		RunConsoleCommand("pnrp_classChangeCost", tostring(GMSettings.ClassChangeCost))
+		RunConsoleCommand("pnrp_deathPay", tostring(GMSettings.DeathPay))
+		RunConsoleCommand("pnrp_deathCost", tostring(GMSettings.DeathCost))
+		RunConsoleCommand("pnrp_maxOwnDoors", tostring(GMSettings.MaxOwnDoors))
+		
+		RunConsoleCommand("pnrp_SpawnMobs", tostring(SpawnSettings.SpawnMobs))
+		RunConsoleCommand("pnrp_MaxZombies", tostring(SpawnSettings.MaxZombies))
+		RunConsoleCommand("pnrp_MaxFastZombies", tostring(SpawnSettings.MaxFastZombies))
+		RunConsoleCommand("pnrp_MaxPoisonZombs", tostring(SpawnSettings.MaxPoisonZombs))
+		RunConsoleCommand("pnrp_MaxAntlions", tostring(SpawnSettings.MaxAntlions))
+		RunConsoleCommand("pnrp_MaxAntGuards", tostring(SpawnSettings.MaxAntGuards))
+		RunConsoleCommand("pnrp_MaxMounds", tostring(SpawnSettings.MaxAntMounds))
+		RunConsoleCommand("pnrp_MoundRate", tostring(SpawnSettings.AntMoundRate))
+		RunConsoleCommand("pnrp_MoundChance", tostring(SpawnSettings.AntMoundChance))
+		RunConsoleCommand("pnrp_MaxMoundAntlions", tostring(SpawnSettings.MaxMoundAntlions))
+		RunConsoleCommand("pnrp_MoundAntlionsPerCycle", tostring(SpawnSettings.MoundAntlionsPerCycle))
+		RunConsoleCommand("pnrp_MaxMoundGuards", tostring(SpawnSettings.MaxMoundGuards))
+		RunConsoleCommand("pnrp_MoundMobRate", tostring(SpawnSettings.AntMoundMobRate))
+		RunConsoleCommand("pnrp_MoundGuardChance", tostring(SpawnSettings.MoundGuardChance))
+		RunConsoleCommand("pnrp_ReproduceRes", tostring(SpawnSettings.ReproduceRes))
+		RunConsoleCommand("pnrp_MaxReproducedRes", tostring(SpawnSettings.MaxReproducedRes))
+		
+		ply:ChatPrint("Settings Confirmed!")
+	else
+		ply:ChatPrint("You are not an admin on this server!")
+	end
+end
+datastream.Hook( "UpdateFromAdminMenu", PNRP.UpdateFromAdminMenu )
+
+-- TEMP SCRIPT --
+--[[
+	This should migrate the old community system to the new one.  Only needed temporarily.
+--]]
+
+local function MigrateCommunities(ply)
+	
+	if not ply:IsAdmin() then return end
+	
+	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
+	if !file.IsDir("PostNukeRP/Communities") then file.CreateDir("PostNukeRP/Communities") end
+	if !file.IsDir("PostNukeRP/Communities_old") then return end
+	
+	local fileList = file.Find("PostNukeRP/Communities_old/*.txt")
+	local listingsTbl = {}
+	local communityTbl = {}
+	
+	for _, f in pairs(fileList) do
+		if not file.IsDir("PostNukeRP/Communities_old/"..f) then
+			local communityName = nil
+			communityTbl = glon.decode(file.Read("PostNukeRP/Communities_old/"..f))
+			
+			if not file.Exists("PostNukeRP/Communities_old/"..f) then
+				ply:ChatPrint("File is lying and says it doesn't exist.")
+				return
+			end
+			
+			for k, v in pairs(communityTbl["users"]) do
+				if not communityName then
+					local uniqueid = k
+					
+					if file.Exists("PostNukeRP/Saves/"..uniqueid..".txt") then
+						local tbl = util.KeyValuesToTable(file.Read("PostNukeRP/Saves/"..uniqueid..".txt"))
+						
+						communityName = tbl["community"]
+					end
+				end
+				listingsTbl[k] = v
+				listingsTbl[k]["community"] = communityName
+			end
+			communityTbl["users"] = nil
+			
+			file.Write("PostNukeRP/Communities/"..communityName..".txt",glon.encode(communityTbl))
+		end
+	end
+	
+	file.Write("PostNukeRP/Communities/listings.txt",glon.encode(listingsTbl))
+	ply:ChatPrint("Complete.")
+end
+concommand.Add("pnrp_migrateComm", MigrateCommunities)
 
 --EOF

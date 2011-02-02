@@ -42,7 +42,7 @@ function StatCheck()
 		
 		local EndUpdateTime 
 		if v:Team() == TEAM_WASTELANDER then
-			EndUpdateTime = UpdateTime / (1)
+			EndUpdateTime = UpdateTime / (1 - (0.05 * v:GetSkill("Endurance")))
 			if v:GetTable().IsAsleep then
 				EndUpdateTime = UpdateTime / 5 
 			end
@@ -225,8 +225,8 @@ function ExitSleep( ply )
 			timer.Create(ply:UniqueID()..tostring(os.time())..tostring(os.date()), 3, 1, function()  
 				if ply:GetTable().WeaponsForSleep then
 					for k,v in pairs(ply.WeaponsForSleep) do
-						ply:Give(v)
-						ply:GetWeapon(v):SetClip1(ply:GetTable().ClipsForSleep[k])
+						local currentWep = ply:Give(v)
+						currentWep:SetClip1(ply:GetTable().ClipsForSleep[k])
 					end
 					ply:StripAmmo()
 					for i = 1, 22 do

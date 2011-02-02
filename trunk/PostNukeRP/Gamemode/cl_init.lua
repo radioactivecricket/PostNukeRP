@@ -9,7 +9,9 @@ for k, v in pairs(file.FindInLua("PostNukeRP/gamemode/derma/*.lua")) do
 end
 
 Resources = {}
+Skills = {}
 Endurance = 100
+XP = 0
 local PrevHealth
 local LastDraw
 local dynaset = {}
@@ -34,137 +36,40 @@ function GM.SetResource(um)
 
 	Resources[res] = amount
 end
-
 usermessage.Hook("pnrp_SetResource",GM.SetResource)
 
-function DrawTopHud()
-	local person = LocalPlayer()
-	if ( !person:Alive() ) then return end
+local PlayerMeta = FindMetaTable("Player")
 
-	local scrap = GetResource("Scrap")
-	local smallparts = GetResource("Small_Parts")
-	local chems = GetResource("Chemicals")
-	
-	local endur = person:GetNetworkedInt("Endurance")
-	local endPerc = endur / 100
-	
-	--Endurance Bar
---	draw.RoundedBox(2, 5, 30, 150, 30, Color(51, 58, 51, 175))
---	draw.RoundedBox(0, 10, 35, 130*endPerc, 20, Color(255-(255*endPerc), 255*endPerc, 30, 155))
-	
---	draw.RoundedBox(0, 114, 35, 1, 20, Color(255, 255, 255, 150))
-	
---	draw.SimpleTextOutlined("Endurance", "ScoreboardText", 30, 30, Color(255,255,255,255), 0, 0, 3, Color(0,0,0,255))
-	--draw.SimpleText("Endurance", "ScoreboardText", 30, 50, Color(255, 255, 255, 255), 0, 0)
-	
-	--Top bar
-	local hudPos = 15
-	local hw, ht = ScrW(), 26 
-	
-	surface.SetDrawColor( 0, 0, 0, 255 )	
-	surface.DrawRect( 0, 0, hw, ht )
-	
-	surface.SetDrawColor( 0, 0, 0, 255  )
-	surface.DrawOutlinedRect( 0, 0, hw, ht )
-	
-	surface.SetTextColor( 255, 255, 255, 255 )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos + 25, 3 )
-	surface.DrawText( "Scrap:  "..scrap )
-	
-	hudPos = hudPos + 120
-	
-	surface.SetTextColor( 255, 255, 255, 255 )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Small Parts:  "..smallparts )
-	
-	hudPos = hudPos + 120
-	
-	surface.SetTextColor( 255, 255, 255, 255 )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Chemicals:  "..chems )
-	
---	hudPos = hudPos + 120
-	
---	local plLocation = nil
---	if person:IsOutside() then
---		plLocation = "Outside"
---	else
---		plLocation = "Inside"
---	end
-	
---	surface.SetTextColor( 255, 255, 255, 255 )
---	surface.SetFont( "CenterPrintText" )
---	surface.SetTextPos( hudPos, 3 )
---	surface.DrawText( "Location:  "..plLocation )
-	
-	hudPos = hudPos + 120
-	
-	surface.SetTextColor( team.GetColor(person:Team()) )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Class:  "..team.GetName(person:Team()) )
-	
-	hudPos = hudPos + 120
-	
-	local vlimit
-	if GetConVarNumber("pnrp_voiceLimit") == 1 then
-		vlimit = "On"
-	else
-		vlimit = "Off"
-	end
-	
-	surface.SetTextColor( 255, 255, 255, 255 )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Voice Limiter:  "..vlimit )
-	
-	hudPos = hudPos + 120
-	
-	local pcost
-	if GetConVarNumber("pnrp_propPay") == 1 then
-		pcost = "On @ "..GetConVarNumber("pnrp_propCost").."%"
-	else
-		pcost = "Off"
-	end
-	
-	surface.SetTextColor( 255, 255, 255, 255 )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Prop Cost:  "..pcost )
-	
-		hudPos = hudPos + 145
-	
-	local trace = {}
-	trace.start = person:EyePos()
-	trace.endpos = trace.start + person:GetAimVector() * 300
-	trace.filter = person
-	local tr = util.TraceLine( trace )	
-	
-	local ent = tr.Entity
-	
-	surface.SetTextColor( 255, 255, 255, 255 )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Owner:  "..ent:GetNWString( "Owner", "None" ))
-	
-	--Quick Key Referance
-	local hudBPos = 15
-	local rfBarY = ScrH() -ht
-	
-	surface.SetDrawColor( 0, 0, 0, 255 )	
-	surface.DrawRect( 0, rfBarY, hw, ht )
-	
-	surface.SetTextColor( 255, 255, 255, 255 )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudBPos + 25, rfBarY + 3 )
-	surface.DrawText( "Tab: Main Menu   F1: Help   F2: Pickup   F3: Inventory   F4: Shop   F5: Screenshot   F12: Take/Remove Ownership " )
-	
-	
+function PlayerMeta:GetSkill(skill)
+	return GetSkill(skill)
 end
-hook.Add("HUDPaint", "HUD_DRAW", DrawTopHud)
+
+--Get skill
+function GetSkill(skill)
+	return Skills[skill] or 0
+end
+
+--Set skill
+function GM.SetSkill(um)
+	local skill = um:ReadString()
+	local amount = um:ReadShort()
+
+	Skills[skill] = amount
+end
+usermessage.Hook("pnrp_SetSkill",GM.SetSkill)
+
+--Get experience
+function GetXP()
+	return XP or 0
+end
+
+--Set experience
+function GM.SetXP(um)
+	local amount = um:ReadLong()
+	
+	XP = amount
+end
+usermessage.Hook("pnrp_SetXP",GM.SetXP)
 
 function set_class()
  
@@ -298,5 +203,4 @@ local function DamageBlur()
 	end
 end
 hook.Add( "RenderScreenspaceEffects", "RenderDamage", DamageBlur )
-
 

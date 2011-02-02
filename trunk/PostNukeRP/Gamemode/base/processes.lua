@@ -142,6 +142,11 @@ function PROCESS:OnStop()
 			self.Data.MaxAmount = self.Data.MaxAmount * 2
 		 end
 		 
+		 if self.Owner:GetSkill("Scavenging") > 0 then
+			self.Data.Chance = self.Data.Chance + (self.Owner:GetSkill("Scavenging") * 5)
+			self.Data.MaxAmount = self.Data.MaxAmount + self.Owner:GetSkill("Scavenging")
+		 end
+		 
          if num < self.Data.Chance then
             local num2 = math.random(self.Data.MinAmount,self.Data.MaxAmount)
             self.Owner:IncResource("Scrap",num2)
@@ -192,6 +197,11 @@ function PROCESS:OnStop()
 		 if self.Owner:Team() == 2 then
 			self.Data.Chance = self.Data.Chance * 1.5
 			self.Data.MaxAmount = self.Data.MaxAmount * 2
+		 end
+		 
+		 if self.Owner:GetSkill("Scavenging") > 0 then
+			self.Data.Chance = self.Data.Chance + (self.Owner:GetSkill("Scavenging") * 5)
+			self.Data.MaxAmount = self.Data.MaxAmount + self.Owner:GetSkill("Scavenging")
 		 end
 
          if num < self.Data.Chance then
@@ -245,6 +255,11 @@ function PROCESS:OnStop()
 			self.Data.Chance = self.Data.Chance * 1.5
 			self.Data.MaxAmount = self.Data.MaxAmount * 2
 		 end
+		 
+		 if self.Owner:GetSkill("Scavenging") > 0 then
+			self.Data.Chance = self.Data.Chance + (self.Owner:GetSkill("Scavenging") * 5)
+			self.Data.MaxAmount = self.Data.MaxAmount + self.Owner:GetSkill("Scavenging")
+		 end
 
          if num < self.Data.Chance then
             local num2 = math.random(self.Data.MinAmount,self.Data.MaxAmount)
@@ -272,6 +287,17 @@ local PROCESS = {}
 
 function PROCESS:OnStart()
          self.Owner:Freeze(true)
+		 
+		 if self.Owner:GetSkill("Construction") > 0 then
+			for _, team in pairs(PNRP.Skills["Construction"].class) do
+				if self.Owner:Team() == team then
+					self.Data.Scrap = math.ceil(self.Data.Scrap * (1 - (0.02 * self.Owner:GetSkill("Construction"))))
+					self.Data.SmallParts = math.ceil(self.Data.SmallParts * (1 - (0.02 * self.Owner:GetSkill("Construction"))))
+					self.Data.Chems = math.ceil(self.Data.Chems * (1 - (0.02 * self.Owner:GetSkill("Construction"))))
+				end
+			end
+		 end
+		 
          if self.Owner:GetResource("Scrap") < self.Data.Scrap and self.Owner:GetResource("Small_Parts") < self.Data.SmallParts and self.Owner:GetResource("Chemicals") < self.Data.Chems then
 			return end
         self.StartTime = CurTime()
@@ -347,6 +373,17 @@ local PROCESS = {}
 
 function PROCESS:OnStart()
          self.Owner:Freeze(true)
+		 
+		 if self.Owner:GetSkill("Construction") > 0 then
+			for _, team in pairs(PNRP.Skills["Construction"].class) do
+				if self.Owner:Team() == team then
+					self.Data.Scrap = math.ceil(self.Data.Scrap * (1 - (0.02 * self.Owner:GetSkill("Construction"))))
+					self.Data.SmallParts = math.ceil(self.Data.SmallParts * (1 - (0.02 * self.Owner:GetSkill("Construction"))))
+					self.Data.Chems = math.ceil(self.Data.Chems * (1 - (0.02 * self.Owner:GetSkill("Construction"))))
+				end
+			end
+		 end
+		 
          if self.Owner:GetResource("Scrap") < self.Data.Scrap and self.Owner:GetResource("Small_Parts") < self.Data.SmallParts and self.Owner:GetResource("Chemicals") < self.Data.Chems then
 			return end
          self.StartTime = CurTime()

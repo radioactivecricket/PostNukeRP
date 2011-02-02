@@ -43,6 +43,7 @@ end
 
 function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 
+	local ply = LocalPlayer()
 	local sc = 0
 	local sp = 0
 	local ch = 0
@@ -83,9 +84,15 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 				pnlPanel.Title:SizeToContents() 
 		 		pnlPanel.Title:SetContentAlignment( 5 )
 		 		
-		 		if item.Scrap != nil then sc = item.Scrap else sc = 0 end
-		 		if item.SmallParts != nil then sp = item.SmallParts else sp = 0 end
-		 		if item.Chemicals != nil then ch = item.Chemicals else ch = 0 end
+				if ply:Team() == TEAM_ENGINEER then
+					if item.Scrap != nil then sc = math.ceil( item.Scrap * (1 - (0.02 * ply:GetSkill("Construction"))))  else sc = 0 end
+					if item.SmallParts != nil then sp = math.ceil(item.SmallParts * (1 - (0.02 * ply:GetSkill("Construction")))) else sp = 0 end
+					if item.Chemicals != nil then ch = math.ceil(item.Chemicals * (1 - (0.02 * ply:GetSkill("Construction")))) else ch = 0 end
+				else
+					if item.Scrap != nil then sc = item.Scrap else sc = 0 end
+					if item.SmallParts != nil then sp =item.SmallParts else sp = 0 end
+					if item.Chemicals != nil then ch = item.Chemicals else ch = 0 end
+				end
 		 		
 		 		pnlPanel.Cost = vgui.Create("DLabel", pnlPanel)		
 				pnlPanel.Cost:SetPos(90, 55)

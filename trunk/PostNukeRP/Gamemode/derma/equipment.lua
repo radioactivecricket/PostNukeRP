@@ -1,3 +1,5 @@
+require('datastream')
+
 function CheckDefWeps(wep)
 	local defWeps = table.Add(PNRP.DefWeps)
 	for k,v in pairs(defWeps) do
@@ -43,14 +45,6 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 		eq_frame:SetDraggable( true )
 		eq_frame:ShowCloseButton( true )
 		eq_frame:MakePopup()
-		
-	--	local pnlList = vgui.Create("DPanelList", eq_frame)
-	--		pnlList:SetPos(10, 25)
-	--		pnlList:SetSize(eq_frame:GetWide() - 150, eq_frame:GetTall() - 35)
-	--		pnlList:EnableVerticalScrollbar(false) 
-	--		pnlList:EnableHorizontal(true) 
-	--		pnlList:SetSpacing(1)
-	--		pnlList:SetPadding(10)
 		
 		local eqPanel = vgui.Create( "DPanel", eq_frame )
 				eqPanel:SetPos(10, 25)
@@ -108,14 +102,14 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 								if ( v ) then
 									if v:GetClass() == "weapon_frag" then
 										if ply:GetAmmoCount( v:GetPrimaryAmmoType() ) > 0 then
-											RunConsoleCommand("pnrp_dropAmmo", "grenade")
+											RunConsoleCommand("pnrp_dropAmmo","grenade", "1")
 										else
 											RunConsoleCommand("pnrp_stripWep",v:GetClass())
 										end
 										eq_frame:Close()
 									elseif v:GetClass() == "weapon_pnrp_charge" then
 										if ply:GetAmmoCount( v:GetPrimaryAmmoType() ) > 0 then
-											RunConsoleCommand("pnrp_dropAmmo", "slam")
+											RunConsoleCommand("pnrp_dropAmmo","slam", "1")
 										else
 											RunConsoleCommand("pnrp_stripWep",v:GetClass())
 										end
@@ -231,13 +225,20 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 			dropAmmoBtn:SetText( "Drop Ammo" )							    	 
 			dropAmmoBtn.DoClick = function()
 				if AmmoComboBox:GetSelectedItems() and AmmoComboBox:GetSelectedItems()[1] then
-					if ammoSlide:GetValue() > 0 then
-						RunConsoleCommand("pnrp_dropAmmo",AmmoComboBox:GetSelectedItems()[1]:GetValue(), ammoSlide:GetValue())
-						eq_frame:Close()
+					local ammoAMT
+					local ammoATYPE = AmmoComboBox:GetSelectedItems()[1]:GetValue()
+					local ammoFTYPE = "ammo_"..ammoATYPE
+					
+					if ammoSlide:GetValue() <= 0 then 
+						ammoAMT = PNRP.Items[ammoFTYPE].Energy
 					else
-						RunConsoleCommand("pnrp_dropAmmo",AmmoComboBox:GetSelectedItems()[1]:GetValue())
-						eq_frame:Close()
+						ammoAMT = ammoSlide:GetValue()
 					end
+					if ammoAMT > ply:GetAmmoCount(ammoATYPE) then
+						ammoAMT = ply:GetAmmoCount(ammoATYPE)
+					end
+					RunConsoleCommand("pnrp_dropAmmo",ammoATYPE, ammoAMT)
+					eq_frame:Close()
 				end
 			end
 		local invAmmoBtn = vgui.Create("DButton", eq_frame )
@@ -260,6 +261,12 @@ function checkGren(ply, weapon)
 			return false
 		end
 	end
+	if weapon:GetClass() == "weapon_pnrp_charge" then
+		if ply:GetAmmoCount( weapon:GetPrimaryAmmoType() ) <= 0 then
+			return false
+		end
+	end	
+	
 	return true
 end
 

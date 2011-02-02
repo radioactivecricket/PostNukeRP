@@ -1,4 +1,4 @@
-GM.Name 	= "PostNukeRP v46" --Set the gamemode name
+GM.Name 	= "PostNukeRP v47" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError(Gmod Addict)" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://radioactivecricket.com" --Set the author website
@@ -26,6 +26,18 @@ table.insert(PNRP.Resources,"Scrap")
 table.insert(PNRP.Resources,"Small_Parts")
 table.insert(PNRP.Resources,"Chemicals")
 
+PNRP.Skills = {}
+PNRP.Skills["Scavenging"] 		= {name = "Scavenging", desc ="Better scavenging through experience.", basecost = 150, maxlvl = 5, class = nil}
+PNRP.Skills["Endurance"] 		= {name = "Endurance", desc ="Staying on your feet longer, to survive better", basecost = 50, maxlvl = 10, class = {TEAM_WASTELANDER}}
+PNRP.Skills["Athletics"] 		= {name = "Athletics", desc ="Running a bit faster always helps.", basecost = 100, maxlvl = 5, class = nil}
+PNRP.Skills["Weapon Handling"] 	= {name = "Weapon Handling", desc ="Accuracy with firearms.  Who wouldn't want that?", basecost = 100, maxlvl = 5, class = nil}
+PNRP.Skills["Construction"] 	= {name = "Construction", desc ="Know-how to make things cost less.", basecost = 100, maxlvl = 5, class = {TEAM_ENGINEER}}
+PNRP.Skills["Backpacking"] 		= {name = "Backpacking", desc ="Knowing how to pack is great for carrying more.", basecost = 50, maxlvl = 5, class = nil}
+PNRP.Skills["Animal Husbandry"] = {name = "Animal Husbandry", desc ="Like cattle rearing, but in worm form!", basecost = 150, maxlvl = 5, class = {TEAM_SCIENCE}}
+PNRP.Skills["Mining"] 			= {name = "Mining", desc ="Get the most out of your sonic miners!", basecost = 150, maxlvl = 5, class = {TEAM_SCAVENGER}}
+PNRP.Skills["Farming"] 			= {name = "Farming", desc ="Take care of those plants less.  God yes...", basecost = 150, maxlvl = 5, class = {TEAM_CULTIVATOR}}
+PNRP.Skills["Salvaging"] 		= {name = "Salvaging", desc ="Lose less when taking stuff apart!", basecost = 100, maxlvl = 5, class = nil}
+
 local PlayerMeta = FindMetaTable("Player")
 
 PNRP.JunkModels = { "models/props_junk/TrashCluster01a.mdl",
@@ -44,26 +56,7 @@ PNRP.DefWeps = {"weapon_physcannon",
 				"weapon_pnrp_knife",
 				"gmod_camera",
 				"gmod_tool"}
-				
-PNRP.WastelanderSkill={	"Skill_1",
-						"Skill_2",
-						"Skill_3"}
-							
-PNRP.ScavengerSkill = {	"Skill_1",
-					   	"Skill_2",
-					   	"Skill_3"}
-							
-PNRP.ScienceSkill = {	"Skill_1",
-					 	"Skill_2",
-					 	"Skill_3"}
-							
-PNRP.EngineerSkill = {	"Skill_1",
-					  	"Skill_2",
-					  	"Skill_3"}
-							
-PNRP.CultivatorSkill = {"Skill_1",
-						"Skill_2",
-						"Skill_3"}
+
 														
 CreateConVar("pnrp_SpawnMobs","1",FCVAR_REPLICATED + FCVAR_NOTIFY)
 CreateConVar("pnrp_MaxZombies","30",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
@@ -257,4 +250,13 @@ local function HoldTypeFix()
 end
 hook.Add( "Think", "holdtypefix", HoldTypeFix )
 
+function toIntfromBool(bool)
+	if bool == true then
+		return 1
+	elseif bool == false then
+		return 0
+	else 
+		return bool
+	end
+end
 --EOF

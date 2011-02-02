@@ -16,6 +16,17 @@ function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
 			--If Right Class
 			if team.GetName(ply:Team()) == item.ClassSpawn or item.ClassSpawn == "All" or allowed == true then
 			
+				--Apply construction skill
+				if ply:GetSkill("Construction") > 0 then
+					for _, team in pairs(PNRP.Skills["Construction"].class) do
+						if ply:Team() == team then
+							item.Scrap = math.ceil(item.Scrap * (1 - (0.02 * ply:GetSkill("Construction"))))
+							item.SmallParts = math.ceil(item.SmallParts * (1 - (0.02 * ply:GetSkill("Construction"))))
+							item.Chemicals = math.ceil(item.Chemicals * (1 - (0.02 * ply:GetSkill("Construction"))))
+						end
+					end
+				end
+				
 				--Verifies Player has the needed Materials to build the item
 				local totalScrap = item.Scrap * Count
 				local totalSmall = item.SmallParts * Count
@@ -282,6 +293,7 @@ function PNRP.DropSpawn( ply, ID, q )
 					ent:Spawn()
 					ent:Activate()
 					ent:SetNetworkedString("Owner", ply:Nick())
+					ent:SetNWEntity( "ownerent", ply )
 					PNRP.TakeFromInventory( ply, data.ID )
 					PNRP.AddWorldCache( ply, data.ID )
 				end	
@@ -361,6 +373,7 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					ent:Spawn()
 					ent:Activate()
 					ent:SetNetworkedString("Owner", ply:Nick())
+					ent:SetNWEntity( "ownerent", ply )
 					PNRP.TakeFromCarInventory( ply, data.ID )
 					PNRP.AddWorldCache( ply, data.ID )
 				end
@@ -415,13 +428,13 @@ function PNRP.Salvage( ply, command, arg )
 			local chemicals
 			
 			if team.GetName(ply:Team()) == "Wastelander" or team.GetName(ply:Team()) == "Scavenger" then
-				scrap = math.Round(PNRP.Items[ItemID].Scrap * 0.25)
-				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * 0.25) 
-				chemicals = math.Round(PNRP.Items[ItemID].Chemicals * 0.25)
+				scrap = math.Round(PNRP.Items[ItemID].Scrap * (0.5 + (ply:GetSkill("Salvaging") * 0.05)))
+				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * (0.5 + (ply:GetSkill("Salvaging") * 0.05))) 
+				chemicals = math.Round(PNRP.Items[ItemID].Chemicals * (0.5 + (ply:GetSkill("Salvaging") * 0.05)))
 			else	
-				scrap = math.Round(PNRP.Items[ItemID].Scrap * 0.5)
-				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * 0.5) 
-				chemicals = math.Round(PNRP.Items[ItemID].Chemicals * 0.5)
+				scrap = math.Round(PNRP.Items[ItemID].Scrap * (0.25 + (ply:GetSkill("Salvaging") * 0.05)))
+				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * (0.25 + (ply:GetSkill("Salvaging") * 0.05))) 
+				chemicals = math.Round(PNRP.Items[ItemID].Chemicals * (0.25 + (ply:GetSkill("Salvaging") * 0.05)))
 			end	
 			
 			Msg(ply:Nick().."Salvaged "..tostring(scrap).." "..tostring(smallparts).." "..tostring(chemicals).."\n")

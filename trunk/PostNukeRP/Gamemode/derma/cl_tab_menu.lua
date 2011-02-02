@@ -188,7 +188,7 @@ function PNRP.buildMenu(parent_frame)
 						skillsmenu:SetParent( menu2List ) 
 						skillsmenu:SetText( "Skills Menu >" ) 
 						skillsmenu:SetSize( 100, 20 ) 
-						skillsmenu.DoClick = function() ply:ChatPrint("Skills not available yet.") SCFrame=false parent_frame:Close() end	
+						skillsmenu.DoClick = function() RunConsoleCommand( "pnrp_skills" ) SCFrame=false parent_frame:Close() end	
 						menu2List:AddItem( skillsmenu )
 					local communitymenu = vgui.Create("DButton") 
 						communitymenu:SetParent( menu2List ) 
