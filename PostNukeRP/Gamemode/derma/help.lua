@@ -281,7 +281,45 @@ function HelpPanel()
 						CommunityList:AddItem( ReadThis )
 				end	
 			pnlList:AddItem(CommunityDCats)
+		
+		local SkillsDCats = vgui.Create("DCollapsibleCategory", pnlList)
+			SkillsDCats:SetSize( pnlList:GetWide()-50, 50 ) -- Keep the second number at 50
+			SkillsDCats:SetExpanded( 0 ) -- Expanded when popped up
+			SkillsDCats:SetLabel( "Communities" )
+			 
+			SkillzList = vgui.Create( "DPanelList" )
+			SkillzList:SetAutoSize( true )
+			SkillzList:SetSpacing( 0 )
+			SkillzList:EnableHorizontal( false )
+			SkillzList:EnableVerticalScrollbar( true )
+			 
+			SkillsDCats:SetContents( SkillzList )
 			
+			local helpSkills = 	{
+			"Skills are gained by spending experiance. Experiance is gained from killign mobs.",
+			"",
+			"Base Skills:",
+			"Athletics - Increases run speed.",
+			"Backpacking - Increases max inventory size.",
+			"Salvaging - Higher yield from salvaging items.",	
+			"Scavenging - Increases rate and success when scavenging.",
+			"Weapon Handling - Increases accuracy and reduces recoil.",
+			"",
+			"Class Skills:",
+			"Animal Husbandry (Science) - Increases the breeding success rate.",
+			"Construction (Engineer) - Decreases cost for building items.",
+			"Endurance (Wastelander) - Decreases rate of Endurance loss.",
+			"Farming (Cultivator) - Changes the plants decay rate.",
+			"Mining (Scavenger) - Increases the drop rate of the miner."
+			}
+			
+				for k, v in pairs( helpSkills ) do
+					local ReadThis = vgui.Create( "DLabel" )
+						ReadThis:SetText( v )
+						SkillzList:AddItem( ReadThis )
+				end	
+			pnlList:AddItem(SkillsDCats)
+		
 		local GatheringDCats = vgui.Create("DCollapsibleCategory", pnlList)
 			GatheringDCats:SetSize( pnlList:GetWide()-50, 50 ) -- Keep the second number at 50
 			GatheringDCats:SetExpanded( 0 ) -- Expanded when popped up

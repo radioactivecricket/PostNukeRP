@@ -165,7 +165,7 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 						pnlPanel.salvageItem:SetPos(540, 55)
 				 		pnlPanel.salvageItem:SetSize(100,17)
 				    	pnlPanel.salvageItem:SetText( "Salvage Item" )
-				    	pnlPanel.salvageItem.DoClick = function() PNRP.OptionVerify( "pnrp_docarsalvage", item.ID, nil) parent_frame:Close() end
+				    	pnlPanel.salvageItem.DoClick = function() PNRP.OptionVerify( "pnrp_docarsalvage", item.ID, nil, nil) parent_frame:Close() end
 				 	end
 				end
 			end

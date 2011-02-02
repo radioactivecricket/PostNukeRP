@@ -45,9 +45,9 @@ function GM.inventory_window( handler, id, encoded, decoded )
 			InvWeight:SetPos(570, 55 )
 			local maxWeight
 			if ply:Team() == TEAM_SCAVENGER then
-				maxWeight = GetConVar("pnrp_packCapScav"):GetInt()
+				maxWeight = GetConVar("pnrp_packCapScav"):GetInt() + (GetSkill("Backpacking")*10)
 			else
-				maxWeight = GetConVar("pnrp_packCap"):GetInt()
+				maxWeight = GetConVar("pnrp_packCap"):GetInt() + (GetSkill("Backpacking")*10)
 			end
 			InvWeight:SetText("Current Weight: "..tostring(CurWeight).."/"..tostring(maxWeight))
 --			InvWeight:SetColor(Color( 0, 0, 0, 255 ))
@@ -204,7 +204,7 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 						pnlPanel.salvageItem:SetPos(540, 55)
 				 		pnlPanel.salvageItem:SetSize(100,17)
 				    	pnlPanel.salvageItem:SetText( "Salvage Item" )
-				    	pnlPanel.salvageItem.DoClick = function() PNRP.OptionVerify( "pnrp_dosalvage", item.ID, nil) parent_frame:Close() end
+				    	pnlPanel.salvageItem.DoClick = function() PNRP.OptionVerify( "pnrp_dosalvage", item.ID, nil, nil) parent_frame:Close() end
 				 	end
 				end
 			end

@@ -1,8 +1,11 @@
 local admin_frame
 local pp_frame
 
-function GM.open_admin(ply)
+function GM.open_admin(handler, id, encoded, decoded)
 	local GM = GAMEMODE
+	local ply = LocalPlayer()
+	local GMSettings = decoded["GMSettings"]
+	local SpawnSettings = decoded["SpawnSettings"]
 	if ply:IsAdmin() then	
 		admin_frame = vgui.Create( "DFrame" )
 				admin_frame:SetSize( 400, 650 ) --Set the size
@@ -26,11 +29,11 @@ function GM.open_admin(ply)
 			ppmenu:SetPos(120, 25) -- set the button position in the frame
 			ppmenu:SetSize( 100, 20 ) -- set the button size
 			ppmenu.DoClick = function() datastream.StreamToServer( "Start_open_PropProtection" ) SCFrame=false admin_frame:Close() end 
-			
+		
 		local AdminTabSheet = vgui.Create( "DPropertySheet" )
 			AdminTabSheet:SetParent( admin_frame )
 			AdminTabSheet:SetPos( 5, 50 )
-			AdminTabSheet:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 60 ) 
+			AdminTabSheet:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 90 ) 
 --Server Settings
 			local GModeSettingsList = vgui.Create( "DPanelList", AdminTabSheet )
 				GModeSettingsList:SetPos( 10,10 )
@@ -51,7 +54,7 @@ function GM.open_admin(ply)
 				    E2RestrictSlider:SetMin( 0 )
 				    E2RestrictSlider:SetMax( 4 )
 				    E2RestrictSlider:SetDecimals( 0 )
-				    E2RestrictSlider:SetValue( GetConVar("pnrp_exp2Level"):GetInt() )
+				    E2RestrictSlider:SetValue( GMSettings.E2Restrict )
 				GModeSettingsList:AddItem( E2RestrictSlider )				
 				
 				local ToolRestrictLabel= vgui.Create("DLabel", GModeSettingsList)
@@ -65,54 +68,60 @@ function GM.open_admin(ply)
 				    ToolRestrictSlider:SetMin( 0 )
 				    ToolRestrictSlider:SetMax( 4 )
 				    ToolRestrictSlider:SetDecimals( 0 )
-				    ToolRestrictSlider:SetValue( GetConVar("pnrp_toolLevel"):GetInt() )
+				    ToolRestrictSlider:SetValue( GMSettings.ToolLevel )
 				GModeSettingsList:AddItem( ToolRestrictSlider )
 				
 				local adminCreateAllTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					adminCreateAllTgl:SetText( "Admin can create all." )
-					adminCreateAllTgl:SetValue( GetConVar("pnrp_adminCreateAll"):GetInt() )
+					adminCreateAllTgl:SetValue( GMSettings.AdminCreateAll )
 					adminCreateAllTgl:SizeToContents() 
 				GModeSettingsList:AddItem( adminCreateAllTgl )
 				
 				local adminTouchAllTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					adminTouchAllTgl:SetText( "Admin can touch all." )
-					adminTouchAllTgl:SetValue( GetConVar("pnrp_adminTouchAll"):GetInt() )
+					adminTouchAllTgl:SetValue( GMSettings.AdminTouchAll )
 					adminTouchAllTgl:SizeToContents() 
 				GModeSettingsList:AddItem( adminTouchAllTgl )
 				
 				local adminNoCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					adminNoCostTgl:SetText( "Admin No Cost." )
-					adminNoCostTgl:SetValue( GetConVar("pnrp_adminNoCost"):GetInt() )
+					adminNoCostTgl:SetValue( GMSettings.AdminNoCost )
 					adminNoCostTgl:SizeToContents() 
 				GModeSettingsList:AddItem( adminNoCostTgl )
 				
 				local propBanningTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					propBanningTgl:SetText( "Prop Banning." )
-					propBanningTgl:SetValue( GetConVar("pnrp_propBanning"):GetInt() )
+					propBanningTgl:SetValue( GMSettings.PropBanning )
 					propBanningTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propBanningTgl )
 				
 				local propAllowingTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					propAllowingTgl:SetText( "Prop Allowing." )
-					propAllowingTgl:SetValue( GetConVar("pnrp_propAllowing"):GetInt() )
+					propAllowingTgl:SetValue( GMSettings.PropAllowing )
 					propAllowingTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propAllowingTgl )
 				
 				local propSpawnProtectTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					propSpawnProtectTgl:SetText( "Player Spawn Prtection." )
-					propSpawnProtectTgl:SetValue( GetConVar("pnrp_propSpawnpointProtection"):GetInt() )
+					propSpawnProtectTgl:SetValue( GMSettings.PropSpawnProtection )
 					propSpawnProtectTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propSpawnProtectTgl )
 				
 				local plyDeathZombieTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					plyDeathZombieTgl:SetText( "Player Death Zombie Spawn." )
-					plyDeathZombieTgl:SetValue( GetConVar("pnrp_PlyDeathZombie"):GetInt() )
+					plyDeathZombieTgl:SetValue( GMSettings.PlyDeathZombie )
 					plyDeathZombieTgl:SizeToContents() 
 				GModeSettingsList:AddItem( plyDeathZombieTgl )
 				
+				local PropExpTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
+					PropExpTgl:SetText( "Player Exp from Prop Kills." )
+					PropExpTgl:SetValue( GMSettings.PropExp )
+					PropExpTgl:SizeToContents() 
+				GModeSettingsList:AddItem( PropExpTgl )
+				
 				local propPayTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					propPayTgl:SetText( "Pay for Props from Q Menu.." )
-					propPayTgl:SetValue( GetConVar("pnrp_propPay"):GetInt() )
+					propPayTgl:SetValue( GMSettings.PropPay )
 					propPayTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propPayTgl )
 				
@@ -122,12 +131,12 @@ function GM.open_admin(ply)
 				    propCostSlider:SetMin( 0 )
 				    propCostSlider:SetMax( 100 )
 				    propCostSlider:SetDecimals( 0 )
-				    propCostSlider:SetValue( GetConVar("pnrp_propCost"):GetInt() )
+					propCostSlider:SetValue( GMSettings.PropCost )
 				GModeSettingsList:AddItem( propCostSlider )
 				
 				local voiceLimitTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					voiceLimitTgl:SetText( "Voice Range Limiter" )
-					voiceLimitTgl:SetValue( GetConVar("pnrp_voiceLimit"):GetInt() )
+					voiceLimitTgl:SetValue( GMSettings.VoiceLimiter )
 					voiceLimitTgl:SizeToContents() 
 				GModeSettingsList:AddItem( voiceLimitTgl )
 				
@@ -137,12 +146,12 @@ function GM.open_admin(ply)
 				    voiceLimitSlider:SetMin( 0 )
 				    voiceLimitSlider:SetMax( 2000 )
 				    voiceLimitSlider:SetDecimals( 0 )
-				    voiceLimitSlider:SetValue( GetConVar("pnrp_voiceDist"):GetInt() )
+				    voiceLimitSlider:SetValue( GMSettings.VoiceDistance )
 				GModeSettingsList:AddItem( voiceLimitSlider )
 				
 				local classCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					classCostTgl:SetText( "Charg for Class Change" )
-					classCostTgl:SetValue( GetConVar("pnrp_classChangePay"):GetInt() )
+					classCostTgl:SetValue( GMSettings.ClassChangePay )
 					classCostTgl:SizeToContents() 
 				GModeSettingsList:AddItem( classCostTgl )
 				
@@ -152,12 +161,12 @@ function GM.open_admin(ply)
 				    classCostSlider:SetMin( 0 )
 				    classCostSlider:SetMax( 100 )
 				    classCostSlider:SetDecimals( 0 )
-				    classCostSlider:SetValue( GetConVar("pnrp_classChangeCost"):GetInt() )
+				    classCostSlider:SetValue( GMSettings.ClassChangeCost )
 				GModeSettingsList:AddItem( classCostSlider )
 				
 				local deathCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
 					deathCostTgl:SetText( "Charg for Death Penalty" )
-					deathCostTgl:SetValue( GetConVar("pnrp_deathPay"):GetInt() )
+					deathCostTgl:SetValue( GMSettings.DeathPay )
 					deathCostTgl:SizeToContents() 
 				GModeSettingsList:AddItem( deathCostTgl )
 				
@@ -167,7 +176,7 @@ function GM.open_admin(ply)
 				    deathCostSlider:SetMin( 0 )
 				    deathCostSlider:SetMax( 100 )
 				    deathCostSlider:SetDecimals( 0 )
-				    deathCostSlider:SetValue( GetConVar("pnrp_deathCost"):GetInt() )
+				    deathCostSlider:SetValue( GMSettings.DeathCost )
 				GModeSettingsList:AddItem( deathCostSlider )
 				
 				local ownDoorsSlider = vgui.Create( "DNumSlider", GModeSettingsList )
@@ -176,99 +185,9 @@ function GM.open_admin(ply)
 				    ownDoorsSlider:SetMin( 0 )
 				    ownDoorsSlider:SetMax( 10 )
 				    ownDoorsSlider:SetDecimals( 0 )
-				    ownDoorsSlider:SetValue( GetConVar("pnrp_maxOwnDoors"):GetInt() )
+				    ownDoorsSlider:SetValue( GMSettings.MaxOwnDoors )
 				GModeSettingsList:AddItem( ownDoorsSlider )
-					
-				--Saves the Settings from the GMode Settings
-				local GModeSettingsSaveBTN = vgui.Create("DButton", SpawnerList )
-				    GModeSettingsSaveBTN:SetText( "Save Settings" )
-				    GModeSettingsSaveBTN.DoClick = function()
-				    	local adminCreateAllOnOff
-				    	local adminTouchAllOnOff
-				    	local adminNoCostOnOff
-				    	local propBanningOnOff
-				    	local propAllowingOnOff
-				    	local propPayOnOff
-				    	local voiceLimitOnOff
-				    	local classCostOnOff
-				    	local deathCostOnOff
-						local plyDeathZombieTglOnOff
-				    	if adminCreateAllTgl:GetChecked(true) then
-				    		adminCreateAllOnOff = 1
-				    	else
-				    		adminCreateAllOnOff = 0
-				    	end
-				    	if adminTouchAllTgl:GetChecked(true) then
-				    		adminTouchAllOnOff = 1
-				    	else
-				    		adminTouchAllOnOff = 0
-				    	end
-				    	if adminNoCostTgl:GetChecked(true) then
-				    		adminNoCostOnOff = 1
-				    	else
-				    		adminNoCostOnOff = 0
-				    	end
-						if plyDeathZombieTgl:GetChecked(true) then
-				    		plyDeathZombieTglOnOff = 1
-				    	else
-				    		plyDeathZombieTglOnOff = 0
-				    	end
-				    	if propBanningTgl:GetChecked(true) then
-				    		propBanningOnOff = 1
-				    	else
-				    		propBanningOnOff = 0
-				    	end
-				    	if propAllowingTgl:GetChecked(true) then
-				    		propAllowingOnOff = 1
-				    	else
-				    		propAllowingOnOff = 0
-				    	end
-						if propSpawnProtectTgl:GetChecked(true) then
-				    		propSpawnProtectOnOff = 1
-				    	else
-				    		propSpawnProtectOnOff = 0
-				    	end
-				    	if propPayTgl:GetChecked(true) then
-				    		propPayOnOff = 1
-				    	else
-				    		propPayOnOff = 0
-				    	end
-				    	if voiceLimitTgl:GetChecked(true) then
-				    		voiceLimitOnOff = 1
-				    	else
-				    		voiceLimitOnOff = 0
-				    	end
-				    	if classCostTgl:GetChecked(true) then
-				    		classCostOnOff = 1
-				    	else
-				    		classCostOnOff = 0
-				    	end
-				    	if deathCostTgl:GetChecked(true) then
-				    		deathCostOnOff = 1
-				    	else
-				    		deathCostOnOff = 0
-				    	end
-				    	RunConsoleCommand("pnrp_RunCommand","pnrp_exp2Level",tostring(E2RestrictSlider:GetValue()))
-				    	RunConsoleCommand("pnrp_RunCommand","pnrp_toolLevel",tostring(ToolRestrictSlider:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminCreateAll",tostring(adminCreateAllOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminTouchAll",tostring(adminTouchAllOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_adminNoCost",tostring(adminNoCostOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_propBanning",tostring(propBanningOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_propAllowing",tostring(propAllowingOnOff))
-						RunConsoleCommand("pnrp_RunCommand","pnrp_propSpawnpointProtection",tostring(propSpawnProtectOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_propPay",tostring(propPayOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_propCost",tostring(propCostSlider:GetValue()))
-						RunConsoleCommand("pnrp_RunCommand","pnrp_PlyDeathZombie",tostring(plyDeathZombieTglOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceLimit",tostring(voiceLimitOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_voiceDist",tostring(voiceLimitSlider:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_classChangePay",tostring(classCostOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_classChangeCost",tostring(classCostSlider:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_deathPay",tostring(deathCostOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_deathCost",tostring(deathCostSlider:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_maxOwnDoors",tostring(ownDoorsSlider:GetValue()))
-				    end
-				GModeSettingsList:AddItem( GModeSettingsSaveBTN )
-				
+								
 			AdminTabSheet:AddSheet( "GMode Settings", GModeSettingsList, "gui/silkicons/bomb", false, false, "GMode Settings" )	
 --Mob Spawning Settings				
 			local SpawnerList = vgui.Create( "DPanelList", AdminTabSheet )
@@ -307,7 +226,7 @@ function GM.open_admin(ply)
 				
 				local mobSpawnerTgl = vgui.Create( "DCheckBoxLabel", MobCategoryList )
 					mobSpawnerTgl:SetText( "Mob Spawner" )
-					mobSpawnerTgl:SetValue( GetConVar("pnrp_SpawnMobs"):GetInt() )
+					mobSpawnerTgl:SetValue( SpawnSettings.SpawnMobs )
 					mobSpawnerTgl:SizeToContents() 
 				MobCategoryList:AddItem( mobSpawnerTgl )
 				
@@ -317,7 +236,7 @@ function GM.open_admin(ply)
 				    maxZombiesSlider:SetMin( 0 )
 				    maxZombiesSlider:SetMax( 100 )
 				    maxZombiesSlider:SetDecimals( 0 )
-				    maxZombiesSlider:SetValue( GetConVar("pnrp_MaxZombies"):GetInt() )
+				    maxZombiesSlider:SetValue( SpawnSettings.MaxZombies )
 				MobCategoryList:AddItem( maxZombiesSlider )
 				
 				local maxFastZombiesSlider = vgui.Create( "DNumSlider", MobCategoryList )
@@ -326,7 +245,7 @@ function GM.open_admin(ply)
 				    maxFastZombiesSlider:SetMin( 0 )
 				    maxFastZombiesSlider:SetMax( 100 )
 				    maxFastZombiesSlider:SetDecimals( 0 )
-				    maxFastZombiesSlider:SetValue( GetConVar("pnrp_MaxFastZombies"):GetInt() )
+				    maxFastZombiesSlider:SetValue( SpawnSettings.MaxFastZombies )
 				MobCategoryList:AddItem( maxFastZombiesSlider )
 				
 				local maxPoisonZombiesSlider = vgui.Create( "DNumSlider", MobCategoryList )
@@ -335,7 +254,7 @@ function GM.open_admin(ply)
 				    maxPoisonZombiesSlider:SetMin( 0 )
 				    maxPoisonZombiesSlider:SetMax( 100 )
 				    maxPoisonZombiesSlider:SetDecimals( 0 )
-				    maxPoisonZombiesSlider:SetValue( GetConVar("pnrp_MaxPoisonZombs"):GetInt() )
+				    maxPoisonZombiesSlider:SetValue( SpawnSettings.MaxPoisonZombs )
 				MobCategoryList:AddItem( maxPoisonZombiesSlider )
 				
 				local maxAntlionsSlider = vgui.Create( "DNumSlider", MobCategoryList )
@@ -344,7 +263,7 @@ function GM.open_admin(ply)
 				    maxAntlionsSlider:SetMin( 0 )
 				    maxAntlionsSlider:SetMax( 100 )
 				    maxAntlionsSlider:SetDecimals( 0 )
-				    maxAntlionsSlider:SetValue( GetConVar("pnrp_MaxAntlions"):GetInt() )
+				    maxAntlionsSlider:SetValue( SpawnSettings.MaxAntlions )
 				MobCategoryList:AddItem( maxAntlionsSlider )
 				
 				local maxAntGuardSlider = vgui.Create( "DNumSlider", MobCategoryList )
@@ -353,7 +272,7 @@ function GM.open_admin(ply)
 				    maxAntGuardSlider:SetMin( 0 )
 				    maxAntGuardSlider:SetMax( 100 )
 				    maxAntGuardSlider:SetDecimals( 0 )
-				    maxAntGuardSlider:SetValue( GetConVar("pnrp_MaxAntGuards"):GetInt() )
+				    maxAntGuardSlider:SetValue( SpawnSettings.MaxAntGuards )
 				MobCategoryList:AddItem( maxAntGuardSlider )
 				
 				SpawnerList:AddItem( MobSpawnerSettingsCats )
@@ -385,7 +304,7 @@ function GM.open_admin(ply)
 				    maxMounds:SetMin( 0 )
 				    maxMounds:SetMax( 100 )
 				    maxMounds:SetDecimals( 0 )
-				    maxMounds:SetValue( GetConVar("pnrp_MaxMounds"):GetInt() )
+				    maxMounds:SetValue( SpawnSettings.MaxAntMounds )
 				MoundCategoryList:AddItem( maxMounds )
 				
 				local moundSpawnRate = vgui.Create( "DNumSlider", MoundCategoryList )
@@ -394,7 +313,7 @@ function GM.open_admin(ply)
 				    moundSpawnRate:SetMin( 0 )
 				    moundSpawnRate:SetMax( 100 )
 				    moundSpawnRate:SetDecimals( 0 )
-				    moundSpawnRate:SetValue( GetConVar("pnrp_MoundRate"):GetInt() )
+				    moundSpawnRate:SetValue( SpawnSettings.AntMoundRate )
 				MoundCategoryList:AddItem( moundSpawnRate )
 				
 				local moundSpawnChance = vgui.Create( "DNumSlider", MoundCategoryList )
@@ -403,7 +322,7 @@ function GM.open_admin(ply)
 				    moundSpawnChance:SetMin( 0 )
 				    moundSpawnChance:SetMax( 100 )
 				    moundSpawnChance:SetDecimals( 0 )
-				    moundSpawnChance:SetValue( GetConVar("pnrp_MoundChance"):GetInt() )
+				    moundSpawnChance:SetValue( SpawnSettings.AntMoundChance )
 				MoundCategoryList:AddItem( moundSpawnChance )
 				
 				local moundMaxAntlions = vgui.Create( "DNumSlider", MoundCategoryList )
@@ -412,7 +331,7 @@ function GM.open_admin(ply)
 				    moundMaxAntlions:SetMin( 0 )
 				    moundMaxAntlions:SetMax( 100 )
 				    moundMaxAntlions:SetDecimals( 0 )
-				    moundMaxAntlions:SetValue( GetConVar("pnrp_MaxMoundAntlions"):GetInt() )
+				    moundMaxAntlions:SetValue( SpawnSettings.MaxMoundAntlions )
 				MoundCategoryList:AddItem( moundMaxAntlions )
 				
 				local moundAntlionsPerCycle = vgui.Create( "DNumSlider", MoundCategoryList )
@@ -421,7 +340,7 @@ function GM.open_admin(ply)
 				    moundAntlionsPerCycle:SetMin( 0 )
 				    moundAntlionsPerCycle:SetMax( 100 )
 				    moundAntlionsPerCycle:SetDecimals( 0 )
-				    moundAntlionsPerCycle:SetValue( GetConVar("pnrp_MoundAntlionsPerCycle"):GetInt() )
+				    moundAntlionsPerCycle:SetValue( SpawnSettings.MoundAntlionsPerCycle )
 				MoundCategoryList:AddItem( moundAntlionsPerCycle )
 				
 				local moundMaxAntlionGuards = vgui.Create( "DNumSlider", MoundCategoryList )
@@ -430,7 +349,7 @@ function GM.open_admin(ply)
 				    moundMaxAntlionGuards:SetMin( 0 )
 				    moundMaxAntlionGuards:SetMax( 100 )
 				    moundMaxAntlionGuards:SetDecimals( 0 )
-				    moundMaxAntlionGuards:SetValue( GetConVar("pnrp_MaxMoundGuards"):GetInt() )
+				    moundMaxAntlionGuards:SetValue( SpawnSettings.MaxMoundGuards )
 				MoundCategoryList:AddItem( moundMaxAntlionGuards )
 				
 				local moundMobRate = vgui.Create( "DNumSlider", MoundCategoryList )
@@ -439,7 +358,7 @@ function GM.open_admin(ply)
 				    moundMobRate:SetMin( 0 )
 				    moundMobRate:SetMax( 100 )
 				    moundMobRate:SetDecimals( 0 )
-				    moundMobRate:SetValue( GetConVar("pnrp_MoundMobRate"):GetInt() )
+				    moundMobRate:SetValue( SpawnSettings.AntMoundMobRate )
 				MoundCategoryList:AddItem( moundMobRate )
 				
 				local moundGuardChance = vgui.Create( "DNumSlider", MoundCategoryList )
@@ -448,7 +367,7 @@ function GM.open_admin(ply)
 				    moundGuardChance:SetMin( 0 )
 				    moundGuardChance:SetMax( 100 )
 				    moundGuardChance:SetDecimals( 0 )
-				    moundGuardChance:SetValue( GetConVar("pnrp_MoundGuardChance"):GetInt() )
+				    moundGuardChance:SetValue( SpawnSettings.MoundGuardChance )
 				MoundCategoryList:AddItem( moundGuardChance )
 				
 				SpawnerList:AddItem( MoundSpawnerSettingsCats )
@@ -483,7 +402,7 @@ function GM.open_admin(ply)
 				
 				local recSpawnerTgl = vgui.Create( "DCheckBoxLabel", RecCategoryList )
 					recSpawnerTgl:SetText( "Recource Spawner" )
-					recSpawnerTgl:SetValue( GetConVar("pnrp_ReproduceRes"):GetInt() )
+					recSpawnerTgl:SetValue( SpawnSettings.ReproduceRes )
 					recSpawnerTgl:SizeToContents() 
 				RecCategoryList:AddItem( recSpawnerTgl )
 				
@@ -493,47 +412,10 @@ function GM.open_admin(ply)
 				    maxReproducedRes:SetMin( 0 )
 				    maxReproducedRes:SetMax( 100 )
 				    maxReproducedRes:SetDecimals( 0 )
-				    maxReproducedRes:SetValue( GetConVar("pnrp_MaxReproducedRes"):GetInt() )
+				    maxReproducedRes:SetValue( SpawnSettings.MaxReproducedRes )
 				RecCategoryList:AddItem( maxReproducedRes )
 				
 				SpawnerList:AddItem( RecSpawnerSettingsCats )
-				
-				--Saves the Settings from the Spawner
-				local mobSettingsSaveBTN = vgui.Create("DButton", SpawnerList )
-				    mobSettingsSaveBTN:SetText( "Save Settings" )
-				    mobSettingsSaveBTN.DoClick = function()
-				    	local mbOnOff
-				    	if mobSpawnerTgl:GetChecked(true) then
-				    		mbOnOff = 1
-				    	else
-				    		mbOnOff = 0
-				    	end
-				    	RunConsoleCommand("pnrp_RunCommand","pnrp_SpawnMobs",tostring(mbOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxZombies",tostring(maxZombiesSlider:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxFastZombies",tostring(maxFastZombiesSlider:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxPoisonZombs",tostring(maxPoisonZombiesSlider:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxAntlions",tostring(maxAntlionsSlider:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxAntGuards",tostring(maxAntGuardSlider:GetValue()))
-						
-						RunConsoleCommand("pnrp_RunCommand","pnrp_MaxMounds",tostring(maxMounds:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MoundRate",tostring(moundSpawnRate:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MoundChance",tostring(moundSpawnChance:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxMoundAntlions",tostring(moundMaxAntlions:GetValue()))
-						RunConsoleCommand("pnrp_RunCommand","pnrp_MoundAntlionsPerCycle",tostring(moundAntlionsPerCycle:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxMoundGuards",tostring(moundMaxAntlionGuards:GetValue()))
-						RunConsoleCommand("pnrp_RunCommand","pnrp_MoundMobRate",tostring(moundMobRate:GetValue()))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MoundGuardChance",tostring(moundGuardChance:GetValue()))
-				        
-				        local rcOnOff
-				    	if recSpawnerTgl:GetChecked(true) then
-				    		rcOnOff = 1
-				    	else
-				    		rcOnOff = 0
-				    	end
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_ReproduceRes",tostring(rcOnOff))
-				        RunConsoleCommand("pnrp_RunCommand","pnrp_MaxReproducedRes",tostring(maxReproducedRes:GetValue()))
-				    end
-				SpawnerList:AddItem( mobSettingsSaveBTN )
 		
 		AdminTabSheet:AddSheet( "Spawn Settings", SpawnerList, "gui/silkicons/bomb", false, false, "Spawn Settings" )
 -- Mob Grid Settings		
@@ -545,23 +427,6 @@ function GM.open_admin(ply)
 				mobGridSetup:SetSpacing( 5 ) -- Spacing between items
 				mobGridSetup:EnableHorizontal( false ) -- Only vertical items
 				mobGridSetup:EnableVerticalScrollbar( true ) -- Allow scrollbar if you exceed the Y axis
-				
-		--	local maxMobGridRangeSlider = vgui.Create( "DNumSlider", mobGridSetup )
-		--		    maxMobGridRangeSlider:SetSize( mobGridSetup:GetWide() - 20, 50 ) -- Keep the second number at 50
-		--		    maxMobGridRangeSlider:SetText( "Max Mob Grid Range (Default 1000)" )
-		--		    maxMobGridRangeSlider:SetMin( 0 )
-		--		    maxMobGridRangeSlider:SetMax( 10000 )
-		--		    maxMobGridRangeSlider:SetDecimals( 0 )
-		--		    maxMobGridRangeSlider:SetValue( mobGridRange )
-		--		mobGridSetup:AddItem( maxMobGridRangeSlider )
-				
-		--	local mPGridBTN = vgui.Create("DButton", mobGridSetup )
-		--		    mPGridBTN:SetText( "Place Grid Node" )
-		--		    mPGridBTN.DoClick = function()
-		--		    	mobGridRange=maxMobGridRangeSlider:GetValue()
-		--		        RunConsoleCommand("pnrp_mobsp" , mobGridRange)
-		--		    end
-		--		mobGridSetup:AddItem( mPGridBTN )
 				
 			local mSGridBTN = vgui.Create("DButton", mobGridSetup )
 				    mSGridBTN:SetText( "Save Grid" )
@@ -592,12 +457,71 @@ function GM.open_admin(ply)
 				mobGridSetup:AddItem( mDLGridBTN )
 		
 		AdminTabSheet:AddSheet( "Mob Grid Settings", mobGridSetup, "gui/silkicons/bomb", false, false, "Mob Grid Settings" )
+		
+		local saveBtn = vgui.Create("DButton") -- Create the button
+			saveBtn:SetParent( admin_frame ) -- parent the button to the frame
+			saveBtn:SetText( "Save Settings" ) -- set the button text
+			saveBtn:SetPos(5, admin_frame:GetTall() - 30) -- set the button position in the frame
+			saveBtn:SetSize( admin_frame:GetWide() - 10, 20 ) -- set the button size
+			saveBtn.DoClick = function()  
+			
+				GMSettings.E2Restrict = tonumber(E2RestrictSlider:GetValue())
+				GMSettings.ToolLevel = tonumber(ToolRestrictSlider:GetValue())
+				GMSettings.AdminCreateAll = toIntfromBool(adminCreateAllTgl:GetChecked())
+				GMSettings.AdminTouchAll = toIntfromBool(adminTouchAllTgl:GetChecked())
+				GMSettings.AdminNoCost = toIntfromBool(adminNoCostTgl:GetChecked())
+				GMSettings.PropBanning = toIntfromBool(propBanningTgl:GetChecked())
+				GMSettings.PropAlowing = toIntfromBool(propAllowingTgl:GetChecked())
+				GMSettings.PropSpawnProtection = toIntfromBool(propSpawnProtectTgl:GetChecked())
+				GMSettings.PlyDeathZombie = toIntfromBool(plyDeathZombieTgl:GetChecked())
+				GMSettings.PropExp = toIntfromBool(PropExpTgl:GetChecked())
+				GMSettings.PropPay = toIntfromBool(propPayTgl:GetChecked())
+				GMSettings.PropCost = tonumber(propCostSlider:GetValue())
+				GMSettings.VoiceLimiter = toIntfromBool(voiceLimitTgl:GetChecked())
+				GMSettings.VoiceDistance = tonumber(voiceLimitSlider:GetValue())
+				GMSettings.ClassChangePay = toIntfromBool(classCostTgl:GetChecked())
+				GMSettings.ClassChangeCost = tonumber(classCostSlider:GetValue())
+				GMSettings.DeathPay = toIntfromBool(deathCostTgl:GetChecked())
+				GMSettings.DeathCost = tonumber(deathCostSlider:GetValue())
+				GMSettings.MaxOwnDoors = tonumber(ownDoorsSlider:GetValue())
+				
+				SpawnSettings.SpawnMobs = toIntfromBool(mobSpawnerTgl:GetChecked())
+				SpawnSettings.MaxZombies = tonumber(maxZombiesSlider:GetValue())
+				SpawnSettings.MaxFastZombies = tonumber(maxFastZombiesSlider:GetValue())
+				SpawnSettings.MaxPoisonZombs = tonumber(maxPoisonZombiesSlider:GetValue())
+				SpawnSettings.MaxAntlions = tonumber(maxAntlionsSlider:GetValue())
+				SpawnSettings.MaxAntGuards = tonumber(maxAntGuardSlider:GetValue())
+				SpawnSettings.MaxAntMounds = tonumber(maxMounds:GetValue())
+				SpawnSettings.AntMoundRate = tonumber(moundSpawnRate:GetValue())
+				SpawnSettings.AntMoundChance = tonumber(moundSpawnChance:GetValue())
+				SpawnSettings.MaxMoundAntlions = tonumber(moundMaxAntlions:GetValue())
+				SpawnSettings.MoundAntlionsPerCycle = tonumber(moundAntlionsPerCycle:GetValue())
+				SpawnSettings.MaxMoundGuards = tonumber(moundMaxAntlionGuards:GetValue())
+				SpawnSettings.AntMoundMobRate = tonumber(moundMobRate:GetValue())
+				SpawnSettings.MoundGuardChance = tonumber(moundGuardChance:GetValue())
+				SpawnSettings.ReproduceRes = toIntfromBool(recSpawnerTgl:GetChecked())
+				SpawnSettings.MaxReproducedRes = tonumber(maxReproducedRes:GetValue())
+				
+				datastream.StreamToServer( "UpdateFromAdminMenu", { ["GMSettings"] = GMSettings, ["SpawnSettings"] = SpawnSettings })
+			end 
 	else
 		ply:ChatPrint("You are not an admin on this server!")
 	end
 end
-concommand.Add( "pnrp_admin_window", GM.open_admin )
+datastream.Hook( "pnrp_OpenAdminWindow", GM.open_admin )
+--concommand.Add( "pnrp_admin_window", GM.open_admin )
 
+function GM.initAdmin(ply)
+	if ply:IsAdmin() then	
+		RunConsoleCommand("pnrp_OpenAdmin")
+	else
+		ply:ChatPrint("You are not an admin on this server!")
+	end
+
+end
+concommand.Add( "pnrp_admin_window",  GM.initAdmin )
+
+-----------------------------------------------------------------------------
 function GM.OpenPropProtectWindow( handler, id, encoded, decoded )
 	local BannedPropList = decoded[1]
 	local AllowedPropList = decoded[2]		

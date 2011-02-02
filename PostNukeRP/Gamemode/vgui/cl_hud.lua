@@ -132,8 +132,35 @@ local function HUDPaint( )
 	else
 		HUD1()
 	end
+	DrawTopHud()
+	DrawDeathZombieLabel()
 end
 hook.Add( "HUDPaint", "PaintHud", HUDPaint )
+
+function DrawDeathZombieLabel()
+	local myPlayer = LocalPlayer()
+	
+	local tracedata = {}
+	tracedata.start = myPlayer:GetShootPos()
+	tracedata.endpos = tracedata.start + (myPlayer:GetAimVector() * 600)
+	tracedata.filter = myPlayer
+	local trace = util.TraceLine(tracedata)
+	
+	if trace.Entity == NullEntity() then return end
+	
+	if trace.Entity:GetClass() == "npc_zombie" then
+		local zombieName = trace.Entity:GetNWString("deadplayername")
+
+		if string.len(zombieName) > 0 then 
+		
+			surface.SetFont("TargetIDSmall")
+			local ZNameText = zombieName.."'s Zombie"
+			local tWidth, tHeight = surface.GetTextSize(ZNameText)
+			
+			draw.WordBox( 8, (ScrW() / 2) - (8 + (tWidth / 2)), (ScrH() / 2) - (16 + tHeight), ZNameText, "TargetIDSmall", Color(50,50,75,100), Color(255,255,255,255) )
+		end	
+	end
+end
 
 local HungSoundSW --Sound Switch to keep sound from repeating.
 
@@ -269,6 +296,8 @@ function HUD1( )
  	PNRP_HUD:PaintRoundedPanel( 6, x, y + height, indW + (vars.padding * 2) + 60, indH + (vars.padding * 2), colors.background )
  	PNRP_HUD:PaintInsideIndic(x + vars.padding, y + height + vars.padding, indW, indH, vars.font, colors.inside_indic )
  	
+	PNRP_HUD:PaintRoundedPanel( 6, x + 100, y + height, indW + (vars.padding * 2) + 60, indH + (vars.padding * 2), colors.background )
+	PNRP_HUD:PaintXPIndic(x + vars.padding + 100, y + height + vars.padding, vars.font )
 end
 
 function HUD2( )
@@ -400,6 +429,12 @@ function HUD2( )
 	
 end
 
+function PNRP_HUD:PaintXPIndic(x, y, font )
+	surface.SetFont( font )
+	surface.SetTextPos( x+5, y-6 )
+	surface.color = Color(255,255,255,255)
+	surface.DrawText( "XP: "..GetXP() )
+end
 
 function PNRP_HUD:PaintInsideIndic(x, y, w, h, font, color )
 	
@@ -489,5 +524,136 @@ function PNRP_HUD:TextSize( text, font )
  
 end
 
+function DrawTopHud()
+	local person = LocalPlayer()
+	if ( !person:Alive() ) then return end
 
+	local scrap = GetResource("Scrap")
+	local smallparts = GetResource("Small_Parts")
+	local chems = GetResource("Chemicals")
+	
+	local endur = person:GetNetworkedInt("Endurance")
+	local endPerc = endur / 100
+	
+	--Endurance Bar
+--	draw.RoundedBox(2, 5, 30, 150, 30, Color(51, 58, 51, 175))
+--	draw.RoundedBox(0, 10, 35, 130*endPerc, 20, Color(255-(255*endPerc), 255*endPerc, 30, 155))
+	
+--	draw.RoundedBox(0, 114, 35, 1, 20, Color(255, 255, 255, 150))
+	
+--	draw.SimpleTextOutlined("Endurance", "ScoreboardText", 30, 30, Color(255,255,255,255), 0, 0, 3, Color(0,0,0,255))
+	--draw.SimpleText("Endurance", "ScoreboardText", 30, 50, Color(255, 255, 255, 255), 0, 0)
+	
+	--Top bar
+	local hudPos = 15
+	local hw, ht = ScrW(), 26 
+	
+	surface.SetDrawColor( 0, 0, 0, 255 )	
+	surface.DrawRect( 0, 0, hw, ht )
+	
+	surface.SetDrawColor( 0, 0, 0, 255  )
+	surface.DrawOutlinedRect( 0, 0, hw, ht )
+	
+	surface.SetTextColor( 255, 255, 255, 255 )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos + 25, 3 )
+	surface.DrawText( "Scrap:  "..scrap )
+	
+	hudPos = hudPos + 120
+	
+	surface.SetTextColor( 255, 255, 255, 255 )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos, 3 )
+	surface.DrawText( "Small Parts:  "..smallparts )
+	
+	hudPos = hudPos + 120
+	
+	surface.SetTextColor( 255, 255, 255, 255 )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos, 3 )
+	surface.DrawText( "Chemicals:  "..chems )
+	
+--	hudPos = hudPos + 120
+	
+--	local plLocation = nil
+--	if person:IsOutside() then
+--		plLocation = "Outside"
+--	else
+--		plLocation = "Inside"
+--	end
+	
+--	surface.SetTextColor( 255, 255, 255, 255 )
+--	surface.SetFont( "CenterPrintText" )
+--	surface.SetTextPos( hudPos, 3 )
+--	surface.DrawText( "Location:  "..plLocation )
+	
+	hudPos = hudPos + 120
+	
+	surface.SetTextColor( team.GetColor(person:Team()) )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos, 3 )
+	surface.DrawText( "Class:  "..team.GetName(person:Team()) )
+	
+	hudPos = hudPos + 120
+	
+	local vlimit
+	local vlimitColor
+	if GetConVarNumber("pnrp_voiceLimit") == 1 then
+		vlimit = "On"
+		vlimitColor = Color( 0, 255, 0, 255 )
+	else
+		vlimit = "Off"
+		vlimitColor = Color( 255, 0, 0, 255 )
+	end
+	
+	surface.SetTextColor( vlimitColor )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos, 3 )
+	surface.DrawText( "Voice Limiter:  "..vlimit )
+	
+	hudPos = hudPos + 120
+	
+	local pcost
+	if GetConVarNumber("pnrp_propPay") == 1 then
+		pcostColor = Color( 0, 255, 0, 255 )
+		pcost = "On @ "..GetConVarNumber("pnrp_propCost").."%"
+	else
+		pcostColor = Color( 255, 0, 0, 255 )
+		pcost = "Off"
+	end
+	
+	surface.SetTextColor( pcostColor )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos, 3 )
+	surface.DrawText( "Prop Cost:  "..pcost )
+	
+		hudPos = hudPos + 145
+	
+	local trace = {}
+	trace.start = person:EyePos()
+	trace.endpos = trace.start + person:GetAimVector() * 300
+	trace.filter = person
+	local tr = util.TraceLine( trace )	
+	
+	local ent = tr.Entity
+	
+	surface.SetTextColor( 255, 255, 255, 255 )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudPos, 3 )
+	surface.DrawText( "Owner:  "..ent:GetNWString( "Owner", "None" ))
+	
+	--Quick Key Referance
+	local hudBPos = 15
+	local rfBarY = ScrH() -ht
+	
+	surface.SetDrawColor( 0, 0, 0, 255 )	
+	surface.DrawRect( 0, rfBarY, hw, ht )
+	
+	surface.SetTextColor( 255, 255, 255, 255 )
+	surface.SetFont( "CenterPrintText" )
+	surface.SetTextPos( hudBPos + 25, rfBarY + 3 )
+	surface.DrawText( "Tab: Main Menu   F1: Help   F2: Pickup   F3: Inventory   F4: Shop   F5: Screenshot   F12: Take/Remove Ownership " )
+	
+	
+end
 --EOF

@@ -7,11 +7,6 @@ AddCSLuaFile("itembase.lua")
 
 require("datastream")
 
---include('keymap.lua')
-
---CreateConVar("pnrp_ReproduceRes","1", FCVAR_ARCHIVE + FCVAR_NOTIFY)
---CreateConVar("pnrp_MaxReproducedRes","20",FCVAR_ARCHIVE + FCVAR_NOTIFY)
-
 local PlayerMeta = FindMetaTable("Player")
 local EntityMeta = FindMetaTable("Entity")
 
@@ -49,6 +44,7 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	ply:SetTeam( TEAM_WASTELANDER ) --Add the player to team 1
 	
 	ply.Resources = {}
+	ply.Skills = {}
 	
 	self.LoadCharacter( ply )
 	
@@ -58,6 +54,10 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	ply:GetTable().Endurance = 100
 	ply:GetTable().Hunger = 100
 	ply:GetTable().IsAsleep = false
+	
+	local tbl = { }
+	
+	
 	
 	--Loads Weapons from Character's Save File
 	timer.Create(tostring(ply:UniqueID()), 6, 1, function()  
@@ -69,9 +69,6 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		ply:IncResource("Small_Parts",0)
 		ply:IncResource("Chemicals",0)
 		
---		PNRP.SendInventory( ply )
---		PNRP.SendCarInventory( ply )
-		
 		PNRP.ReturnWorldCache( ply )
 		
 		Msg("Load Timer run for "..ply:Nick().."\n")
@@ -82,9 +79,20 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		ConVarExists("pnrp_exp2Level")
 		ConVarExists("pnrp_adminNoCost")
 		ConVarExists("pnrp_propPay")
-	end)
 		
---	PNRP.SendInventory( ply )
+		--Added this to fix issue where clients would not have the correct setting.
+		tbl = 
+		{
+			VoiceLimiter = GetConVar("pnrp_voiceLimit"):GetInt(),
+			PropPay = GetConVar("pnrp_propPay"):GetInt(),
+			PropCost = GetConVar("pnrp_propCost"):GetInt()
+		}
+		RunConsoleCommand("pnrp_voiceLimit",tostring(tbl.VoiceLimiter))
+		RunConsoleCommand("pnrp_propPay",tostring(tbl.PropPay))
+		RunConsoleCommand("pnrp_propCost",tostring(tbl.PropCost))
+	end)
+	
+		
 
 end --End the "when player first joins server and spawns" function
 
@@ -111,9 +119,9 @@ function GM:PlayerSpawn( ply )  //What happens when the player spawns
     end
     ply:SetNetworkedInt("MaxHealth", ply:GetMaxHealth())
     if ply:Team() == TEAM_SCAVENGER then
-		ply:SetRunSpeed( 325 ) 
+		ply:SetRunSpeed( 325 + (ply:GetSkill("Athletics") * 10) ) 
 	else
-		ply:SetRunSpeed( 295 )
+		ply:SetRunSpeed( 295 + (ply:GetSkill("Athletics") * 10) )
 	end
 	
 	ply:IncResource("Scrap",0)
@@ -131,12 +139,33 @@ function GM:PlayerDisconnected(ply)
 	local DoorList = PNRP.ListDoors( ply )
 	for k, v in pairs(DoorList) do
 		v:SetNetworkedString("Owner", "World")
+		v:Fire("unlock", "", 0)
 	end
 	SK_Srv.OnDisc_Doors( ply )
 	
 	for k, v in pairs(player.GetAll()) do
 		v:ChatPrint(ply:Nick().." has left the server.")
 	end
+	
+	--Will auto unown items after 60 sec if player does not return.
+	local TMPPlayerName = ply:Nick()
+	timer.Create(tostring(ply:UniqueID()).."plyCK", 60, 1, function()  
+		local PlayerOnCheck = false
+		
+		for k, v in pairs(player.GetAll()) do
+			if v:Nick() == TMPPlayerName then
+				PlayerOnCheck = true
+			end
+		end
+		
+		if !PlayerOnCheck then
+			local OwnedList = PNRP.ListOwnedItems( TMPPlayerName )
+			for k, v in pairs(OwnedList) do
+				v:SetNetworkedString("Owner", "World")
+			end
+			Msg("Reset Owned Items for "..TMPPlayerName.."\n")
+		end
+	end)
 	
 	Msg("Saved character of disconnecting player "..ply:Nick()..".\n")
 end
@@ -322,6 +351,11 @@ function GM:ShowTeam( ply )
 	--Added to remove the Null Entity error
 	if tostring(ent) == "[NULL Entity]" or ent == nil then return end
 	
+	if tostring(ply:GetVehicle( )) != "[NULL Entity]" then
+		ply:ChatPrint("Can not do this while in a vehicle.")
+		return
+	end
+	
 	if ent:GetClass() == "msc_itembox" then
 		ent:F2Use(ply)
 	end
@@ -343,9 +377,9 @@ function GM:ShowTeam( ply )
 				local weightCap
 				
 				if team.GetName(ply:Team()) == "Scavenger" then
-					weightCap = GetConVarNumber("pnrp_packCapScav")
+					weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 				else
-					weightCap = GetConVarNumber("pnrp_packCap")
+					weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
 				end
 				
 				if weight <= weightCap then
@@ -374,9 +408,9 @@ function GM:ShowTeam( ply )
 				local weightCap
 				
 				if team.GetName(ply:Team()) == "Scavenger" then
-					weightCap = GetConVarNumber("pnrp_packCapScav")
+					weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 				else
-					weightCap = GetConVarNumber("pnrp_packCap")
+					weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
 				end
 				
 				if weight <= weightCap then
@@ -386,6 +420,7 @@ function GM:ShowTeam( ply )
 				else
 					ply:ChatPrint("You're pack is too full and cannot carry this.")
 				end
+				
 			else
 				local myModel = ent:GetModel()	
 				
@@ -403,7 +438,7 @@ function GM:ShowTeam( ply )
 				PNRP.TakeFromWorldCache( ply, ItemID )
 				ply:ChatPrint("You picked up your car")
 				ent:Remove()
-				
+								
 --				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
 				
 --				if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
@@ -423,9 +458,9 @@ function GM:ShowTeam( ply )
 				local weightCap
 				
 				if team.GetName(ply:Team()) == "Scavenger" then
-					weightCap = GetConVarNumber("pnrp_packCapScav")
+					weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 				else
-					weightCap = GetConVarNumber("pnrp_packCap")
+					weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
 				end
 				
 				if weight <= weightCap then
@@ -446,10 +481,10 @@ function GM:ShowTeam( ply )
 				local weightCap
 						
 				if team.GetName(ply:Team()) == "Scavenger" then
-					weightCap = GetConVarNumber("pnrp_packCapScav")
+					weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 				else
-					weightCap = GetConVarNumber("pnrp_packCap")
-				end
+					weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+				end 
 				
 				if boxes > 0 then
 					for box = 1, boxes do
@@ -506,9 +541,9 @@ function GM:ShowTeam( ply )
 				end
 				
 				if team.GetName(ply:Team()) == "Scavenger" then
-					weightCap = GetConVarNumber("pnrp_packCapScav")
+					weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 				else
-					weightCap = GetConVarNumber("pnrp_packCap")
+					weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
 				end
 				
 				if weight <= weightCap then
@@ -690,6 +725,18 @@ function PNRP.ListDoors( ply )
 	end
 	
 	return DoorEntTbl
+end
+
+function PNRP.ListOwnedItems( Nick )
+	local OwnedEntTbl = {}
+	
+	for k, v in pairs(ents.GetAll()) do
+		if !v:IsDoor() and v:GetNetworkedString( "Owner" , "None" ) == Nick then
+			table.insert(OwnedEntTbl, v)
+		end
+	end
+	
+	return OwnedEntTbl
 end
 
 --This is an override to hide death notices.

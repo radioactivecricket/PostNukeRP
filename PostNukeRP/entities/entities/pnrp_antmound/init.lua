@@ -32,8 +32,8 @@ function ENT:Initialize()
 	timer.Create( "mounddefense_"..tostring(self.Entity:EntIndex()), 5, 0, self.MoundDefense, self )
 	timer.Create( "moundupdate_"..tostring(self.Entity:EntIndex()), self.SpawnRate, 0, self.MoundUpdate, self )
 	
-	self.Entity:SetMaxHealth( 3000 )
-	self.Entity:SetHealth( 3000 )
+	self.Entity:SetMaxHealth( 6000 )
+	self.Entity:SetHealth( 6000 )
 end
 
 function ENT.MoundDefense( ent )
@@ -241,6 +241,11 @@ function ENT:OnTakeDamage(dmg)
 		self.Alive = false
 		timer.Destroy( "moundsounds_"..tostring(self.Entity:EntIndex()) )
 		timer.Create( "mounddestroy_"..tostring(self.Entity:EntIndex()), 0.1, 0, self.MoundDestroy, self )
+		
+		local killer = dmg:GetAttacker()
+		if killer:IsPlayer() then
+			killer:IncXP(10)
+		end
 		
 		local Ants = self.AntList
 		local Guards = self.GuardList

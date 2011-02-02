@@ -55,8 +55,21 @@ function ENT:ThumperEnable()
 	--self.repellent:Fire("EmitAISound", "", 0)
 	self.ToggleTime = CurTime()
 	
+	local MyPlayer = NullEntity()
+	local MySkill = 0
+	
+	if self.Entity:GetNetworkedString("Owner", "none") ~= "World" and self.Entity:GetNetworkedString("Owner", "none") ~= "none" then
+		for k, v in pairs(player.GetAll()) do
+			if v:Nick() == self.Entity:GetNetworkedString("Owner", "none") then
+				MyPlayer = v
+				MySkill = MyPlayer:GetSkill("Mining")
+				break
+			end
+		end
+	end
+	
 	-- The mining code
-	timer.Create( "minerupdate_"..tostring(self.Entity:EntIndex()), 60, 0, function ()
+	timer.Create( "minerupdate_"..tostring(self.Entity:EntIndex()), 60 - (MySkill * 4), 0, function ()
 		local resourceChance = math.random(100)
 		
 		if resourceChance <= 25 then
@@ -104,7 +117,7 @@ function ENT:Use( activator, caller )
 			end
 		else
 			if activator:Team() ~= TEAM_SCAVENGER then
-				activator:ChatPrint("You don't have any idea how to take care of this plant.")
+				activator:ChatPrint("You don't have any idea how to configure this properly.")
 				return
 			end
 		end

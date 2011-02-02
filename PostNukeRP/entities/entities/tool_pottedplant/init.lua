@@ -17,6 +17,7 @@ function ENT:Initialize()
 	self.Fertilized = false
 	self.Airator = false
 	self.CanPrune = true
+	self.LastUser = NullEntity()
 	timer.Create( "plantupdate_"..tostring(self.Entity:EntIndex()), 120, 0, PlantUpdate, self.Entity )
 end
 
@@ -32,6 +33,14 @@ function PlantUpdate( ent )
 		fruitent:Spawn()
 	end
 	
+	local MySkill = 0
+	
+	if ent.LastUser:IsValid() and ent.LastUser:Team() == TEAM_CULTIVATOR then
+		MySkill = ent.LastUser:GetSkill("Farming")
+	end
+	
+	if MySkill > 0 then statusChange = statusChange + MySkill end
+	
 	if ent.Filtered then
 		statusChange = statusChange + 4
 	end
@@ -45,6 +54,8 @@ function PlantUpdate( ent )
 	end
 	
 	ent.PlantStatus = ent.PlantStatus + statusChange
+	if ent.PlantStatus < 0 then ent.PlantStatus = 0 end
+	if ent.PlantStatus > 100 then ent.PlantStatus = 100 end
 end
 
 function DoFilter( pl, handler, id, encoded, decoded )
@@ -164,6 +175,8 @@ function ENT:Use( activator, caller )
 				return
 			end
 		end
+		
+		self.LastUser = activator
 		
 		local rp = RecipientFilter()
 		rp:RemoveAllPlayers()

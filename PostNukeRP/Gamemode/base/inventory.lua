@@ -127,9 +127,9 @@ function PNRP.OpenEQWindow(ply)
 
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav")
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap")
+		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	datastream.StreamToClients(ply, "pnrp_OpenEquipmentWindow", { tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )), weightCap })
 end
@@ -263,9 +263,9 @@ function PNRP.AddToInvFromCar( p, command, arg )
 	local weightCap
 	
 	if team.GetName(p:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav")
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (p:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap")
+		weightCap = GetConVarNumber("pnrp_packCap") + (p:GetSkill("Backpacking")*10)
 	end
 	
 	if weight <= weightCap then
@@ -287,9 +287,9 @@ function PNRP.AddToInvFromEQ( p, command, arg )
 	local weightCap
 	
 	if team.GetName(p:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav")
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (p:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap")
+		weightCap = GetConVarNumber("pnrp_packCap") + (p:GetSkill("Backpacking")*10)
 	end
 	
 	if weight <= weightCap then

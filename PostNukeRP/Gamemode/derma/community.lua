@@ -1,8 +1,14 @@
 --Main Community Derma Menus
 
 local community_frame
+local comFrame = false
 --Main Community Menu
 function GM.community_window(handler, id, encoded, decoded)
+--	if community_frame != nil then 
+--		community_frame = nil
+--		return 
+--	end
+	if comFrame then return end 
 	local communityName = decoded["CommunityName"]
 	local communityTable = decoded["communityTable"]		
 	local ply = LocalPlayer()
@@ -10,7 +16,7 @@ function GM.community_window(handler, id, encoded, decoded)
 	local communityUsers = communityTable["users"]
 	local communityCount
 	local isLocalUser
-	
+	comFrame = true
 	communityRank = "none"
 	communityCount = "none"
 	
@@ -278,7 +284,7 @@ function GM.community_window(handler, id, encoded, decoded)
 						else
 							disbandBtn:SetDisabled( true ) 
 						end
-						disbandBtn.DoClick = function() PNRP.OptionVerify( "pnrp_delcomm", nil, "pnrp_OpenCommunity" ) community_frame:Close() end	
+						disbandBtn.DoClick = function() PNRP.OptionVerify( "pnrp_delcomm", nil, "pnrp_OpenCommunity", community_frame ) end	
 						cMenuList:AddItem( disbandBtn )
 					local leaveBtn = vgui.Create("DButton") 
 						leaveBtn:SetParent( cMenuList ) 
@@ -289,7 +295,7 @@ function GM.community_window(handler, id, encoded, decoded)
 						else
 							leaveBtn:SetDisabled( true ) 
 						end
-						leaveBtn.DoClick = function() PNRP.OptionVerify( "pnrp_leavecomm", nil, "pnrp_OpenCommunity" ) community_frame:Close() end	
+						leaveBtn.DoClick = function() PNRP.OptionVerify( "pnrp_leavecomm", nil, "pnrp_OpenCommunity", community_frame ) end	
 						cMenuList:AddItem( leaveBtn )
 					local demoteSelfBtn = vgui.Create("DButton") 
 						demoteSelfBtn:SetParent( cMenuList ) 
@@ -300,7 +306,7 @@ function GM.community_window(handler, id, encoded, decoded)
 						else
 							demoteSelfBtn:SetDisabled( true ) 
 						end
-						demoteSelfBtn.DoClick = function() PNRP.OptionVerify( "pnrp_demselfcomm", nil, "pnrp_OpenCommunity" ) end	
+						demoteSelfBtn.DoClick = function() PNRP.OptionVerify( "pnrp_demselfcomm", nil, "pnrp_OpenCommunity", community_frame ) end	
 						cMenuList:AddItem( demoteSelfBtn )
 					local BlankLabel2 = vgui.Create("DLabel", cMenuList	)
 						BlankLabel2:SetColor( Color( 255, 255, 255, 0 ) )
@@ -337,7 +343,7 @@ function GM.community_window(handler, id, encoded, decoded)
 						else
 							remStockBtn:SetDisabled( true ) 
 						end
-						remStockBtn.DoClick = function() PNRP.OptionVerify( "pnrp_remstock", nil, nil ) community_frame:Close() end	
+						remStockBtn.DoClick = function() PNRP.OptionVerify( "pnrp_remstock", nil, nil, community_frame ) end	
 						cMenuList:AddItem( remStockBtn )	
 					local placeLockerBtn = vgui.Create("DButton") 
 						placeLockerBtn:SetParent( cMenuList ) 
@@ -359,7 +365,7 @@ function GM.community_window(handler, id, encoded, decoded)
 						else
 							remLockerBtn:SetDisabled( true ) 
 						end
-						remLockerBtn.DoClick = function() PNRP.OptionVerify( "pnrp_remlocker", nil, nil ) community_frame:Close() end	
+						remLockerBtn.DoClick = function() PNRP.OptionVerify( "pnrp_remlocker", nil, nil, community_frame ) end	
 						cMenuList:AddItem( remLockerBtn )
 						
 					local BlankLabel4 = vgui.Create("DLabel", cMenuList	)
@@ -381,7 +387,10 @@ function GM.community_window(handler, id, encoded, decoded)
 						exitBtn:SetParent( cMenuList ) 
 						exitBtn:SetText( "Exit" ) 
 						exitBtn:SetSize( 100, 20 ) 
-						exitBtn.DoClick = function() community_frame:Close() end	
+						exitBtn.DoClick = function() 
+							community_frame:Close() 
+							community_frame = nil
+						end	
 						cMenuList:AddItem( exitBtn )
 		
 		--//Community Status Window
@@ -428,11 +437,20 @@ function GM.community_window(handler, id, encoded, decoded)
 					UCommunityCountLabel:SetText( "  Member Count: "..communityCount )
 					UCommunityCountLabel:SizeToContents()
 					communityStatusList:AddItem( UCommunityCountLabel )	
+					
+	function community_frame:Close()                  
+		comFrame = false                  
+		self:SetVisible( false )                  
+		self:Remove()          
+	end 
 end
 datastream.Hook( "pnrp_OpenCommunityWindow", GM.community_window )
 
 function GM.initCommunity(ply)
-
+--	if community_frame != nil then 
+--		community_frame = nil
+--		return 
+--	end
 	RunConsoleCommand("pnrp_OpenCommunity")
 
 end
@@ -477,7 +495,7 @@ function RecCInvite( data )
 	local ply = LocalPlayer()
 	
 	local inv_frame = vgui.Create( "DFrame" )
-			inv_frame:SetSize( 250, 85 ) 
+			inv_frame:SetSize( 300, 85 ) 
 			inv_frame:SetPos(ScrW() / 2 - inv_frame:GetWide() / 2, ScrH() / 2 - inv_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 			inv_frame:SetTitle( "Do you want to Join?" )
 			inv_frame:SetVisible( true )
@@ -513,7 +531,7 @@ function RecCInvite( data )
 end
 usermessage.Hook( "sendinvite", RecCInvite )
 
-function PNRP.OptionVerify(Command, Option, returnToMenu)
+function PNRP.OptionVerify(Command, Option, returnToMenu, frame)
 	local ply = LocalPlayer()
 		
 	local opv_frame = vgui.Create( "DFrame" )
@@ -543,6 +561,10 @@ function PNRP.OptionVerify(Command, Option, returnToMenu)
 						RunConsoleCommand( Command )
 					end
 					opv_frame:Close() 
+					if frame != nil then
+						frame:Close()
+						frame = nil
+					end
 					if returnToMenu != nil then
 						RunConsoleCommand( returnToMenu )
 					end
@@ -557,6 +579,10 @@ function PNRP.OptionVerify(Command, Option, returnToMenu)
 					opv_frame:Close() 
 					if returnToMenu != nil then
 						RunConsoleCommand( returnToMenu )
+					end
+					if frame != nil then
+						frame:Close()
+						frame = nil
 					end
 				end
 					

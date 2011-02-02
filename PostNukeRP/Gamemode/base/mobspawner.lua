@@ -14,10 +14,12 @@ function PNRP.PlyDeathZombie(ply)
 		timer.Create(tostring(ply:UniqueID()), 5, 1, function()
 			local ent = ents.Create("npc_zombie")
 			ent:SetPos(pos)
+			
 			local squadnum = math.random(1,GetConVarNumber("pnrp_ZombieSquads"))
 			ent:SetKeyValue ("squadname", "npc_zombies"..tostring(squadnum))
 			ent:Spawn()
 			ent:SetNetworkedString("Owner", "Unownable")
+			ent:SetNetworkedString("deadplayername", ply:Nick())
 			ent:AddRelationship("pnrp_antmound D_HT 99")
 		end)
 	end

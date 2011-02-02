@@ -47,6 +47,7 @@ function ENT:OnTakeDamage(dmg)
 		grubGib:SetAngles(self:GetAngles())
 		grubGib:Spawn()
 		grubGib:SetSolid(SOLID_VPHYSICS)
+		grubGib:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 		grubGib:Activate()
 		
 		--Remove Grub from World Cache
@@ -68,9 +69,10 @@ function ENT:OnTakeDamage(dmg)
 		end
 		
 		timer.Simple(10, function ()
-			self:Remove()
 			grubGib:Remove()
 		end )
+		
+		self:Remove()
 	end
 end 
 
@@ -107,7 +109,7 @@ function ENT.GrubUpdate( ent )
 			local Retries = 50
 			local pos
 			
-			if yourChance <= 20 then
+			if yourChance <= (20 + (MyPlayer:GetSkill("Animal Husbandry")*2)) then
 				while util.IsInWorld(pos) == false and Retries > 0 do
 					pos = ent:GetPos() + Vector(math.random(-75, 75), math.random(-75,75),10)
 					Retries = Retries - 1
