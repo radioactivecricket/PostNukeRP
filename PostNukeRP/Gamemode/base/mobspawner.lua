@@ -301,7 +301,7 @@ function GM.SpawnMobs()
 						if info.HasSpace and skytrace.HitSky and !watertrace.Hit then
 							if class then
 								local ent = ents.Create(class)
-								ent:SetPos(groundtrace.HitPos+Vector(0,0,50))
+								ent:SetPos(groundtrace.HitPos+Vector(0,0,5))
 								if npcType < 4 then
 									local squadnum = math.random(1,GetConVarNumber("pnrp_ZombieSquads"))
 									ent:SetKeyValue ("squadname", "npc_zombies"..tostring(squadnum))

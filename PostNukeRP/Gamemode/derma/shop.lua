@@ -1,9 +1,13 @@
 --Build Shop Menu
 
 local shop_frame
+local shopFrameCK = false
 
 function buy_shop()
-				 		
+	--Stops the multi window exploit
+	if shopFrameCK then return end 
+	shopFrameCK = true
+	
 	shop_frame = vgui.Create( "DFrame" )
 		shop_frame:SetSize( 700, 700 ) --Set the size
 		shop_frame:SetPos(ScrW() / 2 - shop_frame:GetWide() / 2, ScrH() / 2 - shop_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
@@ -39,6 +43,11 @@ function buy_shop()
 			PropertySheet:AddSheet( "Vehicles", vehiclePanel, "gui/silkicons/car", false, false, "Create Vehicles" )
 			PropertySheet:AddSheet( "Tools", toolsPanel, "gui/silkicons/wrench", false, false, "Make Tools - Still in Development" )
 			
+	function shop_frame:Close()                  
+		shopFrameCK = false                  
+		self:SetVisible( false )                  
+		self:Remove()          
+	end 
 end
 
 function PNRP.build_List(itemtype, parent_frame, PropertySheet)

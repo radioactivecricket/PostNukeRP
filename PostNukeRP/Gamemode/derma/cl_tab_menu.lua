@@ -160,7 +160,7 @@ function PNRP.buildMenu(parent_frame)
 
 		local menu2_frame = vgui.Create( "DFrame" )
 			menu2_frame:SetParent( parent_frame )
-			menu2_frame:SetSize( 110, 220 ) 
+			menu2_frame:SetSize( 125, 255 ) 
 			menu2_frame:SetPos( ScrW() / 2 + parent_frame:GetWide() / 2 + 5, ScrH() / 2 - parent_frame:GetTall() / 2 )
 			menu2_frame:SetTitle( " " )
 			menu2_frame:SetVisible( true )
@@ -171,6 +171,26 @@ function PNRP.buildMenu(parent_frame)
 				surface.SetDrawColor( 50, 50, 50, 0 )
 			end
 			
+			local vlimit
+			local vlimitColor
+			if GetConVarNumber("pnrp_voiceLimit") == 1 then
+				vlimit = "On"
+				vlimitColor = Color( 0, 255, 0, 255 )
+			else
+				vlimit = "Off"
+				vlimitColor = Color( 255, 0, 0, 255 )
+			end
+			
+			local pcost
+			local pcostColor
+			if GetConVarNumber("pnrp_propPay") == 1 then
+				pcostColor = Color( 0, 255, 0, 255 )
+				pcost = "On @ "..GetConVarNumber("pnrp_propCost").."%"
+			else
+				pcostColor = Color( 255, 0, 0, 255 )
+				pcost = "Off"
+			end
+			
 			local menu2List = vgui.Create( "DPanelList", menu2_frame )
 					menu2List:SetPos( 0,0 )
 					menu2List:SetSize( menu2_frame:GetWide(), menu2_frame:GetTall() )
@@ -179,11 +199,22 @@ function PNRP.buildMenu(parent_frame)
 					menu2List:EnableHorizontal( false ) 
 					menu2List:EnableVerticalScrollbar( true ) 	
 					
-					local BlankLabel1 = vgui.Create("DLabel", menu2List	)
-						BlankLabel1:SetColor( Color( 255, 255, 255, 0 ) )
-						BlankLabel1:SetText( " " )
-						BlankLabel1:SizeToContents()
-						menu2List:AddItem( BlankLabel1 )
+					local VoiceLimiterLabel = vgui.Create("DLabel", menu2List	)
+						VoiceLimiterLabel:SetColor( vlimitColor )
+						VoiceLimiterLabel:SetText( "Voice Limiter: "..vlimit )
+						VoiceLimiterLabel:SizeToContents()
+						menu2List:AddItem( VoiceLimiterLabel )
+					local PCostLabel = vgui.Create("DLabel", menu2List	)
+						PCostLabel:SetColor( pcostColor )
+						PCostLabel:SetText( "Prop Cost: "..pcost )
+						PCostLabel:SizeToContents()
+						menu2List:AddItem( PCostLabel )					
+					
+					local devide1menu2a = vgui.Create("DShape") 
+						devide1menu2a:SetParent( menu2List ) 
+						devide1menu2a:SetType("Rect")
+						devide1menu2a:SetSize( 100, 2 ) 	
+						menu2List:AddItem( devide1menu2a )
 					local skillsmenu = vgui.Create("DButton") 
 						skillsmenu:SetParent( menu2List ) 
 						skillsmenu:SetText( "Skills Menu >" ) 
@@ -196,6 +227,12 @@ function PNRP.buildMenu(parent_frame)
 						communitymenu:SetSize( 100, 20 ) 
 						communitymenu.DoClick = function() RunConsoleCommand( "pnrp_OpenCommunity" ) SCFrame=false parent_frame:Close() end	
 						menu2List:AddItem( communitymenu )
+					local buddymenu = vgui.Create("DButton") 
+						buddymenu:SetParent( menu2List ) 
+						buddymenu:SetText( "Buddy Menu >" ) 
+						buddymenu:SetSize( 100, 20 ) 
+						buddymenu.DoClick = function() RunConsoleCommand( "pnrp_buddy_window" ) SCFrame=false parent_frame:Close() end	
+						menu2List:AddItem( buddymenu )
 					local devide1menu2 = vgui.Create("DShape") 
 						devide1menu2:SetParent( menu2List ) 
 						devide1menu2:SetType("Rect")

@@ -30,6 +30,13 @@ function GM.open_admin(handler, id, encoded, decoded)
 			ppmenu:SetSize( 100, 20 ) -- set the button size
 			ppmenu.DoClick = function() datastream.StreamToServer( "Start_open_PropProtection" ) SCFrame=false admin_frame:Close() end 
 		
+--		local plymenu = vgui.Create("DButton") -- Create the button
+--			plymenu:SetParent( admin_frame ) -- parent the button to the frame
+--			plymenu:SetText( "Player Control >" ) -- set the button text
+--			plymenu:SetPos(220, 25) -- set the button position in the frame
+--			plymenu:SetSize( 100, 20 ) -- set the button size
+--			plymenu.DoClick = function() RunConsoleCommand( "pnrp_playerAdminList" ) SCFrame=false admin_frame:Close() end 
+		
 		local AdminTabSheet = vgui.Create( "DPropertySheet" )
 			AdminTabSheet:SetParent( admin_frame )
 			AdminTabSheet:SetPos( 5, 50 )
@@ -707,4 +714,75 @@ function PNRP.RemoveItemVerify(model, switch)
 					
 	end
 end
+
+local PlyAdminLs_frame
+local PlyAdminLsFrameCK = false
+function GM.OpenPlyAdminLstWindow(handler, id, encoded, decoded)
+	local GM = GAMEMODE
+	local ply = LocalPlayer()
+	local Players = decoded["Players"]
+	PlyAdminLsFrameCK = true
+	
+	PlyAdminLs_frame = vgui.Create( "DFrame" )
+		PlyAdminLs_frame:SetSize( 400, 450 ) 
+		PlyAdminLs_frame:SetPos(ScrW() / 2 - PlyAdminLs_frame:GetWide() / 2, ScrH() / 2 - PlyAdminLs_frame:GetTall() / 2)
+		PlyAdminLs_frame:SetTitle( "Player Admin" )
+		PlyAdminLs_frame:SetVisible( true )
+		PlyAdminLs_frame:SetDraggable( true )
+		PlyAdminLs_frame:ShowCloseButton( true )
+		PlyAdminLs_frame:MakePopup()
+		
+		local PlyAdminLs_TabSheet = vgui.Create( "DPropertySheet" )
+			PlyAdminLs_TabSheet:SetParent( PlyAdminLs_frame )
+			PlyAdminLs_TabSheet:SetPos( 5, 25 )
+			PlyAdminLs_TabSheet:SetSize( PlyAdminLs_frame:GetWide() - 15, PlyAdminLs_frame:GetTall() - 55 )
+		
+			local PlyAdminLsPanel = vgui.Create( "DPanel", PlyAdminLs_TabSheet )
+				PlyAdminLsPanel:SetPos( 5, 5 )
+				PlyAdminLsPanel:SetSize( PlyAdminLs_TabSheet:GetWide(), PlyAdminLs_TabSheet:GetTall() )
+				PlyAdminLsPanel.Paint = function() -- Paint function
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+			local PlyAdminLsList = vgui.Create("DPanelList", PlyAdminLsPanel)
+				PlyAdminLsList:SetPos(5, 5)
+				PlyAdminLsList:SetSize(PlyAdminLsPanel:GetWide() - 10, PlyAdminLsPanel:GetTall() - 40)
+				PlyAdminLsList:EnableVerticalScrollbar(true) 
+				PlyAdminLsList:EnableHorizontal(false) 
+				PlyAdminLsList:SetSpacing(1)
+				PlyAdminLsList:SetPadding(10)
+				
+				for k, v in pairs( Players ) do
+					local PLyPanel = vgui.Create("DPanel")
+						PLyPanel:SetTall(75)
+						PLyPanel.Paint = function()
+							draw.RoundedBox( 6, 0, 0, PLyPanel:GetWide(), PLyPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+						end
+						PlyAdminLsList:AddItem(PLyPanel)
+						
+						PLyPanel.Title = vgui.Create("DLabel", PLyPanel)
+						PLyPanel.Title:SetPos(10, 5)
+						PLyPanel.Title:SetText(v["name"])
+						PLyPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
+						PLyPanel.Title:SizeToContents() 
+						PLyPanel.Title:SetContentAlignment( 5 )
+				end
+	
+	function PlyAdminLs_frame:Close()                  
+		PlyAdminLsFrameCK = false                  
+		self:SetVisible( false )                  
+		self:Remove()          
+	end 
+end
+datastream.Hook( "pnrp_OpenPlyAdminLstWindow", GM.OpenPlyAdminLstWindow )
+
+function GM.initPlyAdminLst(ply)
+	if ply:IsAdmin() then	
+		RunConsoleCommand("pnrp_OpenPlyAdminLst")
+	else
+		ply:ChatPrint("You are not an admin on this server!")
+	end
+
+end
+--concommand.Add( "pnrp_playerAdminList",  GM.initPlyAdminLst )
+
 --EOF

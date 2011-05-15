@@ -31,6 +31,7 @@ PNRP.ChatConCmd( "/salvage", "pnrp_salvage" )
   Save/Load
 ---------------------------------------------------------*/
 function GM.SaveCharacter(ply,cmd,args)
+	if not ply.HasLoaded then return end
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/Saves") then file.CreateDir("PostNukeRP/Saves") end
 	
@@ -157,7 +158,7 @@ function GM.LoadStatus( ply )
 		
 		if tbl["skills"] then
 			for k,v in pairs( tbl["skills"] ) do
---				ply:ChatPrint(k:gsub("(%a)([%w_']*)", tchelper))
+				ply:ChatPrint(k:gsub("(%a)([%w_']*)", tchelper))
 				ply:SetSkill(k:gsub("(%a)([%w_']*)", tchelper), v)
 			end
 		end
@@ -172,12 +173,8 @@ function GM.LoadStatus( ply )
 			ply:SetRunSpeed( 295 + (ply:GetSkill("Athletics") * 10) )
 		end
 		
-		if tbl["community"] then 
-			--ply:GetTable().Community = tbl["community"]
-			LoadCommunityInfo( ply, tbl["community"] )
-		else 
-			ply:GetTable().Community = nil
-		end
+		--ply:GetTable().Community = tbl["community"]
+		LoadCommunityInfo( ply, tbl["community"] )
 		
 		SendEndurance( ply )
 		
@@ -198,8 +195,10 @@ function GM.LoadWeaps( ply )
 --					end
 --				end
 			end
-			for ammoType,ammoNum in pairs(tbl["ammo"]) do
-				ply:GiveAmmo(ammoNum, ammoType)
+			if tbl["ammo"] then
+				for ammoType,ammoNum in pairs(tbl["ammo"]) do
+					ply:GiveAmmo(ammoNum, ammoType)
+				end
 			end
 		end
 	end
@@ -215,7 +214,7 @@ function LoadCommunityInfo( ply, community )
 	if file.Exists("PostNukeRP/Communities/listings.txt") then	
 		local listingsTbl = glon.decode(file.Read("PostNukeRp/Communities/listings.txt"))
 		
-		if listingsTbl[ply:UniqueID()] then
+		if listingsTbl[ply:UniqueID()] and file.Exists("PostNukeRP/Communities/"..tostring(community)..".txt") then
 			ply:GetTable().Community = listingsTbl[ply:UniqueID()]["community"] or nil
 			ply:GetTable().CommunityRank = listingsTbl[ply:UniqueID()]["rank"] or nil
 			ply:SetNWString("community", listingsTbl[ply:UniqueID()]["community"] or nil)
@@ -1192,7 +1191,9 @@ function PNRP.DropWeapon (ply, command, args)
 		if string.find(myWep:GetModel(), "v_") ~= 1 then
 			wepModel = "models/weapons/w_"..string.sub(myWep:GetModel(),string.find(myWep:GetModel(), "v_")+2)
 		end
-		
+		if myWep:GetClass() == "weapon_radio" then
+			wepModel = "models/props_citizen_tech/transponder.mdl"
+		end
 		local wepEnt = "ent_weapon"--ConvertWepEnt( wepModel )
 		
 		local tr = ply:TraceFromEyes(200)
@@ -1510,14 +1511,45 @@ function PNRP.UpdateFromAdminMenu(ply, handler, id, encoded, decoded )
 end
 datastream.Hook( "UpdateFromAdminMenu", PNRP.UpdateFromAdminMenu )
 
+function PNRP.OpenMainAdmin(ply)
+	if !ply:IsAdmin() then	
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
+	if !file.IsDir("PostNukeRP/Saves") then file.CreateDir("PostNukeRP/Saves") end
+	if !file.IsDir("PostNukeRP/Communities") then file.CreateDir("PostNukeRP/Communities") end
+	
+	local Players = {}
+	
+	local saveList = file.Find("PostNukeRP/Saves/*.txt")
+	for _, f in pairs(saveList) do
+		local tbl = {}
+		tbl = util.KeyValuesToTable(file.Read("PostNukeRP/Saves/"..f))
+		local PUID = string.Explode(".", f)
+		Players[PUID[1]] = {
+			name = tbl["name"],
+			lastdate = tbl["date"],
+			resources = tbl["resources"],
+			experience = tbl["experience"],
+			skills = tbl["skills"]
+			}
+	end
+	
+	datastream.StreamToClients(ply, "pnrp_OpenPlyAdminLstWindow", { ["Players"] = Players })
+end
+concommand.Add("pnrp_OpenPlyAdminLst", PNRP.OpenMainAdmin)
+
 -- TEMP SCRIPT --
 --[[
 	This should migrate the old community system to the new one.  Only needed temporarily.
 --]]
 
 local function MigrateCommunities(ply)
-	
-	if not ply:IsAdmin() then return end
+	if ply:IsValid() then
+		if not ply:IsAdmin() then return end
+	end
 	
 	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
 	if !file.IsDir("PostNukeRP/Communities") then file.CreateDir("PostNukeRP/Communities") end
@@ -1552,7 +1584,9 @@ local function MigrateCommunities(ply)
 			end
 			communityTbl["users"] = nil
 			
-			file.Write("PostNukeRP/Communities/"..communityName..".txt",glon.encode(communityTbl))
+			if communityName then
+				file.Write("PostNukeRP/Communities/"..communityName..".txt",glon.encode(communityTbl))
+			end
 		end
 	end
 	

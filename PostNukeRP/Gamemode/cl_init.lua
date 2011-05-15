@@ -137,45 +137,48 @@ local function DynaEyeTilt()
 	local towards = 1
 	local running = 0
 	local sprint = 1
-	val.pitch, val.yaw, val.roll = person:EyeAngles().p, person:EyeAngles().y, person:EyeAngles().r
 	
-	-- /*
-	-- SWEP = person:GetActiveWeapon()
-	-- if (SWEP:IsValid() and (SWEP:GetClass() == "gmod_cam_amateur")) then return end
-	-- */
+	--Vehicle Check
+	if !person:InVehicle( ) then
+		val.pitch, val.yaw, val.roll = person:EyeAngles().p, person:EyeAngles().y, person:EyeAngles().r
+		
+		-- /*
+		-- SWEP = person:GetActiveWeapon()
+		-- if (SWEP:IsValid() and (SWEP:GetClass() == "gmod_cam_amateur")) then return end
+		-- */
+		
+		val.basediff = math.Clamp(math.AngleDifference(dynaset.prevyaw,val.yaw),-5,5)
+		//bottom + (top-bottom)*perc
+		dynaset.newroll = math.Clamp(dynaset.newroll+val.basediff,-5,5) 
 	
-	val.basediff = math.Clamp(math.AngleDifference(dynaset.prevyaw,val.yaw),-5,5)
-	//bottom + (top-bottom)*perc
-	dynaset.newroll = math.Clamp(dynaset.newroll+val.basediff,-5,5) 
-	
-	
-	if ( person:KeyDown( IN_MOVELEFT ) ) then sideways = sideways - 3 end
-	if ( person:KeyDown( IN_MOVERIGHT ) ) then sideways = sideways + 3 end
-	
-	if ( person:KeyDown( IN_FORWARD  ) ) then 
-		towards = 5 
-		running = 1
-	elseif ( person:KeyDown( IN_BACK  ) ) then 
-		towards = -5 
-		running = 1
-	else
-		runnning = 0
-	end 
-	
-	if ( (person:KeyDown( IN_MOVELEFT  ) or
-		  person:KeyDown( IN_MOVERIGHT ) or 
-		  person:KeyDown( IN_FORWARD   ) or
-		  person:KeyDown( IN_BACK      )    ) and person:KeyDown( IN_SPEED ) ) then sprint = 2 end
-	
-	local isonground = 0
-	if (person:IsOnGround()) then isonground = 1 end
-	
-	local top = dynaset.newroll
-	local bottom = (0.5/7*towards*sprint)*isonground + sideways --math.sin(RealTime()*3*towards*sprint)
-	dynaset.newroll = bottom + (top-bottom)*0.7
-	dynaset.prevyaw = val.yaw
+		if ( person:KeyDown( IN_MOVELEFT ) ) then sideways = sideways - 3 end
+		if ( person:KeyDown( IN_MOVERIGHT ) ) then sideways = sideways + 3 end
+		
+		if ( person:KeyDown( IN_FORWARD  ) ) then 
+			towards = 5 
+			running = 1
+		elseif ( person:KeyDown( IN_BACK  ) ) then 
+			towards = -5 
+			running = 1
+		else
+			runnning = 0
+		end 
+		
+		if ( (person:KeyDown( IN_MOVELEFT  ) or
+			  person:KeyDown( IN_MOVERIGHT ) or 
+			  person:KeyDown( IN_FORWARD   ) or
+			  person:KeyDown( IN_BACK      )    ) and person:KeyDown( IN_SPEED ) ) then sprint = 2 end
+		
+		local isonground = 0
+		if (person:IsOnGround()) then isonground = 1 end
+		
+		local top = dynaset.newroll
+		local bottom = (0.5/7*towards*sprint)*isonground + sideways --math.sin(RealTime()*3*towards*sprint)
+		dynaset.newroll = bottom + (top-bottom)*0.7
+		dynaset.prevyaw = val.yaw
 
-	if (person:Alive() ) then person:SetEyeAngles(Angle(val.pitch+(math.sin(RealTime()*8*running*sprint*isonground)/(8-(sprint-1)*4)),val.yaw,dynaset.newroll)) end
+		if (person:Alive() ) then person:SetEyeAngles(Angle(val.pitch+(math.sin(RealTime()*8*running*sprint*isonground)/(8-(sprint-1)*4)),val.yaw,dynaset.newroll)) end
+	end
 end
 
 hook.Add("Think", "DynaEyeTilt", DynaEyeTilt)
@@ -203,4 +206,14 @@ local function DamageBlur()
 	end
 end
 hook.Add( "RenderScreenspaceEffects", "RenderDamage", DamageBlur )
+
+function PNRP:GetUID( ply )
+	local plUID = tostring(ply:GetNetworkedString( "UID" , "None" ))
+	if plUID == "None" then
+		plUID = ply:UniqueID()
+	end
+	
+	return plUID
+end
+
 

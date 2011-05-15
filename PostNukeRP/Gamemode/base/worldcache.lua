@@ -114,12 +114,16 @@ function PNRP.ReturnWorldCache( ply )
 end
 
 function PNRP.CleanWorldAfterReturn( ply )
+	local plUID = tostring(ply:GetNetworkedString( "UID" , "None" ))
+	if plUID == "None" then
+		plUID = ply:UniqueID()
+	end
 	for k,v in pairs(ents.GetAll()) do
 		local myClass = v:GetClass()
 		local ItemID = PNRP.FindItemID( myClass )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
+			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
 				if myType == "vehicle" or myType == "tool" then
 					v:Remove()
 				end

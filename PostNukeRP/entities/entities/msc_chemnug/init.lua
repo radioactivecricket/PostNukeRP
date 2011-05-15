@@ -7,6 +7,7 @@ util.PrecacheModel ("models/grub_nugget_medium.mdl")
 function ENT:Initialize()
 	self.Entity:SetModel("models/grub_nugget_medium.mdl")
 	self.Entity:PhysicsInit( SOLID_VPHYSICS )      -- Make us work with physics,
+	self.Entity:SetCollisionGroup( COLLISION_GROUP_DEBRIS )
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	self.Entity:PhysWake()

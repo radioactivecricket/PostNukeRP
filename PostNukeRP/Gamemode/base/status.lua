@@ -9,95 +9,95 @@ local PlayerMeta = FindMetaTable("Player")
 
 function StatCheck()
 	for k, v in pairs(player.GetAll()) do
-		local UpdateTime = 0
-		if v:GetTable().IsAsleep then
-			UpdateTime = 5
-		else
-			UpdateTime = 60
-		end
-		
-		--Health checks
-		if v:Alive() and CurTime() - v:GetTable().LastHealthUpdate > UpdateTime and not v:IsOutside() then
-			local health = v:Health()
-			
-			if not ( health == v:GetMaxHealth() ) then
-				
-				v:SetHealth( health + 1 )
-				if ( v:GetMaxHealth() < health + 1  ) then
-					v:SetHealth( v:GetMaxHealth() )
-				end
-			end
-			v:GetTable().LastHealthUpdate = CurTime()
-		end
-		
-		
-		local runModifier = 0
-		
-		if v:KeyDown(IN_FORWARD) or v:KeyDown(IN_LEFT) or v:KeyDown(IN_RIGHT) or v:KeyDown(IN_BACK) then
-			runModifier = runModifier + 1
-			if v:KeyDown(IN_SPEED) then
-				runModifier = runModifier + 3
-			end
-		end
-		
-		local EndUpdateTime 
-		if v:Team() == TEAM_WASTELANDER then
-			EndUpdateTime = UpdateTime / (1 - (0.05 * v:GetSkill("Endurance")))
+		if v.HasLoaded then
+			local UpdateTime = 0
 			if v:GetTable().IsAsleep then
-				EndUpdateTime = UpdateTime / 5 
-			end
-		else
-			EndUpdateTime = UpdateTime / (2)
-			if v:GetTable().IsAsleep then
-				EndUpdateTime = UpdateTime / 5 
-			end
-		end
-		--Endurance checks
-		if v:Alive() and CurTime() - v:GetTable().LastEndUpdate > EndUpdateTime then
-			local endur = v:GetTable().Endurance
-			
-			if v:GetTable().IsAsleep then
-				v:GetTable().Endurance = endur + 2
+				UpdateTime = 5
 			else
-				v:GetTable().Endurance = endur - 1
+				UpdateTime = 60
 			end
 			
-			if v:GetTable().Endurance <= 0 then
-				v:ChatPrint("You've fallen unconcious due to fatigue!")
-				EnterSleep(v)
-			elseif v:GetTable().Endurance >= 100 then
-				if v:GetTable().IsAsleep then
-					ExitSleep(v)
-				end
-				v:GetTable().Endurance = 100
-			end
-			v:GetTable().LastEndUpdate = CurTime()
-		end
-		SendEndurance( v )
-		
-		--Hunger checks
-		local HunUpdateTime 
-		HunUpdateTime = 60 / (2 + ( runModifier / 2 ) )
-		if v:Alive() and CurTime() - v:GetTable().LastHunUpdate > HunUpdateTime and not (v:GetTable().IsAsleep) then
-			local hunger = v:GetTable().Hunger
-			
-			v:GetTable().Hunger = hunger - 1
-			
-			if v:GetTable().Hunger <= 0 then
-				v:GetTable().Hunger = 0
+			--Health checks
+			if v:Alive() and CurTime() - v:GetTable().LastHealthUpdate > UpdateTime and not v:IsOutside() then
+				local health = v:Health()
 				
-				v:SetHealth( v:Health() - 5 )
-				if v:Health() <= 0 then
-					timer.Create("kill_timer",  1, 1, function()
-							v:Kill()
-						end )
+				if not ( health == v:GetMaxHealth() ) then
+					
+					v:SetHealth( health + 1 )
+					if ( v:GetMaxHealth() < health + 1  ) then
+						v:SetHealth( v:GetMaxHealth() )
+					end
+				end
+				v:GetTable().LastHealthUpdate = CurTime()
+			end
+			
+			
+			local runModifier = 0
+			
+			if v:KeyDown(IN_FORWARD) or v:KeyDown(IN_LEFT) or v:KeyDown(IN_RIGHT) or v:KeyDown(IN_BACK) then
+				runModifier = runModifier + 1
+				if v:KeyDown(IN_SPEED) then
+					runModifier = runModifier + 3
 				end
 			end
-			v:GetTable().LastHunUpdate = CurTime()
+			
+			local EndUpdateTime 
+			if v:Team() == TEAM_WASTELANDER then
+				EndUpdateTime = UpdateTime / (1 - (0.05 * v:GetSkill("Endurance")))
+				if v:GetTable().IsAsleep then
+					EndUpdateTime = UpdateTime / 5 
+				end
+			else
+				EndUpdateTime = UpdateTime / (2)
+				if v:GetTable().IsAsleep then
+					EndUpdateTime = UpdateTime / 5 
+				end
+			end
+			--Endurance checks
+			if v:Alive() and CurTime() - v:GetTable().LastEndUpdate > EndUpdateTime then
+				local endur = v:GetTable().Endurance
+				
+				if v:GetTable().IsAsleep then
+					v:GetTable().Endurance = endur + 2
+				else
+					v:GetTable().Endurance = endur - 1
+				end
+				
+				if v:GetTable().Endurance <= 0 then
+					v:ChatPrint("You've fallen unconcious due to fatigue!")
+					EnterSleep(v)
+				elseif v:GetTable().Endurance >= 100 then
+					if v:GetTable().IsAsleep then
+						ExitSleep(v)
+					end
+					v:GetTable().Endurance = 100
+				end
+				v:GetTable().LastEndUpdate = CurTime()
+			end
+			SendEndurance( v )
+			
+			--Hunger checks
+			local HunUpdateTime 
+			HunUpdateTime = 60 / (2 + ( runModifier / 2 ) )
+			if v:Alive() and CurTime() - v:GetTable().LastHunUpdate > HunUpdateTime and not (v:GetTable().IsAsleep) then
+				local hunger = v:GetTable().Hunger
+				
+				v:GetTable().Hunger = hunger - 1
+				
+				if v:GetTable().Hunger <= 0 then
+					v:GetTable().Hunger = 0
+					
+					v:SetHealth( v:Health() - 5 )
+					if v:Health() <= 0 then
+						timer.Create("kill_timer",  1, 1, function()
+								v:Kill()
+							end )
+					end
+				end
+				v:GetTable().LastHunUpdate = CurTime()
+			end
+			SendHunger( v )
 		end
-		SendHunger( v )
-		
-		
 	end
 end
 hook.Add("Think", "StatCheck", StatCheck)
@@ -114,6 +114,7 @@ function EnterSleep ( ply )
 			ply:GetTable().SleepSound = CreateSound(ply, "npc/ichthyosaur/water_breath.wav")
 		end
 		ply:GetTable().IsAsleep = true
+		ply:GetTable().SleepGodCheck = true
 		ply:GetTable().SleepSound:PlayEx(0.10, 100)
 		
 		
@@ -210,6 +211,7 @@ function ExitSleep( ply )
 			ply:SetHealth(health)
 			ply:SetArmor(armor)
 			ply:GetTable().Hunger = hunger
+			ply:GetTable().SleepGodCheck = false
 			if oldPos then
 				ply:SetPos(ragdoll:GetTable().PrevPos)
 			else
@@ -232,7 +234,7 @@ function ExitSleep( ply )
 					for i = 1, 22 do
 						ply:GiveAmmo(ply:GetTable().AmmoForSleep[i], PNRP.ConvertAmmoType(i), false)
 					end
-					
+									
 					local cl_defaultweapon = ply:GetInfo( "cl_defaultweapon" )
 					if ( ply:HasWeapon( cl_defaultweapon )  ) then
 						ply:SelectWeapon( cl_defaultweapon ) 
@@ -241,6 +243,14 @@ function ExitSleep( ply )
 				else
 					GAMEMODE:PlayerLoadout(player)
 				end 
+				
+				--Checks to make sure the player has the default weapons
+				for _,v in pairs(PNRP.DefWeps) do
+					if !ply:HasWeapon( v ) then
+						ply:Give( v )
+					end
+				end
+				
 				ply:ConCommand("pnrp_save")
 				ply:ChatPrint("Timer has run")
 			end)
