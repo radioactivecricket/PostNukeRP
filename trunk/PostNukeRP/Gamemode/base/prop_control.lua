@@ -270,38 +270,43 @@ function GM:PlayerSpawnProp(ply, model)
 	end
 	
 	if allowed then
-		if GetConVarNumber("pnrp_propPay") == 1 then
-			local ent = ents.Create("prop_physics")
-			ent:SetModel(model)
-			ent:Spawn()			
-			
-			local price = math.Round(((ent:BoundingRadius() + ent:GetPhysicsObject():GetMass()) / 2) * (GetConVarNumber("pnrp_propCost") / 100))
-			ent:Remove()
-			
-			if price < 1 then price = 1 end
-			--ply:ChatPrint("Price:  "..tostring(price))
-			
-			--Admin No Cost Overide
-			local adminCostOveride = false
-			if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
-				adminCostOveride = true 
-			else
-				adminCostOveride = false
-			end
-			
-			if ply:GetResource("Scrap") >= price or adminCostOveride == true then
-				ply:ChatPrint(tostring(price).." scrap used to create this prop.")
-				ply:DecResource("Scrap", price)
-				return true
-			else
-				ply:ChatPrint(tostring(price).." scrap needed to create this prop.")
-				return false
-			end
-		else
-			return true
-		end
+		return true
 	end
 	return false
+end
+
+function GM:PlayerSpawnedProp( ply, model, ent )
+	local plUID = PNRP:GetUID( ply )
+	if GetConVarNumber("pnrp_propPay") == 1 then
+		
+		local price = math.Round(((ent:BoundingRadius() + ent:GetPhysicsObject():GetMass()) / 2) * (GetConVarNumber("pnrp_propCost") / 100))
+		
+		if price < 1 then price = 1 end
+		--ply:ChatPrint("Price:  "..tostring(price))
+		
+		--Admin No Cost Overide
+		local adminCostOveride = false
+		if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+			adminCostOveride = true 
+		else
+			adminCostOveride = false
+		end
+		
+		if ply:GetResource("Scrap") >= price or adminCostOveride == true then
+			ply:ChatPrint(tostring(price).." scrap used to create this prop.")
+			ply:DecResource("Scrap", price)
+			ent:SetNWString( "Owner_UID", plUID )
+			ent:SetNWString( "Owner", ply:Nick())
+			ent:SetNWEntity( "ownerent", ply )
+		else
+			ply:ChatPrint(tostring(price).." scrap needed to create this prop.")
+			ent:Remove()
+		end
+	else
+		ent:SetNWString( "Owner_UID", plUID )
+		ent:SetNWString( "Owner", ply:Nick())
+		ent:SetNWEntity( "ownerent", ply )
+	end
 end
 
 function GM:PlayerSpawnVehicle( p, class, vehtbl )
@@ -321,6 +326,13 @@ function GM:PlayerSpawnVehicle( p, class, vehtbl )
 	
 end	
 
+function GM:PlayerSpawnedVehicle(ply, ent)
+	local plUID = PNRP:GetUID( ply )
+	ent:SetNWString( "Owner_UID", plUID )
+	ent:SetNWString( "Owner", ply:Nick())
+	ent:SetNWEntity( "ownerent", ply )
+end
+
 
 function GM:PlayerSpawnRagdoll( p, model )
 
@@ -336,6 +348,12 @@ function GM:PlayerSpawnRagdoll( p, model )
 	
 end	
 
+function GM:PlayerSpawnedRagdoll(ply, model, ent)
+	local plUID = PNRP:GetUID( ply )
+	ent:SetNWString( "Owner_UID", plUID )
+	ent:SetNWString( "Owner", ply:Nick())
+	ent:SetNWEntity( "ownerent", ply )
+end
 
 function GM:PlayerSpawnEffect( p, model )
 
@@ -350,6 +368,14 @@ function GM:PlayerSpawnEffect( p, model )
 	return true
 	
 end	
+
+function GM:PlayerSpawnedEffect(ply, model, ent)
+	local plUID = PNRP:GetUID( ply )
+	ent:SetNWString( "Owner_UID", plUID )
+	ent:SetNWString( "Owner", ply:Nick())
+	ent:SetNWEntity( "ownerent", ply )
+end
+
 
 function GM:PlayerSpawnSENT( p, classname )
 	p:ChatPrint("Classname:  "..classname)
@@ -368,10 +394,17 @@ function GM:PlayerSpawnSENT( p, classname )
 	return true
 end
 
+function GM:PlayerSpawnedSENT(ply, ent)
+	local plUID = PNRP:GetUID( ply )
+	ent:SetNWString( "Owner_UID", plUID )
+	ent:SetNWString( "Owner", ply:Nick())
+	ent:SetNWEntity( "ownerent", ply )
+end
+
 function GM:PlayerSpawnSWEP( ply, class, wep )
 
 	ply:ChatPrint( "Spawning the F-ing Weapon" )
-
+	
 	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
 	
 		ply:ChatPrint( "SWEP spawning is disabled." )
@@ -445,7 +478,9 @@ function PickupCheck( ply, ent)
 		return false
 	end
 	
+	local plUID = PNRP:GetUID( ply )
 	local owner = ent:GetNWString( "Owner", "None" )
+	local ownerUID = ent:GetNWString( "Owner_UID", "None" )
 	
 	local playerPos = ply:GetShootPos()
 	local entPos = ent:GetPos()
@@ -457,16 +492,37 @@ function PickupCheck( ply, ent)
 	--Unownable should be un-pickupable, so we check that next
 	if owner == "Unownable" then return false end
 	
+	--If player owns the prop
+	if ownerUID == plUID then return true end
+	if ent.GetPlayer and type(ent.GetPlayer) == "function" then
+		if ply == ent:GetPlayer() then return true end
+	end
+--	if ownerUID ~= plUID then 
+--		if owner ~= "None" and owner ~= "World" then
+--			return false
+--		end
+--	end
 	--if owner == "None" or owner == "World" then return true end
-	if ply:Nick() == owner then return true end
-	if owner ~= ply:Nick() then 
-		if owner ~= "None" and owner ~= "World" then
-			return false
+	
+	--Checks buddy system
+	local ownerEnt = ent:GetNWEntity( "ownerent", NullEntity() )
+	if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt:IsValid() then
+		ownerEnt = ent:GetPlayer() or NullEntity()
+	end
+	if ownerEnt:IsValid() then
+		if ownerEnt.PropBuddyList then
+			if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
+				return true
+			else
+				return false
+			end
 		end
 	end
 	
-	--If nothing is triggered, just return false.
-	--return false
+	if owner == "None" or owner == "World" then
+		return true
+	end
+	return false
 end
 hook.Add( "PhysgunPickup", "pickupCheck", PickupCheck )
 
@@ -477,7 +533,9 @@ function PhysUnfreezeCheck ( ply, ent, physobj )
 	--get the entity we're looking at, do the same checks as when doing pickup
 	--local ent = ply:GetEyeTrace().Entity
 	
+	local plUID = PNRP:GetUID( ply )
 	local owner = ent:GetNWString( "Owner", "None" )
+	local ownerUID = ent:GetNWString( "Owner_UID", "None" )
 	
 	local playerPos = ply:GetShootPos()
 	local entPos = ent:GetPos()
@@ -486,10 +544,32 @@ function PhysUnfreezeCheck ( ply, ent, physobj )
 	if myDistance > 300 then return false end
 	if owner == "Unownable" then return false end
 	--if owner == "None" or owner == "World" then return true end
-	if ply:Nick() == owner then return true end
+	if plUID == ownerUID then return true end
+	if ent.GetPlayer and type(ent.GetPlayer) == "function" then
+		if ply == ent:GetPlayer() then return true end
+	end
 	
-	--If nothing is triggered, just return false.
-	--return false
+	--if owner == "None" or owner == "World" then return true end
+	
+	--Checks buddy system
+	local ownerEnt = ent:GetNWEntity( "ownerent", NullEntity() )
+	if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt:IsValid() then
+		ownerEnt = ent:GetPlayer() or NullEntity()
+	end
+	if ownerEnt:IsValid() then
+		if ownerEnt.PropBuddyList then
+			if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
+				return true
+			else 
+				return false
+			end
+		end
+	end
+	
+	if owner == "None" or owner == "World" then
+		return true
+	end
+	return false
 end
 hook.Add("CanPlayerUnfreeze", "PhyUnfreezeCheck", PhysUnfreezeCheck)
 
@@ -498,7 +578,7 @@ function ToolCheck( ply, tr, toolmode )
 	
 	if (not ent:IsValid()) and (not ent:IsWorld()) then return false end
 
-	--If player is admin
+	--If player is admin (Admin Touch All overide)
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 		return true
 	end
@@ -509,27 +589,42 @@ function ToolCheck( ply, tr, toolmode )
 			return false 
 		end
 	end
-	--ply:ChatPrint(tostring(toolmode))
-	local searchPos
 	
+	local searchPos
+	--Blocks weapons
 	if string.find(ent:GetClass(), "ep_") == 2 then
 		return false
 	end
-	
+	--Blocks Func Ents
 	if string.find(ent:GetClass(), "unc_") == 2 then
 		return false
 	end
-	
+	--Blocks NPCs and restricts use on turrets
 	if string.find(ent:GetClass(), "pc_") == 2 then
 		if string.find(tostring(ent:GetClass()),"turret") then
 			if toolmode == "weld" or toolmode == "weld_ez" 
 			  or toolmode == "easy_precision" or toolmode == "nocollide" then
-				
 			else
 				return false
 			end
 		else
 			return false
+		end
+	end
+	
+	--Restrics certin tools on vehicles
+	local plyTool = ply:GetActiveWeapon( )
+	if ent:IsVehicle() then
+		if toolmode == "nocollide_world" or toolmode == "AdvBallsocket" 
+			or toolmode == "ballsocket_adv" or toolmode == "ballsocket_ez" then
+			ply:ChatPrint("Tool not allowed on this.")
+			return false
+		end
+		if toolmode == "nocollide" then
+			if( ply:KeyDown( IN_ATTACK2 ) ) then
+				ply:ChatPrint("No-collide all not allowed on this.")
+				return false
+			end
 		end
 	end
 	
@@ -551,21 +646,65 @@ function ToolCheck( ply, tr, toolmode )
 		return false
 	end
 	
+	--Checks ownership
+	local plUID = PNRP:GetUID( ply )
 	local owner = ent:GetNWString( "Owner", "None" )
+	local ownerUID = ent:GetNWString( "Owner_UID", "None" )
 	if owner == "Unownable" then return false end
-	if owner != ply:Nick() then 
-		if owner != "None" then
-			ply:ChatPrint("You do not own this.")
-			return false 
+	
+	
+	local IsBuddy = false
+	
+	--Checks buddy system
+	local ownerEnt = ent:GetNWEntity( "ownerent", NullEntity() )
+	if not ent:IsWorld() then
+		if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt:IsValid() then
+			ownerEnt = ent:GetPlayer() or NullEntity()
+		end
+		if ownerEnt:IsValid() then
+			if ownerEnt.PropBuddyList and ownerEnt != ply then
+				if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
+					IsBuddy = true
+				else 
+					IsBuddy = false
+				end
+			end
+		end
+	end
+	
+	if not IsBuddy then
+		if ownerUID != plUID then 
+			if owner != "World" then
+				if owner != "None" then
+					ply:ChatPrint("You do not own this.")
+					return false 
+				elseif ent.GetPlayer and type(ent.GetPlayer) == "function" then
+					if ent:GetPlayer():IsValid() then
+						if ent:GetPlayer() ~= ply then
+							ply:ChatPrint("You do not own this.")
+							return false 
+						end
+					end
+				end
+			elseif ent.GetPlayer and type(ent.GetPlayer) == "function" then
+				if ent:GetPlayer():IsValid() then
+					if ent:GetPlayer() ~= ply then
+						ply:ChatPrint("You do not own this.")
+						return false 
+					end
+				end
+			end
 		end
 	end
 	
 	if toolmode == "colour" then
 		if ent:IsWorld() then return false end
 		if ent:IsPlayer() then return false end
-		if owner != ply:Nick() then
-			ply:ChatPrint("You do not own this.")
-			return false
+		if not IsBuddy then
+			if ownerUID != plUID then
+				ply:ChatPrint("You do not own this.")
+				return false
+			end
 		end
 	end	
 	
@@ -608,11 +747,7 @@ function ToolCheck( ply, tr, toolmode )
 	--Restricts most tools on items in the item base
 	local DoToolCheck = false
 	local myClass = ent:GetClass()
-	-- Removed and depricated.  Damn seats were too buggy...
-	-- --Checks for weapon seats
-	-- if ent:GetClass() == "prop_vehicle_prisoner_pod" then
-		-- myClass = "weapon_seat"
-	-- end
+
 	--If prop_physics then check by model
 	if myClass == "prop_physics" then
 		local myModel = ent:GetModel()
@@ -632,6 +767,11 @@ function ToolCheck( ply, tr, toolmode )
 		   then 
 			return false
 		end
+	end
+	
+	--if owner == "None" or owner == "World" then return true end
+	if owner == "None" or owner == "World" then
+		return true
 	end
 end
 hook.Add( "CanTool", "ToolCheck", ToolCheck )

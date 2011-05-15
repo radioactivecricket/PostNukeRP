@@ -6,6 +6,7 @@ function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
 	local Count = math.Round(decoded[2])
 	local tr = ply:TraceFromEyes(200)
 	local pos = tr.HitPos
+	local plUID = PNRP:GetUID( ply )
 	for itemname, item in pairs(PNRP.Items) do
 		if tostring( ItemID ) == itemname then
 			local allowed = false
@@ -75,7 +76,10 @@ function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
 						ent:SetPos(pos)
 						ent:SetNWString("itemtype", item.ID)
 						ent:SetNWInt("amount", Count)
-						ent:SetNWString("Owner", ply:Nick())
+						--ent:SetNWString("Owner", ply:Nick())
+						--ent:SetNWString("Owner_UID", plUID)
+						--ent:SetNWEntity( "ownerent", ply )
+						PNRP.SetOwner(ply, ent)
 						ent:Spawn()
 						ply:EmitSound(Sound("items/ammo_pickup.wav"))
 					end )
@@ -99,6 +103,7 @@ function PNRP.DropBulkCrate( ply, handler, id, encoded, decoded)
 	local Count = math.Round(decoded[2])
 	local tr = ply:TraceFromEyes(200)
 	local pos = tr.HitPos
+	local plUID = PNRP:GetUID( ply )
 	for itemname, item in pairs(PNRP.Items) do
 		if tostring( ItemID ) == itemname then
 			local BulkCreate = PNRP.TakeFromInventoryBulk( ply, item.ID, Count )
@@ -108,7 +113,10 @@ function PNRP.DropBulkCrate( ply, handler, id, encoded, decoded)
 				ent:SetPos(pos)
 				ent:SetNWString("itemtype", item.ID)
 				ent:SetNWInt("amount", Count)
-				ent:SetNWString("Owner", ply:Nick())
+				--ent:SetNWString("Owner", ply:Nick())
+				--ent:SetNWString("Owner_UID", plUID)
+				--ent:SetNWEntity( "ownerent", ply )
+				PNRP.SetOwner(ply, ent)
 				ent:Spawn()
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
 			else
@@ -142,9 +150,10 @@ function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
 				end
 				--Spawns the entity
 				ent:SetPos(pos)
-				ent:SetNWString("itemtype", item.ID)
-				ent:SetNWInt("amount", Count)
-				ent:SetNWString("Owner", ply:Nick())
+				--ent:SetNWString("itemtype", item.ID)
+				--ent:SetNWInt("amount", Count)
+				--ent:SetNWString("Owner", ply:Nick())
+				PNRP.SetOwner(ply, ent)
 				ent:Spawn()
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
 			else
@@ -226,6 +235,7 @@ end
 concommand.Add( "pnrp_buildItem", GM.BuildItem, q)
 
 function PNRP.DropSpawn( ply, ID, q )
+	local plUID = PNRP:GetUID( ply )
 	for itemname, item in pairs(PNRP.Items) do
 		if tostring( ID ) == itemname then
 			local tr = ply:TraceFromEyes(200)
@@ -292,8 +302,10 @@ function PNRP.DropSpawn( ply, ID, q )
 					
 					ent:Spawn()
 					ent:Activate()
-					ent:SetNetworkedString("Owner", ply:Nick())
-					ent:SetNWEntity( "ownerent", ply )
+					--ent:SetNetworkedString("Owner", ply:Nick())
+					--ent:SetNetworkedString("Owner_UID", plUID)
+					--ent:SetNWEntity( "ownerent", ply )
+					PNRP.SetOwner(ply, ent)
 					PNRP.TakeFromInventory( ply, data.ID )
 					PNRP.AddWorldCache( ply, data.ID )
 				end	
@@ -372,8 +384,9 @@ function PNRP.DropCarSpawn( ply, ID, q )
 					
 					ent:Spawn()
 					ent:Activate()
-					ent:SetNetworkedString("Owner", ply:Nick())
-					ent:SetNWEntity( "ownerent", ply )
+					--ent:SetNetworkedString("Owner", ply:Nick())
+					--ent:SetNWEntity( "ownerent", ply )
+					PNRP.SetOwner(ply, ent)
 					PNRP.TakeFromCarInventory( ply, data.ID )
 					PNRP.AddWorldCache( ply, data.ID )
 				end
@@ -391,6 +404,7 @@ function PNRP.Salvage( ply, command, arg )
 	local ItemID
 	local allowed = false
 	local playerNick = ply:Nick()
+	local plUID = PNRP:GetUID( ply )
 	
 	if tostring(command) == "pnrp_dosalvage"  or tostring(command) == "pnrp_docarsalvage" then
 		ItemID = arg[1]
@@ -399,7 +413,8 @@ function PNRP.Salvage( ply, command, arg )
 		local tr = ply:TraceFromEyes(400)
 		ent = tr.Entity
 
-		if ent:GetNetworkedString("Owner") == playerNick then
+--		if ent:GetNetworkedString("Owner") == playerNick then
+		if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
 			allowed = true
 		else
 			allowed = false
@@ -452,7 +467,7 @@ function PNRP.Salvage( ply, command, arg )
 				end
 			end
 			
-			ply:ChatPrint("You have salvaged: "..tostring(scrap).." Scrap "..tostring(smallparts).." Small Parts and"..tostring(chemicals).." Chemicals")
+			ply:ChatPrint("You have salvaged: "..tostring(scrap).." Scrap, "..tostring(smallparts).." Small Parts and "..tostring(chemicals).." Chemicals")
 		end
 	else
 	

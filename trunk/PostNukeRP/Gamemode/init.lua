@@ -12,6 +12,24 @@ local EntityMeta = FindMetaTable("Entity")
 
 local firstSpawn = true
 
+--Add required resources
+function AddDir(dir) // recursively adds everything in a directory to be downloaded by client
+	local list = file.FindDir("../"..dir.."/*")
+	for _, fdir in pairs(list) do
+		if fdir != ".svn" then // don't spam people with useless .svn folders
+			AddDir(dir.."/"..fdir)
+		end
+	end
+ 
+	for k,v in pairs(file.Find("../"..dir.."/*")) do
+		resource.AddFile(dir.."/"..v)
+	end
+end
+
+AddDir("models/Zed")
+AddDir("materials/models/Zed/Male")
+AddDir("sound/runner")
+
 --base include
 for k, v in pairs(file.FindInLua("PostNukeRP/gamemode/base/*.lua")) do
 	include("base/"..v)
@@ -29,7 +47,6 @@ for k, v in pairs( file.FindInLua( "PostNukeRP/gamemode/vgui/*.lua" ) ) do
 	AddCSLuaFile("vgui/"..v)
 end
 
-
 for k, v in pairs( file.FindInLua( "PostNukeRP/gamemode/items/*.lua" ) ) do
 	include("items/"..v)
 end
@@ -46,7 +63,7 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	ply.Resources = {}
 	ply.Skills = {}
 	
-	self.LoadCharacter( ply )
+	--self.LoadCharacter( ply )
 	
 	ply:GetTable().LastHealthUpdate = 0
 	ply:GetTable().LastEndUpdate = 0
@@ -55,23 +72,37 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	ply:GetTable().Hunger = 100
 	ply:GetTable().IsAsleep = false
 	
+	--[[
 	local tbl = { }
 	
 	
-	
 	--Loads Weapons from Character's Save File
-	timer.Create(tostring(ply:UniqueID()), 6, 1, function()  
-	    self.LoadWeaps( ply )
-	    
-	    self.LoadStatus( ply )
-	    	
-	    ply:IncResource("Scrap",0)
+	local timerID = tostring(math.random(1,9999999))
+	timer.Create( timerID, 6, 1, LoadingFunction, ply, timerID, self)
+	]]--
+
+end --End the "when player first joins server and spawns" function
+
+--Move it to it's own function.
+function LoadingFunction( ply, handle, id, encoded, decoded )
+	local GM = GAMEMODE
+	if ply:IsValid() then
+		ply.HasLoaded = true
+		ply:SetNWBool( "HasLoaded", true )
+		--Sets the players Unique ID to them for faster access.
+		ply:SetNetworkedString("UID", ply:UniqueID())
+		ply.PropBuddyList = ply.PropBuddyList or {}
+		GM.LoadWeaps( ply )
+		
+		GM.LoadStatus( ply )
+			
+		ply:IncResource("Scrap",0)
 		ply:IncResource("Small_Parts",0)
 		ply:IncResource("Chemicals",0)
 		
 		PNRP.ReturnWorldCache( ply )
 		
-		Msg("Load Timer run for "..ply:Nick().."\n")
+		ErrorNoHalt("Load Timer run for "..ply:Nick().."  ()\n")
 		ply:ChatPrint("Welcome to the Wasteland, Press F1 for Help!")
 		
 		ConVarExists("pnrp_classChangePay")
@@ -79,6 +110,9 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		ConVarExists("pnrp_exp2Level")
 		ConVarExists("pnrp_adminNoCost")
 		ConVarExists("pnrp_propPay")
+		
+		ply:UnSpectate()
+		ply:Spawn()
 		
 		--Added this to fix issue where clients would not have the correct setting.
 		tbl = 
@@ -90,16 +124,32 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 		RunConsoleCommand("pnrp_voiceLimit",tostring(tbl.VoiceLimiter))
 		RunConsoleCommand("pnrp_propPay",tostring(tbl.PropPay))
 		RunConsoleCommand("pnrp_propCost",tostring(tbl.PropCost))
-	end)
-	
+	else
+		ErrorNoHalt("Load timer hit Null Entity (), retrying in 3 seconds.\n")
+		-- timer.Adjust( timerID, 3, 1, LoadingFunction, ply, timerID, gmvar )
+		-- timer.Start( timerID )
+	end
+end
+datastream.Hook( "loadPlayer", LoadingFunction );
+
+
+function GM:PlayerSpawn( ply )
+
+	if not ply.HasLoaded then
+		ply:ConCommand( "pnrp_loadin" )
 		
+		local spawnPoints = ents.FindByClass("info_player_start")
+			table.Add(spawnPoints,ents.FindByClass("info_player_terrorist"))
+			table.Add(spawnPoints,ents.FindByClass("info_player_counterterrorist"))
+	
+		ply:StripWeapons()
+		ply:Spectate(OBS_MODE_CHASE)
+		ply:SpectateEntity(table.GetFirstValue(spawnPoints))
+		return
+	end
 
-end --End the "when player first joins server and spawns" function
-
-function GM:PlayerSpawn( ply )  //What happens when the player spawns
- 
-    self.BaseClass:PlayerSpawn( ply )   // Lines 12 through 18 are all fixes to the sandbox glitch. Don't change
-										// them unless you know what you're doing.
+    self.BaseClass:PlayerSpawn( ply )   
+	
     ply:SetGravity( 1 )  
 	--ply:SetNetworkedInt("Endurance", 100)
  
@@ -127,18 +177,36 @@ function GM:PlayerSpawn( ply )  //What happens when the player spawns
 	ply:IncResource("Scrap",0)
 	ply:IncResource("Small_Parts",0)
 	ply:IncResource("Chemicals",0)
- 
+	
+	if !ply:GetTable().SleepGodCheck then
+		ply:ChatPrint("Temp God Enabled.")
+		ply:GodEnable()
+	
+		local timerID = tostring(math.random(1,9999999))
+		timer.Create( timerID.."god", 15, 1, function()
+			ply:GodDisable()
+			ply:ChatPrint("Temp God Dissabled.")
+		end )
+	end
 end
 
 function GM:PlayerDisconnected(ply)
 	
-	self.SaveCharacter(ply)
+	local plUID = tostring(ply:GetNetworkedString( "UID" , "None" ))
+	if plUID == "None" then
+		plUID = ply:UniqueID()
+	end
+	
+	if ply.HasLoaded then
+		self.SaveCharacter(ply)
+	end
 	PNRP.GetAllCars( ply )
 	PNRP.GetAllTools( ply )
 	
 	local DoorList = PNRP.ListDoors( ply )
 	for k, v in pairs(DoorList) do
 		v:SetNetworkedString("Owner", "World")
+		v:SetNetworkedString("Owner_UID", "None")
 		v:Fire("unlock", "", 0)
 	end
 	SK_Srv.OnDisc_Doors( ply )
@@ -159,9 +227,10 @@ function GM:PlayerDisconnected(ply)
 		end
 		
 		if !PlayerOnCheck then
-			local OwnedList = PNRP.ListOwnedItems( TMPPlayerName )
+			local OwnedList = PNRP.ListOwnedItems( plUID )
 			for k, v in pairs(OwnedList) do
 				v:SetNetworkedString("Owner", "World")
+				v:SetNetworkedString("Owner_UID", "None")
 			end
 			Msg("Reset Owned Items for "..TMPPlayerName.."\n")
 		end
@@ -286,8 +355,6 @@ function classChangeCost(ply, Recource)
 	    end
 	end
 end
-
-
 
 ----Code Below This Line----
 
@@ -670,75 +737,6 @@ end
 concommand.Add( "pnrp_GetCar", PNRP.GetCar )
 PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 
---Some ownership stuff below.
-function PNRP.SetOwnership( ply )
-	local tr = ply:TraceFromEyes(200)
-	local ent = tr.Entity
-	--Added to remove the Null Entity error
-	if tostring(ent) == "[NULL Entity]" or ent == nil then return end
-	local DoorsOwned = table.Count(PNRP.ListDoors(ply))
-	
-	if ent:IsWorld() then return end
-	if ent:IsPlayer() then return end
-	
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
-		
-		if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
-			ply:ConCommand("pnrp_removeowner")
-		else
-			ent:SetNetworkedString("Owner", ply:Nick())
-			ent:SetNWEntity( "ownerent", ply )
-			ply:ChatPrint("Admin override of ownership.")
-		end
-		
-		return
-	end
-		
-	if tostring(ent:GetNetworkedString( "pnrp_spawndoor" , "None" )) == "1" then
-		ply:ChatPrint("You can not own this door.")
-		return
-	end
-	
-	if tostring(ent:GetNetworkedString( "Owner" , "None" )) == ply:Nick() then
-		ply:ConCommand("pnrp_removeowner")
-	else
-		if not ent:IsDoor() then
-			ply:ConCommand("pnrp_addowner")
-		end
-		if DoorsOwned < GetConVarNumber("pnrp_maxOwnDoors") and ent:IsDoor() then
-			ply:ConCommand("pnrp_addowner")
-		elseif ent:IsDoor() then
-			ply:ChatPrint("You own too many doors!")
-		end
-	end
-end
-concommand.Add( "pnrp_setOwner", PNRP.SetOwnership )
-PNRP.ChatConCmd( "/setowner", "pnrp_setOwner" )
-
-function PNRP.ListDoors( ply )
-	local DoorEntTbl = {}
-	
-	for k, v in pairs(ents.GetAll()) do
-		if v:IsDoor() and v:GetNetworkedString( "Owner" , "None" ) == ply:Nick() then
-			table.insert(DoorEntTbl, v)
-		end
-	end
-	
-	return DoorEntTbl
-end
-
-function PNRP.ListOwnedItems( Nick )
-	local OwnedEntTbl = {}
-	
-	for k, v in pairs(ents.GetAll()) do
-		if !v:IsDoor() and v:GetNetworkedString( "Owner" , "None" ) == Nick then
-			table.insert(OwnedEntTbl, v)
-		end
-	end
-	
-	return OwnedEntTbl
-end
-
 --This is an override to hide death notices.
 function GM:PlayerDeath( Victim, Inflictor, Attacker )  
 
@@ -752,5 +750,21 @@ end
 function GM:OnNPCKilled( victim, killer, weapon )
 	-- May do some stuff here later.
 end
+
+--Hook for NPC damage
+function scaleZombieDamage( npc, hitgroup, dmginfo )
+	if npc:GetClass() == "npc_littlezombie" then
+		if hitgroup == HITGROUP_HEAD then
+			dmginfo:ScaleDamage( 5 )
+		elseif hitgroup == HITGROUP_CHEST then
+			dmginfo:ScaleDamage( 1 )
+		else
+			dmginfo:ScaleDamage( 0.5 )
+		end
+	end
+end
+hook.Add("ScaleNPCDamage","ScaleZombieDamage",scaleZombieDamage)
+
+PNRP.ChatConCmd( "/setowner", "pnrp_setOwner" )
 
 --EOF

@@ -13,7 +13,7 @@ SWEP.DrawCrosshair 		= false
 
 SWEP.Base 				= "weapon_base"
 
-SWEP.Primary.Sound 			= Sound("Weapon_SMG1.Single")
+SWEP.Primary.Sound 			= Sound("Weapon_FAMAS.Single")
 SWEP.Primary.Recoil 		= 0.8
 SWEP.Primary.Damage 		= 12
 SWEP.Primary.NumShots 		= 1

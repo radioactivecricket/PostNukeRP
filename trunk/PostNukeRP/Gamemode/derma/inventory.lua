@@ -1,11 +1,14 @@
 --Build Inventory Window
 
---MyInventory = {}
 local CurCarInvWeight
 local inventory_frame
+local inventoryFrameCK = false
 
---function GM.inventory_window(ply)
 function GM.inventory_window( handler, id, encoded, decoded )
+	--Stops the multi window exploit
+	if inventoryFrameCK then return end 
+	inventoryFrameCK = true
+	
 	local MyInventory = decoded["inventory"]		
 	local CurWeight = decoded["playerweight"]	
 	CurCarInvWeight = decoded["carweight"]
@@ -52,6 +55,12 @@ function GM.inventory_window( handler, id, encoded, decoded )
 			InvWeight:SetText("Current Weight: "..tostring(CurWeight).."/"..tostring(maxWeight))
 --			InvWeight:SetColor(Color( 0, 0, 0, 255 ))
 			InvWeight:SizeToContents() 
+			
+	function inventory_frame:Close()                  
+		inventoryFrameCK = false                  
+		self:SetVisible( false )                  
+		self:Remove()          
+	end 
 end
 
 function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInventory)
@@ -214,6 +223,45 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 
 end
 datastream.Hook( "pnrp_OpenInvWindow", GM.inventory_window )
+
+function PNRP.InvToCarBlk(item, carMdl, count)
+	local ply = LocalPlayer()
+	
+	local weight = CurCarInvWeight + item.Weight
+	local weightCap
+	
+	
+--	weightCap = PNRP.Items[ItemID].Weight
+	
+--	if weight <= weightCap then
+--		RunConsoleCommand("pnrp_addtocarinentory",item.ID)
+--		parent_frame:Close()
+--	else
+--		parent_frame:Close()
+--		ply:ChatPrint("You're car trunk is full.")
+--	end
+	
+	local BlkToCar_frame = vgui.Create( "DFrame" )
+		BlkToCar_frame:SetSize( 500, 200 ) --Set the size
+		BlkToCar_frame:SetPos(ScrW() / 2 - eq_frame:GetWide() / 2, ScrH() / 2 - eq_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
+		BlkToCar_frame:SetTitle( "Bulk to Car Menu" ) --Set title
+		BlkToCar_frame:SetVisible( true )
+		BlkToCar_frame:SetDraggable( true )
+		BlkToCar_frame:ShowCloseButton( true )
+		BlkToCar_frame:MakePopup()
+		
+		local BlkToCar_Icon = vgui.Create("SpawnIcon", BlkToCar_frame)
+			BlkToCar_Icon:SetModel(carMdl)
+			BlkToCar_Icon:SetPos(20, 20)
+			BlkToCar_Icon:SetToolTip( nil )
+		
+		local BlkToCar_DPanel = vgui.Create("DLabel", BlkToCar_frame)
+			BlkToCar_DPanel:SetPos(90, 20)
+			BlkToCar_DPanel:SetText("Select amount to place in the Car.")
+			BlkToCar_DPanel:SetColor( Color( 255, 255, 255, 255 ) )
+			BlkToCar_DPanel:SizeToContents() 
+			BlkToCar_DPanel:SetContentAlignment( 5 )
+end
 
 function GM.initInventory(ply)
 

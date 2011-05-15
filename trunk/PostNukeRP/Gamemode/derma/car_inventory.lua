@@ -1,12 +1,13 @@
---Build Inventory Window
-
---MyCarInventory = {}
+--Build Car Inventory Window
 
 local inventory_frame
--- local PropertySheet = vgui.Create( "DPropertySheet" )
+local carFrameCK = false
 
---function GM.car_inventory_window(ply)
 function GM.car_inventory_window( handler, id, encoded, decoded )
+	--Stops the multi window exploit
+	if carFrameCK then return end 
+	carFrameCK = true
+	
 	local MyCarInventory = decoded[1]		
 	local CurCarInvWeight = decoded[2]	
 	local ply = LocalPlayer()			 		
@@ -48,6 +49,13 @@ function GM.car_inventory_window( handler, id, encoded, decoded )
 			InvWeight:SetText("Current Weight: "..tostring(CurCarInvWeight).."/"..tostring(maxCarWeight))
 --			InvWeight:SetColor(Color( 0, 0, 0, 255 ))
 			InvWeight:SizeToContents() 
+			
+	function inventory_frame:Close()                  
+		carFrameCK = false                  
+		self:SetVisible( false )                  
+		self:Remove()          
+	end 
+
 end
 
 function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyCarInventory)

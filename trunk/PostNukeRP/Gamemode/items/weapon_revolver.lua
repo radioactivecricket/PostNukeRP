@@ -22,7 +22,7 @@ WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "357"
 
 function ITEM.Use( ply )
-	local WepName = "weapon_real_cs_desert_eagle"
+	local WepName = "weapon_pnrp_revolver"
 	local gotWep = false
 	for k, v in pairs(ply:GetWeapons()) do
 		if v:GetClass() == WepName then gotWep = true end

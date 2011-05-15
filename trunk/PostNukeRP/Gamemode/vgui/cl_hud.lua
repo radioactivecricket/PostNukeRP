@@ -596,38 +596,15 @@ function DrawTopHud()
 	
 	hudPos = hudPos + 120
 	
-	local vlimit
-	local vlimitColor
-	if GetConVarNumber("pnrp_voiceLimit") == 1 then
-		vlimit = "On"
-		vlimitColor = Color( 0, 255, 0, 255 )
-	else
-		vlimit = "Off"
-		vlimitColor = Color( 255, 0, 0, 255 )
-	end
+	local vtime
+	vtime = os.date("Time: %X")
 	
-	surface.SetTextColor( vlimitColor )
+	surface.SetTextColor( Color( 255, 255, 255, 255 ) )
 	surface.SetFont( "CenterPrintText" )
 	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Voice Limiter:  "..vlimit )
+	surface.DrawText( vtime )
 	
 	hudPos = hudPos + 120
-	
-	local pcost
-	if GetConVarNumber("pnrp_propPay") == 1 then
-		pcostColor = Color( 0, 255, 0, 255 )
-		pcost = "On @ "..GetConVarNumber("pnrp_propCost").."%"
-	else
-		pcostColor = Color( 255, 0, 0, 255 )
-		pcost = "Off"
-	end
-	
-	surface.SetTextColor( pcostColor )
-	surface.SetFont( "CenterPrintText" )
-	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Prop Cost:  "..pcost )
-	
-		hudPos = hudPos + 145
 	
 	local trace = {}
 	trace.start = person:EyePos()
@@ -640,7 +617,18 @@ function DrawTopHud()
 	surface.SetTextColor( 255, 255, 255, 255 )
 	surface.SetFont( "CenterPrintText" )
 	surface.SetTextPos( hudPos, 3 )
-	surface.DrawText( "Owner:  "..ent:GetNWString( "Owner", "None" ))
+	
+	local OwnerNick = ent:GetNWString( "Owner", "None" )
+	
+	if OwnerNick == "None" then
+		if ent.GetPlayer and type(ent.GetPlayer) == "function" then
+			local playGetNick = ent:GetPlayer()
+			if playGetNick:IsValid() then
+				OwnerNick = playGetNick:Nick() 
+			end
+		end
+	end
+	surface.DrawText( "Owner:  "..OwnerNick)
 	
 	--Quick Key Referance
 	local hudBPos = 15
@@ -652,7 +640,7 @@ function DrawTopHud()
 	surface.SetTextColor( 255, 255, 255, 255 )
 	surface.SetFont( "CenterPrintText" )
 	surface.SetTextPos( hudBPos + 25, rfBarY + 3 )
-	surface.DrawText( "Tab: Main Menu   F1: Help   F2: Pickup   F3: Inventory   F4: Shop   F5: Screenshot   F12: Take/Remove Ownership " )
+	surface.DrawText( "Tab: Main Menu   F1: Help   F2: Pickup   F3: Inventory   F4: Shop   F5: Screenshot   F11: Take/Remove Ownership " )
 	
 	
 end

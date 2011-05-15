@@ -166,7 +166,7 @@ function ENT.GrubUpdate( ent )
 		local chemnug_ent = ents.Create( "msc_chemnug" )
 		chemnug_ent:SetModel("models/grub_nugget_medium.mdl")
 		chemnug_ent:SetAngles(Angle(0,0,0))
-		chemnug_ent:SetPos(ent:LocalToWorld(Vector(30,0,10)))
+		chemnug_ent:SetPos(ent:LocalToWorld(Vector(30+math.random(0,10),math.random(-5,5),10)))
 		chemnug_ent:Spawn()
 	end
 	

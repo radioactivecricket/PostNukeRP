@@ -2,9 +2,9 @@ local ITEM = {}
 local WEAPON = {}
 
 
-ITEM.ID = "wep_percrifle"
+ITEM.ID = "wep_precrifle"
 
-ITEM.Name = "Percision Sniper Rifle"
+ITEM.Name = "Precision Sniper Rifle"
 ITEM.ClassSpawn = "Engineer"
 ITEM.Scrap = 50
 ITEM.Small_Parts = 100

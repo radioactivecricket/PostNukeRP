@@ -24,7 +24,8 @@ function ITEM.Create( ply, class, pos )
 	ent:SetPos(pos)
 	ent:Spawn()
 	ent:Activate()
-	ent:SetNetworkedString("Owner", ply:Nick())
+	--ent:SetNetworkedString("Owner", ply:Nick())
+	PNRP.SetOwner(ply, ent)
 	
 	PNRP.AddWorldCache( ply,ITEM.ID )
 end

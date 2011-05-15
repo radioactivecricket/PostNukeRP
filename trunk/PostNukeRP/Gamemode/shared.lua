@@ -1,4 +1,4 @@
-GM.Name 	= "PostNukeRP v47" --Set the gamemode name
+GM.Name 	= "PostNukeRP v48" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError(Gmod Addict)" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://radioactivecricket.com" --Set the author website
@@ -136,6 +136,15 @@ end
 for k, v in pairs( file.FindInLua( "PostNukeRP/gamemode/items/*.lua" ) ) do
 	include("items/"..v)
 	if (SERVER) then AddCSLuaFile("items/"..v) end
+end
+
+function PNRP:GetUID( ply )
+	local plUID = tostring(ply:GetNetworkedString( "UID" , "None" ))
+	if plUID == "None" then
+		plUID = ply:UniqueID()
+	end
+	
+	return plUID
 end
 
 function PNRP.FindItemID( class )
