@@ -11,20 +11,26 @@ function ENT:Initialize()
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
 	self.Community = self.Entity:GetNWString("community_owner")
+	self.CommunityName = self.Entity:GetNWString("communityName")
 	self.Enabled = false
 	self.BreakInTimer = 60
 	self.BreakingIn = nil
 	self.Repairing = nil
-	self.Entity:SetColor(255, 255, 255, 155)
+	
+	self:SetRenderMode( 1 )
+	self.Entity:SetColor(Color(50, 255, 50, 55))
+	
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_WORLD)
 	
 	local position = self.Entity:GetPos()
 	
 	timer.Simple(10, function()
-		self.Entity:SetColor(255, 255, 255, 255)
+		self.Entity:SetColor(Color(255, 255, 255, 255))
 		self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
+		self.Entity:GetPhysicsObject():EnableMotion(false)
+		self.Entity:SetMoveType(MOVETYPE_NONE)
 
-		self.Entity:SetPos(position)
+		--self.Entity:SetPos(position)
 		self.Enabled = true
 	end )
 end
@@ -44,12 +50,19 @@ function ENT:Use( activator, caller )
 				local communityTbl = GetCommunityTbl(self.Community)
 				if communityTbl == nil then return end
 				
-				local playerTbl = { }
-				local ILoc = PNRP.GetInventoryLocation( activator )
-				if file.Exists( ILoc ) then 
-					playerTbl = util.KeyValuesToTable(file.Read(ILoc))
-				end
-				datastream.StreamToClients( activator, "locker_menu",{ ["locker"] = self, ["health"] = math.Round((self.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
+--				local playerTbl = { }
+--				local ILoc = PNRP.GetInventoryLocation( activator )
+--				if file.Exists( ILoc ) then 
+--					playerTbl = util.KeyValuesToTable(file.Read(ILoc))
+--				end
+				--datastream.StreamToClients( activator, "locker_menu",{ ["locker"] = self, ["health"] = math.Round((self.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
+				net.Start("locker_menu")
+					net.WriteEntity(activator)
+					net.WriteEntity(self)
+					net.WriteDouble(math.Round((self.BreakInTimer / 60) * 100))
+					net.WriteTable(communityTbl["inv"])
+					net.WriteTable(PNRP.Inventory( activator ))
+				net.Send(activator)
 				
 				-- umsg.Start("locker_menu", activator)
 					-- umsg.Entity(self)
@@ -68,13 +81,17 @@ function ENT:Use( activator, caller )
 		end
 	end
 end
+util.AddNetworkString( "locker_menu" )
 
-function TakeItems( ply, handler, id, encoded, decoded )
-	local locker = decoded["locker"]
+function TakeItems( )
+	local ply = net.ReadEntity()
+	local locker = net.ReadEntity()
+	local Item = net.ReadString()
+	local Amount =  math.Round(net.ReadDouble())
+	--local locker = decoded["locker"]
 	if not locker then return end
-	
-	local Item = decoded["item"]
-	local Amount = math.Round(decoded["amount"])
+	--local Item = decoded["item"]
+	--local Amount = math.Round(decoded["amount"])
 	
 	local communityTbl = GetCommunityTbl(locker.Community)
 	
@@ -84,36 +101,50 @@ function TakeItems( ply, handler, id, encoded, decoded )
 	
 	local weight = PNRP.Items[Item].Weight
 	if PNRP.Items[Item].Type == "vehicle" then weight = 0 end
+	local sumWeight = weight*Amount
 	
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav")
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap")
+		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	
-	local AmntTaken = 0
-	for i = 1, Amount do
-		local expWeight = PNRP.InventoryWeight( ply ) + weight
-		if expWeight <= weightCap then
-			ply:AddToInventory( Item )
-			AmntTaken = AmntTaken + 1
+	local weightCalc = PNRP.InventoryWeight( ply ) + sumWeight
+	if weightCalc <= weightCap then
+		ply:AddToInventory( Item, Amount )
+		ply:EmitSound(Sound("items/ammo_pickup.wav"))
+		
+		SubCommunityItem( locker.Community, Item, Amount )
+	else
+		local weightDiff = weightCalc - weightCap
+		local extra = math.ceil(weightDiff/weight)
+		
+		if extra >= Amount then
+			ply:ChatPrint("You can't carry any of these!")
 		else
-			ply:ChatPrint("You were only able to carry "..tostring(AmntTaken).." of these!")
-			break
+			local taken = Amount - extra
+			
+			ply:AddToInventory( Item, taken )
+			SubCommunityItem( locker.Community, Item, taken )
+			ply:EmitSound(Sound("items/ammo_pickup.wav"))
+			ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
 		end
 	end
-
-	SubCommunityItem( locker.Community, Item, AmntTaken )
 end
-datastream.Hook( "locker_take", TakeItems )
+--datastream.Hook( "locker_take", TakeItems )
+net.Receive( "locker_take", TakeItems )
 
 function PutItems( ply, handler, id, encoded, decoded )
-	local locker = decoded["locker"]
+	local ply = net.ReadEntity()
+	local locker = net.ReadEntity()
+	local Item = net.ReadString()
+	local Amount = math.Round(tonumber(net.ReadString()))
+	--local locker = decoded["locker"]
 	if not locker then return end
 	
-	local Item = decoded["item"]
-	local Amount = math.Round(decoded["amount"])
+	--local Item = decoded["item"]
+	--local Amount = math.Round(decoded["amount"])
 	
 	local Check = PNRP.TakeFromInventoryBulk( ply, Item, Amount )
 	if Check then
@@ -122,10 +153,13 @@ function PutItems( ply, handler, id, encoded, decoded )
 		ply:ChatPrint("You do not have enough of this")
 	end
 end
-datastream.Hook( "locker_put", PutItems )
+--datastream.Hook( "locker_put", PutItems )
+net.Receive( "locker_put", PutItems )
 
 function LockerBreakIn( ply, handler, id, encoded, decoded )
-	local locker = decoded["locker"]
+	local ply = net.ReadEntity()
+	local locker = net.ReadEntity()
+	--local locker = decoded["locker"]
 	if not locker then 
 		-- ply:Freeze(false)
 		ply:SetMoveType(MOVETYPE_WALK)
@@ -149,15 +183,15 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 			end
 			
 			local communityTbl = GetCommunityTbl(locker.Community)
-			datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 30) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
-			-- umsg.Start("locker_menu", ply)
-				-- local communityTbl = GetCommunityTbl(locker.Community)
-				-- umsg.Entity(locker)
-				-- umsg.Long(communityTbl["res"]["Scrap"])
-				-- umsg.Long(communityTbl["res"]["Small_Parts"])
-				-- umsg.Long(communityTbl["res"]["Chemicals"])
-				-- umsg.Short( math.Round((locker.BreakInTimer / 30) * 100) )
-			-- umsg.End()
+			--datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 30) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
+			net.Start("locker_menu")
+				net.WriteEntity(ply)
+				net.WriteEntity(locker)
+				net.WriteDouble(math.Round((locker.BreakInTimer / 30) * 100))
+				net.WriteTable(communityTbl["inv"])
+				net.WriteTable(playerTbl)
+			net.Send(ply)
+
 		else
 			-- ply:Freeze(true)
 			ply:SetMoveType(MOVETYPE_NONE)
@@ -192,14 +226,15 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 						playerTbl = util.KeyValuesToTable(file.Read(ILoc))
 					end
 					
-					datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
-					-- umsg.Start("locker_menu", ply)
-						-- umsg.Entity(locker)
-						-- umsg.Long(communityTbl["res"]["Scrap"])
-						-- umsg.Long(communityTbl["res"]["Small_Parts"])
-						-- umsg.Long(communityTbl["res"]["Chemicals"])
-						-- umsg.Short( math.Round((locker.BreakInTimer / 30) * 100) )
-					-- umsg.End()
+					--datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
+					net.Start("locker_menu")
+						net.WriteEntity(ply)
+						net.WriteEntity(locker)
+						net.WriteDouble(math.Round((locker.BreakInTimer / 60) * 100))
+						net.WriteTable(communityTbl["inv"])
+						net.WriteTable(playerTbl)
+					net.Send(ply)
+
 					-- ply:Freeze(false)
 					locker:SetModel("models/props_forest/footlocker01_open.mdl")
 					locker:EmitSound("physics/wood/wood_box_break2.wav",100,100)
@@ -222,10 +257,13 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 		ply:ChatPrint("Someone is already breaking into this locker.")
 	end
 end
-datastream.Hook( "locker_breakin", LockerBreakIn )
+--datastream.Hook( "locker_breakin", LockerBreakIn )
+net.Receive( "locker_breakin", LockerBreakIn )
 
-function LockerRepair( ply, handler, id, encoded, decoded )
-	local locker = decoded["locker"]
+function LockerRepair( )
+	local ply = net.ReadEntity()
+	local locker = net.ReadEntity()
+	--local locker = decoded["locker"]
 	if locker.BreakInTimer >= 30 then
 		ply:ChatPrint("This locker is fully repaired!")
 		return
@@ -271,14 +309,14 @@ function LockerRepair( ply, handler, id, encoded, decoded )
 						playerTbl = util.KeyValuesToTable(file.Read(ILoc))
 					end
 					
-					datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
-					-- umsg.Start("locker_menu", ply)
-						-- umsg.Entity(locker)
-						-- umsg.Long(communityTbl["res"]["Scrap"])
-						-- umsg.Long(communityTbl["res"]["Small_Parts"])
-						-- umsg.Long(communityTbl["res"]["Chemicals"])
-						-- umsg.Short( math.Round((locker.BreakInTimer / 30) * 100) )
-					-- umsg.End()
+					--datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
+					net.Start("locker_menu")
+						net.WriteEntity(ply)
+						net.WriteEntity(locker)
+						net.WriteDouble(math.Round((locker.BreakInTimer / 60) * 100))
+						net.WriteTable(communityTbl["inv"])
+						net.WriteTable(playerTbl)
+					net.Send(ply)
 					-- ply:Freeze(false)
 					timer.Stop(ply:UniqueID()..tostring(locker:EntIndex()))
 				else
@@ -295,7 +333,8 @@ function LockerRepair( ply, handler, id, encoded, decoded )
 		ply:ChatPrint("Someone is already repairing this locker.")
 	end
 end
-datastream.Hook( "locker_repair", LockerRepair )
+--datastream.Hook( "locker_repair", LockerRepair )
+net.Receive( "locker_repair", LockerRepair )
 
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value

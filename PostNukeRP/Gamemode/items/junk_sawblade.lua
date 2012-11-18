@@ -18,10 +18,21 @@ ITEM.Model = "models/props_junk/sawblade001a.mdl"
 ITEM.Script = ""
 ITEM.Weight = 7
 
+function ITEM.ToolCheck( p )
+	return true
+end
+
 function ITEM.Use( ply )
 	return true	
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create(class)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetModel(ITEM.Model)
+	ent:SetPos(pos)
+	ent:Spawn()
+end
 
 PNRP.AddItem(ITEM)
 

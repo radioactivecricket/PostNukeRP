@@ -8,19 +8,25 @@ function PNRP.ClassMenu(ply)
 		return
 	end
 	class_Frame = vgui.Create( "DFrame" )
-		class_Frame:SetSize( 700, 500 ) --Set the size
+		class_Frame:SetSize( 710, 510 ) --Set the size
 		class_Frame:SetPos(ScrW() / 2 - class_Frame:GetWide() / 2, ScrH() / 2 - class_Frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 		class_Frame:SetTitle( "Class Selection Menu" ) --Set title
 		class_Frame:SetVisible( true )
 		class_Frame:SetDraggable( true )
 		class_Frame:ShowCloseButton( true )
 		class_Frame:MakePopup()
+		class_Frame.Paint = function() 
+			surface.SetDrawColor( 50, 50, 50, 0 )
+		end
 		
+		local screenBG = vgui.Create("DImage", class_Frame)
+			screenBG:SetImage( "VGUI/gfx/pnrp_screen_2b.png" )
+			screenBG:SetSize(class_Frame:GetWide(), class_Frame:GetTall())
 		PNRP.buildMenu(class_Frame)
 		
 		local InfoFrame = vgui.Create( "DLabel", class_Frame )
-		InfoFrame:SetPos(10,50)
-		InfoFrame:SetColor(Color( 0, 0, 0, 255 ))
+		InfoFrame:SetPos(85,60)
+		InfoFrame:SetColor(Color( 0, 175, 0, 255 ))
 		local changeCost
 		if GetConVar("pnrp_classChangePay"):GetInt() == 1 then
 			changeCost = "Class change cost is ON and will cost "..GetConVar("pnrp_classChangeCost"):GetInt().."% of your resources." 
@@ -32,8 +38,11 @@ function PNRP.ClassMenu(ply)
 		
 		local PropertySheet = vgui.Create( "DPropertySheet" )
 			PropertySheet:SetParent( class_Frame )
-			PropertySheet:SetPos( 5, 70 )
-			PropertySheet:SetSize( class_Frame:GetWide() - 10 , class_Frame:GetTall() - 80 )
+			PropertySheet:SetPos( 40, 60 )
+			PropertySheet:SetSize( class_Frame:GetWide() - 85 , class_Frame:GetTall() - 80 )
+			PropertySheet.Paint = function() 
+				surface.SetDrawColor( 50, 50, 50, 0 )
+			end
 			
 			local pnlList = vgui.Create("DPanelList", PropertySheet)
 				pnlList:SetPos(10, 10)
@@ -42,7 +51,10 @@ function PNRP.ClassMenu(ply)
 				pnlList:EnableHorizontal(false) 
 				pnlList:SetSpacing(1)
 				pnlList:SetPadding(10)
-			
+			--	pnlList.Paint = function()
+			--		draw.RoundedBox( 8, 0, 0, pnlList:GetWide(), pnlList:GetTall(), Color( 50, 50, 50, 255 ) )
+			--	end
+				
 				local wastelanderPanel = vgui.Create("DPanel")
 				wastelanderPanel:SetTall(75)
 				wastelanderPanel.Paint = function()

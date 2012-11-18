@@ -7,7 +7,13 @@ SWEP.DrawAmmo			= false
 SWEP.DrawCrosshair		= false
 SWEP.WepSelectIcon		= nil
 
+--SWEP.Frequency			= 400
+--SWEP.Power				= "off"
+
+
+
 local function RadioFreq( data )
+	local ply = data:ReadEntity()
 	local frequency = data:ReadString()
 	local freqNumber = tonumber(frequency)
 	
@@ -42,9 +48,25 @@ local function RadioFreq( data )
 		SetButton.DoClick = function ()
 			-- local amount = math.Round(tonumber(amountSlider:GetValue()))
 			-- if amount < 1 then return end
-			datastream.StreamToServer( "setfreq_stream", { ["freq"] = tostring(freqSlider:GetValue()) } )
-			
+			--datastream.StreamToServer( "setfreq_stream", { ["freq"] = tostring(freqSlider:GetValue()) } )
+			--SWEP.Frequency = freqSlider:GetValue()
+			net.Start( "setfreq_stream" )
+				net.WriteEntity(ply)
+				net.WriteString(tostring(freqSlider:GetValue()))		
+			net.SendToServer()
 			freq_frame:Close()
 		end
 end
 usermessage.Hook("radiofreq_select", RadioFreq)
+
+function RecieveFixedFreq( data )
+	local curPly = LocalPlayer()
+	curPly.radioFreq = data:ReadString()
+end
+usermessage.Hook("radiofreq_recieve", RecieveFixedFreq)
+
+function RadioPower( data )
+	local curPly = LocalPlayer()
+	curPly.radioPower = data:ReadBool()
+end
+usermessage.Hook("radiopower_select", RadioPower)

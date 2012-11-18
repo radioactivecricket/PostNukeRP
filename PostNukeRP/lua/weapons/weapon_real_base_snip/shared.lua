@@ -201,7 +201,7 @@ function SWEP:PrimaryAttack()
 	-- Remove 1 bullet from our clip
 	self:TakePrimaryAmmo(1)
 
-	if ((SinglePlayer() and SERVER) or CLIENT) then
+	if ((game.SinglePlayer() and SERVER) or CLIENT) then
 		self.Weapon:SetNetworkedFloat("LastShootTime", CurTime())
 	end
 end

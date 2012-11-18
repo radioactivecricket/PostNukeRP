@@ -1,39 +1,42 @@
 include('shared.lua')
 
-local radarHUD_Switch = "false"
+local radarHUD_Enabled = false
 local radarState = "none"
 local syncedENTIndex
-local radarGPR_Upgrade = "false"
-local syncMaxTime = 60
+local radar_GPR_Enabled = false
+local synchedRadarENT = nil
 
 function ENT:Draw()
 	self.Entity:DrawModel()
 end
 
 function RadarMenu( um )
-	local smallparts = GetResource("Small_Parts")
 	local radarHP = um:ReadShort()
 	local endIndex = um:ReadShort()
 	local radarEnt = um:ReadEntity()
-	local radarGPR = um:ReadString()
 	syncMaxTime = um:ReadShort()
-	local Allowed = "true"
+	
+	local radarGPR = radarEnt:GetNWString("EnabledGPR", false)
+	local radarState = radarEnt:GetNWString("Status", 0)
+	local plyRadarIndex = ply:GetNWString("RadarENTIndex", nil)
+	
+	local Allowed = false
 	local entMSG = "none"
+	
 	ply = LocalPlayer( )
 	local owner = radarEnt:GetNWString( "Owner", "None" )
 	
-	if radarState ~= "none" then
-		if endIndex ~= syncedENTIndex then
-			--ply:ChatPrint("You are allready Synced to another unit.")
-			entMSG = "You are allready Synced to another unit."
-			Allowed = "false"
-			--return
+	if radarState >= 0 then
+		if tostring(plyRadarIndex) ~= "" and plyRadarIndex ~= 0 then
+			if endIndex ~= plyRadarIndex then
+				entMSG = "You are allready Synced to another unit."
+				Allowed = false
+			else 
+				Allowed = true
+			end
+		else
+			Allowed = true
 		end
-	end
-	
-	if owner ~= ply:Nick() then
-		entMSG = "You do not own this unit."
-		Allowed = "false"
 	end
 	
 	local w = 250
@@ -76,21 +79,7 @@ function RadarMenu( um )
 			amtLabel:SetPos(StatusBar:GetWide() - 75, 3 )
 		end
 		
-		if radarGPR == "true" then
-			local GPR_Upgrad = vgui.Create( "DPanel", radar_frame )
-				GPR_Upgrad:SetPos( 155, 100 )
-				GPR_Upgrad:SetSize( 80, 20 )
-				GPR_Upgrad.Paint = function()
-					surface.SetDrawColor( 10, 100, 10, 255 )
-					surface.DrawRect( 0, 0, GPR_Upgrad:GetWide(), GPR_Upgrad:GetTall() )
-				end
-			local UpgradeLabel = vgui.Create("DLabel", GPR_Upgrad)
-				UpgradeLabel:SetColor( Color( 0, 0, 0, 255 ) )
-				UpgradeLabel:SetText( "GPR Installed" )
-				UpgradeLabel:SizeToContents()
-				UpgradeLabel:SetPos( 3, 3 )	
-		else
-			local GPR_Upgrad = vgui.Create( "DPanel", radar_frame )
+		local GPR_Upgrad = vgui.Create( "DPanel", radar_frame )
 				GPR_Upgrad:SetPos( 155, 100 )
 				GPR_Upgrad:SetSize( 80, 20 )
 				GPR_Upgrad.Paint = function()
@@ -102,11 +91,22 @@ function RadarMenu( um )
 				UpgradeLabel:SetText( "GPR Not Found" )
 				UpgradeLabel:SizeToContents()
 				UpgradeLabel:SetPos( 3, 3 )
+		
+		if radarGPR then
+
+			GPR_Upgrad.Paint = function()
+				surface.SetDrawColor( 10, 100, 10, 255 )
+				surface.DrawRect( 0, 0, GPR_Upgrad:GetWide(), GPR_Upgrad:GetTall() )
+			end
+
+			UpgradeLabel:SetColor( Color( 0, 0, 0, 255 ) )
+			UpgradeLabel:SetText( "GPR Installed" )
+
 		end
+
+		if Allowed then
 		
-		if Allowed == "true" then
-		
-			if radarState == "Standby" then
+			if radarState == 1 then
 				if radarEnt:IsOutside() then
 					local RadarButtonSynch = vgui.Create( "DButton" )
 					RadarButtonSynch:SetParent( radar_frame )
@@ -114,8 +114,10 @@ function RadarMenu( um )
 					RadarButtonSynch:SetPos( 10, 75 )
 					RadarButtonSynch:SetSize( 125, 25 )
 					RadarButtonSynch.DoClick = function ()
-						radarState = "Syncing"
-						datastream.StreamToServer( "radar_synching_stream", { radarEnt } )
+						net.Start("RADAR_Synch")
+							net.WriteEntity(ply)
+							net.WriteEntity(radarEnt)
+						net.SendToServer()
 						radar_frame:Close()
 					end
 				else
@@ -125,32 +127,32 @@ function RadarMenu( um )
 					entOMSGLabel:SetText( "Unit must be outside to sync!" )
 					entOMSGLabel:SizeToContents()
 				end
-			elseif radarState == "Ready" then
+			elseif radarState > 0 then
 				local RadarButtonOff = vgui.Create( "DButton" )
 				RadarButtonOff:SetParent( radar_frame )
 				RadarButtonOff:SetText( "Shut Down Radar" )
 				RadarButtonOff:SetPos( 10, 75 )
 				RadarButtonOff:SetSize( 125, 25 )
 				RadarButtonOff.DoClick = function ()
-					radarState = "none"
-					radarHUD_Switch = "false"
-					datastream.StreamToServer( "radar_shutdown_stream", { radarEnt } )
+					net.Start("RADAR_PowerOff")
+						net.WriteEntity(ply)
+						net.WriteEntity(radarEnt)
+					net.SendToServer()
 					radar_frame:Close()
 				end
 			end
 			
-			if radarHUD_Switch == "false" then
+			if radarState == 0 or not radarHUD_Enabled then
 				local HUDButtonAt = vgui.Create( "DButton" )
 				HUDButtonAt:SetParent( radar_frame )
 				HUDButtonAt:SetText( "Attach to HUD" )
 				HUDButtonAt:SetPos( 10, 100 )
 				HUDButtonAt:SetSize( 125, 25 )
 				HUDButtonAt.DoClick = function ()
-					if radarState == "none" then
-						radarState = "Standby"
-						syncedENTIndex = endIndex
-					end
-					radarHUD_Switch = "true"
+					net.Start("RADAR_Attach")
+						net.WriteEntity(ply)
+						net.WriteEntity(radarEnt)
+					net.SendToServer()
 					radar_frame:Close()
 				end
 			else
@@ -160,7 +162,10 @@ function RadarMenu( um )
 				HUDButtonDt:SetPos( 10, 100 )
 				HUDButtonDt:SetSize( 125, 25 )
 				HUDButtonDt.DoClick = function ()
-					radarHUD_Switch = "false"
+					net.Start("RADAR_Detach")
+						net.WriteEntity(ply)
+						net.WriteEntity(radarEnt)
+					net.SendToServer()
 					radar_frame:Close()
 				end
 			end
@@ -181,36 +186,44 @@ function RadarMenu( um )
 			FixButton:SetPos( 10, 125 )
 			FixButton:SetSize( 125, 25 )
 			FixButton.DoClick = function ()
-				datastream.StreamToServer( "radar_repair_stream", { radarEnt } )
+				net.Start("RADAR_Repair")
+					net.WriteEntity(ply)
+					net.WriteEntity(radarEnt)
+				net.SendToServer()
 				radar_frame:Close()
 			end
 		end
 		
+		if radarGPR then
+			local DGPRButton = vgui.Create( "DButton" )
+				DGPRButton:SetParent( radar_frame )
+				DGPRButton:SetText( "Remove GPR" )
+				DGPRButton:SetPos( 145, 125 )
+				DGPRButton:SetSize( 100, 25 )
+				DGPRButton.DoClick = function ()
+					net.Start("RADAR_RemoveGPR")
+						net.WriteEntity(ply)
+						net.WriteEntity(radarEnt)
+					net.SendToServer()
+					radar_frame:Close()
+				end
+		else
+			local AGPRButton = vgui.Create( "DButton" )
+				AGPRButton:SetParent( radar_frame )
+				AGPRButton:SetText( "Attach GPR" )
+				AGPRButton:SetPos( 145, 125 )
+				AGPRButton:SetSize( 100, 25 )
+				AGPRButton.DoClick = function ()
+					net.Start("RADAR_AttachGPR")
+						net.WriteEntity(ply)
+						net.WriteEntity(radarEnt)
+					net.SendToServer()
+					radar_frame:Close()
+				end
+		end
+		
 end
 usermessage.Hook("radar_menu", RadarMenu)
-
-function RadarState( um )
-
-	local getState = um:ReadString()
-	local endIndex = um:ReadShort()
-	if endIndex == syncedENTIndex then
-		if getState == "none" then		
-			radarHUD_Switch = "false"
-		end
-		radarState = getState
-	end
-end
-usermessage.Hook("radar_state", RadarState)
-
-function RadarUpgrade( um )
-
-	local getState = um:ReadString()
-	local endIndex = um:ReadShort()
-	if endIndex == syncedENTIndex then
-		radarGPR_Upgrade = getState
-	end
-end
-usermessage.Hook("radar_upgrade", RadarUpgrade)
 
 RADAR_HUD = { }
 local syncTimer = 0
@@ -218,15 +231,45 @@ local syncTimerSW = "off"
 
 function pnrpHUD_DrawRadar()
 	local ply = LocalPlayer()
+	local plyRadarIndex = ply:GetNWString("RadarENTIndex")
+	local radarENT = nil
+	
 	if ( !ply:Alive() ) then 
-		radarHUD_Switch = "false"
+		radarHUD_Enabled = false
 		return 
 	end
 	
-	if ply:Team() ~= TEAM_WASTELANDER then
-		radarState = "none"
-		radarHUD_Switch = "false"
+--	if plyRadarIndex then
+--		local foundRadars = ents.FindByClass("tool_radar")
+--		for k, v in pairs(foundRadars) do
+--			if v:EntIndex() == plyRadarIndex then
+--				radarENT = v
+--				radarHUD_Enabled = true
+--			end
+--		end
+--	else
+--		radarHUD_Enabled = false
+--		return 
+--	end
+	
+	radarENT = ply:GetNWEntity("RadarENT")
+	if IsValid(radarENT) and radarENT ~= ply and plyRadarIndex ~= 0 then
+		radarHUD_Enabled = true
+	else
+		radarHUD_Enabled = false
+		return 
 	end
+	
+	local radarState = radarENT:GetNWString("Status", 0)
+	radar_GPR_Enabled = radarENT:GetNWString("EnabledGPR", false)
+--	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then 
+		--Admin Overide
+--	else
+--		if ply:Team() ~= TEAM_WASTELANDER then
+--			radarState = "none"
+--			radarHUD_Enabled = "false"
+--		end
+--	end
 	
 	font = "TargetID"
 	local c =
@@ -235,40 +278,57 @@ function pnrpHUD_DrawRadar()
 		text = Color( 255, 255, 255, 255 )
 	}
 	local background = Color( 51, 58, 51, 100 )
-	
-	if radarHUD_Switch == "true" then
-		RADAR_HUD:PaintRoundedPanel( 6, 6, 175, 150, 25, background )
-		RADAR_HUD:PaintText( 15, 175, "Wasteland Radar", font, c )
-	
-		if radarState == "dead" then
-			RADAR_HUD:PaintText( 15, 200, "Signal Lost...", font, c )
-		end
-		if radarState == "Standby" then
-			RADAR_HUD:PaintText( 15, 200, "Radar SCXU 8034 in Standby Mode", font, c )
-			RADAR_HUD:PaintText( 15, 215, "Use Radar and Sync to activate.", font, c )
+		
+	local hPos = 200
+	local vPos = 15
+--	RADAR_HUD:PaintText( 150, 25, "Radar ENT: "..tostring(radarENT), font, c )
+--	RADAR_HUD:PaintText( 150, 45, "HUD Switch: "..tostring(radarHUD_Enabled), font, c )
+--	RADAR_HUD:PaintText( 150, 65, "Radar State: "..tostring(radarState), font, c )
+--	RADAR_HUD:PaintText( 150, 85, "syncTimerSW: "..tostring(syncTimerSW), font, c )
+--	RADAR_HUD:PaintText( 150, 105, "syncTimer: "..tostring(syncTimer), font, c )
+--	RADAR_HUD:PaintText( 150, 125, "syncMaxTime: "..tostring(syncMaxTime), font, c )
+--	RADAR_HUD:PaintText( 150, 145, "TimeExists: "..tostring(timer.Exists( "synch_Timer"..tostring(ply))), font, c )
+	RADAR_HUD:PaintText( 150, 25, "radar_GPR_Enabled: "..tostring(radar_GPR_Enabled), font, c )
+	if radarHUD_Enabled then
+		RADAR_HUD:PaintRoundedPanel( 0, 6, hPos-5, 150, 25, background )
+		RADAR_HUD:PaintText( vPos, hPos, "Wasteland Radar", font, c )
+		surface.SetDrawColor( Color( 0, 100, 0, 150 ) )
+		surface.DrawOutlinedRect( 6, hPos-5, 150, 25 )
+		
+		hPos = hPos + 25
+		if radarState < 0 then --Dead or No Power
+			RADAR_HUD:PaintText( vPos, hPos, "Signal Lost...", font, c )
+		end 
+		if radarState == 1 then --Standby
+			RADAR_HUD:PaintRoundedPanel( 0, 6, hPos-6, 300, 45, background )
+			RADAR_HUD:PaintText( vPos, hPos, "Radar SCXU 8034 in Standby Mode", font, c )
+			RADAR_HUD:PaintText( vPos, hPos + 15, "Use Radar and Sync to activate.", font, c )
+			surface.SetDrawColor( Color( 0, 100, 0, 150 ) )
+			surface.DrawOutlinedRect( 6, hPos-6, 300, 45 )
 			syncTimer = 0
 		end
-		if radarState == "Syncing" then
-			RADAR_HUD:PaintText( 15, 200, "Radar Syncing...", font, c )
-			RADAR_HUD:PaintRoundedPanel( 0, 6, 225, 150, 25, background )
-			RADAR_HUD:PaintRoundedPanel( 0, 6, 225, 150, 25, background )
+		if radarState == 2 then --Synching
+			RADAR_HUD:PaintText( vPos, hPos, "Radar Syncing...", font, c )
+			RADAR_HUD:PaintRoundedPanel( 0, 6, 222, 150, 25, background )
 			
 			if syncTimerSW == "off" then
 				syncTimerSW = "on"
-				timer.Create( "synch_Timer", 1, syncMaxTime, function()
+				timer.Create( "synch_Timer"..tostring(ply), 1, syncMaxTime, function()
 					syncTimer = syncTimer + 1 
 				end)
 			end
-			
-			RADAR_HUD:PaintRoundedPanel( 0, 6, 225, 150 * ( syncTimer / syncMaxTime ), 25, Color( 204, 121, 44, 50 ) )
+			hPos = hPos + 25
+			RADAR_HUD:PaintRoundedPanel( 0, 6, hPos, 150 * ( syncTimer / syncMaxTime ), 25, Color( 204, 121, 44, 50 ) )
+			surface.SetDrawColor( Color( 0, 100, 0, 150 ) )
+			surface.DrawOutlinedRect( 6, hPos, 150, 25 )
 		else
 			syncTimer = 0
+			if syncTimerSW == "on" then
+				timer.Destroy("synch_Timer"..tostring(ply))
+			end
 			syncTimerSW = "off"
 		end
-		if radarState == "Ready" then
-			--RADAR_HUD:PaintText( 6, 200, "Radar Ready...", font, c )
-			--local inerC = Color( 110, 100, 105, 100 )
-			--RADAR_HUD:PaintRoundedPanel( 50, 15, 200, 100, 100, inerC )
+		if radarState == 3 then --Ready
 			RADAR_HUD:DrawRadar()
 		end
 		
@@ -288,7 +348,7 @@ function RADAR_HUD:DrawRadar()
 	local npcHostileC = Color( 229 * math.abs(math.sin(CurTime()*2)), 0, 0, 125 )
 	local dotSize = 6
 	local radar_x = 15
-	local radar_y = 200
+	local radar_y = 225
 	local radar_w = 125
 	local radar_h = 125
 	local radar_r = radar_w/2.75 --radius
@@ -306,7 +366,7 @@ function RADAR_HUD:DrawRadar()
 			local class = ent:GetClass()
 			--Code for radar rotation
 			local z = math.sqrt( tx*tx + ty*ty )
-			local phi = math.Deg2Rad( math.Rad2Deg( math.atan2( tx, ty ) ) - math.Rad2Deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
+			local phi = math.rad( math.deg( math.atan2( tx, ty ) ) - math.deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
 			tx = math.cos(phi)*z
 			ty = math.sin(phi)*z
 			
@@ -332,14 +392,14 @@ function RADAR_HUD:DrawRadar()
 				local ty = (loc_diff.y/radar_r)
 				--Code for radar rotation
 				local z = math.sqrt( tx*tx + ty*ty )
-				local phi = math.Deg2Rad( math.Rad2Deg( math.atan2( tx, ty ) ) - math.Rad2Deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
+				local phi = math.rad( math.deg( math.atan2( tx, ty ) ) - math.deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
 				tx = math.cos(phi)*z
 				ty = math.sin(phi)*z
 				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, playerC )
 			end
 		end
-		if radarGPR_Upgrade == "true" then
-			
+		
+		if radar_GPR_Enabled then
 			local isREC = RADAR_HUD:IsRecModel( ent:GetModel() ) 
 			if 	isREC then
 				--Calculates in relation to the local player
@@ -348,7 +408,7 @@ function RADAR_HUD:DrawRadar()
 				local ty = (loc_diff.y/radar_r)
 				--Code for radar rotation
 				local z = math.sqrt( tx*tx + ty*ty )
-				local phi = math.Deg2Rad( math.Rad2Deg( math.atan2( tx, ty ) ) - math.Rad2Deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
+				local phi = math.rad( math.deg( math.atan2( tx, ty ) ) - math.deg( math.atan2( ply:GetAimVector().x, ply:GetAimVector().y ) ) - 90 )
 				tx = math.cos(phi)*z
 				ty = math.sin(phi)*z
 				RADAR_HUD:PaintRoundedPanel( 4, center_x+tx-dotSize, center_y+ty-dotSize, dotSize, dotSize, recC )

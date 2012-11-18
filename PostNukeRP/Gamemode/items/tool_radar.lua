@@ -18,6 +18,11 @@ ITEM.Model = "models/props_mining/antlion_detector.mdl"
 ITEM.Script = ""
 ITEM.Weight = 15
 
+function ITEM.ToolCheck( p )
+	-- This one returns required items.
+	return {["intm_hudint"]=1, ["intm_elecboard"]=2, ["intm_servo"]=1}
+end
+
 function ITEM.Create( ply, class, pos )	
 	local ent = ents.Create(class)
 	ent:SetAngles(Angle(0,0,0))

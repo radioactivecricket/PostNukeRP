@@ -6,8 +6,8 @@ SWEP.Contact		= "N/A"
 SWEP.Purpose		= "PNRP radio swep."
 SWEP.Instructions	= "Left click to change channel.\nRight click to turn the radio on and off."
 
-SWEP.ViewModel		= "models/Weapons/V_hands.mdl"
-SWEP.WorldModel		= "models/props_citizen_tech/transponder.mdl"
+SWEP.ViewModel		= "" //"models/Weapons/V_hands.mdl"
+SWEP.WorldModel		= "" //"models/props_citizen_tech/transponder.mdl"
 
 SWEP.Spawnable      = false
 SWEP.AdminSpawnable = false
@@ -28,6 +28,8 @@ SWEP.Secondary.Ammo			= "none"
 SWEP.NextLeft = 0
 SWEP.NextRight = 0
 
+SWEP.Frequency			= 400
+SWEP.Power				= "off"
 
 /*---------------------------------------------------------
 	Initialize
@@ -72,6 +74,7 @@ function SWEP:PrimaryAttack()
 	if not Channel then Channel = 400.00 end
 	
 	umsg.Start("radiofreq_select", self.Owner)
+		umsg.Entity(self.Owner)
 		umsg.String(Channel)
 	umsg.End()
 	
@@ -87,12 +90,18 @@ function SWEP:SecondaryAttack()
 	if (!SERVER) then return end
 	self.Owner.RdioPower = (not self.Owner.RdioPower)
 	local mystring = "Radio is now "
-	
+
 	if self.Owner.RdioPower then 
 		mystring = mystring.."on."
+		self.Power = "on"
 	else
 		mystring = mystring.."off."
+		self.Power = "off"
 	end
+	
+	umsg.Start("radiopower_select", self.Owner)
+		umsg.Bool(self.Owner.RdioPower)
+	umsg.End()
 	
 	self.Owner:ChatPrint(mystring)
 	

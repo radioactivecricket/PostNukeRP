@@ -1,4 +1,4 @@
-require("datastream")
+--require("datastream")
 
 ENT.Type 			= "anim"
 ENT.Base 			= "base_gmodentity"

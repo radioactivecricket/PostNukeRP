@@ -242,7 +242,7 @@ function SWEP:PrimaryAttack()
 	self:TakePrimaryAmmo(1)
 	-- Take 1 ammo in you clip
 
-	if ((SinglePlayer() and SERVER) or CLIENT) then
+	if ((game.SinglePlayer() and SERVER) or CLIENT) then
 		self.Weapon:SetNetworkedFloat("LastShootTime", CurTime())
 	end
 end
@@ -532,7 +532,7 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
 			util.Effect(self.ShellEffect,fx)				-- Shell ejection
 	end)
 
-	if ((SinglePlayer() and SERVER) or (not SinglePlayer() and CLIENT)) then
+	if ((game.SinglePlayer() and SERVER) or (not game.SinglePlayer() and CLIENT)) then
 		local eyeang = self.Owner:EyeAngles()
 		eyeang.pitch = eyeang.pitch - recoil
 		self.Owner:SetEyeAngles(eyeang)

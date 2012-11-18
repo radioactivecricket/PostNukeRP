@@ -18,6 +18,11 @@ ITEM.Model = "models/props_combine/combinethumper002.mdl"
 ITEM.Script = ""
 ITEM.Weight = 20
 
+function ITEM.ToolCheck( p )
+	-- This one returns required items.
+	return {["intm_sensorpod"]=1, ["intm_elecboard"]=2, ["intm_servo"]=2}
+end
+
 function ITEM.Create( ply, class, pos )
 	local ent = ents.Create(class)
 	ent:SetAngles(Angle(0,0,0))

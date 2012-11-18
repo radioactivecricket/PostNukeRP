@@ -130,15 +130,54 @@ concommand.Add( "pnrp_addxp", AddXPPoints )
 --]]
 
 function DeathXP( victim, killer, weapon )
+	if victim.hasBackpack then
+		local pos = victim:GetPos()+ Vector(0,0,20)
+		local ent = ents.Create("msc_backpack")
+		ent:SetAngles(Angle(0,0,0))
+		ent:SetPos(pos)
+		ent.contents = victim.packTbl
+		ent:Spawn()
+	end
+	
 	if not killer:IsPlayer() then return end
 	if GetConVarNumber("pnrp_propExp") == 0 then
 		if weapon:GetClass() == "prop_physics" then return end
 	end
 	
 	if victim:GetClass() == "npc_antlionguard" then
-		killer:IncXP(5)
+		killer:IncXP(30)
 	else
 		killer:IncXP(1)
+	end
+	
+	local spawnMod
+	if killer:Team() == TEAM_WASTELANDER then
+		spawnMod = 20
+	else
+		spawnMod = 0
+	end
+	
+	--For now, drops will go here.
+	if victim:GetClass() == "npc_antlion" then
+		if math.random(1,100) <= 30 + spawnMod then
+			if math.random(1,100) <= 30 + (spawnMod / 2) then
+				PNRP.Items["fuel_grubfood"].Create(killer, PNRP.Items["food_rawant"].Ent, victim:GetPos()+ Vector(0,0,20))
+			else
+				PNRP.Items["food_rawant"].Create(killer, PNRP.Items["food_rawant"].Ent, victim:GetPos()+ Vector(0,0,20))
+			end
+		end
+	elseif victim:GetClass() == "npc_zombie" or victim:GetClass() == "npc_fastzombie" or victim:GetClass() == "npc_poisonzombie" then
+		if math.random(1,100) <= 20 + spawnMod then
+			PNRP.Items["food_rawhead"].Create(killer, PNRP.Items["food_rawhead"].Ent, victim:GetPos()+ Vector(0,0,20))
+		end
+	elseif victim:GetClass() == "npc_antlionguard" then
+		if math.random(1,100) <= 20 + spawnMod then
+			if math.random(1,100) <= 60 then
+				PNRP.Items["fuel_grubfood"].Create(killer, PNRP.Items["food_rawant"].Ent, victim:GetPos()+ Vector(0,0,20))
+			else
+				PNRP.Items["food_rawguard"].Create(killer, PNRP.Items["food_rawguard"].Ent, victim:GetPos()+ Vector(0,0,20))
+			end
+		end
 	end
 end
 hook.Add( "OnNPCKilled", "GiveDeathXP", DeathXP )

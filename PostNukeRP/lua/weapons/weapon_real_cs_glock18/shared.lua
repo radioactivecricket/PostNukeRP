@@ -89,7 +89,7 @@ function SWEP:PrimaryAttack()
 	self:TakePrimaryAmmo(1)
 	-- Take 1 ammo in you clip
 
-	if ((SinglePlayer() and SERVER) or CLIENT) then
+	if ((game.SinglePlayer() and SERVER) or CLIENT) then
 		self.Weapon:SetNetworkedFloat("LastShootTime", CurTime())
 	end
 end

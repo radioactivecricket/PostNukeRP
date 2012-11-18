@@ -12,9 +12,10 @@ SWEP.IconLetter = "."
 	
 function SWEP:DrawWeaponSelection(x, y, wide, tall, alpha)
 
+	self:PrintWeaponInfo(x + wide + 20, y + tall * 0.95, alpha)
+	-- Print weapon information
+
 	draw.SimpleText(self.IconLetter, "HL2MPTypeDeath", x + wide / 2, y + tall * 0.2, Color(255, 210, 0, 255), TEXT_ALIGN_CENTER)
 	-- Draw a CS:S select icon
 
-	self:PrintWeaponInfo(x + wide + 20, y + tall * 0.95, alpha)
-	-- Print weapon information
 end

@@ -18,9 +18,14 @@ ITEM.Ent = "weapon_pnrp_precrifle"
 ITEM.Model = "models/weapons/w_snip_sg550.mdl"
 ITEM.Script = ""
 ITEM.Weight = 8
+ITEM.ShopHide = true
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "357"
+
+function ITEM.ToolCheck( p )
+	return true
+end
 
 function ITEM.Use( ply )
 	local WepName = "weapon_pnrp_precrifle"
@@ -38,6 +43,17 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create("ent_weapon")
+	--ent:SetNetworkedInt("Ammo", self.Energy)
+	ent:SetNWString("WepClass", ITEM.Ent)
+	ent:SetModel(ITEM.Model)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+	
+	return ent
+end
 
 PNRP.AddItem(ITEM)
 PNRP.AddWeapon(WEAPON)

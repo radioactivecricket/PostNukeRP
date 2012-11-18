@@ -100,7 +100,7 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:Reload()
-	if self.Weapon:Clip1() < self.Primary.ClipSize then
+	if self.Weapon:Clip1() < self.Primary.ClipSize and self.Owner:GetAmmoCount(self.Weapon:GetPrimaryAmmoType()) > 0 then
 		self.Weapon:SetNWBool("IronSights", false)
 		self.Owner:SetFOV( 0, 0.15 )
 		
@@ -221,7 +221,7 @@ function SWEP:ShootBullet( damage, num_bullets, aimcone, recoil )
 	
 	self:ShootEffects()
 	
-	if ((SinglePlayer() and SERVER) or (not SinglePlayer() and CLIENT)) then
+	if ((game.SinglePlayer() and SERVER) or (not game.SinglePlayer() and CLIENT)) then
 		local eyeang = self.Owner:EyeAngles()
 		eyeang.pitch = eyeang.pitch - recoil
 		self.Owner:SetEyeAngles(eyeang)

@@ -1,8 +1,9 @@
 local buddy_frame
 
-function GM.BuddyWindow(handler, id, encoded, decoded)
+function GM.BuddyWindow( )
 
-	local buddyTable = decoded["buddyTable"]		
+	local buddyTable = net.ReadTable()
+	--local buddyTable = decoded["buddyTable"]		
 	local ply = LocalPlayer()
 	
 	local plUID = PNRP:GetUID( ply )
@@ -21,10 +22,11 @@ function GM.BuddyWindow(handler, id, encoded, decoded)
 				PlayerLabel:SetText("Player List")
 				PlayerLabel:SizeToContents() 
 				
-			local PlyComboBox = vgui.Create( "DComboBox", buddy_frame )
+			local PlyComboBox = vgui.Create( "DListView", buddy_frame )
 				PlyComboBox:SetPos( 10, 45 )
 				PlyComboBox:SetSize( 125, 200 )
-				PlyComboBox:SetMultiple( false ) -- <removed sarcastic and useless comment>
+				PlyComboBox:SetMultiSelect( false ) -- <removed sarcastic and useless comment>
+				PlyComboBox:AddColumn("Name")
 			
 			local addName = true
 				for k,v in pairs(ents.GetAll()) do
@@ -38,7 +40,7 @@ function GM.BuddyWindow(handler, id, encoded, decoded)
 								end
 							end
 							if addName then
-								PlyComboBox:AddItem( v:GetName() )
+								PlyComboBox:AddLine( v:GetName() )
 							end
 						end
 					end
@@ -49,8 +51,8 @@ function GM.BuddyWindow(handler, id, encoded, decoded)
 				AddBuddyBTN:SetPos( 140, 50 )
 				AddBuddyBTN:SetSize( 100, 20 ) 
 				AddBuddyBTN.DoClick = function()
-					if PlyComboBox:GetSelectedItems() and PlyComboBox:GetSelectedItems()[1] then 
-						local addPlyBuddy = PlyComboBox:GetSelectedItems()[1]:GetValue()
+					if PlyComboBox:GetSelectedLine() then						
+		       			local addPlyBuddy = PlyComboBox:GetLine(PlyComboBox:GetSelectedLine()):GetValue(1) 
 						for _, v in pairs(player.GetAll()) do
 							if v:Nick() == addPlyBuddy then
 								addPlyBuddy = PNRP:GetUID( v )
@@ -67,13 +69,14 @@ function GM.BuddyWindow(handler, id, encoded, decoded)
 				BuddyLabel:SetText("Buddy List")
 				BuddyLabel:SizeToContents() 		
 				
-			local BuddyComboBox = vgui.Create( "DComboBox", buddy_frame )
+			local BuddyComboBox = vgui.Create( "DListView", buddy_frame )
 				BuddyComboBox:SetPos( 245, 45 )
 				BuddyComboBox:SetSize( 125, 200 )
-				BuddyComboBox:SetMultiple( false ) -- <removed sarcastic and useless comment>
+				BuddyComboBox:SetMultiSelect( false ) 
+				BuddyComboBox:AddColumn("Name")
 				
 				for _, v in pairs(buddyTable) do
-						BuddyComboBox:AddItem( v )
+						BuddyComboBox:AddLine( v )
 				end
 			
 			local RemBuddyBTN = vgui.Create("DButton", buddy_frame )
@@ -81,8 +84,8 @@ function GM.BuddyWindow(handler, id, encoded, decoded)
 				RemBuddyBTN:SetPos( 140, 75 )
 				RemBuddyBTN:SetSize( 100, 20 ) 
 				RemBuddyBTN.DoClick = function()
-					if BuddyComboBox:GetSelectedItems() and BuddyComboBox:GetSelectedItems()[1] then 
-						local remPlyBuddy = BuddyComboBox:GetSelectedItems()[1]:GetValue()
+					if BuddyComboBox:GetSelectedLine() then						
+		       			local remPlyBuddy = BuddyComboBox:GetLine(BuddyComboBox:GetSelectedLine()):GetValue(1) 
 						for _, v in pairs(player.GetAll()) do
 							if v:Nick() == remPlyBuddy then
 								remPlyBuddy = PNRP:GetUID( v )
@@ -93,9 +96,21 @@ function GM.BuddyWindow(handler, id, encoded, decoded)
 						buddy_frame:Close()
 					end
 				end	
+			
+	--		local AddCommBTN = vgui.Create("DButton", buddy_frame )
+	--			AddCommBTN:SetText( "Add Community >>" )
+	--			AddCommBTN:SetPos( 140, 75 )
+	--			AddCommBTN:SetSize( 100, 20 ) 
+	--			AddCommBTN.DoClick = function()
+					
+	--				RunConsoleCommand( "PNRP_AddCommBuddy" )
+
+	--				buddy_frame:Close()
+	--			end	
 end
 --concommand.Add( "pnrp_buddy_window", open_buddy )
-datastream.Hook( "pnrp_OpenBuddyWindow", GM.BuddyWindow )
+--datastream.Hook( "pnrp_OpenBuddyWindow", GM.BuddyWindow )
+net.Receive( "pnrp_OpenBuddyWindow", GM.BuddyWindow )
 
 function GM.initBuddy(ply)
 

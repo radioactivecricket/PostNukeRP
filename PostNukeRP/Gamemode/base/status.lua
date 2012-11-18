@@ -9,94 +9,96 @@ local PlayerMeta = FindMetaTable("Player")
 
 function StatCheck()
 	for k, v in pairs(player.GetAll()) do
-		if v.HasLoaded then
-			local UpdateTime = 0
-			if v:GetTable().IsAsleep then
-				UpdateTime = 5
-			else
-				UpdateTime = 60
-			end
-			
-			--Health checks
-			if v:Alive() and CurTime() - v:GetTable().LastHealthUpdate > UpdateTime and not v:IsOutside() then
-				local health = v:Health()
-				
-				if not ( health == v:GetMaxHealth() ) then
-					
-					v:SetHealth( health + 1 )
-					if ( v:GetMaxHealth() < health + 1  ) then
-						v:SetHealth( v:GetMaxHealth() )
-					end
-				end
-				v:GetTable().LastHealthUpdate = CurTime()
-			end
-			
-			
-			local runModifier = 0
-			
-			if v:KeyDown(IN_FORWARD) or v:KeyDown(IN_LEFT) or v:KeyDown(IN_RIGHT) or v:KeyDown(IN_BACK) then
-				runModifier = runModifier + 1
-				if v:KeyDown(IN_SPEED) then
-					runModifier = runModifier + 3
-				end
-			end
-			
-			local EndUpdateTime 
-			if v:Team() == TEAM_WASTELANDER then
-				EndUpdateTime = UpdateTime / (1 - (0.05 * v:GetSkill("Endurance")))
+		if IsValid(v) then
+			if v.HasLoaded then
+				local UpdateTime = 0
 				if v:GetTable().IsAsleep then
-					EndUpdateTime = UpdateTime / 5 
-				end
-			else
-				EndUpdateTime = UpdateTime / (2)
-				if v:GetTable().IsAsleep then
-					EndUpdateTime = UpdateTime / 5 
-				end
-			end
-			--Endurance checks
-			if v:Alive() and CurTime() - v:GetTable().LastEndUpdate > EndUpdateTime then
-				local endur = v:GetTable().Endurance
-				
-				if v:GetTable().IsAsleep then
-					v:GetTable().Endurance = endur + 2
+					UpdateTime = 5
 				else
-					v:GetTable().Endurance = endur - 1
+					UpdateTime = 60
 				end
 				
-				if v:GetTable().Endurance <= 0 then
-					v:ChatPrint("You've fallen unconcious due to fatigue!")
-					EnterSleep(v)
-				elseif v:GetTable().Endurance >= 100 then
-					if v:GetTable().IsAsleep then
-						ExitSleep(v)
-					end
-					v:GetTable().Endurance = 100
-				end
-				v:GetTable().LastEndUpdate = CurTime()
-			end
-			SendEndurance( v )
-			
-			--Hunger checks
-			local HunUpdateTime 
-			HunUpdateTime = 60 / (2 + ( runModifier / 2 ) )
-			if v:Alive() and CurTime() - v:GetTable().LastHunUpdate > HunUpdateTime and not (v:GetTable().IsAsleep) then
-				local hunger = v:GetTable().Hunger
-				
-				v:GetTable().Hunger = hunger - 1
-				
-				if v:GetTable().Hunger <= 0 then
-					v:GetTable().Hunger = 0
+				--Health checks
+				if v:Alive() and CurTime() - v:GetTable().LastHealthUpdate > UpdateTime and not v:IsOutside() then
+					local health = v:Health()
 					
-					v:SetHealth( v:Health() - 5 )
-					if v:Health() <= 0 then
-						timer.Create("kill_timer",  1, 1, function()
-								v:Kill()
-							end )
+					if not ( health == v:GetMaxHealth() ) then
+						
+						v:SetHealth( health + 1 )
+						if ( v:GetMaxHealth() < health + 1  ) then
+							v:SetHealth( v:GetMaxHealth() )
+						end
+					end
+					v:GetTable().LastHealthUpdate = CurTime()
+				end
+				
+				
+				local runModifier = 0
+				
+				if v:KeyDown(IN_FORWARD) or v:KeyDown(IN_LEFT) or v:KeyDown(IN_RIGHT) or v:KeyDown(IN_BACK) then
+					runModifier = runModifier + 1
+					if v:KeyDown(IN_SPEED) then
+						runModifier = runModifier + 3
 					end
 				end
-				v:GetTable().LastHunUpdate = CurTime()
+				
+				local EndUpdateTime 
+				if v:Team() == TEAM_WASTELANDER then
+					EndUpdateTime = UpdateTime / (1 - (0.05 * v:GetSkill("Endurance")))
+					if v:GetTable().IsAsleep then
+						EndUpdateTime = UpdateTime / 5 
+					end
+				else
+					EndUpdateTime = UpdateTime / (2)
+					if v:GetTable().IsAsleep then
+						EndUpdateTime = UpdateTime / 5 
+					end
+				end
+				--Endurance checks
+				if v:Alive() and CurTime() - v:GetTable().LastEndUpdate > EndUpdateTime then
+					local endur = v:GetTable().Endurance
+					
+					if v:GetTable().IsAsleep then
+						v:GetTable().Endurance = endur + 2
+					else
+						v:GetTable().Endurance = endur - 1
+					end
+					
+					if v:GetTable().Endurance <= 0 then
+						v:ChatPrint("You've fallen unconcious due to fatigue!")
+						EnterSleep(v)
+					elseif v:GetTable().Endurance >= 100 then
+						if v:GetTable().IsAsleep then
+							ExitSleep(v)
+						end
+						v:GetTable().Endurance = 100
+					end
+					v:GetTable().LastEndUpdate = CurTime()
+				end
+				SendEndurance( v )
+				
+				--Hunger checks
+				local HunUpdateTime 
+				HunUpdateTime = 60 / (2 + ( runModifier / 2 ) )
+				if v:Alive() and CurTime() - v:GetTable().LastHunUpdate > HunUpdateTime and not (v:GetTable().IsAsleep) then
+					local hunger = v:GetTable().Hunger
+					
+					v:GetTable().Hunger = hunger - 1
+					
+					if v:GetTable().Hunger <= 0 then
+						v:GetTable().Hunger = 0
+						
+						v:SetHealth( v:Health() - 5 )
+						if v:Health() <= 0 then
+							timer.Create("kill_timer",  1, 1, function()
+									v:Kill()
+								end )
+						end
+					end
+					v:GetTable().LastHunUpdate = CurTime()
+				end
+				SendHunger( v )
 			end
-			SendHunger( v )
 		end
 	end
 end
@@ -121,35 +123,47 @@ function EnterSleep ( ply )
 		if ply:InVehicle() then
 			ply:Freeze(true)
 		else
-			ply:GetTable().WeaponsForSleep = {}
-			ply:GetTable().ClipsForSleep = {}
-			ply:GetTable().AmmoForSleep = {}
-			for k,v in pairs(ply:GetWeapons( )) do
-				ply:GetTable().WeaponsForSleep[k] = v:GetClass()
-				ply:GetTable().ClipsForSleep[k] = v:Clip1()
+			ply:Freeze(true)
+			ply:CreateRagdoll()
+			ply:SetRenderMode(1)
+			ply:SetColor( Color(0,0,0,0) )
+			local ragdoll = ply:GetRagdollEntity()
+			ply.SleepRagdoll = ragdoll
+			ply.OldColGroup = ply:GetCollisionGroup()
+			ply:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+			
+			if ply:HasWeapon( "gmod_rp_hands" ) then
+				ply:SelectWeapon( "gmod_rp_hands")
 			end
+			-- ply:GetTable().WeaponsForSleep = {}
+			-- ply:GetTable().ClipsForSleep = {}
+			-- ply:GetTable().AmmoForSleep = {}
+			-- for k,v in pairs(ply:GetWeapons( )) do
+				-- ply:GetTable().WeaponsForSleep[k] = v:GetClass()
+				-- ply:GetTable().ClipsForSleep[k] = v:Clip1()
+			-- end
 			
-			for i = 1, 22 do
-				ply:GetTable().AmmoForSleep[i] = ply:GetAmmoCount(PNRP.ConvertAmmoType(i))
-			end
+			-- for i = 1, 22 do
+				-- ply:GetTable().AmmoForSleep[i] = ply:GetAmmoCount(PNRP.ConvertAmmoType(i))
+			-- end
 			
-			local ragdoll = ents.Create("prop_ragdoll")
-			ragdoll:SetPos(ply:GetPos())
-			ragdoll:SetAngles(Angle(0,ply:GetAngles().Yaw,0))
-			ragdoll:SetModel(ply:GetModel())
-			ragdoll:Spawn()
-			ragdoll:Activate()
-			ragdoll:SetVelocity(ply:GetVelocity())
-			--ragdoll.OwnerINT = player:EntIndex()
-			ragdoll:GetTable().PrevPos = ply:GetPos()
+			-- local ragdoll = ents.Create("prop_ragdoll")
+			-- ragdoll:SetPos(ply:GetPos())
+			-- ragdoll:SetAngles(Angle(0,ply:GetAngles().Yaw,0))
+			-- ragdoll:SetModel(ply:GetModel())
+			-- ragdoll:Spawn()
+			-- ragdoll:Activate()
+			-- ragdoll:SetVelocity(ply:GetVelocity())
+			-- --ragdoll.OwnerINT = player:EntIndex()
+			-- ragdoll:GetTable().PrevPos = ply:GetPos()
 			
-			ply:StripWeapons()
-			ply:Spectate(OBS_MODE_CHASE)
-			ply:SpectateEntity(ragdoll)
-			ply:GetTable().SleepRagdoll = ragdoll
-			ragdoll:GetTable().OwnerID = ply:UniqueID()
-			ragdoll.Owner = player
-			ragdoll:SetNetworkedString("Owner", ply:Nick())
+			-- ply:StripWeapons()
+			-- ply:Spectate(OBS_MODE_CHASE)
+			-- ply:SpectateEntity(ragdoll)
+			-- ply:GetTable().SleepRagdoll = ragdoll
+			-- ragdoll:GetTable().OwnerID = ply:UniqueID()
+			-- ragdoll.Owner = player
+			-- ragdoll:SetNetworkedString("Owner", ply:Nick())
 		end
 		
 		
@@ -193,67 +207,72 @@ function ExitSleep( ply )
 		if ply:InVehicle() then
 			ply:Freeze(false)
 		else
-			local ragdoll = ply:GetTable().SleepRagdoll
-			local health = ply:Health()
-			local armor = ply:Armor()
-			local hunger = ply:GetTable().Hunger
-			local oldPos = false
+			ply:Freeze(false)
+			ply:SetRenderMode(0)
+			ply:SetColor( Color(255,255,255,255) )
+			ply.SleepRagdoll:Remove()
+			ply:SetCollisionGroup(ply.OldColGroup)
+			-- local ragdoll = ply:GetTable().SleepRagdoll
+			-- local health = ply:Health()
+			-- local armor = ply:Armor()
+			-- local hunger = ply:GetTable().Hunger
+			-- local oldPos = false
 			
-			local entsearch = ents.FindInSphere( ragdoll:GetTable().PrevPos , 100 )
+			-- local entsearch = ents.FindInSphere( ragdoll:GetTable().PrevPos , 100 )
 			
-			for k,v in pairs(entsearch) do
-				if v:GetClass() == "prop_ragdoll" then
-					oldPos = true
-				end
-			end
+			-- for k,v in pairs(entsearch) do
+				-- if v:GetClass() == "prop_ragdoll" then
+					-- oldPos = true
+				-- end
+			-- end
 			
-			ply:Spawn()
-			ply:SetHealth(health)
-			ply:SetArmor(armor)
-			ply:GetTable().Hunger = hunger
-			ply:GetTable().SleepGodCheck = false
-			if oldPos then
-				ply:SetPos(ragdoll:GetTable().PrevPos)
-			else
-				ply:SetPos(ragdoll:GetPos())
-			end
+			-- ply:Spawn()
+			-- ply:SetHealth(health)
+			-- ply:SetArmor(armor)
+			-- ply:GetTable().Hunger = hunger
+			-- ply:GetTable().SleepGodCheck = false
+			-- if oldPos then
+				-- ply:SetPos(ragdoll:GetTable().PrevPos)
+			-- else
+				-- ply:SetPos(ragdoll:GetPos())
+			-- end
 			
-			ply:SetAngles(Angle(0, ragdoll:GetPhysicsObjectNum(10):GetAngles().Yaw, 0))
-			ply:UnSpectate()
-			ply:StripWeapons()
-			ragdoll:Remove()
-			--Runs this a little after spawn to help with lag issues
-			ply:ChatPrint("Picking up gear...")
-			timer.Create(ply:UniqueID()..tostring(os.time())..tostring(os.date()), 3, 1, function()  
-				if ply:GetTable().WeaponsForSleep then
-					for k,v in pairs(ply.WeaponsForSleep) do
-						local currentWep = ply:Give(v)
-						currentWep:SetClip1(ply:GetTable().ClipsForSleep[k])
-					end
-					ply:StripAmmo()
-					for i = 1, 22 do
-						ply:GiveAmmo(ply:GetTable().AmmoForSleep[i], PNRP.ConvertAmmoType(i), false)
-					end
+			-- ply:SetAngles(Angle(0, ragdoll:GetPhysicsObjectNum(10):GetAngles().Yaw, 0))
+			-- ply:UnSpectate()
+			-- ply:StripWeapons()
+			-- ragdoll:Remove()
+			-- --Runs this a little after spawn to help with lag issues
+			-- ply:ChatPrint("Picking up gear...")
+			-- timer.Create(ply:UniqueID()..tostring(os.time())..tostring(os.date()), 3, 1, function()  
+				-- if ply:GetTable().WeaponsForSleep then
+					-- for k,v in pairs(ply.WeaponsForSleep) do
+						-- local currentWep = ply:Give(v)
+						-- currentWep:SetClip1(ply:GetTable().ClipsForSleep[k])
+					-- end
+					-- ply:StripAmmo()
+					-- for i = 1, 22 do
+						-- ply:GiveAmmo(ply:GetTable().AmmoForSleep[i], PNRP.ConvertAmmoType(i), false)
+					-- end
 									
-					local cl_defaultweapon = ply:GetInfo( "cl_defaultweapon" )
-					if ( ply:HasWeapon( cl_defaultweapon )  ) then
-						ply:SelectWeapon( cl_defaultweapon ) 
-					end
+					-- local cl_defaultweapon = ply:GetInfo( "cl_defaultweapon" )
+					-- if ( ply:HasWeapon( cl_defaultweapon )  ) then
+						-- ply:SelectWeapon( cl_defaultweapon ) 
+					-- end
 				
-				else
-					GAMEMODE:PlayerLoadout(player)
-				end 
+				-- else
+					-- GAMEMODE:PlayerLoadout(player)
+				-- end 
 				
-				--Checks to make sure the player has the default weapons
-				for _,v in pairs(PNRP.DefWeps) do
-					if !ply:HasWeapon( v ) then
-						ply:Give( v )
-					end
-				end
+				-- --Checks to make sure the player has the default weapons
+				-- for _,v in pairs(PNRP.DefWeps) do
+					-- if !ply:HasWeapon( v ) then
+						-- ply:Give( v )
+					-- end
+				-- end
 				
-				ply:ConCommand("pnrp_save")
-				ply:ChatPrint("Timer has run")
-			end)
+				-- ply:ConCommand("pnrp_save")
+				-- ply:ChatPrint("Timer has run")
+			-- end)
 		end
 		
 		local rfilter = RecipientFilter()
@@ -276,7 +295,7 @@ end
 concommand.Add( "pnrp_wake", ExitSleepCmd )
 PNRP.ChatConCmd( "/wake", "pnrp_wake" )
 
-local function DamageSleepers(ent, inflictor, attacker, amount, dmginfo)
+--[[local function DamageSleepers(ent, inflictor, attacker, amount, dmginfo)
 	local ownerid = ent:GetTable().OwnerID
 	if ownerid and ownerid ~= 0 then
 		for k,v in pairs(player.GetAll()) do 
@@ -303,7 +322,7 @@ local function DamageSleepers(ent, inflictor, attacker, amount, dmginfo)
 		end
 	end
 end
-hook.Add("EntityTakeDamage", "Sleepdamage", DamageSleepers)
+hook.Add("EntityTakeDamage", "Sleepdamage", DamageSleepers)]]--
 
 ------------------------------
 -- Variable sends

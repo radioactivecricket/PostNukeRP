@@ -32,15 +32,21 @@ function ENT:Use( activator, caller )
 				if self.myItem.Type == "weapon" then
 					ent = ents.Create("ent_weapon")
 					ent:SetNetworkedString("WepClass", self.myItem.Ent)
-					ent:SetNetworkedInt("Ammo", self:GetNWInt("ammoamount", 0))
+					--ent:SetNetworkedInt("Ammo", self:GetNWInt("ammoamount", 0))
+					ent:SetNetworkedInt("Ammo", 0)
 				else
 					ent = ents.Create(self.myItem.Ent)
 					ent:SetNetworkedString("Ammo", tostring(self:GetNWInt("ammoamount", 0)))
 				end
-				ent:SetModel(self.myItem.Model)
-				ent:SetAngles(Angle(0,0,0))
-				ent:SetPos(self:GetPos()+Vector(0,0,30))
-				ent:Spawn()
+				
+				--ent:SetModel(self.myItem.Model)
+				--ent:SetAngles(Angle(0,0,0))
+				--ent:SetPos(self:GetPos()+Vector(0,0,30))
+				--ent:Spawn()
+				local pos = self:GetPos()+Vector(0,0,30) 
+				
+				self.myItem.Create(activator, self.myItem.Ent, pos)
+				
 				
 				self.Amount = self.Amount - 1
 				self.Entity:SetNWInt("amount", self.Amount )
@@ -65,30 +71,35 @@ function ENT:F2Use(ply)
 	local Item = self.Item
 	local Amount = self.Amount
 	local weight = PNRP.Items[Item].Weight
+	local sumWeight = weight*Amount
 	
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav")
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap")
+		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	
-	local AmntTaken = 0
-	for i = 1, Amount do
-		local expWeight = PNRP.InventoryWeight( ply ) + weight
-		if expWeight <= weightCap then
-			ply:AddToInventory( Item )
-			self.Amount = self.Amount - 1
-			self.Entity:SetNWInt("amount", self.Amount )
-			ply:EmitSound(Sound("items/ammo_pickup.wav"))
-			if self.Amount <= 0 then
-				self:Remove()
-			end
-			AmntTaken = AmntTaken + 1
+	local weightCalc = PNRP.InventoryWeight( ply ) + sumWeight
+	if weightCalc <= weightCap then
+		ply:AddToInventory( Item, Amount )
+		ply:EmitSound(Sound("items/ammo_pickup.wav"))
+		ply:ChatPrint("You have taken all of this.")
+		self:Remove()
+	else
+		local weightDiff = weightCalc - weightCap
+		local extra = math.ceil(weightDiff/weight)
+		
+		if extra >= Amount then
+			ply:ChatPrint("You can't carry any of these!")
 		else
-			ply:ChatPrint("You were only able to carry "..tostring(AmntTaken).." of these!")
-			break
+			local taken = Amount - extra
+			
+			ply:AddToInventory( Item, taken )
+			self.Entity:SetNWInt("amount", Amount - taken )
+			self.Amount = Amount - taken
+			ply:EmitSound(Sound("items/ammo_pickup.wav"))
+			ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
 		end
 	end
-	
 end

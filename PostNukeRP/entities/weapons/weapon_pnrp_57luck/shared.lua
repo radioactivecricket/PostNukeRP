@@ -18,7 +18,7 @@ SWEP.ShellEjectAttachment	= "2" -- Should be "2" for CSS models or "1" for hl2 m
 
 SWEP.Primary.Sound 			= Sound("Weapon_FiveSeven.Single")
 SWEP.Primary.Recoil 		= 1.2
-SWEP.Primary.Damage 		= 8
+SWEP.Primary.Damage 		= 16
 SWEP.Primary.NumShots 		= 1
 SWEP.Primary.Cone 			= 0.017
 SWEP.Primary.ClipSize 		= 20
@@ -46,15 +46,22 @@ function SWEP:Initialize()
     self:SetWeaponHoldType(self.HoldType)
 end
 
+function SWEP:SetupDataTables()
+	self:DTVar("Bool", 0, "Holsted")
+	self:DTVar("Bool", 1, "Ironsights")
+end 
+
 function SWEP:Equip()
-	self.Weapon:SetNWBool("IronSights", false)
-	self.Weapon:SetNWBool("IsPassive", false)
+	-- self.Weapon:SetNWBool("IronSights", false)
+	-- self.Weapon:SetNWBool("IsPassive", false)
+	self.Weapon:SetDTBool(0, false)
+	self.Weapon:SetDTBool(1, false)
 end
 
 function SWEP:PrimaryAttack()
 
 	if not self:CanPrimaryAttack() or self.Owner:WaterLevel() > 2 then return end
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then return end
+	if self.Weapon:GetDTBool(0) or self.Owner:KeyDown( IN_SPEED ) then return end
 	
 	self.Weapon:EmitSound(self.Primary.Sound)
 	self:TakePrimaryAmmo(self.Primary.NumShots)
@@ -63,7 +70,7 @@ function SWEP:PrimaryAttack()
 	
 	local handlingSkill = self.Owner:GetSkill("Weapon Handling")
 	
-	if self.Weapon:GetNWBool("IronSights", false) then
+	if self.Weapon:GetDTBool(1) then
 		self.Owner:ViewPunch(Angle(math.Rand(-0.5,-2.5) * (self.Primary.Recoil - (0.1 * handlingSkill)), math.Rand(-1,1) * ((self.Primary.Recoil - (0.1 * handlingSkill)) / 2), 0))
 		self:ShootBullet(self.Primary.Damage, self.Primary.NumShots, ((self.Primary.Cone - (0.0005 * handlingSkill)) / 2), (self.Primary.Recoil - (0.1 * handlingSkill)) / 2 )
 	else
@@ -76,21 +83,28 @@ end
 
 function SWEP:SecondaryAttack()
 	if self.Owner:KeyDown( IN_WALK ) then
-		local savedBool = (not self.Weapon:GetNWBool("IsPassive", false))
-		self.Weapon:SetNWBool("IsPassive", (not self.Weapon:GetNWBool("IsPassive", false)))
-		self.Owner:EmitSound("npc/combine_soldier/gear4.wav")
+		-- local savedBool = (not self.Weapon:GetNWBool("IsPassive", false))
+		local savedBool = (not self.Weapon:GetDTBool(0))
+		
+		if (SERVER) then
+			self.Weapon:SetDTBool(0, (not self.Weapon:GetDTBool(0)))
+			self.Owner:EmitSound("npc/combine_soldier/gear4.wav")
+		end
 		
 		if savedBool then
 			self:SetWeaponHoldType("normal")
 			self.Owner:SetFOV( 0, 0.15 )
-			self.Weapon:SetNWBool("IronSights", false)
+			self.Weapon:SetDTBool(1, false)
 		else
 			self:SetWeaponHoldType(self.HoldType)
 		end
 	else
-		if self.Weapon:GetNWBool("IsPassive", false) then return end
-		local savedBool = (not self.Weapon:GetNWBool("IronSights", false))
-		self.Weapon:SetNWBool("IronSights", (not self.Weapon:GetNWBool("IronSights", false))) 
+		--if self.Weapon:GetNWBool("IsPassive", false) then return end
+		if self.Weapon:GetDTBool(0) then return end
+		-- local savedBool = (not self.Weapon:GetNWBool("IronSights", false))
+		local savedBool = (not self.Weapon:GetDTBool(1))
+		-- self.Weapon:SetNWBool("IronSights", (not self.Weapon:GetNWBool("IronSights", false))) 
+		self.Weapon:SetDTBool(1, (not self.Weapon:GetDTBool(1)))
 		
 		if savedBool then
 			self.Owner:SetFOV( 65, 0.15 )
@@ -103,12 +117,13 @@ end
 
 function SWEP:Reload()
 	if self.Weapon:Clip1() < self.Primary.ClipSize then
-		self.Weapon:SetNWBool("IronSights", false)
+		self.Weapon:SetDTBool(1, false)
 		self.Owner:SetFOV( 0, 0.15 )
 		
 		-- self.Weapon:SetNextPrimaryFire(CurTime() + 1.5)
 		-- self.Weapon:SetNextSecondaryFire(CurTime() + 1.5)
-	
+		
+		self.Weapon:SetWeaponHoldType(self.HoldType)
 		self.Weapon:DefaultReload(ACT_VM_RELOAD) 
 		self.Weapon:EmitSound("Weapon_FiveSeven.Reload")
 		
@@ -118,8 +133,11 @@ end
 function SWEP:Deploy()
 
 	self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
-	self.Owner:SetNWBool("IronSights", false)
-	self.Weapon:SetNWBool("IsPassive", false)
+	-- self.Owner:SetNWBool("IronSights", false)
+	-- self.Weapon:SetNWBool("IsPassive", false)
+	
+	self.Weapon:SetDTBool(0, false)
+	self.Weapon:SetDTBool(1, false)
 
 	self.Weapon:SetNextPrimaryFire(CurTime() + 1)
 	return true
@@ -138,7 +156,7 @@ local IRONSIGHT_TIME = 0.15
 
 function SWEP:GetViewModelPosition(pos, ang)
 	
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then
+	if self.Weapon:GetDTBool(0) or self.Owner:KeyDown( IN_SPEED ) then
 		ang = ang * 1
 		ang:RotateAroundAxis(ang:Right(), 		-37.2258)
 		ang:RotateAroundAxis(ang:Up(), 		1.7237)
@@ -157,7 +175,7 @@ function SWEP:GetViewModelPosition(pos, ang)
 	
 	if (not self.IronSightsPos) then return pos, ang end
 
-	local bIron = self.Weapon:GetNWBool("IronSights", false)
+	local bIron = self.Weapon:GetDTBool(1)
 
 	if (bIron != self.bLastIron) then
 		self.bLastIron = bIron
@@ -223,7 +241,7 @@ function SWEP:ShootBullet( damage, num_bullets, aimcone, recoil )
 	
 	self:ShootEffects()
 	
-	if ((SinglePlayer() and SERVER) or (not SinglePlayer() and CLIENT)) then
+	if ((game.SinglePlayer() and SERVER) or (not game.SinglePlayer() and CLIENT)) then
 		local eyeang = self.Owner:EyeAngles()
 		eyeang.pitch = eyeang.pitch - recoil
 		self.Owner:SetEyeAngles(eyeang)
@@ -238,29 +256,3 @@ function SWEP:ShootEffects()
 	self.Owner:SetAnimation( PLAYER_ATTACK1 )		-- 3rd Person Animation
  
 end
-
--- --Holdtype fix?
--- local function HoldTypeFix()
-	-- for k, v in pairs(player.GetAll()) do
-		-- local myWep = v:GetActiveWeapon()
-		-- if myWep:IsValid() then
-			-- if myWep:GetClass() == "weapon_testsmg" then
-				-- if myWep:GetNWBool("IsPassive", false) or v:KeyDown( IN_SPEED ) then
-					-- myWep:SetWeaponHoldType("normal")
-					-- -- -- if (SERVER) then
-						-- -- -- -- self.Weapon:SetWeaponHoldType("normal")
-						-- -- -- self.Owner:SetAnimation( ACT_HL2MP_IDLE_PASSIVE )
-					-- -- -- end
-				-- else
-					-- myWep:SetWeaponHoldType(myWep.HoldType)
-					-- -- -- if (SERVER) then
-						-- -- -- -- self.Weapon:SetWeaponHoldType(self.HoldType)
-						-- -- -- self.Owner:SetAnimation( ACT_HL2MP_IDLE_SMG1 )
-					-- -- -- end
-				-- end
-				-- -- -- self:SetWeaponHoldType( self.HoldType )
-			-- end
-		-- end
-	-- end
--- end
--- hook.Add( "Think", "holdtypefix_test", HoldTypeFix )

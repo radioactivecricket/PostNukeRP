@@ -10,7 +10,9 @@ function SmeltMenu()
 	local w = 200
 	local h = 150
 	local title = "Smelt Small Parts"
-
+	
+	local ply = LocalPlayer()
+	
 	local smelt_frame = vgui.Create("DFrame")
 	--smelt_frame:SetPos( (ScrW()/2) - (w / 2), (ScrH()/2) - (h / 2))
 	smelt_frame:Center()
@@ -45,7 +47,11 @@ function SmeltMenu()
 	SubmitButton:SetPos( 60, 100 )
 	--SubmitButton:SetSize( 100, 75 )
 	SubmitButton.DoClick = function()
-		datastream.StreamToServer( "smelt_stream", { ScrapSlider:GetValue() } )
+		--datastream.StreamToServer( "smelt_stream", { ScrapSlider:GetValue() } )
+		net.Start("smelt_stream")
+			net.WriteEntity(ply)
+			net.WriteLong(ScrapSlider:GetValue())
+		net.SendTopServer()
 		smelt_frame:Close()
 	end
 	

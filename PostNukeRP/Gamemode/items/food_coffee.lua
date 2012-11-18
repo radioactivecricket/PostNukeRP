@@ -20,6 +20,9 @@ ITEM.Weight = 1
 
 
 function ITEM.ToolCheck( p )
+	if (CLIENT) then
+		return false
+	end
 	if p:HasInInventory("tool_coffeepot") then
 		return true
 	else
@@ -41,6 +44,12 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create(class)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+end
 
 PNRP.AddItem(ITEM)
 

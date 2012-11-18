@@ -18,6 +18,10 @@ ITEM.Model = "models/props_rooftop/satellitedish02.mdl"
 ITEM.Script = ""
 ITEM.Weight = 3
 
+function ITEM.ToolCheck( p )
+	return true
+end
+
 function ITEM.Create( ply, class, pos )
 	local ent = ents.Create(class)
 	ent:SetAngles(Angle(0,0,0))

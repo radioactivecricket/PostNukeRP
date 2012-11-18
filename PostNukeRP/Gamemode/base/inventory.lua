@@ -25,6 +25,10 @@ function PNRP.AddItem( itemtable )
 		Weight = itemtable.Weight,
 		Create = itemtable.Create,
 		ToolCheck = itemtable.ToolCheck,
+		ShopHide = itemtable.ShopHide,
+		Capacity = itemtable.Capacity,
+		ProfileCost = itemtable.ProfileCost,
+		Persistant = itemtable.Persistant,
 	}
 	
 end	
@@ -35,119 +39,115 @@ function PNRP.RPSteamID( p )
 	
 end	
 
-
-function PNRP.GetInventoryLocation( p )
-
-	return "PostNukeRP/inventory/"..PNRP.RPSteamID( p )..".txt"
-	
-end	
-
-
-function PNRP.GetCarInventoryLocation( p )
-
-	return "PostNukeRP/inventory/"..PNRP.RPSteamID( p ).."_car.txt"
-	
-end	
-	
-
 function PNRP.Inventory( p )
+	local query
+	local result
 	
-	local ILoc = PNRP.GetInventoryLocation( p )
+	query = "SELECT inventory FROM player_inv WHERE pid="..tostring(p.pid)
+	result = sql.Query(query)
+--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (Select inventory from player_inv wher PID) Error:  "..tostring(sql.LastError()))
 	
-	if !file.Exists( ILoc ) then print( "Inventory file doesn't exist !" ) return end	
+	if not result then return nil end
 	
-	local decoded = util.KeyValuesToTable( file.Read( ILoc ) )	
+	local invTbl = {}
+	local invLongStr = string.Explode( " ", result[1]["inventory"] )
+	for _, invStr in pairs( invLongStr ) do
+		local invSplit = string.Explode( ",", invStr )
+		invTbl[invSplit[1]] = math.Round(tonumber(invSplit[2]) or 0)
+	end
 	
-	return decoded
-	
+	return invTbl
 end	
 
 function PlayerMeta:HasInInventory( theitem )
-	local ILoc = PNRP.GetInventoryLocation( self )		
+	local query
+	local result
 	
-	if !file.Exists( ILoc ) then return false end
+	query = "SELECT inventory FROM player_inv WHERE pid="..tostring(self.pid)
+	result = sql.Query(query)
+--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (Select inventory from player_inv wher PID) Error:  "..tostring(sql.LastError()))
 	
-	local decoded = PNRP.Inventory( self )		
-
-	if decoded[theitem] != nil then
+	if not result then return nil end
 	
-		if decoded[theitem] > 0 then
-		
+	local invTbl = {}
+	local invLongStr = string.Explode( " ", result[1]["inventory"] )
+	for _, invStr in pairs( invLongStr ) do
+		local invSplit = string.Explode( ",", invStr )
+		invTbl[invSplit[1]] = tonumber(invSplit[2])
+	end
+	
+	if invTbl[theitem] ~= nil then
+		if invTbl[theitem] >0 then
 			return true
-		
 		else
-			
 			return false
-			
 		end
-		
 	else
-		
 		return false
-
-	end	
+	end
+	
 end
 
 function PNRP.CarInventory( p )
+	local query
+	local result
 	
-	local ILoc = PNRP.GetCarInventoryLocation( p )
+	query = "SELECT car_inventory FROM player_inv WHERE pid="..tostring(p.pid)
+	result = sql.Query(query)
+--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (Select inventory from player_inv wher PID) Error:  "..tostring(sql.LastError()))
 	
-	if !file.Exists( ILoc ) then print( "Car Inventory file doesn't exist !" ) return end	
+	if not result then return nil end
 	
-	local decoded = util.KeyValuesToTable( file.Read( ILoc ) )	
+	local invTbl = {}
+	local invLongStr = string.Explode( " ", result[1]["car_inventory"] )
+	for _, invStr in pairs( invLongStr ) do
+		local invSplit = string.Explode( ",", invStr )
+		invTbl[invSplit[1]] = tonumber(invSplit[2])
+	end
 	
-	return decoded
-	
+	return invTbl
 end	
 
 
-function PNRP.OpenMainInventory(ply)
+function PNRP.OpenMainInventory(ply)	
+	local tbl = PNRP.Inventory( ply )
 	
-	local ILoc = PNRP.GetInventoryLocation( ply )
-	
-	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
-	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
-	
-	local tbl = { }
-	if !file.Exists( ILoc ) then 
-		print( "Inventory file doesn't exist !" ) 
-		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { ["inventory"] = tbl, ["playerweight"] = tostring(PNRP.InventoryWeight( ply )), ["carweight"] = tostring(PNRP.CarInventoryWeight( ply )) })
-		--datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
-	else
-		tbl = util.KeyValuesToTable(file.Read(ILoc))
-		datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { ["inventory"] = tbl, ["playerweight"] = tostring(PNRP.InventoryWeight( ply )), ["carweight"] = tostring(PNRP.CarInventoryWeight( ply )) })
-		--datastream.StreamToClients(ply, "pnrp_OpenInvWindow", { tbl, tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )) })
+	if not tbl then
+		tbl = {}
+		print("Missing inventory!")
 	end
 	
-
+	net.Start("pnrp_OpenInvWindow")
+		net.WriteTable(tbl)
+		net.WriteString(tostring(PNRP.InventoryWeight( ply )))
+		net.WriteString(tostring(PNRP.CarInventoryWeight( ply )))
+	net.Send(ply)
 end
 concommand.Add("pnrp_OpenInventory", PNRP.OpenMainInventory)
+util.AddNetworkString( "pnrp_OpenInvWindow" )
 
 function PNRP.OpenEQWindow(ply)
-
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
 		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
 		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
 	end
-	datastream.StreamToClients(ply, "pnrp_OpenEquipmentWindow", { tostring(PNRP.InventoryWeight( ply )), tostring(PNRP.CarInventoryWeight( ply )), weightCap })
+	
+	net.Start("pnrp_OpenEquipmentWindow")
+		net.WriteEntity(ply)
+		net.WriteString(tostring(PNRP.InventoryWeight( ply )))
+		net.WriteString(tostring(PNRP.CarInventoryWeight( ply )))
+		net.WriteFloat(weightCap)
+	net.Send(ply)
 end
 concommand.Add("pnrp_initEQ", PNRP.OpenEQWindow)
+util.AddNetworkString( "pnrp_OpenEquipmentWindow" )
 
 function PNRP.InventoryWeight( p )
-	
-	local ILoc = PNRP.GetInventoryLocation( p )
-	
-	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
-	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
-	
-	if !file.Exists( ILoc ) then 
-		print( "Inventory file doesn't exist !" )
-		return 0
-	end	
-	
 	local Inv = PNRP.Inventory( p )
+	
+	if not Inv then return 0 end
 	
 	local weightSum = 0
 	
@@ -158,7 +158,6 @@ function PNRP.InventoryWeight( p )
 					weightSum = weightSum + (item.Weight * tonumber(v))
 				end
 			end
-			
 		end
 	end
 	
@@ -167,38 +166,26 @@ end
 
 
 function PNRP.OpenMainCarInventory(ply)
+	local tbl = PNRP.CarInventory( ply )
 	
-	local ILoc = PNRP.GetCarInventoryLocation( ply )
-	
-	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
-	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
-	
-	local tbl = { }
-	if !file.Exists( ILoc ) then 
-		print( "Inventory file doesn't exist !" ) 
-		datastream.StreamToClients(ply, "pnrp_OpenCarInvWindow", { tbl, tostring(PNRP.CarInventoryWeight( ply )) })
-	else
-		tbl = util.KeyValuesToTable(file.Read(ILoc))
-		datastream.StreamToClients(ply, "pnrp_OpenCarInvWindow", { tbl, tostring(PNRP.CarInventoryWeight( ply )) })
+	if not tbl then
+		tbl = {}
+		print("Missing inventory!")
 	end
 	
-
+	net.Start("pnrp_OpenCarInvWindow")
+		net.WriteTable(tbl)
+		net.WriteString(tostring(PNRP.InventoryWeight( ply )))
+		net.WriteString(tostring(PNRP.CarInventoryWeight( ply )))
+	net.Send(ply)
 end
 concommand.Add("pnrp_OpenCarInventory", PNRP.OpenMainCarInventory)
+util.AddNetworkString( "pnrp_OpenCarInvWindow" )
 
 function PNRP.CarInventoryWeight( p )
-	
-	local ILoc = PNRP.GetCarInventoryLocation( p )
-	
-	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
-	if !file.IsDir("PostNukeRP/inventory") then file.CreateDir("PostNukeRP/inventory") end
-	
-	if !file.Exists( ILoc ) then 
-		print( "Car Inventory file doesn't exist !" )
-		return 0
-	end	
-	
 	local Inv = PNRP.CarInventory( p )
+	
+	if not Inv then return 0 end
 	
 	local weightSum = 0
 	
@@ -216,44 +203,53 @@ function PNRP.CarInventoryWeight( p )
 	return weightSum
 end
 
-function PlayerMeta:AddToInventory( theitem )
-	PNRP.AddToInentory( self, theitem )
+function PlayerMeta:AddToInventory( theitem, amount )
+	PNRP.AddToInventory( self, theitem, amount )
 end
 	
-function PNRP.AddToInentory( p, theitem )
-	
+function PNRP.AddToInventory( p, theitem, amount )
+	local query
+	local result
+	amount = tonumber(amount)
 	if PNRP.Items[theitem] != nil then
-	
-		local ILoc = PNRP.GetInventoryLocation( p )		
+		query = "SELECT pid FROM player_inv WHERE pid="..tostring(p.pid)
+		result = sql.Query(query)
+	--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (Check for pid in player_inv) Error:  "..tostring(sql.LastError()))
 		
-		if file.Exists( ILoc ) then	
-		
-			local decoded = PNRP.Inventory( p )		
+		if result then
+			local Inv = PNRP.Inventory( p )
 			
-			if tonumber( decoded[theitem] ) != nil then
-			
-				decoded[theitem] = decoded[theitem] + 1
-				
-			else
-			
-				decoded[theitem] = 1
-				
+			if not Inv then
+				Inv = {}
 			end
 			
-			file.Write( ILoc, util.TableToKeyValues( decoded ) )
+			if Inv[theitem] then
+				Inv[theitem] = Inv[theitem] + amount
+			else
+				Inv[theitem] = amount
+			end
 			
+			local InvHalfString = {}
+			for item, amount in pairs(Inv) do
+				table.insert(InvHalfString, item..","..tostring(amount))
+			end
+			local InvStr = ""
+			for _, hstring in pairs(InvHalfString) do
+				InvStr = InvStr..hstring.." "
+			end
+			InvStr = string.TrimRight(InvStr)
+			
+			query = "UPDATE player_inv SET inventory='"..InvStr.."' WHERE pid="..tostring(p.pid)
+			result = sql.Query(query)
+		--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (UPDATE player_inv where pid) Error:  "..tostring(sql.LastError()))
 		else
-		
-			local Inventory	= {}			
+			local Inv = theitem..",1"
 			
-			Inventory[theitem] = 1
-			
-			file.Write( ILoc, util.TableToKeyValues( Inventory ) )
-			
+			query = "INSERT INTO player_inv (pid, inventory) VALUES ("..tostring(p.pid)..", '"..Inv.."')"
+			result = sql.Query(query)
+		--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (INSERT INTO player_inv ( pid, inventory) ) Error:  "..tostring(sql.LastError()))
 		end
-		
 	end
-	
 end
 
 function PNRP.AddToInvFromCar( p, command, arg )
@@ -269,7 +265,7 @@ function PNRP.AddToInvFromCar( p, command, arg )
 	end
 	
 	if weight <= weightCap then
-		PNRP.AddToInentory( p, theitem )
+		PNRP.AddToInventory( p, theitem, 1 )
 		PNRP.TakeFromCarInventory( p, theitem )
 	else
 		p:ChatPrint("You're pack is too full and cannot carry this.")
@@ -286,6 +282,15 @@ function PNRP.AddToInvFromEQ( p, command, arg )
 	local weight = PNRP.InventoryWeight( p ) + PNRP.Items[theitem].Weight
 	local weightCap
 	
+	--Checks to see if the player has enough ammo to put in pack.
+	if command == "pnrp_addtoinvfromceq-ammo" then
+		local ammoCount = p:GetAmmoCount(string.sub(theitem, 6))
+		if ammoCount < PNRP.Items[theitem].Energy then
+			p:ChatPrint("You do not have enough to place in your pack..")
+			return
+		end
+	end
+	
 	if team.GetName(p:Team()) == "Scavenger" then
 		weightCap = GetConVarNumber("pnrp_packCapScav") + (p:GetSkill("Backpacking")*10)
 	else
@@ -293,7 +298,7 @@ function PNRP.AddToInvFromEQ( p, command, arg )
 	end
 	
 	if weight <= weightCap then
-		PNRP.AddToInentory( p, theitem )
+		PNRP.AddToInventory( p, theitem, 1 )
 		
 	else
 		p:ChatPrint("You're pack is too full and cannot carry this.")
@@ -313,167 +318,255 @@ end
 concommand.Add( "pnrp_addtoinvfromeq", PNRP.AddToInvFromEQ )
 concommand.Add( "pnrp_addtoinvfromceq-ammo", PNRP.AddToInvFromEQ )
 
-function PNRP.AddToCarInentory( p, command, arg )
-	local theitem = arg[1]
+function PNRP.AddToCarInentory( )
+	local query
+	local result
+	
+	local ply = net.ReadEntity()
+	local command = net.ReadString()
+	local theitem = net.ReadString()
+	local amt = net.ReadDouble()
+	
+	if amt <= 0 then amt = 1 end
 	
 	if PNRP.Items[theitem] != nil then
-	
-		local ILoc = PNRP.GetCarInventoryLocation( p )		
+		query = "SELECT pid FROM player_inv WHERE pid="..tostring(ply.pid)
+		result = sql.Query(query)
+	--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (Check for pid in player_inv) Error:  "..tostring(sql.LastError()))
 		
-		if file.Exists( ILoc ) then	
-		
-			local decoded = PNRP.CarInventory( p )		
+		if result then
+			local Inv = PNRP.CarInventory( ply )
 			
-			if tonumber( decoded[theitem] ) != nil then
-			
-				decoded[theitem] = decoded[theitem] + 1
-				
-			else
-			
-				decoded[theitem] = 1
-				
+			if not Inv then
+				Inv = {}
 			end
 			
-			file.Write( ILoc, util.TableToKeyValues( decoded ) )
+			if Inv[theitem] then
+				Inv[theitem] = Inv[theitem] + amt
+			else
+				Inv[theitem] = amt
+			end
 			
+			local InvHalfString = {}
+			for item, amount in pairs(Inv) do
+				table.insert(InvHalfString, item..","..tostring(amount))
+			end
+			local InvStr = ""
+			for _, hstring in pairs(InvHalfString) do
+				InvStr = InvStr..hstring.." "
+			end
+			InvStr = string.TrimRight(InvStr)
+			
+			query = "UPDATE player_inv SET car_inventory='"..InvStr.."' WHERE pid="..tostring(ply.pid)
+			result = sql.Query(query)
+	--		ErrorNoHalt(tostring(os.date()).." SQL QUERY: (UPDATE player_inv where pid) Error:  "..tostring(sql.LastError()))
 		else
-		
-			local CarInventory	= {}			
+			local Inv = theitem..","..tostring(amt)
 			
-			CarInventory[theitem] = 1
-			Msg("CarInv: "..tostring(CarInventory).."\n")
-			file.Write( ILoc, util.TableToKeyValues( CarInventory ) )
-			
+			query = "INSERT INTO player_inv (pid, car_inventory) VALUES ("..tostring(ply.pid)..", '"..Inv.."')"
+			result = sql.Query(query)
+	--		ErrorNoHalt(tostring(os.date()).." SQL QUERY: (INSERT INTO player_inv ( pid, car_inventory) ) Error:  "..tostring(sql.LastError()))
 		end
 		
-		PNRP.TakeFromInventory( p, theitem )
-		
-		Msg("["..tostring(theitem).."] added to "..p:Nick().."'s car inventory.  \n")
+		for i = 1, amt do
+			PNRP.TakeFromInventory( ply, theitem )
+		end
+		Msg("["..tostring(theitem).."] added to "..ply:Nick().."'s car inventory.  \n")
+		ply:ChatPrint(tostring(amt).." "..PNRP.Items[theitem].Name.." stored to your Car's Trunk")
 	end
-	if command == "pnrp_addtocarinentoryFromEQ" then
+	if command == "FromEQ" then
 		local ammoAmt = PNRP.Items[theitem].Energy
 		theitem = string.gsub(theitem, "ammo_", "")
-		p:RemoveAmmo( ammoAmt, theitem )
+		ply:RemoveAmmo( ammoAmt, theitem )
 	end
 	
-	if command ~= "pnrp_addtocarinentoryFromEQ" then
-		p:ConCommand("pnrp_inv")
+	if command ~= "FromEQ" then
+		ply:ConCommand("pnrp_inv")
 	end
-end	
-concommand.Add( "pnrp_addtocarinentory", PNRP.AddToCarInentory )
-concommand.Add( "pnrp_addtocarinentoryFromEQ", PNRP.AddToCarInentory )
-
+end
+net.Receive( "pnrp_addtocarinentory", PNRP.AddToCarInentory )
 
 function PNRP.TakeFromInventory( p, theitem )
-	local ILoc = PNRP.GetInventoryLocation( p )		
+	local query
+	local result
 	
-	if !file.Exists( ILoc ) then return print( "Inventory file doesn't exist !" ) end
-	local decoded = PNRP.Inventory( p )		
-	if decoded[theitem] != nil then
-		if decoded[theitem] > 1 then
-			decoded[theitem] = decoded[theitem] - 1
+	local inv = PNRP.Inventory( p )
+	
+	if not inv then
+		ErrorNoHalt("No inventory under PID!")
+		return
+	end
+	
+	if inv[theitem] ~= nil then
+		if inv[theitem] > 1 then
+			inv[theitem] = inv[theitem] - 1
 		else
-			decoded[theitem] = nil
+			inv[theitem] = nil
 		end
-		file.Write( ILoc, util.TableToKeyValues( decoded ) )
-	end	
+		
+		local InvHalfString = {}
+		for item, amount in pairs(inv) do
+			table.insert(InvHalfString, item..","..tostring(amount))
+		end
+		local InvStr = ""
+		for _, hstring in pairs(InvHalfString) do
+			InvStr = InvStr..hstring.." "
+		end
+		InvStr = string.TrimRight(InvStr)
+		
+		query = "UPDATE player_inv SET inventory='"..InvStr.."' WHERE pid="..tostring(p.pid)
+		result = sql.Query(query)
+	--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (UPDATE player_inv where pid) Error:  "..tostring(sql.LastError()))
+	end
 end
 
 function PNRP.TakeFromInventoryBulk( p, theitem, Count )
-	local ILoc = PNRP.GetInventoryLocation( p )		
+	local query
+	local result
 	local Check = false
-	if !file.Exists( ILoc ) then return print( "Inventory file doesn't exist !" ) end
-	local decoded = PNRP.Inventory( p )		
-	if decoded[theitem] != nil then
-		if decoded[theitem] > Count then
-			decoded[theitem] = decoded[theitem] - Count
+	
+	local inv = PNRP.Inventory( p )
+	
+	if not inv then
+		ErrorNoHalt("No inventory under PID!")
+		return
+	end
+	
+	if inv[theitem] ~= nil then
+		if inv[theitem] > Count then
+			inv[theitem] = inv[theitem] - Count
 			Check = true
 		else
-			if decoded[theitem] == Count then
-				decoded[theitem] = nil
+			if inv[theitem] == Count then
+				inv[theitem] = nil
 				Check = true
 			else
 				Check = false
+				return false
 			end
 		end
-		file.Write( ILoc, util.TableToKeyValues( decoded ) )
-	end	
+		
+		local InvHalfString = {}
+		for item, amount in pairs(inv) do
+			table.insert(InvHalfString, item..","..tostring(amount))
+		end
+		local InvStr = ""
+		for _, hstring in pairs(InvHalfString) do
+			InvStr = InvStr..hstring.." "
+		end
+		InvStr = string.TrimRight(InvStr)
+		
+		query = "UPDATE player_inv SET inventory='"..InvStr.."' WHERE pid="..tostring(p.pid)
+		result = sql.Query(query)
+	--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (UPDATE player_inv where pid) Error:  "..tostring(sql.LastError()))
+	end
 	return Check
 end
 
 function PNRP.TakeFromCarInventory( p, theitem )
-	local ILoc = PNRP.GetCarInventoryLocation( p )		
+	local query
+	local result
 	
-	if !file.Exists( ILoc ) then return print( "Inventory file doesn't exist !" ) end
-	local decoded = PNRP.CarInventory( p )		
-	if decoded[theitem] != nil then
-		if decoded[theitem] > 1 then
-			decoded[theitem] = decoded[theitem] - 1	
+	local inv = PNRP.CarInventory( p )
+	
+	if not inv then
+		ErrorNoHalt("No inventory under PID!")
+		return
+	end
+	
+	if inv[theitem] ~= nil then
+		if inv[theitem] > 1 then
+			inv[theitem] = inv[theitem] - 1
 		else
-			decoded[theitem] = nil	
+			inv[theitem] = nil
 		end
-		file.Write( ILoc, util.TableToKeyValues( decoded ) )
-	end	
+		
+		local InvHalfString = {}
+		for item, amount in pairs(inv) do
+			table.insert(InvHalfString, item..","..tostring(amount))
+		end
+		local InvStr = ""
+		for _, hstring in pairs(InvHalfString) do
+			InvStr = InvStr..hstring.." "
+		end
+		InvStr = string.TrimRight(InvStr)
+		
+		query = "UPDATE player_inv SET car_inventory='"..InvStr.."' WHERE pid="..tostring(p.pid)
+		result = sql.Query(query)
+	--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (UPDATE player_inv where pid) Error:  "..tostring(sql.LastError()))
+	end
 end
 
 function PNRP.TakeFromCarInventoryBulk( p, theitem, Count )
-	local ILoc = PNRP.GetCarInventoryLocation( p )		
+	local query
+	local result
 	local Check = false
-	if !file.Exists( ILoc ) then return print( "Inventory file doesn't exist !" ) end
-	local decoded = PNRP.CarInventory( p )		
-	if decoded[theitem] != nil then
-		if decoded[theitem] > Count then
-			decoded[theitem] = decoded[theitem] - Count
+	
+	local inv = PNRP.CarInventory( p )
+	
+	if not inv then
+		ErrorNoHalt("No inventory under PID!")
+		return
+	end
+	
+	if inv[theitem] ~= nil then
+		if inv[theitem] > Count then
+			inv[theitem] = inv[theitem] - Count
 			Check = true
 		else
-			if decoded[theitem] == Count then
-				decoded[theitem] = nil
+			if inv[theitem] == Count then
+				inv[theitem] = nil
 				Check = true
 			else
 				Check = false
+				return false
 			end
 		end
-		file.Write( ILoc, util.TableToKeyValues( decoded ) )
-	end	
+		
+		local InvHalfString = {}
+		for item, amount in pairs(inv) do
+			table.insert(InvHalfString, item..","..tostring(amount))
+		end
+		local InvStr = ""
+		for _, hstring in pairs(InvHalfString) do
+			InvStr = InvStr..hstring.." "
+		end
+		InvStr = string.TrimRight(InvStr)
+		
+		query = "UPDATE player_inv SET car_inventory='"..InvStr.."' WHERE pid="..tostring(p.pid)
+		result = sql.Query(query)
+	--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (UPDATE player_inv where pid) Error:  "..tostring(sql.LastError()))
+	end
 	return Check
 end
 
-function PNRP.DropItem( p, c, a )
-
-	for itemname, item in pairs( PNRP.Items ) do
-	
-		for k, v in pairs( PNRP.Inventory( p ) ) do
-		
+function PNRP.DropItem( p, c, a )	
+	local inv = PNRP.Inventory( p )	
+	for itemname, item in pairs( PNRP.Items ) do	
+		for k, v in pairs( inv ) do		
 			if k == itemname && k == a[1] then
 			
 				PNRP.DropSpawn(p, itemname, 1)
 
-			end
-			
-		end
-		
+			end		
+		end	
 	end	
-
 end
 
 concommand.Add( "inventory_drop", PNRP.DropItem )
 
 function PNRP.DropCarItem( p, c, a )
-
-	for itemname, item in pairs( PNRP.Items ) do
+	local inv = PNRP.CarInventory( p )
 	
-		for k, v in pairs( PNRP.CarInventory( p ) ) do
-		
+	for itemname, item in pairs( PNRP.Items ) do
+		for k, v in pairs( inv ) do	
 			if k == itemname && k == a[1] then
 			
 				PNRP.DropCarSpawn(p, itemname, 1)
 
-			end
-			
-		end
-		
+			end			
+		end		
 	end	
-
 end
 
 concommand.Add( "carinventory_drop", PNRP.DropCarItem )
@@ -484,8 +577,9 @@ end
 
 concommand.Add( "debug_weight", PNRP.ReportWeight )
 
-function PNRP.UseFromInv(ply, handler, id, encoded, decoded )
-	local ItemID = decoded[1]
+function PNRP.UseFromInv()
+	local ply = net.ReadEntity()
+	local ItemID = net.ReadString()
 	
 	if PNRP.Items[ItemID] == nil then return end
 	local item = PNRP.Items[ItemID]
@@ -495,9 +589,8 @@ function PNRP.UseFromInv(ply, handler, id, encoded, decoded )
 		if useCheck == true then
 			PNRP.TakeFromInventory( ply, ItemID )
 		end
-	end
-		
+	end	
 end
-datastream.Hook( "UseFromInv", PNRP.UseFromInv )
+net.Receive( "UseFromInv", PNRP.UseFromInv )
 
 --EOF

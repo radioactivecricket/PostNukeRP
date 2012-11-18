@@ -3,6 +3,7 @@ AddCSLuaFile( "shared.lua" )
 include('shared.lua')
 
 util.PrecacheModel ("models/props/cs_office/crates_indoor.mdl")
+util.AddNetworkString("stockpile_breakin")
 
 function ENT:Initialize()
 	self.Entity:SetModel("models/props/cs_office/crates_indoor.mdl")
@@ -11,20 +12,27 @@ function ENT:Initialize()
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
 	self.Community = self.Entity:GetNWString("community_owner")
+	self.CommunityName = self.Entity:GetNWString("communityName")
 	self.Enabled = false
 	self.BreakInTimer = 30
 	self.BreakingIn = nil
 	self.Repairing = nil
-	self.Entity:SetColor(255, 255, 255, 155)
+	
+	self.Entity:SetRenderMode( 1 )
+	self.Entity:SetColor(Color(200, 200, 200, 50))
+--	self.Entity:SetKeyValue( "renderfx", 16 )
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_WORLD)
 	
 	local position = self.Entity:GetPos()
 	
 	timer.Simple(10, function()
-		self.Entity:SetColor(255, 255, 255, 255)
+		self.Entity:SetColor(Color(200, 200, 200, 255))
+--		self.Entity:SetKeyValue( "renderfx", 0 )
 		self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
+		self.Entity:GetPhysicsObject():EnableMotion(false)
+		self.Entity:SetMoveType(MOVETYPE_NONE)
 
-		self.Entity:SetPos(position)
+		--self.Entity:SetPos(position)
 		self.Enabled = true
 	end )
 end
@@ -62,13 +70,16 @@ function ENT:Use( activator, caller )
 	end
 end
 
-function TakeRes( ply, handler, id, encoded, decoded )
-	local stockpile = decoded["stockpile"]
+function TakeRes( )
+	local GM = GAMEMODE
+	local ply = net.ReadEntity()
+	local stockpile = net.ReadEntity()
+
 	if not stockpile then return end
 	
-	local Scrap = math.Round(decoded["scrap"])
-	local Small = math.Round(decoded["small"])
-	local Chems = math.Round(decoded["chems"])
+	local Scrap = math.Round(net.ReadDouble())
+	local Small = math.Round(net.ReadDouble())
+	local Chems = math.Round(net.ReadDouble())
 	
 	local communityTbl = GetCommunityTbl(stockpile.Community)
 	
@@ -99,15 +110,20 @@ function TakeRes( ply, handler, id, encoded, decoded )
 		ply:IncResource( "Chemicals", Chems )
 		ply:ChatPrint("You have taken "..tostring(Chems).." chemicals from the stockpile.")
 	end
+	
+	GM.SaveCharacter(ply)
 end
-datastream.Hook( "stockpile_take", TakeRes )
+net.Receive( "stockpile_take", TakeRes )
 
-function PutRes( ply, handler, id, encoded, decoded )
-	local stockpile = decoded["stockpile"]
+function PutRes( )
+	local GM = GAMEMODE
+	local ply = net.ReadEntity()
+	local stockpile = net.ReadEntity()
+
 	if not stockpile then return end
-	local Scrap = math.Round(decoded["scrap"])
-	local Small = math.Round(decoded["small"])
-	local Chems = math.Round(decoded["chems"])
+	local Scrap = math.Round(net.ReadDouble())
+	local Small = math.Round(net.ReadDouble())
+	local Chems = math.Round(net.ReadDouble())
 	
 	local TotalScrap = ply:GetResource( "Scrap" )
 	local TotalSmall = ply:GetResource( "Small_Parts" )
@@ -136,11 +152,15 @@ function PutRes( ply, handler, id, encoded, decoded )
 		ply:DecResource( "Chemicals", Chems )
 		ply:ChatPrint("You have put "..tostring(Chems).." chemicals into the stockpile.")
 	end
+	
+	GM.SaveCharacter(ply)
 end
-datastream.Hook( "stockpile_put", PutRes )
+net.Receive( "stockpile_put", PutRes )
 
-function StockBreakIn( ply, handler, id, encoded, decoded )
-	local stockpile = decoded["stockpile"]
+function StockBreakIn( )
+	local ply = net.ReadEntity()
+	local stockpile = net.ReadEntity()
+	--local stockpile = decoded["stockpile"]
 	if not stockpile then 
 		-- ply:Freeze(false)
 		ply:SetMoveType(MOVETYPE_WALK)
@@ -220,10 +240,13 @@ function StockBreakIn( ply, handler, id, encoded, decoded )
 		ply:ChatPrint("Someone is already breaking into this stockpile.")
 	end
 end
-datastream.Hook( "stockpile_breakin", StockBreakIn )
+--datastream.Hook( "stockpile_breakin", StockBreakIn )
+net.Receive( "stockpile_breakin", StockBreakIn )
 
-function StockRepair( ply, handler, id, encoded, decoded )
-	local stockpile = decoded["stockpile"]
+function StockRepair( )
+	local ply = net.ReadEntity()
+	local stockpile = met.ReadEntity()
+	--local stockpile = decoded["stockpile"]
 	if stockpile.BreakInTimer >= 30 then
 		ply:ChatPrint("This stockpile is fully repaired!")
 		return
@@ -285,7 +308,8 @@ function StockRepair( ply, handler, id, encoded, decoded )
 		ply:ChatPrint("Someone is already repairing this stockpile.")
 	end
 end
-datastream.Hook( "stockpile_repair", StockRepair )
+--datastream.Hook( "stockpile_repair", StockRepair )
+net.Receive("stockpile_repair", StockRepair )
 
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value

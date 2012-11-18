@@ -18,6 +18,10 @@ ITEM.Model = "models/antlion_grub.mdl"
 ITEM.Script = ""
 ITEM.Weight = 4
 
+function ITEM.ToolCheck( p )
+	return {["intm_grubegg"]=1}
+end
+
 function ITEM.Create( ply, class, pos )
 	local ent = ents.Create(class)
 	ent:SetAngles(Angle(0,0,0))
@@ -30,6 +34,11 @@ function ITEM.Create( ply, class, pos )
 	ent:AddRelationship("npc_floor_turret D_LI 99")
 	ent:AddRelationship("npc_chemgrub D_LI 99")
 	ent:AddRelationship("player D_LI 99")
+	
+	for k, v in pairs(ents.FindByClass("npc_turret_floor")) do
+		v:AddEntityRelationship(ent, D_LI, 99 )
+	end
+	
 	PNRP.AddWorldCache( ply,ITEM.ID )
 end
 

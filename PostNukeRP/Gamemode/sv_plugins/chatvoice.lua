@@ -251,14 +251,14 @@ function GM:PlayerCanHearPlayersVoice( pListener, pTalker )
 	
 	if GetConVarNumber("pnrp_voiceLimit") == 1 then
 		if curDistance < maxDistance then
-			return true
+			return true, true
 		elseif senderRdioOn and listenerRdioOn and senderChnl == listenerChnl then
 			return true
 		else
 			return false
 		end
 	end
-	return true
+	return true, true
 end
 
 function GM:PlayerCanSeePlayersChat( strText, bTeamOnly, pListener, pTalker )

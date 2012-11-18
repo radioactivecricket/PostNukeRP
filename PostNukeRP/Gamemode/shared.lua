@@ -1,4 +1,4 @@
-GM.Name 	= "PostNukeRP v48" --Set the gamemode name
+GM.Name 	= "PostNukeRP v49" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError(Gmod Addict)" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://radioactivecricket.com" --Set the author website
@@ -7,12 +7,17 @@ DeriveGamemode("sandbox")
 
 PNRP = {}
 
+PNRP_Path = "PostNukeRP/"
+
+PNRP_MOTDPath = "http://postnukerp.com"
+PNRP_WIKIPath = "http://postnukerp.com/wiki"
+
 --Team Variables
 
-TEAM_WASTELANDER = 1
-TEAM_SCAVENGER = 2
-TEAM_SCIENCE = 3
-TEAM_ENGINEER = 4
+TEAM_WASTELANDER = 6
+TEAM_SCAVENGER = 7
+TEAM_SCIENCE = 8
+TEAM_ENGINEER = 9
 TEAM_CULTIVATOR = 5
 
 team.SetUp( TEAM_WASTELANDER, "Wastelander", Color( 125, 125, 125, 255 ) ) --Gray
@@ -37,6 +42,20 @@ PNRP.Skills["Animal Husbandry"] = {name = "Animal Husbandry", desc ="Like cattle
 PNRP.Skills["Mining"] 			= {name = "Mining", desc ="Get the most out of your sonic miners!", basecost = 150, maxlvl = 5, class = {TEAM_SCAVENGER}}
 PNRP.Skills["Farming"] 			= {name = "Farming", desc ="Take care of those plants less.  God yes...", basecost = 150, maxlvl = 5, class = {TEAM_CULTIVATOR}}
 PNRP.Skills["Salvaging"] 		= {name = "Salvaging", desc ="Lose less when taking stuff apart!", basecost = 100, maxlvl = 5, class = nil}
+
+PNRP.ScavItems = {}
+PNRP.ScavItems["fuel_h2pod"]		=	5
+PNRP.ScavItems["fuel_uranrods"]		=	5
+PNRP.ScavItems["intm_sensorpod"]	=	20
+PNRP.ScavItems["intm_seeds"]		=	15
+PNRP.ScavItems["intm_pulsecore"]	=	15
+PNRP.ScavItems["intm_servo"]		=	20
+PNRP.ScavItems["intm_diamsaw"]		=	30
+PNRP.ScavItems["intm_waterjet"]		=	10
+PNRP.ScavItems["intm_solarthinfilm"]=	5
+PNRP.ScavItems["intm_fusioncore"]	=	1
+PNRP.ScavItems["intm_nukecore"]		=	1
+PNRP.ScavItems["food_beans"]		=	250
 
 local PlayerMeta = FindMetaTable("Player")
 
@@ -86,6 +105,7 @@ CreateConVar("pnrp_MaxReproducedRes","20", FCVAR_REPLICATED + FCVAR_NOTIFY + FCV
 CreateConVar("pnrp_propSpawnpointProtection", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_propBanning", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_propAllowing", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_AllowPunt", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_propPay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_propCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
@@ -133,7 +153,7 @@ if (SERVER) then
 	AddCSLuaFile("itembase.lua")
 end	
 
-for k, v in pairs( file.FindInLua( "PostNukeRP/gamemode/items/*.lua" ) ) do
+for k, v in pairs( file.Find(PNRP_Path.."gamemode/items/*.lua", "LUA" ) ) do
 	include("items/"..v)
 	if (SERVER) then AddCSLuaFile("items/"..v) end
 end
@@ -150,7 +170,9 @@ end
 function PNRP.FindItemID( class )
 	
 	for itemname, item in pairs( PNRP.Items ) do
-		if class == item.Ent then
+		if item.Ent == "prop_physics" and item.ID == class then
+			return item.ID
+		elseif class == item.Ent then
 			return item.ID
 		end
 		
@@ -178,6 +200,12 @@ function PNRP.FindWepItem( model )
 	end	
 	return nil
 	
+end
+
+function GM:StartEntityDriving( ent, ply )
+	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		drive.Start( ply, ent )
+	end
 end
 
 function PNRP.FindAmmoType( id, class )
@@ -227,12 +255,12 @@ end
 local RP_Default_Weapons = {}
 RP_Default_Weapons = { "weapon_pnrp_ak-comp", "weapon_pnrp_badlands", "weapon_pnrp_charge", "weapon_pnrp_knife", 
 		"weapon_pnrp_p228", "weapon_pnrp_precrifle", "weapon_pnrp_pumpshotgun", "weapon_pnrp_revolver", "weapon_pnrp_saw", 
-		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck" }
+		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck", "weapon_pnrp_ump", "weapon_pnrp_m82" }
 
 local function HoldTypeFix()
 	for k, v in pairs(player.GetAll()) do
 		local myWep = v:GetActiveWeapon()
-		if myWep:IsValid() then
+		if myWep and IsValid(myWep) then
 			local wepFound = false
 			for _, wepClass in pairs(RP_Default_Weapons) do
 				if wepClass == myWep:GetClass() then
@@ -241,17 +269,21 @@ local function HoldTypeFix()
 				end
 			end
 		
-			if wepFound then
+			if wepFound and IsValid(myWep) then
 				if v:Crouching() then
 					myWep:SetWeaponHoldType(myWep.HoldType)
-				elseif myWep:GetNWBool("IsPassive", false) or v:KeyDown( IN_SPEED ) then
-					if myWep.HoldType == "pistol" or myWep.HoldType == "knife" or myWep.HoldType == "slam" then
+				elseif myWep:GetNWBool("IsPassive", false) or myWep:GetDTBool(0) or v:KeyDown( IN_SPEED ) then
+					if myWep.HoldType == "pistol" or myWep.HoldType == "revolver" or myWep.HoldType == "knife" or myWep.HoldType == "slam" then
 						myWep:SetWeaponHoldType("normal")
 					else
 						myWep:SetWeaponHoldType("passive")
 					end
+				elseif myWep:GetDTBool(1) and myWep.HoldType == "pistol" then
+					myWep:SetWeaponHoldType("revolver")
+				elseif myWep:GetDTBool(1) and myWep.HoldType == "shotgun" then
+					myWep:SetWeaponHoldType("ar2")
 				else
-					myWep:SetWeaponHoldType(myWep.HoldType)
+					myWep:SetWeaponHoldType(myWep.HoldType or "normal")
 				end
 			end
 		end
@@ -268,4 +300,29 @@ function toIntfromBool(bool)
 		return bool
 	end
 end
+
+--Checks the players weight
+function PNRP:WeightCk( ply, w )
+	local weightCap
+	if team.GetName(ply:Team()) == "Scavenger" then
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+	else
+		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+	end
+	local expWeight = PNRP.InventoryWeight( ply ) + weight
+	if expWeight <= weightCap then
+		return true
+	else
+		return false
+	end
+end
+
+function round(num, idp)
+  if idp and idp>0 then
+    local mult = 10^idp
+    return math.floor(num * mult + 0.5) / mult
+  end
+  return math.floor(num + 0.5)
+end
+
 --EOF

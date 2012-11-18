@@ -3,67 +3,76 @@
 local community_frame
 local comFrame = false
 --Main Community Menu
-function GM.community_window(handler, id, encoded, decoded)
---	if community_frame != nil then 
---		community_frame = nil
---		return 
---	end
+function GM.community_window( )
 	if comFrame then return end 
-	local communityName = decoded["CommunityName"]
-	local communityTable = decoded["communityTable"]		
+	local communityName = net.ReadString()
+	local communityTable = net.ReadTable()
+	local plyPID = net.ReadString()
 	local ply = LocalPlayer()
-	local communityRank
+	local communityRank = -1
 	local communityUsers = communityTable["users"]
 	local communityCount
 	local isLocalUser
 	comFrame = true
-	communityRank = "none"
 	communityCount = "none"
 	
 	if communityName != "none" then
+		communityCount = 0
 		for i, u in pairs(communityUsers) do
-			if ply:UniqueID() == i then
+			if plyPID == i then
 				communityRank = u["rank"]
 			end
+			communityCount = communityCount + 1
 		end
 	end
 	community_frame = vgui.Create( "DFrame" )
-		community_frame:SetSize( 400, 450 ) 
+		community_frame:SetSize( 710, 520 ) 
 		community_frame:SetPos(ScrW() / 2 - community_frame:GetWide() / 2, ScrH() / 2 - community_frame:GetTall() / 2)
 		community_frame:SetTitle( " " )
 		community_frame:SetVisible( true )
 		community_frame:SetDraggable( false )
-		community_frame:ShowCloseButton( false )
+		community_frame:ShowCloseButton( true )
 		community_frame:MakePopup()
 		community_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
 		
-		local communityLabel_frame = vgui.Create( "DFrame" )
-			communityLabel_frame:SetParent( community_frame )
-			communityLabel_frame:SetSize( 250, 40 ) 
-			communityLabel_frame:SetPos(ScrW() / 2 - community_frame:GetWide() / 2, ScrH() / 2 - community_frame:GetTall() / 2 - 15)
-			communityLabel_frame:SetTitle( " " )
-			communityLabel_frame:SetVisible( true )
-			communityLabel_frame:SetDraggable( false )
-			communityLabel_frame:ShowCloseButton( false )
-			communityLabel_frame:MakePopup()
-			communityLabel_frame.Paint = function() 
-				surface.SetDrawColor( 50, 50, 50, 0 )
-			end
+		local screenBG = vgui.Create("DImage", community_frame)
+			screenBG:SetImage( "VGUI/gfx/pnrp_screen_4b.png" )
+			screenBG:SetSize(community_frame:GetWide(), community_frame:GetTall())	
 		
-		local CommunityLabel = vgui.Create("DLabel", communityLabel_frame)
-			CommunityLabel:SetPos(10,0)
-			CommunityLabel:SetColor( Color( 255, 255, 255, 255 ) )
-			CommunityLabel:SetText( "Community Window" )
-			CommunityLabel:SetFont("Trebuchet24")
-			CommunityLabel:SizeToContents()
 			
+			local UCommunityNameLabel = vgui.Create("DLabel", community_frame)
+					UCommunityNameLabel:SetPos(50,40)
+					UCommunityNameLabel:SetColor( Color( 255, 255, 255, 255 ) )
+					UCommunityNameLabel:SetText( communityName )
+					UCommunityNameLabel:SizeToContents()
+			
+			local UCommunityRankLabel = vgui.Create("DLabel", community_frame)
+					UCommunityRankLabel:SetPos(50,55)
+					UCommunityRankLabel:SetColor( Color( 255, 255, 255, 255 ) )
+					local RankVar = "none"
+					if tonumber(communityRank) >= 0 then
+						RankVar = communityRank
+					end
+					UCommunityRankLabel:SetText( "Rank: Level "..communityRank )
+					UCommunityRankLabel:SizeToContents()
+					
+			local UCommunityCountLabel = vgui.Create("DLabel", community_frame)
+					UCommunityCountLabel:SetPos(275,55)
+					UCommunityCountLabel:SetColor( Color( 255, 255, 255, 255 ) )
+					UCommunityCountLabel:SetText( "Member Count: "..communityCount )
+					UCommunityCountLabel:SizeToContents()
+
+					
 		
 		local community_TabSheet = vgui.Create( "DPropertySheet" )
 			community_TabSheet:SetParent( community_frame )
-			community_TabSheet:SetPos( 5, 25 )
-			community_TabSheet:SetSize( community_frame:GetWide() - 15, community_frame:GetTall() - 55 )
+			community_TabSheet:SetPos( 40, 70 )
+			community_TabSheet:SetSize( community_frame:GetWide() - 350, community_frame:GetTall() - 120 )
+			community_TabSheet.Paint = function() -- Paint function
+				surface.SetDrawColor( 50, 50, 50, 0 )
+			end
 		--//List of Current Members	
 			local cMemberPanel = vgui.Create( "DPanel", community_TabSheet )
 				cMemberPanel:SetPos( 5, 5 )
@@ -72,18 +81,21 @@ function GM.community_window(handler, id, encoded, decoded)
 					surface.SetDrawColor( 50, 50, 50, 0 )
 				end
 			local cMemberList = vgui.Create("DPanelList", cMemberPanel)
-				cMemberList:SetPos(5, 5)
-				cMemberList:SetSize(cMemberPanel:GetWide() - 10, cMemberPanel:GetTall() - 40)
+				cMemberList:SetPos(0, 0)
+				cMemberList:SetSize(cMemberPanel:GetWide() - 5, cMemberPanel:GetTall() - 40)
 				cMemberList:EnableVerticalScrollbar(true) 
 				cMemberList:EnableHorizontal(false) 
 				cMemberList:SetSpacing(1)
 				cMemberList:SetPadding(10)
+				cMemberList.Paint = function()
+				--	draw.RoundedBox( 8, 0, 0, cMemberList:GetWide(), cMemberList:GetTall(), Color( 50, 50, 50, 255 ) )
+				end
 				if communityName != "none" then
 					communityCount = table.Count( communityUsers )
 					--table.sort(communityUsers, function(a["rank"],b["rank"]) return a["rank"]>b["rank"] end)
 					for k, v in pairs( communityUsers ) do		
-						
-						if ply:UniqueID() == k then
+					
+						if plyPID == k then
 							isLocalUser = true
 						else 
 							isLocalUser = false
@@ -93,7 +105,7 @@ function GM.community_window(handler, id, encoded, decoded)
 						MemberPanel:SetTall(75)
 						MemberPanel.Paint = function()
 						
-							draw.RoundedBox( 6, 0, 0, MemberPanel:GetWide(), MemberPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+							draw.RoundedBox( 6, 0, 0, MemberPanel:GetWide(), MemberPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
 					
 						end
 						cMemberList:AddItem(MemberPanel)
@@ -117,6 +129,13 @@ function GM.community_window(handler, id, encoded, decoded)
 						MemberPanel.Rank:SizeToContents() 
 						MemberPanel.Rank:SetContentAlignment( 5 )
 						
+						MemberPanel.Title = vgui.Create("DLabel", MemberPanel)
+						MemberPanel.Title:SetPos(90, 40)
+						MemberPanel.Title:SetText(v["title"])
+						MemberPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
+						MemberPanel.Title:SizeToContents() 
+						MemberPanel.Title:SetContentAlignment( 5 )
+						
 						MemberPanel.LastOn = vgui.Create("DLabel", MemberPanel)
 						MemberPanel.LastOn:SetPos(90, 55)
 						MemberPanel.LastOn:SetText("Last On: "..v["lastlog"])
@@ -124,11 +143,27 @@ function GM.community_window(handler, id, encoded, decoded)
 						MemberPanel.LastOn:SizeToContents() 
 						MemberPanel.LastOn:SetContentAlignment( 5 )
 						
+						MemberPanel.TitleBtn = vgui.Create("DButton", MemberPanel )
+						MemberPanel.TitleBtn:SetPos(255, 5)
+						MemberPanel.TitleBtn:SetSize(75,15)
+						MemberPanel.TitleBtn:SetText( "Set Title" )
+						MemberPanel.TitleBtn.DoClick = function() 
+							SetTitle(v)
+						--	RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] + 1 )
+						--	community_frame:Close() 
+						--	RunConsoleCommand( "pnrp_OpenCommunity" )
+						end
+						if tonumber(communityRank) == 3 then 
+							MemberPanel.TitleBtn:SetDisabled( false )
+						else
+							MemberPanel.TitleBtn:SetDisabled( true )
+						end
+							
 						if !isLocalUser then
 							
 							MemberPanel.PromoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.PromoteBtn:SetPos(255, 5)
-							MemberPanel.PromoteBtn:SetSize(75,17)
+							MemberPanel.PromoteBtn:SetPos(255, 20)
+							MemberPanel.PromoteBtn:SetSize(75,15)
 							MemberPanel.PromoteBtn:SetText( "Promote" )
 							MemberPanel.PromoteBtn.DoClick = function() 
 								RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] + 1 )
@@ -142,8 +177,8 @@ function GM.community_window(handler, id, encoded, decoded)
 							end
 							
 							MemberPanel.DemoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.DemoteBtn:SetPos(255, 25)
-							MemberPanel.DemoteBtn:SetSize(75,17)
+							MemberPanel.DemoteBtn:SetPos(255, 35)
+							MemberPanel.DemoteBtn:SetSize(75,15)
 							MemberPanel.DemoteBtn:SetText( "Demote" )
 							MemberPanel.DemoteBtn.DoClick = function() 
 								RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] - 1 )
@@ -157,11 +192,11 @@ function GM.community_window(handler, id, encoded, decoded)
 							end
 							
 							MemberPanel.BootBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.BootBtn:SetPos(255, 45)
+							MemberPanel.BootBtn:SetPos(255, 50)
 							MemberPanel.BootBtn:SetSize(75,17)
 							MemberPanel.BootBtn:SetText( "Remove" )
 							MemberPanel.BootBtn.DoClick = function() 
-								RunConsoleCommand( "pnrp_remcomm", v["name"] )
+								RunConsoleCommand( "pnrp_remcomm", v["pid"] )
 								community_frame:Close() 
 								RunConsoleCommand( "pnrp_OpenCommunity" )
 							end
@@ -178,7 +213,7 @@ function GM.community_window(handler, id, encoded, decoded)
 						end
 					end
 				end
-			community_TabSheet:AddSheet( "Community Member List", cMemberPanel, "gui/silkicons/group", false, false, "Community Member List" )
+			community_TabSheet:AddSheet( "Community Member List", cMemberPanel, "gui/icons/group.png", false, false, "Community Member List" )
 			if communityName != "none" and tonumber(communityRank) >= 3 then
 				--//Invite Panel
 				local cInvitePanel = vgui.Create( "DPanel", community_TabSheet )
@@ -204,7 +239,7 @@ function GM.community_window(handler, id, encoded, decoded)
 							iPlayerPanel:SetTall(75)
 							iPlayerPanel.Paint = function()
 							
-								draw.RoundedBox( 6, 0, 0, iPlayerPanel:GetWide(), iPlayerPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+								draw.RoundedBox( 6, 0, 0, iPlayerPanel:GetWide(), iPlayerPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
 						
 							end
 							cInviteList:AddItem(iPlayerPanel)
@@ -234,209 +269,250 @@ function GM.community_window(handler, id, encoded, decoded)
 						end
 					end
 			
-				community_TabSheet:AddSheet( "Invite Members", cInvitePanel, "gui/silkicons/add", false, false, "Invite Members" )	
+				community_TabSheet:AddSheet( "Invite Members", cInvitePanel, "gui/icons/add.png", false, false, "Invite Members" )	
 			end
 		
 		--//Community Main Menu
-		local communityMenu_frame = vgui.Create( "DFrame" )
-			communityMenu_frame:SetParent( community_frame )
-			communityMenu_frame:SetSize( 100, cMemberList:GetTall() ) 
-			communityMenu_frame:SetPos( ScrW() / 2 + community_frame:GetWide() / 2 + 5, ScrH() / 2 - community_frame:GetTall() / 2 + 50 )
-			communityMenu_frame:SetTitle( " " )
-			communityMenu_frame:SetVisible( true )
-			communityMenu_frame:SetDraggable( false )
-			communityMenu_frame:ShowCloseButton( true )
-			communityMenu_frame:MakePopup()
-			communityMenu_frame.Paint = function() 
-				surface.SetDrawColor( 50, 50, 50, 0 )
-			end
-			
-			local cMenuList = vgui.Create( "DPanelList", communityMenu_frame )
-					cMenuList:SetPos( 0,0 )
-					cMenuList:SetSize( communityMenu_frame:GetWide(), communityMenu_frame:GetTall() )
-					cMenuList:SetSpacing( 5 )
-					cMenuList:SetPadding(3)
-					cMenuList:EnableHorizontal( false ) 
-					cMenuList:EnableVerticalScrollbar( true ) 	
-					
-					local BlankLabel1 = vgui.Create("DLabel", cMenuList	)
-						BlankLabel1:SetColor( Color( 255, 255, 255, 0 ) )
-						BlankLabel1:SetText( " " )
-						BlankLabel1:SizeToContents()
-						cMenuList:AddItem( BlankLabel1 )
-					local createBtn = vgui.Create("DButton") 
-						createBtn:SetParent( cMenuList ) 
-						createBtn:SetText( "Create" ) 
-						createBtn:SetSize( 100, 20 ) 
+								
+					local btnHPos = 50
+					local btnHeight = 40
+					local lblColor = Color( 245, 218, 210, 180 )
+							
+					local createBtn = vgui.Create("DImageButton", community_frame)
+						createBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						createBtn:SetSize(30,30)
 						if communityName == "none" then 
-							createBtn:SetDisabled( false ) 
+							createBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							createBtn.DoClick = function() PNRP.CreateCommWindow() end
+							createBtn.Paint = function()
+								if createBtn:IsDown() then 
+									createBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									createBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
 						else
-							createBtn:SetDisabled( true ) 
-						end
-						createBtn.DoClick = function() PNRP.CreateCommWindow() end	
-						cMenuList:AddItem( createBtn )
-					local disbandBtn = vgui.Create("DButton") 
-						disbandBtn:SetParent( cMenuList ) 
-						disbandBtn:SetText( "Disband" ) 
-						disbandBtn:SetSize( 100, 20 ) 
-						if communityRank == 3 then 
-							disbandBtn:SetDisabled( false ) 
-						else
-							disbandBtn:SetDisabled( true ) 
-						end
-						disbandBtn.DoClick = function() PNRP.OptionVerify( "pnrp_delcomm", nil, "pnrp_OpenCommunity", community_frame ) end	
-						cMenuList:AddItem( disbandBtn )
-					local leaveBtn = vgui.Create("DButton") 
-						leaveBtn:SetParent( cMenuList ) 
-						leaveBtn:SetText( "Leave" ) 
-						leaveBtn:SetSize( 100, 20 ) 
-						if communityName != "none" then 
-							leaveBtn:SetDisabled( false ) 
-						else
-							leaveBtn:SetDisabled( true ) 
-						end
-						leaveBtn.DoClick = function() PNRP.OptionVerify( "pnrp_leavecomm", nil, "pnrp_OpenCommunity", community_frame ) end	
-						cMenuList:AddItem( leaveBtn )
-					local demoteSelfBtn = vgui.Create("DButton") 
-						demoteSelfBtn:SetParent( cMenuList ) 
-						demoteSelfBtn:SetText( "Demote Self" ) 
-						demoteSelfBtn:SetSize( 100, 20 ) 
-						if communityName == "none" or tonumber(communityRank) >= 1 then 
-							demoteSelfBtn:SetDisabled( false ) 
-						else
-							demoteSelfBtn:SetDisabled( true ) 
-						end
-						demoteSelfBtn.DoClick = function() PNRP.OptionVerify( "pnrp_demselfcomm", nil, "pnrp_OpenCommunity", community_frame ) end	
-						cMenuList:AddItem( demoteSelfBtn )
-					local BlankLabel2 = vgui.Create("DLabel", cMenuList	)
-						BlankLabel2:SetColor( Color( 255, 255, 255, 0 ) )
-						BlankLabel2:SetText( " " )
-						BlankLabel2:SizeToContents()
-						cMenuList:AddItem( BlankLabel2 )	
-					local devide1menu2 = vgui.Create("DShape") 
-						devide1menu2:SetParent( cMenuList ) 
-						devide1menu2:SetType("Rect")
-						devide1menu2:SetSize( 100, 2 ) 	
-						cMenuList:AddItem( devide1menu2 )
-					local BlankLabel3 = vgui.Create("DLabel", cMenuList	)
-						BlankLabel3:SetColor( Color( 255, 255, 255, 0 ) )
-						BlankLabel3:SetText( " " )
-						BlankLabel3:SizeToContents()
-						cMenuList:AddItem( BlankLabel3 )
-					local placeStockBtn = vgui.Create("DButton") 
-						placeStockBtn:SetParent( cMenuList ) 
-						placeStockBtn:SetText( "Place Stockpile" ) 
-						placeStockBtn:SetSize( 100, 20 ) 
-						if communityRank == 3 then 
-							placeStockBtn:SetDisabled( false ) 
-						else
-							placeStockBtn:SetDisabled( true ) 
-						end
-						placeStockBtn.DoClick = function() RunConsoleCommand( "pnrp_placestock" ) community_frame:Close() end	
-						cMenuList:AddItem( placeStockBtn )
-					local remStockBtn = vgui.Create("DButton") 
-						remStockBtn:SetParent( cMenuList ) 
-						remStockBtn:SetText( "Remove Stockpile" ) 
-						remStockBtn:SetSize( 100, 20 ) 
-						if communityRank == 3 then 
-							remStockBtn:SetDisabled( false ) 
-						else
-							remStockBtn:SetDisabled( true ) 
-						end
-						remStockBtn.DoClick = function() PNRP.OptionVerify( "pnrp_remstock", nil, nil, community_frame ) end	
-						cMenuList:AddItem( remStockBtn )	
-					local placeLockerBtn = vgui.Create("DButton") 
-						placeLockerBtn:SetParent( cMenuList ) 
-						placeLockerBtn:SetText( "Place Locker" ) 
-						placeLockerBtn:SetSize( 100, 20 ) 
-						if communityRank == 3 then 
-							placeLockerBtn:SetDisabled( false ) 
-						else
-							placeLockerBtn:SetDisabled( true ) 
-						end
-						placeLockerBtn.DoClick = function() RunConsoleCommand( "pnrp_placelocker" ) community_frame:Close() end	
-						cMenuList:AddItem( placeLockerBtn )
-					local remLockerBtn = vgui.Create("DButton") 
-						remLockerBtn:SetParent( cMenuList ) 
-						remLockerBtn:SetText( "Remove Locker" ) 
-						remLockerBtn:SetSize( 100, 20 ) 
-						if communityRank == 3 then 
-							remLockerBtn:SetDisabled( false ) 
-						else
-							remLockerBtn:SetDisabled( true ) 
-						end
-						remLockerBtn.DoClick = function() PNRP.OptionVerify( "pnrp_remlocker", nil, nil, community_frame ) end	
-						cMenuList:AddItem( remLockerBtn )
-						
-					local BlankLabel4 = vgui.Create("DLabel", cMenuList	)
-						BlankLabel4:SetColor( Color( 255, 255, 255, 0 ) )
-						BlankLabel4:SetText( " " )
-						BlankLabel4:SizeToContents()
-						cMenuList:AddItem( BlankLabel4 )	
-					local devide1menu3 = vgui.Create("DShape") 
-						devide1menu3:SetParent( cMenuList ) 
-						devide1menu3:SetType("Rect")
-						devide1menu3:SetSize( 100, 2 ) 	
-						cMenuList:AddItem( devide1menu3 )
-					local BlankLabel5 = vgui.Create("DLabel", cMenuList	)
-						BlankLabel5:SetColor( Color( 255, 255, 255, 0 ) )
-						BlankLabel5:SetText( " " )
-						BlankLabel5:SizeToContents()
-						cMenuList:AddItem( BlankLabel5 )	
-					local exitBtn = vgui.Create("DButton") 
-						exitBtn:SetParent( cMenuList ) 
-						exitBtn:SetText( "Exit" ) 
-						exitBtn:SetSize( 100, 20 ) 
-						exitBtn.DoClick = function() 
-							community_frame:Close() 
-							community_frame = nil
+							createBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
 						end	
-						cMenuList:AddItem( exitBtn )
-		
-		--//Community Status Window
-		local communityStatus_frame = vgui.Create( "DFrame" )
-			communityStatus_frame:SetParent( community_frame )
-			communityStatus_frame:SetSize( 175, cMemberList:GetTall() ) 
-			communityStatus_frame:SetPos(ScrW() / 2 + community_frame:GetWide() / 2 + 110, ScrH() / 2 - community_frame:GetTall() / 2 + 50) 
-			communityStatus_frame:SetTitle( " " )
-			communityStatus_frame:SetVisible( true )
-			communityStatus_frame:SetDraggable( false )
-			communityStatus_frame:ShowCloseButton( false )
-			communityStatus_frame:MakePopup()
-			communityStatus_frame.Paint = function() 
-				surface.SetDrawColor( 50, 50, 50, 0 )
-			end	
-		
-		local communityStatusList = vgui.Create( "DPanelList", communityStatus_frame )
-				communityStatusList:SetPos( 0,0 )
-				communityStatusList:SetSize( communityStatus_frame:GetWide() - 10, communityStatus_frame:GetTall() )
-				communityStatusList:SetSpacing( 5 )
-				communityStatusList:EnableHorizontal( false ) 
-				communityStatusList:EnableVerticalScrollbar( true ) 	
-		
-			local UCommunityBlankLabel = vgui.Create("DLabel", communityStatusList)
-					UCommunityBlankLabel:SetColor( Color( 255, 255, 255, 0 ) )
-					UCommunityBlankLabel:SetText( " " )
-					UCommunityBlankLabel:SizeToContents()
-					communityStatusList:AddItem( UCommunityBlankLabel )
-			
-			local UCommunityNameLabel = vgui.Create("DLabel", communityStatusList)
-					UCommunityNameLabel:SetColor( Color( 255, 255, 255, 255 ) )
-					UCommunityNameLabel:SetText( "  Member of: "..communityName )
-					UCommunityNameLabel:SizeToContents()
-					communityStatusList:AddItem( UCommunityNameLabel )
-			
-			local UCommunityRankLabel = vgui.Create("DLabel", communityStatusList)
-					UCommunityRankLabel:SetColor( Color( 255, 255, 255, 255 ) )
-					UCommunityRankLabel:SetText( "  Rank: Level "..communityRank )
-					UCommunityRankLabel:SizeToContents()
-					communityStatusList:AddItem( UCommunityRankLabel )
+					local createBtnLbl = vgui.Create("DLabel", community_frame)
+						createBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						createBtnLbl:SetColor( lblColor )
+						createBtnLbl:SetText( "Create Community" )
+						createBtnLbl:SetFont("Trebuchet24")
+						createBtnLbl:SizeToContents()
 					
-			local UCommunityCountLabel = vgui.Create("DLabel", communityStatusList)
-					UCommunityCountLabel:SetColor( Color( 255, 255, 255, 255 ) )
-					UCommunityCountLabel:SetText( "  Member Count: "..communityCount )
-					UCommunityCountLabel:SizeToContents()
-					communityStatusList:AddItem( UCommunityCountLabel )	
+					btnHPos = btnHPos + btnHeight
+					local disbandBtn = vgui.Create("DImageButton", community_frame)
+						disbandBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						disbandBtn:SetSize(30,30)
+						if communityRank == 3 then 
+							disbandBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							disbandBtn.DoClick = function() 
+								PNRP.OptionVerify( "pnrp_delcomm", nil, "pnrp_OpenCommunity", community_frame ) 
+							end	
+							disbandBtn.Paint = function()
+								if disbandBtn:IsDown() then 
+									disbandBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									disbandBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
+						else
+							disbandBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						end
+					local disbandBtnLbl = vgui.Create("DLabel", community_frame)
+						disbandBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						disbandBtnLbl:SetColor( lblColor )
+						disbandBtnLbl:SetText( "Disband Community" )
+						disbandBtnLbl:SetFont("Trebuchet24")
+						disbandBtnLbl:SizeToContents()	
+
+					btnHPos = btnHPos + btnHeight
+					local leaveBtn = vgui.Create("DImageButton", community_frame)
+						leaveBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						leaveBtn:SetSize(30,30)
+						if communityName != "none" then 
+							leaveBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							leaveBtn.DoClick = function() 
+								PNRP.OptionVerify( "pnrp_leavecomm", nil, "pnrp_OpenCommunity", community_frame ) 
+							end	
+							leaveBtn.Paint = function()
+								if leaveBtn:IsDown() then 
+									leaveBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									leaveBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
+						else
+							leaveBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						end
+					local leaveBtnLbl = vgui.Create("DLabel", community_frame)
+						leaveBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						leaveBtnLbl:SetColor( lblColor )
+						leaveBtnLbl:SetText( "Leave Community" )
+						leaveBtnLbl:SetFont("Trebuchet24")
+						leaveBtnLbl:SizeToContents()
+					
+					btnHPos = btnHPos + btnHeight
+					local demoteSelfBtn = vgui.Create("DImageButton", community_frame)
+						demoteSelfBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						demoteSelfBtn:SetSize(30,30)
+						if communityName ~= "none" or tonumber(communityRank) >= 1 then
+							demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							demoteSelfBtn.DoClick = function() 
+								PNRP.OptionVerify( "pnrp_demselfcomm", nil, "pnrp_OpenCommunity", community_frame ) 
+							end	
+							demoteSelfBtn.Paint = function()
+								if demoteSelfBtn:IsDown() then 
+									demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
+						else
+							demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						end
+					local demoteSelfBtnLbl = vgui.Create("DLabel", community_frame)
+						demoteSelfBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						demoteSelfBtnLbl:SetColor( lblColor )
+						demoteSelfBtnLbl:SetText( "Demote Self" )
+						demoteSelfBtnLbl:SetFont("Trebuchet24")
+						demoteSelfBtnLbl:SizeToContents()
+						
+					btnHPos = btnHPos + btnHeight --Blank Space
+					
+					btnHPos = btnHPos + btnHeight
+					local placeStockBtn = vgui.Create("DImageButton", community_frame)
+						placeStockBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						placeStockBtn:SetSize(30,30)
+						if tonumber(communityRank) >= 2 then
+							placeStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							placeStockBtn.DoClick = function() 
+								RunConsoleCommand( "pnrp_placestock" ) 
+								community_frame:Close()
+							end	
+							placeStockBtn.Paint = function()
+								if placeStockBtn:IsDown() then 
+									placeStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									placeStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
+						else
+							placeStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						end
+					local placeStockBtnLbl = vgui.Create("DLabel", community_frame)
+						placeStockBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						placeStockBtnLbl:SetColor( lblColor )
+						placeStockBtnLbl:SetText( "Place Stockpile" )
+						placeStockBtnLbl:SetFont("Trebuchet24")
+						placeStockBtnLbl:SizeToContents()
+					
+					btnHPos = btnHPos + btnHeight
+					local remStockBtn = vgui.Create("DImageButton", community_frame)
+						remStockBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						remStockBtn:SetSize(30,30)
+						if tonumber(communityRank) >= 2 then
+							remStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							remStockBtn.DoClick = function() 
+								PNRP.OptionVerify( "pnrp_remstock", nil, nil, community_frame )
+							end	
+							remStockBtn.Paint = function()
+								if remStockBtn:IsDown() then 
+									remStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									remStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
+						else
+							remStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						end
+					local remStockBtnLbl = vgui.Create("DLabel", community_frame)
+						remStockBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						remStockBtnLbl:SetColor( lblColor )
+						remStockBtnLbl:SetText( "Remove Stockpile" )
+						remStockBtnLbl:SetFont("Trebuchet24")
+						remStockBtnLbl:SizeToContents()
+						
+					btnHPos = btnHPos + btnHeight
+					local placeLockerBtn = vgui.Create("DImageButton", community_frame)
+						placeLockerBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						placeLockerBtn:SetSize(30,30)
+						if tonumber(communityRank) >= 2 then
+							placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							placeLockerBtn.DoClick = function() 
+								RunConsoleCommand( "pnrp_placelocker" ) 
+								community_frame:Close()
+							end	
+							placeLockerBtn.Paint = function()
+								if placeLockerBtn:IsDown() then 
+									placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
+						else
+							placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						end
+					local placeLockerBtnLbl = vgui.Create("DLabel", community_frame)
+						placeLockerBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						placeLockerBtnLbl:SetColor( lblColor )
+						placeLockerBtnLbl:SetText( "Place Locker" )
+						placeLockerBtnLbl:SetFont("Trebuchet24")
+						placeLockerBtnLbl:SizeToContents()
+						
+					btnHPos = btnHPos + btnHeight
+					local remLockerBtn = vgui.Create("DImageButton", community_frame)
+						remLockerBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						remLockerBtn:SetSize(30,30)
+						if tonumber(communityRank) >= 2 then
+							remLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							remLockerBtn.DoClick = function() 
+								PNRP.OptionVerify( "pnrp_remlocker", nil, nil, community_frame )
+							end	
+							remLockerBtn.Paint = function()
+								if remLockerBtn:IsDown() then 
+									remLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									remLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
+						else
+							remLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						end
+					local placeLockerBtnLbl = vgui.Create("DLabel", community_frame)
+						placeLockerBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						placeLockerBtnLbl:SetColor( lblColor )
+						placeLockerBtnLbl:SetText( "Remove Locker" )
+						placeLockerBtnLbl:SetFont("Trebuchet24")
+						placeLockerBtnLbl:SizeToContents()
+					
+					btnHPos = btnHPos + btnHeight --Blank Space
+					
+					if ply:IsAdmin() then
+						btnHPos = btnHPos + btnHeight
+						local comAdminBtn = vgui.Create("DImageButton", community_frame)
+							comAdminBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+							comAdminBtn:SetSize(30,30)
+							comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+							comAdminBtn.DoClick = function() 
+								RunConsoleCommand( "pnrp_communityAdmin" ) 
+								community_frame:Close()
+							end	
+							comAdminBtn.Paint = function()
+								if comAdminBtn:IsDown() then 
+									comAdminBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+								else
+									comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+								end
+							end
+						local comAdminBtnLbl = vgui.Create("DLabel", community_frame)
+							comAdminBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+							comAdminBtnLbl:SetColor( lblColor )
+							comAdminBtnLbl:SetText( "Communities Admin" )
+							comAdminBtnLbl:SetFont("Trebuchet24")
+							comAdminBtnLbl:SizeToContents()
+					end
 					
 	function community_frame:Close()                  
 		comFrame = false                  
@@ -444,7 +520,8 @@ function GM.community_window(handler, id, encoded, decoded)
 		self:Remove()          
 	end 
 end
-datastream.Hook( "pnrp_OpenCommunityWindow", GM.community_window )
+--datastream.Hook( "pnrp_OpenCommunityWindow", GM.community_window )
+net.Receive( "pnrp_OpenCommunityWindow", GM.community_window )
 
 function GM.initCommunity(ply)
 --	if community_frame != nil then 
@@ -455,6 +532,35 @@ function GM.initCommunity(ply)
 
 end
 concommand.Add( "pnrp_community",  GM.initCommunity )
+
+function SetTitle(person)
+	local CTW_frame = vgui.Create( "DFrame" )
+		CTW_frame:SetSize( 250, 115 )
+		CTW_frame:SetPos(ScrW() / 2 - CTW_frame:GetWide() / 2, ScrH() / 2 - CTW_frame:GetTall() / 2) 
+		CTW_frame:SetTitle( "Set Title." ) 
+		CTW_frame:SetVisible( true )
+		CTW_frame:SetDraggable( true )
+		CTW_frame:ShowCloseButton( true )
+		CTW_frame:MakePopup()
+		
+		local CTWtextbox = vgui.Create("DTextEntry", CTW_frame)
+			CTWtextbox:SetText("Community Name")
+			CTWtextbox:SetText("")
+			CTWtextbox:SetMultiline(false)
+			CTWtextbox:SetSize(CTW_frame:GetWide() - 20, 20) 
+			CTWtextbox:SetPos(CTW_frame:GetWide() / 2 - CTWtextbox:GetWide() / 2, 50)
+		local CTWBtn = vgui.Create("DButton") 
+			CTWBtn:SetParent( CTW_frame )
+			CTWBtn:SetText( "Set Title" ) 
+			CTWBtn:SetSize( 100, 20 ) 
+			CTWBtn:SetPos(CTW_frame:GetWide() / 2 - CTWBtn:GetWide() / 2, 80)
+			CTWBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_setTitle", person["pid"], CTWtextbox:GetValue() )
+				CTW_frame:Close()
+				community_frame:Close()
+				RunConsoleCommand( "pnrp_OpenCommunity" )
+			end
+end
 
 function PNRP.CreateCommWindow()
 
@@ -471,8 +577,9 @@ function PNRP.CreateCommWindow()
 			CCWLabel:SetText( "Enter the name of your new Community." )
 			CCWLabel:SizeToContents()
 			CCWLabel:SetPos(CCW_frame:GetWide() / 2 - CCWLabel:GetWide() / 2, 30)
-		local CCWtextbox = vgui.Create("TextEntry", CCW_frame)
+		local CCWtextbox = vgui.Create("DTextEntry", CCW_frame)
 			CCWtextbox:SetText("Community Name")
+			CCWtextbox:SetText("")
 			CCWtextbox:SetMultiline(false)
 			CCWtextbox:SetSize(CCW_frame:GetWide() - 20, 20) 
 			CCWtextbox:SetPos(CCW_frame:GetWide() / 2 - CCWtextbox:GetWide() / 2, 50)
@@ -491,6 +598,7 @@ end
 
 function RecCInvite( data )
 	local PlayerNIC = data:ReadString() 
+	local CommunityID = data:ReadString() 
 	local CommunityName = data:ReadString() 
 	local ply = LocalPlayer()
 	
@@ -556,6 +664,7 @@ function PNRP.OptionVerify(Command, Option, returnToMenu, frame)
 				opv_yes:SetSize( 50, 20 ) 
 				opv_yes.DoClick = function() 
 					if Option != nil then
+						ply:ChatPrint(Option)
 						RunConsoleCommand( Command, Option )
 					else
 						RunConsoleCommand( Command )
@@ -588,4 +697,6 @@ function PNRP.OptionVerify(Command, Option, returnToMenu, frame)
 					
 	
 end
+
+
 

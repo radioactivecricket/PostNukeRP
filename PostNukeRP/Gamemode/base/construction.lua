@@ -1,9 +1,10 @@
 local PlayerMeta = FindMetaTable("Player")
 local EntityMeta = FindMetaTable("Entity")
 
-function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
-	local ItemID = decoded[1]
-	local Count = math.Round(decoded[2])
+function PNRP.SpawnBulkCrate( )
+	local ply = net.ReadEntity()
+	local ItemID = net.ReadString()
+	local Count = math.Round(net.ReadDouble())
 	local tr = ply:TraceFromEyes(200)
 	local pos = tr.HitPos
 	local plUID = PNRP:GetUID( ply )
@@ -40,16 +41,39 @@ function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
 					enough = false
 				end
 				if enough == true then
-					if item.Type  == "food" then
-						if not item.ToolCheck( ply ) then
-							ply:ChatPrint("You don't have the proper tool to make this!")
-							return
-						end
-					end
 					--Block these from Bulk Build
 					if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" then
 						ply:ChatPrint("You can not create bulk of this type.")
 						return
+					end
+					
+					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then
+						--Admin No cost
+					else
+						local toolcheck = item.ToolCheck( ply )
+						if not toolcheck then
+							ply:ChatPrint("You don't have the proper tool to make this!")
+							return
+						elseif type(toolcheck) == "table" then
+							local plyInv = PNRP.Inventory( ply )
+							
+							for itemid, amount in pairs(toolcheck) do
+								if (not plyInv) or (not plyInv[itemid]) or plyInv[itemid] < (amount * Count) then
+									if amount == 0 then
+										ply:ChatPrint("You don't have a "..PNRP.Items[itemid].Name..", which is required to build this.")
+									else
+										ply:ChatPrint("You don't have enough "..PNRP.Items[itemid].Name.."s.  You require "..tostring(amount*Count).." to build this many.")
+									end
+									return
+								end
+							end
+							
+							for itemid, amount in pairs(toolcheck) do
+								if amount ~= 0 then
+									PNRP.TakeFromInventoryBulk( ply, itemid, (amount * Count) )
+								end
+							end
+						end
 					end
 					
 					local totalTime = 0
@@ -60,6 +84,9 @@ function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
 					
 					ply:Freeze(true)
 					ply:ChatPrint("Construction in progress...")
+					umsg.Start("startProgressBar", ply)
+						umsg.Short(totalTime)
+					umsg.End()
 					
 					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
 						ply:ChatPrint("Admin No Cost")
@@ -71,6 +98,8 @@ function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
 					
 					timer.Simple( totalTime, function() 
 						ply:Freeze(false)
+						umsg.Start("stopProgressBar", ply)
+						umsg.End()
 						local ent = ents.Create("msc_itembox")
 						--Spawns the entity
 						ent:SetPos(pos)
@@ -96,11 +125,12 @@ function PNRP.SpawnBulkCrate( ply, handler, id, encoded, decoded)
 	end
 	
 end
-datastream.Hook( "SpawnBulkCrate", PNRP.SpawnBulkCrate )
+net.Receive( "SpawnBulkCrate", PNRP.SpawnBulkCrate )
 
-function PNRP.DropBulkCrate( ply, handler, id, encoded, decoded)
-	local ItemID = decoded[1]
-	local Count = math.Round(decoded[2])
+function PNRP.DropBulkCrate( )
+	local ply = net.ReadEntity()
+	local ItemID = net.ReadString()
+	local Count = math.Round(net.ReadDouble())
 	local tr = ply:TraceFromEyes(200)
 	local pos = tr.HitPos
 	local plUID = PNRP:GetUID( ply )
@@ -126,11 +156,12 @@ function PNRP.DropBulkCrate( ply, handler, id, encoded, decoded)
 	end
 	
 end
-datastream.Hook( "DropBulkCrate", PNRP.DropBulkCrate )
+net.Receive( "DropBulkCrate", PNRP.DropBulkCrate )
 
 function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
-	local ItemID = decoded[1]
-	local Count = math.Round(decoded[2])
+	local ply = net.ReadEntity()
+	local ItemID = net.ReadString()
+	local Count = math.Round(net.ReadDouble())
 	local tr = ply:TraceFromEyes(200)
 	local CarEnt = tr.Entity
 	local pos = tr.HitPos
@@ -150,8 +181,8 @@ function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
 				end
 				--Spawns the entity
 				ent:SetPos(pos)
-				--ent:SetNWString("itemtype", item.ID)
-				--ent:SetNWInt("amount", Count)
+				ent:SetNWString("itemtype", item.ID)
+				ent:SetNWInt("amount", Count)
 				--ent:SetNWString("Owner", ply:Nick())
 				PNRP.SetOwner(ply, ent)
 				ent:Spawn()
@@ -163,7 +194,7 @@ function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
 	end
 	
 end
-datastream.Hook( "DropBulkCrateCar", PNRP.DropBulkCrateCar )
+net.Receive( "DropBulkCrateCar", PNRP.DropBulkCrateCar )
 
 function GM.BuildItem( ply, command, arg )
 	for itemname, item in pairs(PNRP.Items) do
@@ -190,35 +221,66 @@ function GM.BuildItem( ply, command, arg )
 					--If Enough
 					
 					ply:ChatPrint("Creating "..item.Name)
-					local data = {}
-					data.Pos = tr.HitPos
-					data.ID = item.ID
-					data.Name = item.Name
-					data.Chance = item.Chance
-					data.Scrap = item.Scrap
-					data.SmallParts = item.SmallParts
-					data.Chems = item.Chemicals
-					data.Script = item.Script
-					data.Ent = item.Ent
-					data.Type = item.Type
-					data.Model = item.Model
-					data.Energy = item.Energy
-					data.Create = item.Create
-					data.ToolCheck = item.ToolCheck
 					
-					if data.Type == "food" then
-						if not data.ToolCheck( ply ) then
+					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then
+						--Admin No cost
+					else
+						local toolcheck = item.ToolCheck( ply )
+						if not toolcheck then
 							ply:ChatPrint("You don't have the proper tool to make this!")
 							return
+						elseif type(toolcheck) == "table" then
+							local plyInv = PNRP.Inventory( ply )
+							
+							for itemid, amount in pairs(toolcheck) do
+								if (not plyInv) or (not plyInv[itemid]) or plyInv[itemid] < amount then
+									if amount == 0 then
+										ply:ChatPrint("You don't have a "..PNRP.Items[itemid].Name..", which is required to build this.")
+									else
+										ply:ChatPrint("You don't have enough "..PNRP.Items[itemid].Name.."s.  You require "..tostring(amount).." to build this.")
+									end
+									return
+								end
+							end
+							
+							for itemid, amount in pairs(toolcheck) do
+								if amount ~= 0 then
+									PNRP.TakeFromInventoryBulk( ply, itemid, amount )
+								end
+							end
 						end
 					end
 					
-					if item.Type != "vehicle" then
-						ply:DoProcess("ConstructItem",2,data)
-					else
-						ply:DoProcess("ConstructJeep",2,data)
-					end	
-					
+					ply:Freeze(true)
+					umsg.Start("startProgressBar", ply)
+						umsg.Short(2)
+					umsg.End()
+					local myscrap = item.Scrap
+					local mysmall = item.SmallParts
+					local mychems = item.Chemicals
+					local myenergy = item.Energy
+					timer.Simple( 2, function() 
+							if ply and IsValid(ply) and ply:Alive() then
+								ply:Freeze(false)
+								umsg.Start("stopProgressBar", ply)
+								umsg.End()
+								if item.Type == "food" then
+									ply:EmitSound(Sound("ambient/materials/dinnerplates5.wav"))
+								else
+									ply:EmitSound(Sound("items/ammo_pickup.wav"))
+								end
+								ply:DecResource("Scrap", myscrap)
+								ply:DecResource("Small_Parts", mysmall)
+								ply:DecResource("Chemicals", mychems)
+								
+								local tr = ply:TraceFromEyes(200)
+								local myEnt = item.Create(ply, item.Ent, tr.HitPos + Vector(0,0,20))
+								
+								if item.Type == "weapon" then
+									myEnt:SetNWInt("Ammo", myenergy)
+								end
+							end
+						end )
 				else
 					--If Not enough Materials
 					ply:ChatPrint("Insufficient Materials!")
@@ -241,76 +303,16 @@ function PNRP.DropSpawn( ply, ID, q )
 			local tr = ply:TraceFromEyes(200)
 			
 			ply:ChatPrint("Dropping "..item.Name)
-			local data = {}
-			data.Pos = tr.HitPos
-			data.ID = item.ID
-			data.Name = item.Name
-			data.Chance = item.Chance
-			data.Scrap = item.Scrap
-			data.SmallParts = item.SmallParts
-			data.Chems = item.Chemicals
-			data.Script = item.Script
-			data.Ent = item.Ent
-			data.Model = item.Model
-			data.Create = item.Create
-			data.ToolCheck = item.ToolCheck
+			
 			for i = 1, q do
-				
-				if item.Type ~= "vehicle" then
-					ply:EmitSound(Sound("items/ammo_pickup.wav"))
+				ply:EmitSound(Sound("items/ammo_pickup.wav"))
 					
-					local pos = data.Pos + Vector(0,0,20)
-					if item.Type == "tool" then
-						item.Create(ply, item.Ent, pos)
-						
-					else
-						local ent 
-						if item.Type == "weapon" and item.ID ~= "wep_grenade" then
-							ent = ents.Create("ent_weapon")
-							ent:SetNWString("WepClass", data.Ent)
-							ent:SetNetworkedInt("Ammo", 0)
-						elseif item.Type == "ammo" then
-							ent = ents.Create(data.Ent)
-							ent:SetNetworkedString("Ammo", tostring(item.Energy))
-						else
-							ent = ents.Create(data.Ent)
-						end
-						ent:SetModel(data.Model)
-						ent:SetAngles(Angle(0,0,0))
-						ent:SetPos(pos)
-						ent:Spawn()
-						ent:SetNetworkedString("Owner", "World")
-						
-					end
-					
-					PNRP.TakeFromInventory( ply, data.ID )
-				else
-					
-					local ent = ents.Create(data.Ent)
-					local pos = data.Pos + Vector(0,0,20)
---					if data.Ent == "weapon_seat" then
---						ent:SetNetworkedString("Type", "1")
---					end
-					ent:SetModel(data.Model)
-					ent:SetKeyValue( "actionScale", 1 ) 
-					ent:SetKeyValue( "VehicleLocked", 0 ) 
-					ent:SetKeyValue( "solid", 6 ) 
-					ent:SetKeyValue( "vehiclescript", data.Script ) 
-					ent:SetAngles(Angle(0,0,0))
-					ent:SetPos(pos)
-					ent:SetKeyValue( "model", data.Model )
-					
-					ent:Spawn()
-					ent:Activate()
-					--ent:SetNetworkedString("Owner", ply:Nick())
-					--ent:SetNetworkedString("Owner_UID", plUID)
-					--ent:SetNWEntity( "ownerent", ply )
-					PNRP.SetOwner(ply, ent)
-					PNRP.TakeFromInventory( ply, data.ID )
-					PNRP.AddWorldCache( ply, data.ID )
-				end	
+				local pos = tr.HitPos + Vector(0,0,20)
+				local ent = item.Create(ply, item.Ent, pos)
 				
 			end
+			
+			PNRP.TakeFromInventoryBulk( ply, item.ID, q )
 		
 		else
 		
@@ -324,74 +326,17 @@ function PNRP.DropCarSpawn( ply, ID, q )
 			local tr = ply:TraceFromEyes(200)
 			
 			ply:ChatPrint("Dropping "..item.Name)
-			local data = {}
-			data.Pos = tr.HitPos
-			data.ID = item.ID
-			data.Name = item.Name
-			data.Chance = item.Chance
-			data.Scrap = item.Scrap
-			data.SmallParts = item.SmallParts
-			data.Chems = item.Chemicals
-			data.Script = item.Script
-			data.Ent = item.Ent
-			data.Model = item.Model
-			data.ToolCheck = item.ToolCheck
+			
 			for i = 1, q do
 				
-				if item.Type ~= "vehicle" then
-					ply:EmitSound(Sound("items/ammo_pickup.wav"))
+				ply:EmitSound(Sound("items/ammo_pickup.wav"))
 					
-					local pos = data.Pos + Vector(0,0,20)
-					if item.Type == "tool" then
-						item.Create(ply, item.Ent, pos)
-						
-					else
-						local ent 
-						if item.Type == "weapon" and item.ID ~= "wep_grenade" then
-							ent = ents.Create("ent_weapon")
-							ent:SetNWString("WepClass", data.Ent)
-							ent:SetNetworkedInt("Ammo", 0)
-						elseif item.Type == "ammo" then
-							ent = ents.Create(data.Ent)
-							ent:SetNetworkedString("Ammo", tostring(item.Energy))
-						else
-							ent = ents.Create(data.Ent)
-						end
-						ent:SetModel(data.Model)
-						ent:SetAngles(Angle(0,0,0))
-						ent:SetPos(pos)
-						ent:Spawn()
-						ent:SetNetworkedString("Owner", "World")
-						
-					end
-					
-					PNRP.TakeFromCarInventory( ply, data.ID )
-				else
-					
-					local ent = ents.Create(data.Ent)
-					local pos = data.Pos + Vector(0,0,20)
---					if data.Ent == "weapon_seat" then
---						ent:SetNetworkedString("Type", "1")
---					end
-					ent:SetModel(data.Model)
-					ent:SetKeyValue( "actionScale", 1 ) 
-					ent:SetKeyValue( "VehicleLocked", 0 ) 
-					ent:SetKeyValue( "solid", 6 ) 
-					ent:SetKeyValue( "vehiclescript", data.Script ) 
-					ent:SetAngles(Angle(0,0,0))
-					ent:SetPos(pos)
-					ent:SetKeyValue( "model", data.Model )
-					
-					ent:Spawn()
-					ent:Activate()
-					--ent:SetNetworkedString("Owner", ply:Nick())
-					--ent:SetNWEntity( "ownerent", ply )
-					PNRP.SetOwner(ply, ent)
-					PNRP.TakeFromCarInventory( ply, data.ID )
-					PNRP.AddWorldCache( ply, data.ID )
-				end
+				local pos = tr.HitPos + Vector(0,0,20)
+				local ent = item.Create(ply, item.Ent, pos)
 				
 			end
+			
+			PNRP.TakeFromCarInventoryBulk( ply, item.ID, q )
 		
 		else
 
@@ -405,9 +350,12 @@ function PNRP.Salvage( ply, command, arg )
 	local allowed = false
 	local playerNick = ply:Nick()
 	local plUID = PNRP:GetUID( ply )
+	local count = 1
 	
 	if tostring(command) == "pnrp_dosalvage"  or tostring(command) == "pnrp_docarsalvage" then
-		ItemID = arg[1]
+		local split = string.Explode(",",arg[1])
+		ItemID = split[1]
+		count = tonumber(split[2])
 		allowed = true
 	else
 		local tr = ply:TraceFromEyes(400)
@@ -448,9 +396,13 @@ function PNRP.Salvage( ply, command, arg )
 				chemicals = math.Round(PNRP.Items[ItemID].Chemicals * (0.5 + (ply:GetSkill("Salvaging") * 0.05)))
 			else	
 				scrap = math.Round(PNRP.Items[ItemID].Scrap * (0.25 + (ply:GetSkill("Salvaging") * 0.05)))
-				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * (0.25 + (ply:GetSkill("Salvaging") * 0.05))) 
+				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * (0.25 + (ply:GetSkill("Salvaging") * 0.05)))
 				chemicals = math.Round(PNRP.Items[ItemID].Chemicals * (0.25 + (ply:GetSkill("Salvaging") * 0.05)))
 			end	
+			
+			scrap = scrap * count
+			smallparts = smallparts * count
+			chemicals = chemicals * count
 			
 			Msg(ply:Nick().."Salvaged "..tostring(scrap).." "..tostring(smallparts).." "..tostring(chemicals).."\n")
 			ply:IncResource("Scrap", scrap)
@@ -458,10 +410,10 @@ function PNRP.Salvage( ply, command, arg )
 			ply:IncResource("Chemicals", chemicals)
 
 			if tostring(command) == "pnrp_dosalvage" then
-				PNRP.TakeFromInventory( ply, ItemID )
+				PNRP.TakeFromInventoryBulk( ply, ItemID, count )
 			else
 				if tostring(command) == "pnrp_docarsalvage" then
-					PNRP.TakeFromCarInventory( ply, ItemID )
+					PNRP.TakeFromCarInventoryBulk( ply, ItemID, count )
 				else
 					ent:Remove()
 				end
