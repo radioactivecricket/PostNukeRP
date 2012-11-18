@@ -1,6 +1,12 @@
 AddCSLuaFile( "cl_init.lua" )
 AddCSLuaFile( "shared.lua" )
+
 include('shared.lua')
+
+util.AddNetworkString("addfilter_stream")
+util.AddNetworkString("fertilize_stream")
+util.AddNetworkString("addairator_stream")
+util.AddNetworkString("prune_stream")
 
 util.PrecacheModel ("models/props/cs_office/plant01.mdl")
 
@@ -13,159 +19,221 @@ function ENT:Initialize()
 	
 	self.FruitLevel = 0
 	self.PlantStatus = 60
-	self.Filtered = false
+	self.Filtered = nil
 	self.Fertilized = false
-	self.Airator = false
+	self.Airator = nil
 	self.CanPrune = true
-	self.LastUser = NullEntity()
-	timer.Create( "plantupdate_"..tostring(self.Entity:EntIndex()), 120, 0, PlantUpdate, self.Entity )
+	self.LastUser = nil
+	timer.Create( "plantupdate_"..tostring(self), 120, 0, function()
+		self:PlantUpdate()
+	end)
+	
+	self.Entity:NextThink(CurTime() + 1.0)
 end
 
-function PlantUpdate( ent )
+function ENT:PlantUpdate()
 	local statusChange = -10
 	
-	if ent.PlantStatus > 75 and ent.FruitLevel < 3 then
+	if self.PlantStatus > 75 and self.FruitLevel < 3 then
 		-- ent.FruitLevel = ent.FruitLevel + 1
 		local fruitent = ents.Create("food_orange")
 		fruitent:SetModel("models/props/cs_italy/orange.mdl")
 		fruitent:SetAngles(Angle(0,0,0))
-		fruitent:SetPos(ent:LocalToWorld(Vector(0,0,20)))
+		fruitent:SetPos(self:LocalToWorld(Vector(0,0,20)))
 		fruitent:Spawn()
 	end
 	
 	local MySkill = 0
 	
-	if ent.LastUser:IsValid() and ent.LastUser:Team() == TEAM_CULTIVATOR then
-		MySkill = ent.LastUser:GetSkill("Farming")
+	if self.LastUser:IsValid() and self.LastUser:Team() == TEAM_CULTIVATOR then
+		MySkill = self.LastUser:GetSkill("Farming")
 	end
 	
 	if MySkill > 0 then statusChange = statusChange + MySkill end
 	
-	if ent.Filtered then
-		statusChange = statusChange + 4
-	end
-	
-	if ent.Fertilized then
+	if IsValid(self.Filtered) then
 		statusChange = statusChange + 3
 	end
 	
-	if ent.Airator then
+	if self.Fertilized then
 		statusChange = statusChange + 3
 	end
 	
-	ent.PlantStatus = ent.PlantStatus + statusChange
-	if ent.PlantStatus < 0 then ent.PlantStatus = 0 end
-	if ent.PlantStatus > 100 then ent.PlantStatus = 100 end
+	if IsValid(self.Airator) then
+		statusChange = statusChange + 3
+	end
+	
+	self.PlantStatus = self.PlantStatus + statusChange
+	if self.PlantStatus < 0 then self.PlantStatus = 0 end
+	if self.PlantStatus > 100 then self.PlantStatus = 100 end
 end
 
-function DoFilter( pl, handler, id, encoded, decoded )
-	local ent = decoded[1]
+function DoFilter( )
+	local ply = net.ReadEntity()
+	local ent = net.ReadEntity()
 	
-	if pl:GetResource( "Small_Parts" ) < 20 then
-		pl:ChatPrint( "Not enough small parts to upgrade!" )
-		return
-	end
-	
-	pl:Freeze(true)
-	pl:ChatPrint("Building filtered water drip...")
-	
-	timer.Simple( 10, function ()
-		pl:Freeze(false)
-		pl:DecResource( "Small_Parts", 20 )
+	if IsValid(ent.Filtered) then
+		constraint.RemoveConstraints( ent.Filtered, "Weld" )
 		
-		ent.Filtered = true
-		pl:ChatPrint("It's been built!")
-	end )
+		ent.Filtered:GetPhysicsObject():EnableMotion(true)
+		ent.Filtered:GetPhysicsObject():Wake()
+		ent:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
+		
+		ent.Filtered.Attached = false
+		
+		ent.Filtered = nil
+		ply:ChatPrint("You've unhooked the water purifier.")
+	else
+		local nearbyEnts = ents.FindInSphere(ent:GetPos(), 150)
+		
+		local filter
+		local dist = 500
+		
+		for k, v in pairs(nearbyEnts) do
+			if v:GetClass() == "tool_waterpurifier" and !v.Attached and (not IsValid(v.NetworkContainer)) then
+				if ent:GetPos():Distance(v:GetPos()) < dist and ply == v:GetNWEntity( "ownerent" ) then
+					filter = v
+					dist = ent:GetPos():Distance(v:GetPos())
+				end
+			end
+		end
+		
+		if IsValid(filter) then
+			ent.Filtered = filter
+			
+			filter.Attached = true
+			
+			filter:SetPos(util.LocalToWorld( ent, Vector(4, 2, 17)))
+			
+			filter:SetAngles(Angle(ent:GetAngles().Roll, ent:GetAngles().Pitch, ent:GetAngles().Yaw )+Angle(90,0,0))
+			ply:ChatPrint("Ent:GetAngles():  "..tostring(ent:GetAngles()))
+			
+			constraint.Weld(ent, filter, 0, 0, 0, true)
+			
+			ent:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
+			ply:ChatPrint("You've hooked up the water purifier.")
+		else
+			ply:ChatPrint("No nearby owned water purifier.")
+		end
+	end
 end
-datastream.Hook( "addfilter_stream", DoFilter )
+--datastream.Hook( "addfilter_stream", DoFilter )
+net.Receive( "addfilter_stream", DoFilter )
 
-function DoFertilize( pl, handler, id, encoded, decoded )
-	local ent = decoded[1]
+function DoFertilize( )
+	local ply = net.ReadEntity()
+	local ent = net.ReadEntity()
+	--local ent = decoded[1]
 	
-	if pl:GetResource( "Chemicals" ) < 5 then
-		pl:ChatPrint( "Not enough chemicals to fertilize!" )
+	if ply:GetResource( "Chemicals" ) < 5 then
+		ply:ChatPrint( "Not enough chemicals to fertilize!" )
 		return
 	end
 	
-	pl:Freeze(true)
-	pl:ChatPrint("Fertilizing...")
+	ply:Freeze(true)
+	ply:ChatPrint("Fertilizing...")
 	
 	timer.Simple( 5, function ()
-		pl:Freeze(false)
-		pl:DecResource( "Chemicals", 5 )
+		ply:Freeze(false)
+		ply:DecResource( "Chemicals", 5 )
 		
 		ent.Fertilized = true
 		timer.Create( "unfertilize_"..tostring(ent:EntIndex()), 600, 1, function()
 			ent.Fertilized = false
 		end )
-		pl:ChatPrint("Fertilized!")
+		ply:ChatPrint("Fertilized!")
 	end )
 end
-datastream.Hook( "fertilize_stream", DoFertilize )
+--datastream.Hook( "fertilize_stream", DoFertilize )
+net.Receive( "fertilize_stream", DoFertilize )
 
-function DoAirator( pl, handler, id, encoded, decoded )
-	local ent = decoded[1]
+function DoAirator( )
+	local ply = net.ReadEntity()
+	local ent = net.ReadEntity()
 	
-	if pl:GetResource( "Small_Parts" ) < 20 then
-		pl:ChatPrint( "Not enough small parts to upgrade!" )
-		return
-	end
-	
-	pl:Freeze(true)
-	pl:ChatPrint("Building automatic airator...")
-	
-	timer.Simple( 10, function ()
-		pl:Freeze(false)
-		pl:DecResource( "Small_Parts", 20 )
+	if IsValid(ent.Airator) then
+		constraint.RemoveConstraints( ent.Airator, "Weld" )
 		
-		ent.Airator = true
-		pl:ChatPrint("It's been built!")
-	end )
-end
-datastream.Hook( "addairator_stream", DoAirator )
-
-function DoHarvest( pl, handler, id, encoded, decoded )
-	local ent = decoded[1]
-	local spawnPos = ent:GetPos() + Vector( 0, 0, 10 )
-	
-	pl:Freeze(true)
-	pl:ChatPrint("Harvesting...")
-	timer.Simple( 5, function ()
-		ent:EmitSound(Sound("items/ammo_pickup.wav"))
-		pl:AddToInventory( "food_orange" )
-		pl:ChatPrint("An orange is now in your inventory!")
+		ent.Airator:GetPhysicsObject():EnableMotion(true)
+		ent.Airator:GetPhysicsObject():Wake()
+		ent:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
 		
-		ent.FruitLevel = ent.FruitLevel - 1
-		pl:Freeze(false)
-	end )
+		ent.Airator.Attached = false
+		
+		ent.Airator = nil
+		ply:ChatPrint("You've unhooked the airator.")
+	else
+		local nearbyEnts = ents.FindInSphere(ent:GetPos(), 150)
+		
+		local airator
+		local dist = 500
+		
+		for k, v in pairs(nearbyEnts) do
+			if v:GetClass() == "tool_airator" and !v.Attached and (not IsValid(v.NetworkContainer)) then
+				if ent:GetPos():Distance(v:GetPos()) < dist and ply == v:GetNWEntity( "ownerent" ) then
+					airator = v
+					dist = ent:GetPos():Distance(v:GetPos())
+				end
+			end
+		end
+		
+		if IsValid(airator) then
+			ent.Airator = airator
+			
+			airator.Attached = true
+			
+			airator:SetPos(util.LocalToWorld( ent, Vector(0, 5, 17)))
+			airator:SetAngles(ent:GetAngles()+Angle(0,0,180))
+			
+			constraint.Weld(ent, airator, 0, 0, 0, true)
+			
+			ent:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
+			ply:ChatPrint("You've hooked the airator.")
+		else
+			ply:ChatPrint("No nearby owned airator.")
+		end
+	end	
 end
-datastream.Hook( "harvest_stream", DoHarvest )
+--datastream.Hook( "addairator_stream", DoAirator )
+net.Receive( "addairator_stream", DoAirator )
 	
-function DoPrune( pl, handler, id, encoded, decoded )
-	local ent = decoded[1]
-	local amount = decoded[2]
+function DoPrune( )
+	local ply = net.ReadEntity()
+	local ent = net.ReadEntity()
+	
+	ply:SelectWeapon("gmod_rp_hands")
+	ply:SetMoveType(MOVETYPE_NONE)
+	ent.Pruning = ply
 	ent.CanPrune = false
-	pl:Freeze(true)
-	pl:ChatPrint("Pruning...")
 	
-	timer.Simple( amount/2, function ()
-		pl:Freeze(false)
-		ent.CanPrune = true
-		
-		ent.PlantStatus = ent.PlantStatus + amount
-		if ent.PlantStatus > 100 then ent.PlantStatus = 100 end
-		pl:ChatPrint("It looks much better!")
+	umsg.Start("startProgressBar", ply)
+		umsg.Short((100 - ent.PlantStatus)/2)
+	umsg.End()
+	
+	timer.Create( ply:UniqueID().."_prune_"..tostring(ent), 0.25, ((100 - ent.PlantStatus)*4)/2, function()
+		ply:SelectWeapon("gmod_rp_hands")
+		if (not ent:IsValid()) or (not ply:Alive()) then
+			ply:SetMoveType(MOVETYPE_WALK)
+			umsg.Start("stopProgressBar", ply)
+			umsg.End()
+			ent.Pruning = nil
+			if ent:IsValid() then 
+				timer.Stop(ply:UniqueID().."_prune_"..tostring(ent))
+			end
+			return
+		end
 	end )
 end
-datastream.Hook( "prune_stream", DoPrune )
+--datastream.Hook( "prune_stream", DoPrune )
+net.Receive( "prune_stream", DoPrune )
 
 function ENT:OnRemove()
-	timer.Destroy( "plantupdate_"..tostring(self.Entity:EntIndex()) )
+	timer.Destroy( "plantupdate_"..tostring(self) )
 end
 
 function ENT:Use( activator, caller )
 	if activator:KeyPressed( IN_USE ) then
-		if activator:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+		if activator:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 			if activator:Team() ~= TEAM_CULTIVATOR then
 				activator:ChatPrint("Admin overide.")
 			end
@@ -176,22 +244,107 @@ function ENT:Use( activator, caller )
 			end
 		end
 		
-		self.LastUser = activator
-		
-		local rp = RecipientFilter()
-		rp:RemoveAllPlayers()
-		rp:AddPlayer( activator )
-		 
-		umsg.Start("plant_menu", rp)
-			umsg.Short(self.FruitLevel)
-			umsg.Short(self.PlantStatus)
-			umsg.Bool(self.Filtered)
-			umsg.Bool(self.Fertilized)
-			umsg.Bool(self.Airator)
-			umsg.Bool(self.CanPrune)
-			umsg.Entity(self.Entity)
-		umsg.End()
+		if self.Pruning then
+			if self.Pruning == activator then
+				self.Pruning = nil
+				activator:ChatPrint("You stop pruning the plant.")
+				
+				activator:SetMoveType(MOVETYPE_WALK)
+				umsg.Start("stopProgressBar", activator)
+				umsg.End()
+				self.Pruning = nil
+				self.CanPrune = true
+				if self:IsValid() then 
+					timer.Stop(activator:UniqueID().."_prune_"..tostring(self))
+				end
+			else
+				activator:ChatPrint("This plant is currently being pruned.")
+			end
+		else
+			self.LastUser = activator
+			
+			local rp = RecipientFilter()
+			rp:RemoveAllPlayers()
+			rp:AddPlayer( activator )
+			 
+			umsg.Start("plant_menu", rp)
+				umsg.Short(self.FruitLevel)
+				umsg.Short(self.PlantStatus)
+				umsg.Bool(IsValid(self.Filtered))
+				umsg.Bool(self.Fertilized)
+				umsg.Bool(IsValid(self.Airator))
+				umsg.Bool(self.CanPrune)
+				umsg.Entity(self.Entity)
+			umsg.End()
+		end
 	end
+end
+
+function ENT:Think()
+	if self.Pruning then
+		self.PlantStatus = self.PlantStatus + 2
+		
+		if self.PlantStatus >= 100 then
+			self.PlantStatus = 100
+			self.Pruning:ChatPrint("You finish pruning the plant.")
+			
+			self.Pruning:SetMoveType(MOVETYPE_WALK)
+			umsg.Start("stopProgressBar", self.Pruning)
+			umsg.End()
+			if self:IsValid() and IsValid(self.Pruning) then 
+				timer.Stop(self.Pruning:UniqueID().."_prune_"..tostring(self))
+			end
+			self.Pruning = nil
+			self.CanPrune = true
+		end
+	end
+	
+	if IsValid(self.Airator) then
+		local AirCheck = false
+		
+		local findPlantHost = constraint.FindConstraints( self.Airator, "Weld" )
+		for _, v in pairs(findPlantHost) do
+			if v.Entity[1].Entity == self then
+				AirCheck = true
+			end
+		end
+		
+		if not AirCheck then
+			self.Airator:SetPos(util.LocalToWorld( self, Vector(0, 5, 17)))
+			self.Airator:SetAngles(self:GetAngles()+Angle(0,0,180))
+			
+			constraint.Weld(self, self.Airator, 0, 0, 0, true)
+				
+			self:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
+			
+			AirCheck = true
+		end
+	end
+	
+	if IsValid(self.Filtered) then
+		local FilterCheck = false
+		
+		local findPlantHost = constraint.FindConstraints( self.Filtered, "Weld" )
+		for _, v in pairs(findPlantHost) do
+			if v.Entity[1].Entity == self then
+				FilterCheck = true
+			end
+		end
+		
+		if not FilterCheck then
+			self.Filtered:SetPos(util.LocalToWorld( self, Vector(4, 2, 17)))
+			self.Filtered:SetAngles(self:GetAngles()+Angle(90,0,0))
+			
+			constraint.Weld(self, self.Filtered, 0, 0, 0, true)
+				
+			self:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
+			
+			FilterCheck = true
+		end
+	end
+	
+	self.Entity:NextThink(CurTime() + 1)
+	return true
 end
 
 function ENT:PostEntityPaste(pl, Ent, CreatedEntities)

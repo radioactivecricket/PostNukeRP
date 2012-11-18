@@ -8,6 +8,9 @@ Scope Textures
 resource.AddFile( "materials/scope/scope_normal.vmt" );
 resource.AddFile( "materials/scope/scope_normal.vtf" );
 
+resource.AddFile( "materials/scope/scope_hurricane.vmt" );
+resource.AddFile( "materials/scope/scope_hurricane.vtf" );
+
 resource.AddFile( "materials/scope/scope_reddot.vmt" );
 resource.AddFile( "materials/scope/scope_reddot.vtf" );
 

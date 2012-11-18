@@ -3,8 +3,8 @@ SWEP.Contact		= "lostinthewired@gmail.com"
 SWEP.Purpose		= "Keys for SimpleKeys"
 SWEP.Instructions	= "Left click to unlock.\nRight click to lock.\nR to enter door management or ownership."
 
-SWEP.ViewModel		= "models/Weapons/V_hands.mdl"
-SWEP.WorldModel		= "models/weapons/w_camphone.mdl"
+SWEP.ViewModel		= ""
+SWEP.WorldModel		= ""
 
 SWEP.Spawnable      = false
 SWEP.AdminSpawnable = false
@@ -67,20 +67,23 @@ function SWEP:Reload()
 	if !tr.Entity:IsValid() then return end
 	if not (tr.Entity:IsDoor() or tr.Entity:IsVehicle()) then return end
 	
-	local doorowner = doorEnt:GetNWEntity( "ownerent", NullEntity() )
+	local doorowner = doorEnt:GetNWEntity( "ownerent", nil )
 	if !doorowner:IsValid() then
 		self.Owner:ConCommand("pnrp_setOwner")
 		-- self.Owner:ChatPrint("You have taken ownership of this door!")
 	elseif doorowner == self.Owner then
 		--Open Door Management
-		datastream.StreamToClients(self.Owner, "manageDoor", { ["doorEnt"] = doorEnt, ["coowners"] = doorEnt.Coowners })
+		--datastream.StreamToClients(self.Owner, "manageDoor", { ["doorEnt"] = doorEnt, ["coowners"] = doorEnt.Coowners })
+		net.Start("manageDoor")
+			net.WriteEntity(doorEnt)
+			net.WriteTable(doorEnt.Coowners or {})
+		net.Send(self.Owner)
 	else
 		self.Owner:ChatPrint("You don't have this key.")
 	end
 	
 	self.NextR = CurTime() + 1
 end
-
 
 ---------------------------------------------------------
 --	PrimaryAttack

@@ -4,9 +4,9 @@ TOOL.Command = nil
 TOOL.ConfigName = "" --Setting this means that you do not have to create external configuration files to define the layout of the tool config-hud 
 
 if ( CLIENT ) then
-	language.Add( "Tool_pnrp_nodemaker_name", "PNRP Monster Node Placer" )
-	language.Add( "Tool_pnrp_nodemaker_desc", "Spawns and updates nodes for PNRP." )
-	language.Add( "Tool_pnrp_nodemaker_0", "Primary: Create/Update Monster Node" )
+	language.Add( "Tool.pnrp_nodemaker.name", "PNRP Monster Node Placer" )
+	language.Add( "Tool.pnrp_nodemaker.desc", "Spawns and updates nodes for PNRP." )
+	language.Add( "Tool.pnrp_nodemaker.0", "Primary: Create/Update Monster Node" )
 	language.Add( "undone_monsternode", "Undone Monster Node" )
 end
 
@@ -85,7 +85,7 @@ function TOOL:RightClick( trace )
 			ply:ConCommand("pnrp_nodemaker_targindex -1")
 			ply:ChatPrint( "Door linked.")
 		elseif trace.Entity:IsValid() and trace.Entity:EntIndex() == self:GetClientNumber("targindex") then
-			trace.Entity:SetNWEntity( "infLinked", NullEntity() )
+			trace.Entity:SetNWEntity( "infLinked", nil )
 			ply:ConCommand("pnrp_nodemaker_targindex -1")
 			ply:ChatPrint( "Link cancelled.")
 		else

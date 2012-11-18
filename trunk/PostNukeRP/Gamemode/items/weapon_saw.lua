@@ -17,9 +17,14 @@ ITEM.Ent = "weapon_pnrp_saw"
 ITEM.Model = "models/weapons/w_mach_m249para.mdl"
 ITEM.Script = ""
 ITEM.Weight = 16
+ITEM.ShopHide = true
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "smg1"
+
+function ITEM.ToolCheck( p )
+	return true
+end
 
 function ITEM.Use( ply )
 	local WepName = "weapon_pnrp_saw"
@@ -37,6 +42,17 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create("ent_weapon")
+	--ent:SetNetworkedInt("Ammo", self.Energy)
+	ent:SetNWString("WepClass", ITEM.Ent)
+	ent:SetModel(ITEM.Model)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+	
+	return ent
+end
 
 PNRP.AddItem(ITEM)
 PNRP.AddWeapon(WEAPON)

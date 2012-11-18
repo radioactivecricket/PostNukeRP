@@ -42,7 +42,7 @@ end
 ---------------------------------------------------------*/
 function ENT:Explosion()
 
-	local doorent = self.Entity:GetNWEntity("door", NullEntity())
+	local doorent = self.Entity:GetNWEntity("door", nil)
 	if doorent:IsValid() and (doorent:GetClass() == "prop_door_rotating" or doorent:GetClass() == "func_door_rotating") then
 		doorent:Fire("open", "", 0.1)
 		doorent:Fire("unlock", "", 0.1)
@@ -83,11 +83,17 @@ function ENT:Explosion()
 
 			ent:Spawn()
 
-			timer.Simple(0.01, ent.SetVelocity, ent, push)               
-			timer.Simple(0.01, ent:GetPhysicsObject().ApplyForceCenter, ent:GetPhysicsObject(), push)
-			timer.Simple(25, ResetDoor, doorent, ent)
+			timer.Simple(0.01, function()
+					ent:SetVelocity(push)
+					ent:GetPhysicsObject():ApplyForceCenter(push)
+				end)
+			timer.Simple(25, function()
+					ResetDoor( doorent, ent)
+				end)
 		else
-			timer.Simple(25, ResetDoor, doorent, NullEntity())
+			timer.Simple(25, function()
+					ResetDoor( doorent, nil)
+				end)
 		end
 	elseif doorent:IsValid() and doorent:GetClass() == "pnrp_antmound" then
 		doorent:SetHealth(doorent:Health() - 500)
@@ -98,7 +104,7 @@ function ENT:Explosion()
 		effectdata:SetOrigin(self.Entity:GetPos())
 	util.Effect("HelicopterMegaBomb", effectdata)
 	
-	local owner = self.Entity:GetNWEntity("ownerent", NullEntity())
+	local owner = self.Entity:GetNWEntity("ownerent", nil)
 	
 	if owner:IsValid() then
 		local rf = RecipientFilter()
@@ -138,7 +144,7 @@ function ENT:Use(activator, caller)
 	else
 		activator:Give("weapon_testcharge")
 	end
-	local chargeOwner = self.Entity:GetNWEntity("ownerent", NullEntity())
+	local chargeOwner = self.Entity:GetNWEntity("ownerent", nil)
 	
 	if chargeOwner:IsValid() then
 		local trgWeapon = chargeOwner:GetWeapon("weapon_testcharge")

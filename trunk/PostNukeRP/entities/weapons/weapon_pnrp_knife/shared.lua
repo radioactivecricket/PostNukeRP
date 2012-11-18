@@ -46,14 +46,19 @@ function SWEP:Initialize()
     self:SetWeaponHoldType(self.HoldType)
 end
 
+function SWEP:SetupDataTables()
+	self:DTVar("Bool", 0, "Holsted")
+	self:DTVar("Bool", 1, "Ironsights")
+end 
+
 function SWEP:Equip()
-	self.Weapon:SetNWBool("IronSights", false)
-	self.Weapon:SetNWBool("IsPassive", false)
+	self.Weapon:SetDTBool(0, false)
+	self.Weapon:SetDTBool(1, false)
 end
 
 function SWEP:PrimaryAttack()
 
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then return end
+	if self.Weapon:GetDTBool(0) or self.Owner:KeyDown( IN_SPEED ) then return end
 	
 	local tr = {}
 	tr.start = self.Owner:GetShootPos()
@@ -106,17 +111,19 @@ end
 
 function SWEP:SecondaryAttack()
 	if self.Owner:KeyDown( IN_WALK ) then
-		local savedBool = (not self.Weapon:GetNWBool("IsPassive", false))
-		self.Weapon:SetNWBool("IsPassive", (not self.Weapon:GetNWBool("IsPassive", false)))
-		self.Owner:EmitSound("npc/combine_soldier/gear4.wav")
+		-- local savedBool = (not self.Weapon:GetNWBool("IsPassive", false))
+		local savedBool = (not self.Weapon:GetDTBool(0))
+		
+		if (SERVER) then
+			self.Weapon:SetDTBool(0, (not self.Weapon:GetDTBool(0)))
+			self.Owner:EmitSound("npc/combine_soldier/gear4.wav")
+		end
 		
 		if savedBool then
-			self:SetWeaponHoldType("passive")
+			self:SetWeaponHoldType("normal")
 			self.Owner:SetFOV( 0, 0.15 )
-			self.Weapon:SetNWBool("IronSights", false)
-			self.Weapon:SendWeaponAnim(ACT_VM_HOLSTER)
+			self.Weapon:SetDTBool(1, false)
 		else
-			self.Weapon:SendWeaponAnim(ACT_VM_DRAW)
 			self:SetWeaponHoldType(self.HoldType)
 		end
 	else
@@ -132,7 +139,8 @@ end
 function SWEP:Deploy()
 
 	self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
-	self.Weapon:SetNWBool("IsPassive", false)
+	self.Weapon:SetDTBool(0, false)
+	self.Weapon:SetDTBool(1, false)
 
 	self.Weapon:SetNextPrimaryFire(CurTime() + 1)
 	return true
@@ -146,7 +154,7 @@ local IRONSIGHT_TIME = 0.15
 
 function SWEP:GetViewModelPosition(pos, ang)
 	
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then
+	if self.Weapon:GetDTBool(0) or self.Owner:KeyDown( IN_SPEED ) then
 		ang = ang * 1
 		ang:RotateAroundAxis(ang:Right(), 		-50.2258)
 		ang:RotateAroundAxis(ang:Up(), 		1.7237)

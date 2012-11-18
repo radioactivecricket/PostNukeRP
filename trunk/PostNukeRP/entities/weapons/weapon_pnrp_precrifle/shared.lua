@@ -18,7 +18,7 @@ SWEP.ShellEjectAttachment	= "2" -- Should be "2" for CSS models or "1" for hl2 m
 
 SWEP.Primary.Sound 			= Sound("Weapon_SG550.Single")
 SWEP.Primary.Recoil 		= 2
-SWEP.Primary.Damage 		= 33
+SWEP.Primary.Damage 		= 70
 SWEP.Primary.NumShots 		= 1
 SWEP.Primary.Cone 			= 0
 SWEP.Primary.ClipSize 		= 5
@@ -122,15 +122,20 @@ function SWEP:Initialize()
     self:SetWeaponHoldType(self.HoldType)
 end
 
+function SWEP:SetupDataTables()
+	self:DTVar("Bool", 0, "Holsted")
+	self:DTVar("Bool", 1, "Ironsights")
+end 
+
 function SWEP:Equip()
-	self.Weapon:SetNWBool("IronSights", false)
-	self.Weapon:SetNWBool("IsPassive", false)
+	self.Weapon:SetDTBool(0, false)
+	self.Weapon:SetDTBool(1, false)
 end
 
 function SWEP:PrimaryAttack()
 
 	if not self:CanPrimaryAttack() or self.Owner:WaterLevel() > 2 then return end
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then return end
+	if self.Weapon:GetDTBool(0) or self.Owner:KeyDown( IN_SPEED ) then return end
 	
 	self.Weapon:EmitSound(self.Primary.Sound)
 	self:TakePrimaryAmmo(self.Primary.NumShots)
@@ -139,7 +144,7 @@ function SWEP:PrimaryAttack()
 	
 	local handlingSkill = self.Owner:GetSkill("Weapon Handling")
 	
-	if self.Weapon:GetNWBool("IronSights", false) then
+	if self.Weapon:GetDTBool(1) then
 		self.Owner:ViewPunch(Angle(math.Rand(-0.5,-2.5) * (self.Primary.Recoil - (0.1 * handlingSkill)), math.Rand(-1,1) * ((self.Primary.Recoil - (0.1 * handlingSkill)) / 2), 0))
 		self:ShootBullet(self.Primary.Damage, self.Primary.NumShots, self.Primary.Cone / 2, (self.Primary.Recoil - (0.1 * handlingSkill)) / 2 )
 	else
@@ -152,21 +157,28 @@ end
 
 function SWEP:SecondaryAttack()
 	if self.Owner:KeyDown( IN_WALK ) then
-		local savedBool = (not self.Weapon:GetNWBool("IsPassive", false))
-		self.Weapon:SetNWBool("IsPassive", (not self.Weapon:GetNWBool("IsPassive", false)))
-		self.Owner:EmitSound("npc/combine_soldier/gear4.wav")
+		-- local savedBool = (not self.Weapon:GetNWBool("IsPassive", false))
+		local savedBool = (not self.Weapon:GetDTBool(0))
+		
+		if (SERVER) then
+			self.Weapon:SetDTBool(0, (not self.Weapon:GetDTBool(0)))
+			self.Owner:EmitSound("npc/combine_soldier/gear4.wav")
+		end
 		
 		if savedBool then
-			self:SetWeaponHoldType("passive")
+			self:SetWeaponHoldType("normal")
 			self.Owner:SetFOV( 0, 0.15 )
-			self.Weapon:SetNWBool("IronSights", false)
+			self.Weapon:SetDTBool(1, false)
 		else
 			self:SetWeaponHoldType(self.HoldType)
 		end
 	else
-		if self.Weapon:GetNWBool("IsPassive", false) then return end
-		local savedBool = (not self.Weapon:GetNWBool("IronSights", false))
-		self.Weapon:SetNWBool("IronSights", (not self.Weapon:GetNWBool("IronSights", false))) 
+		--if self.Weapon:GetNWBool("IsPassive", false) then return end
+		if self.Weapon:GetDTBool(0) then return end
+		-- local savedBool = (not self.Weapon:GetNWBool("IronSights", false))
+		local savedBool = (not self.Weapon:GetDTBool(1))
+		-- self.Weapon:SetNWBool("IronSights", (not self.Weapon:GetNWBool("IronSights", false))) 
+		self.Weapon:SetDTBool(1, (not self.Weapon:GetDTBool(1)))
 		
 		if savedBool then
 			self.Owner:SetFOV( 10, 0.15 )
@@ -185,13 +197,14 @@ end
 
 function SWEP:Reload()
 	if self.Weapon:Clip1() < self.Primary.ClipSize then
-		self.Weapon:SetNWBool("IronSights", false)
+		self.Weapon:SetDTBool(1, false)
 		self.Owner:SetFOV( 0, 0.15 )
 		
 		if (SERVER) then self.Owner:DrawViewModel(true) end
 		-- self.Weapon:SetNextPrimaryFire(CurTime() + 1.5)
 		-- self.Weapon:SetNextSecondaryFire(CurTime() + 1.5)
 	
+		self:SetWeaponHoldType("ar2")
 		self.Weapon:DefaultReload(ACT_VM_RELOAD) 
 		self.Weapon:EmitSound("Weapon_Weapon_SG550.Reload")
 		
@@ -201,8 +214,8 @@ end
 function SWEP:Deploy()
 
 	self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
-	self.Owner:SetNWBool("IronSights", false)
-	self.Weapon:SetNWBool("IsPassive", false)
+	self.Weapon:SetDTBool(0, false)
+	self.Weapon:SetDTBool(1, false)
 	self.Weapon:SetNWFloat("MouseSensitivity", 1)
 
 	self.Weapon:SetNextPrimaryFire(CurTime() + 1)
@@ -222,7 +235,7 @@ local IRONSIGHT_TIME = 0.15
 
 function SWEP:GetViewModelPosition(pos, ang)
 	
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then
+	if self.Weapon:GetDTBool(0) or self.Owner:KeyDown( IN_SPEED ) then
 		ang = ang * 1
 		ang:RotateAroundAxis(ang:Right(), 		-37.2258)
 		ang:RotateAroundAxis(ang:Up(), 		1.7237)
@@ -241,7 +254,7 @@ function SWEP:GetViewModelPosition(pos, ang)
 	
 	if (not self.IronSightsPos) then return pos, ang end
 
-	local bIron = self.Weapon:GetNWBool("IronSights", false)
+	local bIron = self.Weapon:GetDTBool(1)
 
 	if (bIron != self.bLastIron) then
 		self.bLastIron = bIron
@@ -307,7 +320,7 @@ function SWEP:ShootBullet( damage, num_bullets, aimcone, recoil )
 	
 	self:ShootEffects()
 	
-	if ((SinglePlayer() and SERVER) or (not SinglePlayer() and CLIENT)) then
+	if ((game.SinglePlayer() and SERVER) or (not game.SinglePlayer() and CLIENT)) then
 		local eyeang = self.Owner:EyeAngles()
 		eyeang.pitch = eyeang.pitch - recoil
 		self.Owner:SetEyeAngles(eyeang)
@@ -324,37 +337,18 @@ function SWEP:ShootEffects()
 end
 
 if CLIENT then
-	local LastViewAng = false
-
-	local function SimilarizeAngles (ang1, ang2) --this function makes angle-play a little easier on the mind, damn the overhead I say
-
-		ang1.y = math.fmod (ang1.y, 360)
-		ang2.y = math.fmod (ang2.y, 360)
-
-		if math.abs (ang1.y - ang2.y) > 180 then
-			if ang1.y - ang2.y < 0 then
-				ang1.y = ang1.y + 360
-			else
-				ang1.y = ang1.y - 360
-			end
-		end
-	end
-
-	local function ReduceScopeSensitivity (uCmd)
-
+	local function AdjustSensitivity()
 		if LocalPlayer():GetActiveWeapon() and LocalPlayer():GetActiveWeapon():IsValid() then
-			local newAng = uCmd:GetViewAngles()
-			if LastViewAng then
-				SimilarizeAngles (LastViewAng, newAng)
-
-				local diff = newAng - LastViewAng
-
-				diff = diff * (LocalPlayer():GetActiveWeapon():GetNWFloat("MouseSensitivity", 1))
-				uCmd:SetViewAngles (LastViewAng + diff)
+			if LocalPlayer():GetActiveWeapon():GetClass() == "weapon_pnrp_precrifle" then
+				local ironSights = LocalPlayer():GetActiveWeapon():GetNWBool("IronSights", false)
+				if ironSights then
+					return 0.35
+				else
+					return 1
+				end
 			end
 		end
-		LastViewAng = uCmd:GetViewAngles()
 	end
-	 
-	hook.Add ("CreateMove", "RSS", ReduceScopeSensitivity)
+	hook.Add("AdjustMouseSensitivity", "PrecRflSense", AdjustSensitivity)
+
 end

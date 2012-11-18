@@ -27,37 +27,44 @@ function ENT:Initialize()
 	self.PlayDeath = 0
 	self.AlertStatus = 0
 	self.LastAlert = 0
+	self.eggs = math.random(1,2)
 	
-	timer.Create( "moundspawn_"..tostring(self.Entity:EntIndex()), 0.1, 0, self.MoundSpawn, self )
-	timer.Create( "mounddefense_"..tostring(self.Entity:EntIndex()), 5, 0, self.MoundDefense, self )
-	timer.Create( "moundupdate_"..tostring(self.Entity:EntIndex()), self.SpawnRate, 0, self.MoundUpdate, self )
+	timer.Create( "moundspawn_"..tostring(self), 0.1, 0, function()
+		self:MoundSpawn()
+	end)
+	timer.Create( "mounddefense_"..tostring(self), 5, 0, function()
+		self:MoundDefense()
+	end)
+	timer.Create( "moundupdate_"..tostring(self), self.SpawnRate, 0, function()
+		self:MoundUpdate()
+	end)
 	
 	self.Entity:SetMaxHealth( 6000 )
 	self.Entity:SetHealth( 6000 )
 end
 
-function ENT.MoundDefense( ent )
-	for k, v in pairs(ent.AntList) do
+function ENT:MoundDefense()
+	for k, v in pairs(self.AntList) do
 		if not v:IsValid() then
-			table.remove(ent.AntList, k)
+			table.remove(self.AntList, k)
 		end
 	end
-	for k, v in pairs(ent.GuardList) do
+	for k, v in pairs(self.GuardList) do
 		if not v:IsValid() then
-			table.remove(ent.GuardList, k)
+			table.remove(self.GuardList, k)
 		end
 	end
 	
-	if not ent.Alive then return end
+	if not self.Alive then return end
 	
-	local nearbyEnts = ents.FindInSphere( ent:GetPos() + Vector(0,0,50), 750 )
+	local nearbyEnts = ents.FindInSphere( self:GetPos() + Vector(0,0,50), 750 )
 	
 	for _, v in pairs(nearbyEnts) do
 		if v:IsValid() then
-			if (v:GetClass() == "npc_zombie" or v:GetClass() == "npc_fastzombie" or v:GetClass() == "npc_poisonzombie" or v:IsPlayer()) and ent.AlertStatus == 0 then
-				ent.AlertStatus = 1
-				ent.LastAlert = CurTime()
-				for _, ant in pairs( ent.AntList ) do
+			if (v:GetClass() == "npc_zombie" or v:GetClass() == "npc_fastzombie" or v:GetClass() == "npc_poisonzombie" or v:IsPlayer()) and self.AlertStatus == 0 then
+				self.AlertStatus = 1
+				self.LastAlert = CurTime()
+				for _, ant in pairs( self.AntList ) do
 					if ant:IsValid() then
 						--ant:SetNPCState( NPC_STATE_ALERT )
 						--ant:NavSetGoal( v:GetPos() )
@@ -66,7 +73,7 @@ function ENT.MoundDefense( ent )
 						ant:SetSchedule( SCHED_FORCED_GO_RUN )
 					end
 				end
-				for _, guard in pairs( ent.GuardList ) do
+				for _, guard in pairs( self.GuardList ) do
 					if guard:IsValid() then
 						--guard:SetNPCState( NPC_STATE_ALERT )
 						--guard:NavSetGoal( v:GetPos() )
@@ -79,17 +86,17 @@ function ENT.MoundDefense( ent )
 		end
 	end
 	
-	local timeSinceLast = CurTime() - ent.LastAlert
+	local timeSinceLast = CurTime() - self.LastAlert
 	
-	if timeSinceLast > 60 and ent.AlertStatus then
-		ent.AlertStatus = 0
-		for _, ant in pairs( ent.AntList ) do
+	if timeSinceLast > 60 and self.AlertStatus then
+		self.AlertStatus = 0
+		for _, ant in pairs( self.AntList ) do
 			if ant:IsValid() then
 				--ant:SetNPCState( NPC_STATE_ALERT )
 				ant:SetSchedule( SCHED_IDLE_WANDER )
 			end
 		end
-		for _, guard in pairs( ent.GuardList ) do
+		for _, guard in pairs( self.GuardList ) do
 			if guard:IsValid() then
 				--guard:SetNPCState( NPC_STATE_ALERT )
 				guard:SetSchedule( SCHED_IDLE_WANDER )
@@ -98,25 +105,25 @@ function ENT.MoundDefense( ent )
 	end
 end
 
-function ENT.MoundSpawn( ent )
-	ent:SetPos(ent.MyPos - Vector(0,0,ent.BelowZ))
+function ENT:MoundSpawn()
+	self:SetPos(self.MyPos - Vector(0,0,self.BelowZ))
 	
-	ent.BelowZ = ent.BelowZ - ent.ZAmount
-	if ent.BelowZ <= 0 then
-		ent.BelowZ = 0
-		ent:SetPos( ent.MyPos )
-		timer.Destroy("moundspawn_"..tostring(ent:EntIndex()))
+	self.BelowZ = self.BelowZ - self.ZAmount
+	if self.BelowZ <= 0 then
+		self.BelowZ = 0
+		self:SetPos( self.MyPos )
+		timer.Destroy("moundspawn_"..tostring(self))
 	end
 end
 
-function ENT.MoundDestroy( ent )
-	ent:SetPos(ent.MyPos - Vector(0,0,ent.BelowZ))
+function ENT:MoundDestroy()
+	self:SetPos(self.MyPos - Vector(0,0,self.BelowZ))
 	
-	ent.BelowZ = ent.BelowZ + ent.ZAmount
-	if ent.BelowZ >= ent.ZAmount * 50 then
-		ent.BelowZ = ent.ZAmount * 50
-		ent:Remove()
-		timer.Destroy( "mounddestroy_"..tostring(ent:EntIndex()) )
+	self.BelowZ = self.BelowZ + self.ZAmount
+	if self.BelowZ >= self.ZAmount * 50 then
+		self.BelowZ = self.ZAmount * 50
+		self:Remove()
+		timer.Destroy( "mounddestroy_"..tostring(self) )
 	end
 end
 
@@ -149,34 +156,34 @@ function ENT:Think()
 	end
 end
 
-function ENT.MoundUpdate( ent )
-	ent.MaxAnts = GetConVarNumber("pnrp_MaxMoundAntlions")
-	ent.MaxGuards = GetConVarNumber("pnrp_MaxMoundGuards")
-	ent.SpawnRate = math.Round(GetConVarNumber("pnrp_MoundMobRate") * 60)
-	ent.GuardChance = GetConVarNumber("pnrp_MoundGuardChance")
+function ENT:MoundUpdate()
+	self.MaxAnts = GetConVarNumber("pnrp_MaxMoundAntlions")
+	self.MaxGuards = GetConVarNumber("pnrp_MaxMoundGuards")
+	self.SpawnRate = math.Round(GetConVarNumber("pnrp_MoundMobRate") * 60)
+	self.GuardChance = GetConVarNumber("pnrp_MoundGuardChance")
 	
-	local myAnts = ent.AntList
-	local myGuards = ent.GuardList
+	local myAnts = self.AntList
+	local myGuards = self.GuardList
 	
-	for k, v in pairs(ent.AntList) do
+	for k, v in pairs(self.AntList) do
 		if not v:IsValid() then
-			table.remove(ent.AntList, k)
+			table.remove(self.AntList, k)
 		end
 	end
-	for k, v in pairs(ent.GuardList) do
+	for k, v in pairs(self.GuardList) do
 		if not v:IsValid() then
-			table.remove(ent.GuardList, k)
+			table.remove(self.GuardList, k)
 		end
 	end
 	
-	if #myAnts >= ent.MaxAnts and #myGuards >= ent.MaxGuards then return end
+	if #myAnts >= self.MaxAnts and #myGuards >= self.MaxGuards then return end
 	local randomized = math.random(1,100)
-	if randomized <= ent.GuardChance and #myGuards < ent.MaxGuards then
+	if randomized <= self.GuardChance and #myGuards < self.MaxGuards then
 		local spawnPos
 		local clearFromMound = false
 		
 		repeat
-			spawnPos = ent:GetPos() + Vector(  math.random(-150,150), math.random(-150,150), 200 )
+			spawnPos = self:GetPos() + Vector(  math.random(-150,150), math.random(-150,150), 200 )
 			
 			local trace = {}
 			trace.start = spawnPos
@@ -191,19 +198,19 @@ function ENT.MoundUpdate( ent )
 		
 		local guard = ents.Create("npc_antlionguard")
 		guard:SetPos(spawnPos+Vector(0,0,400))
-		guard:SetKeyValue ("squadname", "npc_antlions_"..ent.Entity:EntIndex())
+		guard:SetKeyValue ("squadname", "npc_antlions_"..self.Entity:EntIndex())
 		
 		guard:Spawn()
 		guard:SetNetworkedString("Owner", "Unownable")
 		
-		table.insert(ent.GuardList, guard)
+		table.insert(self.GuardList, guard)
 		return
 	end
 	
-	if #myAnts >= ent.MaxAnts then return end
-	local spawnSize = ent.SquadSize
-	if ent.SquadSize > ent.MaxAnts - #myAnts then
-		spawnSize = ent.MaxAnts - #myAnts
+	if #myAnts >= self.MaxAnts then return end
+	local spawnSize = self.SquadSize
+	if self.SquadSize > self.MaxAnts - #myAnts then
+		spawnSize = self.MaxAnts - #myAnts
 	end
 	
 	for i=1, spawnSize do
@@ -211,7 +218,7 @@ function ENT.MoundUpdate( ent )
 		local clearFromMound = false
 		
 		repeat
-			spawnPos = ent:GetPos() + Vector(  math.random(-150,150), math.random(-150,150), 400 )
+			spawnPos = self:GetPos() + Vector(  math.random(-150,150), math.random(-150,150), 400 )
 			
 			local trace = {}
 			trace.start = spawnPos
@@ -226,12 +233,12 @@ function ENT.MoundUpdate( ent )
 		
 		local antlion = ents.Create("npc_antlion")
 		antlion:SetPos(spawnPos+Vector(0,0,400))
-		antlion:SetKeyValue ("squadname", "npc_antlions_"..ent.Entity:EntIndex())
+		antlion:SetKeyValue ("squadname", "npc_antlions_"..self.Entity:EntIndex())
 		
 		antlion:Spawn()
 		antlion:SetNetworkedString("Owner", "Unownable")
 		
-		table.insert(ent.AntList, antlion)
+		table.insert(self.AntList, antlion)
 	end
 end
 
@@ -239,12 +246,14 @@ function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
 	if self:Health() <= 0 and self.Alive then --run on death
 		self.Alive = false
-		timer.Destroy( "moundsounds_"..tostring(self.Entity:EntIndex()) )
-		timer.Create( "mounddestroy_"..tostring(self.Entity:EntIndex()), 0.1, 0, self.MoundDestroy, self )
+		timer.Destroy( "moundsounds_"..tostring(self.Entity) )
+		timer.Create( "mounddestroy_"..tostring(self.Entity), 0.1, 0, function ()
+			self:MoundDestroy()
+		end )
 		
 		local killer = dmg:GetAttacker()
 		if killer:IsPlayer() then
-			killer:IncXP(10)
+			killer:IncXP(100)
 		end
 		
 		local Ants = self.AntList
@@ -270,14 +279,70 @@ end
 
 function ENT:OnRemove()
 	self.dieSound:Stop()
-	timer.Destroy( "moundupdate_"..tostring(self.Entity:EntIndex()) )
-	timer.Destroy( "mounddefense_"..tostring(self.Entity:EntIndex()) )
-	timer.Destroy( "mounddestroy_"..tostring(self.Entity:EntIndex()))
+	timer.Destroy( "moundupdate_"..tostring(self) )
+	timer.Destroy( "mounddefense_"..tostring(self) )
+	timer.Destroy( "mounddestroy_"..tostring(self) )
 end
 
--- function ENT:Use( activator, caller )
+function ENT:Use( activator, caller )
+	if not activator:KeyPressed( IN_USE ) then return end
+	if activator:Team() ~= TEAM_WASTELANDER then return end
 	
--- end
+	if activator.scavving == self then
+		timer.Destroy(activator:UniqueID().."_mound_"..tostring(self))
+		timer.Destroy(activator:UniqueID().."_mound_"..tostring(self).."_end")
+		
+		activator:SetMoveType(MOVETYPE_WALK)
+		activator.scavving = nil
+		umsg.Start("stopProgressBar", activator)
+		umsg.End()
+		return
+	elseif activator.scavving then
+		return end
+	
+	if self.eggs <= 0 then return end
+	
+	activator:SelectWeapon("gmod_rp_hands")
+	activator:SetMoveType(MOVETYPE_NONE)
+	activator.scavving = self
+	
+	activator:EmitSound(Sound("ambient/levels/streetwar/building_rubble"..tostring(math.random(1,5))..".wav"))
+	
+	umsg.Start("startProgressBar", activator)
+		umsg.Short(30)
+	umsg.End()
+	
+	local mound = self
+	timer.Create( activator:UniqueID().."_mound_"..tostring(self), 0.25, 120, function()
+			activator:SelectWeapon("gmod_rp_hands")
+			if (not mound:IsValid()) or (not activator:Alive()) then
+				activator:SetMoveType(MOVETYPE_WALK)
+				umsg.Start("stopProgressBar", activator)
+				umsg.End()
+				activator.scavving = nil
+				if mound:IsValid() then 
+					timer.Stop(activator:UniqueID().."_mound_"..tostring(mound:EntIndex()))
+				end
+				return
+			end
+		end )
+	
+	local myself = self
+	timer.Create( activator:UniqueID().."_mound_"..tostring(self).."_end", 30, 1, function() 
+			umsg.Start("stopProgressBar", activator)
+			umsg.End()
+			-- ply:Freeze(false)
+			activator:SetMoveType(MOVETYPE_WALK)
+			activator.scavving = nil
+			
+			if mound and IsValid(mound) and activator and IsValid(activator) and activator:IsPlayer() and mound.eggs > 0 then
+				if math.random(1,100) <= 33 then
+					PNRP.Items["intm_grubegg"].Create(activator, PNRP.Items["intm_grubegg"].Ent, activator:GetShootPos() + activator:GetForward() * 30 )
+					mound.eggs = mound.eggs - 1
+				end
+			end
+		end )
+end
 
 function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
 	self:Remove()

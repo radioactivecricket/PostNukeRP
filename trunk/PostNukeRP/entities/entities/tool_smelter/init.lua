@@ -1,7 +1,7 @@
 AddCSLuaFile( "cl_init.lua" )
 AddCSLuaFile( "shared.lua" )
 include('shared.lua')
-
+util.AddNetworkString("smelt_stream")
 util.PrecacheModel ("models/props_forest/furnace01.mdl")
 
 function ENT:Initialize()
@@ -25,10 +25,12 @@ function ENT:Use( activator, caller )
 	end
 end
 
-function DoSmelt( pl, handler, id, encoded, decoded )
-	local smallparts = tonumber(decoded[1])
+function DoSmelt( )
+	local pl = net.ReadEntity()
+	local smallparts = net.ReadLong()
+	--local smallparts = tonumber(decoded[1])
 	
-	if pl:Team() ~= 4 then
+	if pl:Team() ~= TEAM_ENGINEER then
 		pl:ChatPrint( "You must be a engineer to use a smelter!" )
 		return
 	end
@@ -46,5 +48,5 @@ function DoSmelt( pl, handler, id, encoded, decoded )
 	
 	pl:ChatPrint( "You have smelted "..tostring(smallparts).." Small Parts into "..tostring(amount).." Scrap!" )
 end
-datastream.Hook( "smelt_stream", DoSmelt )
-
+--datastream.Hook( "smelt_stream", DoSmelt )
+net.Receive( "smelt_stream", DoSmelt )

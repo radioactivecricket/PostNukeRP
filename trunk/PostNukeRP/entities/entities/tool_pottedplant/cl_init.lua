@@ -13,6 +13,7 @@ function PlantMenu( um )
 	local airator = um:ReadBool()
 	local canPrune = um:ReadBool()
 	local plantEnt = um:ReadEntity()
+	local ply = LocalPlayer()
 	
 	local w = 300
 	local h = 400
@@ -70,25 +71,33 @@ function PlantMenu( um )
 		end
 	
 	if filtered then
-		local FilterLabel = vgui.Create("Label", plant_frame)
-		FilterLabel:SetPos( 25, 75 )
-		FilterLabel:SetText( "Water filter already built." )
-		FilterLabel:SizeToContents()
-	else
 		local FilterButton = vgui.Create( "DButton" )
 		FilterButton:SetParent( plant_frame )
-		FilterButton:SetText( "Build Water Filter" )
+		FilterButton:SetText( "Detach Water Purifier" )
 		FilterButton:SetPos( 25, 75 )
 		FilterButton:SetSize( 125, 30 )
 		FilterButton.DoClick = function ()
-			datastream.StreamToServer( "addfilter_stream", { plantEnt } )
+			--datastream.StreamToServer( "addfilter_stream", { plantEnt } )
+			net.Start("addfilter_stream")
+				net.WriteEntity(ply)
+				net.WriteEntity(plantEnt)
+			net.SendToServer()
 			plant_frame:Close()
 		end
-		
-		local FilterLabel = vgui.Create("Label", plant_frame)
-		FilterLabel:SetPos( 160, 80 )
-		FilterLabel:SetText( "20 Small Parts" )
-		FilterLabel:SizeToContents()
+	else
+		local FilterButton = vgui.Create( "DButton" )
+		FilterButton:SetParent( plant_frame )
+		FilterButton:SetText( "Attach Water Purifier" )
+		FilterButton:SetPos( 25, 75 )
+		FilterButton:SetSize( 125, 30 )
+		FilterButton.DoClick = function ()
+			--datastream.StreamToServer( "addfilter_stream", { plantEnt } )
+			net.Start("addfilter_stream")
+				net.WriteEntity(ply)
+				net.WriteEntity(plantEnt)
+			net.SendToServer()
+			plant_frame:Close()
+		end
 	end
 	
 	if fertilized then
@@ -103,7 +112,11 @@ function PlantMenu( um )
 		FertButton:SetPos( 25, 125 )
 		FertButton:SetSize( 125, 30 )
 		FertButton.DoClick = function ()
-			datastream.StreamToServer( "fertilize_stream", { plantEnt } )
+			--datastream.StreamToServer( "fertilize_stream", { plantEnt } )
+			net.Start("fertilize_stream")
+				net.WriteEntity(ply)
+				net.WriteEntity(plantEnt)
+			net.SendToServer()
 			plant_frame:Close()
 		end
 		
@@ -114,84 +127,48 @@ function PlantMenu( um )
 	end
 	
 	if airator then
-		local AiratorLabel = vgui.Create("Label", plant_frame)
-		AiratorLabel:SetPos( 25, 175 )
-		AiratorLabel:SetText( "Automatic airator already built." )
-		AiratorLabel:SizeToContents()
-	else
 		local AiratorButton = vgui.Create( "DButton" )
 		AiratorButton:SetParent( plant_frame )
-		AiratorButton:SetText( "Build Automatic Airator" )
+		AiratorButton:SetText( "Detach Automatic Airator" )
 		AiratorButton:SetPos( 25, 175 )
 		AiratorButton:SetSize( 125, 30 )
 		AiratorButton.DoClick = function ()
-			datastream.StreamToServer( "addairator_stream", { plantEnt } )
+			--datastream.StreamToServer( "addairator_stream", { plantEnt } )
+			net.Start("addairator_stream")
+				net.WriteEntity(ply)
+				net.WriteEntity(plantEnt)
+			net.SendToServer()
 			plant_frame:Close()
 		end
-		
-		local AiratorLabel = vgui.Create("Label", plant_frame)
-		AiratorLabel:SetPos( 160, 180 )
-		AiratorLabel:SetText( "20 Small Parts" )
-		AiratorLabel:SizeToContents()
+	else
+		local AiratorButton = vgui.Create( "DButton" )
+		AiratorButton:SetParent( plant_frame )
+		AiratorButton:SetText( "Attach Automatic Airator" )
+		AiratorButton:SetPos( 25, 175 )
+		AiratorButton:SetSize( 125, 30 )
+		AiratorButton.DoClick = function ()
+			--datastream.StreamToServer( "addairator_stream", { plantEnt } )
+			net.Start("addairator_stream")
+				net.WriteEntity(ply)
+				net.WriteEntity(plantEnt)
+			net.SendToServer()
+			plant_frame:Close()
+		end
 	end
 	
 	if plantStatus < 100 and canPrune then
-		
-		local remPercent
-		remPercent = 100 - plantStatus
-	
-		local amountSlider = vgui.Create( "DNumSlider", plant_frame )
-	    amountSlider:SetSize( plant_frame:GetWide() - 40, 50 ) -- Keep the second number at 50
-	    amountSlider:SetPos( 25, 250 )
-	    amountSlider:SetText( "How long to work (%):" )
-	    amountSlider:SetMin( 0 )
-	    amountSlider:SetMax( 100 )
-	    amountSlider:SetValue( remPercent )
-	    amountSlider:SetDecimals( 0 )
-		
---		local amountLabel = vgui.Create("Label", plant_frame)
---		amountLabel:SetPos( 160, 250 )
---		amountLabel:SetText( "How long to work:" )
---		amountLabel:SizeToContents()
-			
---		local amountText = vgui.Create( "DTextEntry", plant_frame )
---		amountText:SetPos( 160,270 )
---		amountText:SetTall( 20 )
---		amountText:SetWide( 75 )
---		amountText:SetEnterAllowed( true )
---		amountText.OnEnter = function()
---			local amount = math.Round(tonumber(amountText:GetValue()))
---			if amount < 1 then return end
---			datastream.StreamToServer( "prune_stream", { plantEnt, amount } )
---			plant_frame:Close()
---		end
-	
 		local PruneButton = vgui.Create( "DButton" )
 		PruneButton:SetParent( plant_frame )
 		PruneButton:SetText( "Prune and Water" )
 		PruneButton:SetPos( plant_frame:GetWide() / 2 - 125, 300 )
 		PruneButton:SetSize( 125, 30 )
 		PruneButton.DoClick = function ()
-			local amount = math.Round(tonumber(amountSlider:GetValue()))
-			if amount < 1 then return end
-			datastream.StreamToServer( "prune_stream", { plantEnt, amount } )
+			net.Start("prune_stream")
+				net.WriteEntity(ply)
+				net.WriteEntity(plantEnt)
+			net.SendToServer()
 			plant_frame:Close()
 		end
 	end
-	
-	
-
-	
-	-- if fruitLevel > 0 then
-		-- local HarvestButton = vgui.Create( "DButton" )
-		-- HarvestButton:SetParent( plant_frame )
-		-- HarvestButton:SetText( "Harvest Fruits" )
-		-- HarvestButton:SetPos( 25, 300 )
-		-- HarvestButton:SetSize( 125, 30 )
-		-- HarvestButton.DoClick = function ()
-			-- datastream.StreamToServer( "harvest_stream", { plantEnt } )
-			-- plant_frame:Close()
-		-- end
-	-- end
 end
 usermessage.Hook("plant_menu", PlantMenu)

@@ -11,7 +11,12 @@ function ENT:Initialize()
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	self.Entity:PhysWake()
 	
-	self.Entity:NextThink(CurTime() + 10)
+	-- Important power vars!
+	self.PowerItem = true
+	self.PowerLevel = 0
+	self.NetworkContainer = nil
+	self.LinkedItems = {}
+	self.DirectLinks = {}
 end
 
 function ENT:Use( activator, caller )
@@ -19,28 +24,28 @@ function ENT:Use( activator, caller )
 end
 
 function ENT:Think()
-	local constr = constraint.FindConstraint( self, "Weld" )
+--	local constr = constraint.FindConstraint( self, "Weld" )
 	
-	if not constr then
-		self.Entity:NextThink(CurTime() + 10)
-		return true
-	end
+--	if not constr then
+--		self.Entity:NextThink(CurTime() + 10)
+--		return true
+--	end
 	
-	if constr.Entity[2].Entity:GetClass() == "tool_radar" then
-		if self:GetNWString( "Owner", "None" ) == constr.Entity[2].Entity:GetNWString( "Owner", "None" ) then
-			if self:GetPos():Distance( constr.Entity[2].Entity:GetPos() ) > 100 then
-				self:EmitSound("ambient/energy/spark4.wav", 100, 100)
-				constraint.RemoveConstraints( self, "Weld" )
-			end
-		else
-			self:EmitSound("ambient/energy/spark4.wav", 100, 100)
-			constraint.RemoveConstraints( self, "Weld" )
-		end
-	else
-		self:EmitSound("ambient/energy/spark4.wav", 100, 100)
-		constraint.RemoveConstraints( self, "Weld" )
-	end
-	
-	self.Entity:NextThink(CurTime() + 10)
-	return true
+--	if constr.Entity[2].Entity:GetClass() == "tool_radar" then
+--		if self:GetNWString( "Owner", "None" ) == constr.Entity[2].Entity:GetNWString( "Owner", "None" ) then
+--			if self:GetPos():Distance( constr.Entity[2].Entity:GetPos() ) > 100 then
+--				self:EmitSound("ambient/energy/spark4.wav", 100, 100)
+--				constraint.RemoveConstraints( self, "Weld" )
+--			end
+--		else
+--			self:EmitSound("ambient/energy/spark4.wav", 100, 100)
+--			constraint.RemoveConstraints( self, "Weld" )
+--		end
+--	else
+--		self:EmitSound("ambient/energy/spark4.wav", 100, 100)
+--		constraint.RemoveConstraints( self, "Weld" )
+--	end
+--	
+--	self.Entity:NextThink(CurTime() + 10)
+--	return true
 end

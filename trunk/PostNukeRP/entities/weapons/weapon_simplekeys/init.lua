@@ -16,3 +16,6 @@ SWEP.AutoSwitchFrom		= false
 function SWEP:ShouldDropOnDie()
 	return false
 end
+--Moved this here
+--Was causing errors client side.
+util.AddNetworkString( "manageDoor" )

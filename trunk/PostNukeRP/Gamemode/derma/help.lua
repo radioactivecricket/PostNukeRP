@@ -1,6 +1,37 @@
 --Help Menu Frame
 
 function HelpPanel()
+	local w = 810
+	local h = 770
+	local HelpFrame = vgui.Create("DFrame")
+		HelpFrame:SetSize(w, h)
+		HelpFrame:SetPos(ScrW() / 2 - HelpFrame:GetWide() / 2, ScrH() / 2 - HelpFrame:GetTall() / 2)
+		HelpFrame:SetTitle( "Help Menu" )
+		HelpFrame:SetBackgroundBlur(true)
+		HelpFrame:SetVisible( true )
+		HelpFrame:SetDraggable( true )
+		HelpFrame:ShowCloseButton( true )
+		HelpFrame:MakePopup()
+		HelpFrame.Paint = function() 
+			surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+		
+		local screenBG = vgui.Create("DImage", HelpFrame)
+			screenBG:SetImage( "VGUI/gfx/pnrp_screen_1b.png" )
+			screenBG:SetKeepAspect()
+			screenBG:SizeToContents()
+			screenBG:SetSize(HelpFrame:GetWide(), HelpFrame:GetTall())
+			
+		local setTxt = vgui.Create("HTML", HelpFrame)
+			setTxt:SetMultiline(true)
+			setTxt:OpenURL(PNRP_WIKIPath)
+			setTxt:SetPos(50,40)
+			setTxt:SetSize(HelpFrame:GetWide()-100, HelpFrame:GetTall()-100)
+end
+
+function HelpPanelOld()
+	local textColor = Color(200,200,200,255)
+	
 	local HelpFrame = vgui.Create("DFrame")
 		HelpFrame:SetSize(700, 700)
 		HelpFrame:SetPos(ScrW() / 2 - HelpFrame:GetWide() / 2, ScrH() / 2 - HelpFrame:GetTall() / 2)
@@ -10,7 +41,7 @@ function HelpPanel()
 		HelpFrame:SetDraggable( true )
 		HelpFrame:ShowCloseButton( true )
 		HelpFrame:MakePopup()
-		
+	
 	local pnlList = vgui.Create("DPanelList", HelpFrame)
 		pnlList:SetPos(20, 40)
 		pnlList:SetSize(HelpFrame:GetWide() - 40, HelpFrame:GetTall() - 60)
@@ -18,6 +49,9 @@ function HelpPanel()
 		pnlList:EnableHorizontal(false) 
 		pnlList:SetSpacing(2)
 		pnlList:SetPadding(10)
+		pnlList.Paint = function()
+			draw.RoundedBox( 8, 0, 0, pnlList:GetWide(), pnlList:GetTall(), Color( 50, 50, 50, 255 ) )
+		end
 		
 		local helpIntro = 	{
 				"Welcome to PostNukeRP",
@@ -25,6 +59,7 @@ function HelpPanel()
 				}
 			for k, v in pairs( helpIntro ) do
 				local ReadThis = vgui.Create( "DLabel" )
+				ReadThis:SetTextColor(textColor)
 					ReadThis:SetText( v )
 					pnlList:AddItem( ReadThis )
 			end			
@@ -550,6 +585,7 @@ function HelpPanel()
 		for k, v in pairs( helpEnd ) do
 			local ReadThis = vgui.Create( "DLabel" )
 				ReadThis:SetText( v )
+				ReadThis:SetTextColor(textColor)
 				EndHelpList:AddItem( ReadThis )
 		end	
 		

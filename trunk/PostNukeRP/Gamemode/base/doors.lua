@@ -1,11 +1,15 @@
 -- Everything below is a shameless copy and paste.  God knows how well it'll work after integration.
 
 
-require("datastream")
+--require("datastream")
 
 SK_Srv = {}
 
-AddCSLuaFile("autorun/client/simplekeys_cl.lua")
+--AddCSLuaFile("autorun/client/simplekeys_cl.lua")
+
+util.AddNetworkString("SKRemAllCoowner")
+util.AddNetworkString("SKAddCoowner")
+util.AddNetworkString("SKRemCoowner")
 
 local PlayerMeta = FindMetaTable("Player")
 local EntityMeta = FindMetaTable("Entity")
@@ -19,13 +23,12 @@ local EntityMeta = FindMetaTable("Entity")
 
 function SK_Srv.OnDisc_Doors( ply )
 	for k, v in pairs(ents.GetAll()) do
-		if v:IsDoor() and v:GetNWEntity( "ownerent", NullEntity() ) == ply then
+		if v:IsDoor() and v:GetNWEntity( "ownerent" ) == ply then
 			v:SKRemoveOwner()
 			if v.Coowners and v.Coowners[1] then
 				local topCoowner = v.Coowners[1]
 				v:SKRemoveCoowner( topCoowner )
 				v:SKSetOwner( topCoowner )
-				v:SetNWString("Owner", topCoowner:Nick())
 				
 				topCoowner:ChatPrint( ply:GetName().." has released an item and you have been made the owner." )
 			end
@@ -44,11 +47,14 @@ end
 
 --Entity Functions (Mostly ownership functions)
 function EntityMeta:SKSetOwner( ply )
+	local plUID = PNRP:GetUID( ply )
 	self:SetNWEntity( "ownerent", ply )
+	self:SetNWString("Owner", ply:Nick())
+	self:SetNetworkedString("Owner_UID", plUID)
 end
 
 function EntityMeta:SKRemoveOwner( ply )
-	self:SetNWEntity( "ownerent", NullEntity() )
+	self:SetNWEntity( "ownerent", nil )
 end
 
 function EntityMeta:SKSetCoowner( ply )
@@ -91,14 +97,14 @@ function EntityMeta:SKRemoveCoowners()
 end
 
 function EntityMeta:SKRemoveOwners()
-	self:SetNWEntity( "ownerent", NullEntity() )
+	self:SetNWEntity( "ownerent", nil )
 	self.Coowners = {}
 end
 
 function EntityMeta:SKHasOwner()
-	local myowner = self:GetNWEntity( "ownerent", NullEntity() )
+	local myowner = self:GetNWEntity( "ownerent", nil )
 	
-	if myowner:IsValid() then
+	if IsValid(myowner) then
 		return true
 	else
 		return false
@@ -106,7 +112,7 @@ function EntityMeta:SKHasOwner()
 end
 
 function PlayerMeta:SKIsOwner( ent )
-	local doorowner = ent:GetNWEntity( "ownerent", NullEntity() )
+	local doorowner = ent:GetNWEntity( "ownerent", nil )
 	
 	if self == doorowner then
 		return true
@@ -131,13 +137,11 @@ function PlayerMeta:SKIsCoowner( ent )
 end
 
 ----------------------------------------------------
---	Datastream Hooks
+--	Net Hooks [Used to be Datastreams]
 ----------------------------------------------------
 
 --	SKReleaseOwner
-function SK_Srv.ReleaseOwner( ply, handle, id, encoded, decoded )
-	local doorEnt = decoded.doorEnt
-	
+function SK_Srv.ReleaseOwner( ply, doorEnt )	
 	if ply:SKIsOwner( doorEnt ) then
 		doorEnt:SKRemoveOwner()
 		ply:ChatPrint("You have released ownership of this.")
@@ -152,12 +156,23 @@ function SK_Srv.ReleaseOwner( ply, handle, id, encoded, decoded )
 		end
 	end
 end
-datastream.Hook( "SKReleaseOwner", SK_Srv.ReleaseOwner )
+
+function SK_Srv.RelOwnerNet()
+	local ply = net.ReadEntity()
+	local doorEnt = net.ReadEntity()
+	
+	SK_Srv.ReleaseOwner( ply, doorEnt )
+end
+--datastream.Hook( "SKReleaseOwner", SK_Srv.ReleaseOwner )
+net.Receive( "SKReleaseOwner", SK_Srv.ReleaseOwner )
 
 --SKAddCoowner
-function SK_Srv.AddCoowner( ply, handle, id, encoded, decoded )
-	local doorEnt = decoded.doorEnt
-	local newCoowner = decoded.newCoowner
+function SK_Srv.AddCoowner( )
+	local ply = net.ReadEntity()
+	local doorEnt = net.ReadEntity()
+	local newCoowner = net.ReadEntity()
+	--local doorEnt = decoded.doorEnt
+	--local newCoowner = decoded.newCoowner
 	
 	if ply:SKIsOwner( doorEnt ) then
 		if doorEnt:SKSetCoowner( newCoowner ) then
@@ -168,12 +183,16 @@ function SK_Srv.AddCoowner( ply, handle, id, encoded, decoded )
 		end
 	end
 end
-datastream.Hook( "SKAddCoowner", SK_Srv.AddCoowner )
+--datastream.Hook( "SKAddCoowner", SK_Srv.AddCoowner )
+net.Receive( "SKAddCoowner", SK_Srv.AddCoowner )
 
 --SKRemCoowner
-function SK_Srv.RemCoowner( ply, handle, id, encoded, decoded )
-	local doorEnt = decoded.doorEnt
-	local coowner = decoded.coowner
+function SK_Srv.RemCoowner( )
+	local ply = net.ReadEntity()
+	local doorEnt = net.ReadEntity()
+	local coowner = net.ReadEntity()
+--	local doorEnt = decoded.doorEnt
+--	local coowner = decoded.coowner
 	
 	if ply:SKIsOwner( doorEnt ) then
 		if doorEnt:SKRemoveCoowner( coowner ) then
@@ -184,22 +203,26 @@ function SK_Srv.RemCoowner( ply, handle, id, encoded, decoded )
 		end
 	end
 end
-datastream.Hook( "SKRemCoowner", SK_Srv.RemCoowner )
+--datastream.Hook( "SKRemCoowner", SK_Srv.RemCoowner )
+net.Receive( "SKRemCoowner", SK_Srv.RemCoowner )
 
 --SKRemAllCoowner
-function SK_Srv.RemAllCoowner( ply, handle, id, encoded, decoded )
-	local doorEnt = decoded.doorEnt
+function SK_Srv.RemAllCoowner( )
+	local ply = net.ReadEntity()
+	local doorEnt = net.ReadEntity()
+	--local doorEnt = decoded.doorEnt
 	
 	if ply:SKIsOwner( doorEnt ) then
 		for k, v in pairs(doorEnt.Coowners) do
-			if v:IsValid() and v:IsPlayer() then
+			if IsValid(v) and v:IsPlayer() then
 				v:ChatPrint( ply:GetName().." has removed you as a co-owner." )
 			end
 		end
 		doorEnt:SKRemoveCoowners()
 	end
 end
-datastream.Hook( "SKRemAllCoowner", SK_Srv.RemAllCoowner )
+--datastream.Hook( "SKRemAllCoowner", SK_Srv.RemAllCoowner )
+net.Receive( "SKRemAllCoowner", SK_Srv.RemAllCoowner )
 
 -- Already part of the meta tables.
 --Utilities

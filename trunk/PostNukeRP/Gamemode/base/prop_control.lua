@@ -34,6 +34,10 @@ function PNRP.AddItem( itemtable )
 		Weight = itemtable.Weight,
 		Create = itemtable.Create,
 		ToolCheck = itemtable.ToolCheck,
+		ShopHide = itemtable.ShopHide,
+		Capacity = itemtable.Capacity,
+		ProfileCost = itemtable.ProfileCost,
+		Persistant = itemtable.Persistant,
 	}
 	
 	AddBannedProp(itemtable.Model)
@@ -52,63 +56,76 @@ end
 
 function PNRP.GetBannedPropsList( )
 	local tbl = { }
-	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
-	if file.Exists("PostNukeRP/banned_props.txt") then
-		tbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
+	if !file.IsDir("PostNukeRP", "DATA" ) then file.CreateDir("PostNukeRP") end
+	if file.Exists("PostNukeRP/banned_props.txt", "DATA") then
+		tbl = util.JSONToTable(file.Read("PostNukeRP/banned_props.txt"))
 		if tbl ~= nil then
 			for k, v in pairs(tbl) do
+				print("k ["..k.."] v ["..v.."]")
 				AddToolBlockedProp(v)
 				AddBannedProp(v)
 			end
 		end
 	else
-		file.Write("PostNukeRP/banned_props.txt",glon.encode(bannedtbl))
+		file.Write("PostNukeRP/banned_props.txt",util.TableToJSON(bannedtbl))
 	end
 end
 PNRP.GetBannedPropsList( )
 
 function PNRP.GetAllowedPropsList( )
 	local tbl = { }
-	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
-	if file.Exists("PostNukeRP/allowed_props.txt") then
-		tbl = glon.decode(file.Read("PostNukeRP/allowed_props.txt"))
+	if !file.IsDir("PostNukeRP", "DATA") then file.CreateDir("PostNukeRP") end
+	if file.Exists("PostNukeRP/allowed_props.txt", "DATA") then
+		tbl = util.JSONToTable(file.Read("PostNukeRP/allowed_props.txt"))
 		if tbl ~= nil then
 			for k, v in pairs(tbl) do
 				AddAllowedProp(v)
 			end
 		end
 	else
-		file.Write("PostNukeRP/allowed_props.txt",glon.encode(bannedtbl))
+		file.Write("PostNukeRP/allowed_props.txt",util.TableToJSON(bannedtbl))
 	end
 end
 PNRP.GetAllowedPropsList( )
 
-function PNRP.Start_open_PropPprotection(ply)
+function PNRP.Start_open_PropPprotection()
+	local ply = net.ReadEntity()
 	local bannedtbl = { }
-	if !file.IsDir("PostNukeRP") then file.CreateDir("PostNukeRP") end
-	if file.Exists("PostNukeRP/banned_props.txt") then
-		bannedtbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
+	if !file.IsDir("PostNukeRP", "DATA") then file.CreateDir("PostNukeRP") end
+	if file.Exists("PostNukeRP/banned_props.txt", "DATA") then
+		bannedtbl = util.JSONToTable(file.Read("PostNukeRP/banned_props.txt"))
 	else
-		file.Write("PostNukeRP/banned_props.txt",glon.encode(bannedtbl))
+		file.Write("PostNukeRP/banned_props.txt",util.TableToJSON(bannedtbl))
 	end
 	local allowedtbl = { }
-	if file.Exists("PostNukeRP/allowed_props.txt") then
-		allowedtbl = glon.decode(file.Read("PostNukeRP/allowed_props.txt"))
+	if file.Exists("PostNukeRP/allowed_props.txt", "DATA") then
+		allowedtbl = util.JSONToTable(file.Read("PostNukeRP/allowed_props.txt"))
 	else
-		file.Write("PostNukeRP/allowed_props.txt",glon.encode(allowedtbl))
+		file.Write("PostNukeRP/allowed_props.txt",util.TableToJSON(allowedtbl))
 	end
-	datastream.StreamToClients(ply, "pnrp_OpenPropProtectWindow", { bannedtbl, allowedtbl } )
+	--datastream.StreamToClients(ply, "pnrp_OpenPropProtectWindow", { bannedtbl, allowedtbl } )
+	
+	if bannedtbl == nil then bannedtbl = { } end
+	if allowedtbl == nil then allowedtbl= { } end
+	
+	net.Start("pnrp_OpenPropProtectWindow")
+		net.WriteTable(bannedtbl)
+		net.WriteTable(allowedtbl)
+	net.Send(ply)
 end
-datastream.Hook( "Start_open_PropProtection", PNRP.Start_open_PropPprotection )
+--datastream.Hook( "Start_open_PropProtection", PNRP.Start_open_PropPprotection )
+net.Receive( "Start_open_PropProtection", PNRP.Start_open_PropPprotection )
+util.AddNetworkString( "pnrp_OpenPropProtectWindow" )
 
-function PNRP.PropProtect_AddItem(ply, handler, id, encoded, decoded )
-	local model = decoded[1]
-	local switch = decoded[2] --1 is add Prop Block, 2 is add Prop Allowed
+function PNRP.PropProtect_AddItem( )
+	local ply = net.ReadEntity()
+	local model = net.ReadString()
+	local switch = net.ReadDouble() --1 is add Prop Block, 2 is add Prop Allowed
 	local tbl = {}
 	if switch == 1 then
 		--Prop Blocking 
-		if file.Exists("PostNukeRP/banned_props.txt") then
-			tbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
+		if file.Exists("PostNukeRP/banned_props.txt", "DATA") then
+			tbl = util.JSONToTable(file.Read("PostNukeRP/banned_props.txt"))
 			if tbl ~= nil then
 				for k, v in pairs( tbl ) do	
 					if model == v then return end
@@ -119,17 +136,17 @@ function PNRP.PropProtect_AddItem(ply, handler, id, encoded, decoded )
 			table.insert(tbl, model)
 			AddBannedProp(model)
 			AddToolBlockedProp(model)
-			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
+			file.Write("PostNukeRP/banned_props.txt",util.TableToJSON(tbl))
 		else
 			AddBannedProp(model)
 			AddToolBlockedProp(model)
 			table.insert(tbl, model)
-			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
+			file.Write("PostNukeRP/banned_props.txt",util.TableToJSON(tbl))
 		end
 	else
 		--Prop Allowing
-		if file.Exists("PostNukeRP/allowed_props.txt") then
-			tbl = glon.decode(file.Read("PostNukeRP/allowed_props.txt"))
+		if file.Exists("PostNukeRP/allowed_props.txt", "DATA") then
+			tbl = util.JSONToTable(file.Read("PostNukeRP/allowed_props.txt"))
 			if tbl ~= nil then
 				for k, v in pairs( tbl ) do	
 					if model == v then return end
@@ -139,31 +156,33 @@ function PNRP.PropProtect_AddItem(ply, handler, id, encoded, decoded )
 			end
 			table.insert(tbl, model)
 			AddAllowedProp(model)
-			file.Write("PostNukeRP/allowed_props.txt",glon.encode(tbl))
+			file.Write("PostNukeRP/allowed_props.txt",util.TableToJSON(tbl))
 		else
 			table.insert(tbl, model)
 			AddAllowedProp(model)
-			file.Write("PostNukeRP/allowed_props.txt",glon.encode(tbl))
+			file.Write("PostNukeRP/allowed_props.txt",util.TableToJSON(tbl))
 		end
 	end
 end
-datastream.Hook(  "PropProtect_AddItem", PNRP.PropProtect_AddItem )
+--datastream.Hook(  "PropProtect_AddItem", PNRP.PropProtect_AddItem )
+net.Receive(  "PropProtect_AddItem", PNRP.PropProtect_AddItem )
 
-function PNRP.PropProtect_RemoveItem(ply, handler, id, encoded, decoded )
-	local model = decoded[1]
-	local switch = decoded[2] --1 is add Prop Block, 2 is add Prop Allowed
+function PNRP.PropProtect_RemoveItem( )
+	local ply = net.ReadEntity()
+	local model = net.ReadString()
+	local switch = net.ReadDouble() --1 is add Prop Block, 2 is add Prop Allowed
 	local tbl = { }
 	if switch == 1 then
 		--Prop Banning
-		if file.Exists("PostNukeRP/banned_props.txt") then
-			tbl = glon.decode(file.Read("PostNukeRP/banned_props.txt"))
+		if file.Exists("PostNukeRP/banned_props.txt", "DATA") then
+			tbl = util.JSONToTable(file.Read("PostNukeRP/banned_props.txt"))
 			if tbl ~= nil then
 				for k, v in pairs( tbl ) do	
 					if model == v then
 						table.remove(tbl, k)
 					end
 				end
-				file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
+				file.Write("PostNukeRP/banned_props.txt",util.TableToJSON(tbl))
 			end
 			for k, v in pairs( BannedProps ) do	
 				if model == v then
@@ -178,19 +197,19 @@ function PNRP.PropProtect_RemoveItem(ply, handler, id, encoded, decoded )
 					table.remove(ToolBlockedProps, k)
 				end
 			end
-			file.Write("PostNukeRP/banned_props.txt",glon.encode(tbl))
+			file.Write("PostNukeRP/banned_props.txt",util.TableToJSON(tbl))
 		end
 	else
 		--Prop Allowing
-		if file.Exists("PostNukeRP/allowed_props.txt") then
-			tbl = glon.decode(file.Read("PostNukeRP/allowed_props.txt"))
+		if file.Exists("PostNukeRP/allowed_props.txt", "DATA") then
+			tbl = util.JSONToTable(file.Read("PostNukeRP/allowed_props.txt"))
 			if tbl ~= nil then
 				for k, v in pairs( tbl ) do	
 					if model == v then
 						table.remove(tbl, k)
 					end
 				end
-				file.Write("PostNukeRP/allowed_props.txt",glon.encode(tbl))
+				file.Write("PostNukeRP/allowed_props.txt",util.TableToJSON(tbl))
 			end
 			for k, v in pairs( AllowedProps ) do	
 				if model == v then
@@ -203,11 +222,12 @@ function PNRP.PropProtect_RemoveItem(ply, handler, id, encoded, decoded )
 					table.remove(AllowedProps, k)
 				end
 			end
-			file.Write("PostNukeRP/allowed_props.txt",glon.encode(tbl))
+			file.Write("PostNukeRP/allowed_props.txt",util.TableToJSON(tbl))
 		end
 	end
 end
-datastream.Hook( "PropProtect_RemoveItem", PNRP.PropProtect_RemoveItem )
+--datastream.Hook( "PropProtect_RemoveItem", PNRP.PropProtect_RemoveItem )
+net.Receive( "PropProtect_RemoveItem", PNRP.PropProtect_RemoveItem )
 
 --Checks spawn for props and removes them
 function PNRP.spawnPropProtect()
@@ -220,7 +240,7 @@ function PNRP.spawnPropProtect()
 				local found_ents = ents.FindInSphere( v:GetPos(), 135)
 				for i, ent in ipairs(found_ents) do
 					local myClass = ent:GetClass()
-					if myClass == "prop_physics" then
+					if myClass == "prop_physics"  and not ent.ID then
 						ent:Remove()
 					end
 					if ent:IsDoor() then
@@ -250,10 +270,17 @@ function GM:PlayerSpawnProp(ply, model)
 		if string.find(model,  "//") then return false end
 		-- Banned props take precedence over allowed props
 		if GetConVarNumber("pnrp_propBanning") == 1 then
+			local blockProp = false
 			for k, v in pairs(BannedProps) do
 				if string.lower(v) == string.lower(model) then 
-					ply:ChatPrint("This prop is not allowed.")
-					return false 
+					blockProp = true
+					for k, v in pairs(AllowedProps) do
+						if v == model then blockProp = false end
+					end
+					if blockProp then
+						ply:ChatPrint("This prop is not allowed.")
+						return false 
+					end
 				end
 			end
 		end
@@ -310,20 +337,14 @@ function GM:PlayerSpawnedProp( ply, model, ent )
 end
 
 function GM:PlayerSpawnVehicle( p, class, vehtbl )
-
 	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
-		
 		for _, v in pairs(AllowedProps) do
 			if class == v then return true end
 		end
-		
 		p:ChatPrint( "Vehicle spawning is disabled." )
-		return false
-		
+		return false	
 	end	
-
 	return true
-	
 end	
 
 function GM:PlayerSpawnedVehicle(ply, ent)
@@ -333,19 +354,12 @@ function GM:PlayerSpawnedVehicle(ply, ent)
 	ent:SetNWEntity( "ownerent", ply )
 end
 
-
 function GM:PlayerSpawnRagdoll( p, model )
-
 	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
-
 		p:ChatPrint( "Ragdoll spawning is disabled." )
-	
 		return false
-		
 	end	
-
 	return true
-	
 end	
 
 function GM:PlayerSpawnedRagdoll(ply, model, ent)
@@ -356,17 +370,19 @@ function GM:PlayerSpawnedRagdoll(ply, model, ent)
 end
 
 function GM:PlayerSpawnEffect( p, model )
-
 	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
-
 		p:ChatPrint( "Effect spawning is disabled." )
-	
 		return false
-		
 	end	
-
 	return true
-	
+end	
+
+function GM:PlayerGiveSWEP( ply, class, info )
+	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+		ply:ChatPrint( "Weapon spawning is disabled." )
+		return false
+	end	
+	return true
 end	
 
 function GM:PlayerSpawnedEffect(ply, model, ent)
@@ -378,18 +394,23 @@ end
 
 
 function GM:PlayerSpawnSENT( p, classname )
-	p:ChatPrint("Classname:  "..classname)
 	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
-		for k, v in pairs(PNRP.Items) do
-			if v.ClassSpawn == classname then
-				return false
-			end
-		end
-		
-		if string.find(classname, "eapon") == 2 then
-			return false
-		end
+		p:ChatPrint( "SEnt spawning is disabled." )
+		return false
 	end
+	
+	p:ChatPrint("Classname:  "..classname)
+--	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+--		for k, v in pairs(PNRP.Items) do
+--			if v.ClassSpawn == classname then
+--				return false
+--			end
+--		end
+		
+--		if string.find(classname, "eapon") == 2 then
+--			return false
+--		end
+--	end
 	
 	return true
 end
@@ -402,52 +423,55 @@ function GM:PlayerSpawnedSENT(ply, ent)
 end
 
 function GM:PlayerSpawnSWEP( ply, class, wep )
-
 	ply:ChatPrint( "Spawning the F-ing Weapon" )
-	
 	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
-	
 		ply:ChatPrint( "SWEP spawning is disabled." )
-	
-		return false
-		
+		return false	
 	end	
-
 	return true
-		
-	
 end
 
 function GM:PlayerSpawnNPC( p, npc_type, npc_weapon )
-
 	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
-	
 		p:ChatPrint( "NPC spawning is disabled." )
-	
-		return false
-		
+		return false	
 	end	
-
 	return true
-	
 end	
 
 function PuntCheck(ply, ent)
 	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1) then
-		return false
+		if GetConVarNumber("pnrp_AllowPunt") == 1 then
+			return true
+		else
+			return false
+		end
 	end
-	
 	return true
 end
 hook.Add("GravGunPunt", "PuntCheck", PuntCheck)
+
+function isPlayerAndAdmin( ent )
+	if ent:IsPlayer() then
+		if ent:IsSuperAdmin() or ent:IsAdmin() then
+			return true
+		else
+			return false
+		end
+	else
+		return false
+	end
+end
 
 function PickupCheck( ply, ent)
 	--admin can do whatever they want
 	if ply:IsSuperAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then return true end
 	
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 and not (ent:IsSuperAdmin() or ent:IsAdmin()) then return true end
+	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 and not isPlayerAndAdmin( ent ) then return true end
 	
 	if ent:IsPlayer() then return false end
+	
+	if ent.moveActive == false then return false end
 	
 	--local searchString = " "..ent:GetClass()
 	if string.find(ent:GetClass(), "unc_") == 2 then
@@ -505,11 +529,11 @@ function PickupCheck( ply, ent)
 	--if owner == "None" or owner == "World" then return true end
 	
 	--Checks buddy system
-	local ownerEnt = ent:GetNWEntity( "ownerent", NullEntity() )
-	if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt:IsValid() then
-		ownerEnt = ent:GetPlayer() or NullEntity()
+	local ownerEnt = ent:GetNWEntity( "ownerent", nil )
+	if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt then
+		ownerEnt = ent:GetPlayer() or nil
 	end
-	if ownerEnt:IsValid() then
+	if ownerEnt then
 		if ownerEnt.PropBuddyList then
 			if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
 				return true
@@ -529,6 +553,8 @@ hook.Add( "PhysgunPickup", "pickupCheck", PickupCheck )
 function PhysUnfreezeCheck ( ply, ent, physobj )
 	--admin can do whatever they want
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then return true end
+	
+	if ent.moveActive == false then return false end
 
 	--get the entity we're looking at, do the same checks as when doing pickup
 	--local ent = ply:GetEyeTrace().Entity
@@ -552,11 +578,11 @@ function PhysUnfreezeCheck ( ply, ent, physobj )
 	--if owner == "None" or owner == "World" then return true end
 	
 	--Checks buddy system
-	local ownerEnt = ent:GetNWEntity( "ownerent", NullEntity() )
-	if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt:IsValid() then
-		ownerEnt = ent:GetPlayer() or NullEntity()
+	local ownerEnt = ent:GetNWEntity( "ownerent", nil )
+	if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt then
+		ownerEnt = ent:GetPlayer() or nil
 	end
-	if ownerEnt:IsValid() then
+	if ownerEnt then
 		if ownerEnt.PropBuddyList then
 			if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
 				return true
@@ -576,12 +602,17 @@ hook.Add("CanPlayerUnfreeze", "PhyUnfreezeCheck", PhysUnfreezeCheck)
 function ToolCheck( ply, tr, toolmode )
 	local ent = tr.Entity
 	
-	if (not ent:IsValid()) and (not ent:IsWorld()) then return false end
+	if (not ent) and (not ent:IsWorld()) then return false end
 
 	--If player is admin (Admin Touch All overide)
 	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 		return true
 	end
+	
+	if toolmode == "pnrp_powerlinker" then return true end
+	
+	if ent.moveActive == false then return false end
+	
 	--Blocks tool usage to these items
 	for k, v in pairs(ToolBlockedProps) do
 		if string.lower(v) == string.lower(ent:GetModel()) then 
@@ -656,12 +687,12 @@ function ToolCheck( ply, tr, toolmode )
 	local IsBuddy = false
 	
 	--Checks buddy system
-	local ownerEnt = ent:GetNWEntity( "ownerent", NullEntity() )
+	local ownerEnt = ent:GetNWEntity( "ownerent", nil )
 	if not ent:IsWorld() then
-		if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt:IsValid() then
-			ownerEnt = ent:GetPlayer() or NullEntity()
+		if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt then
+			ownerEnt = ent:GetPlayer() or nil
 		end
-		if ownerEnt:IsValid() then
+		if ownerEnt then
 			if ownerEnt.PropBuddyList and ownerEnt != ply then
 				if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
 					IsBuddy = true
@@ -679,7 +710,7 @@ function ToolCheck( ply, tr, toolmode )
 					ply:ChatPrint("You do not own this.")
 					return false 
 				elseif ent.GetPlayer and type(ent.GetPlayer) == "function" then
-					if ent:GetPlayer():IsValid() then
+					if ent:GetPlayer() then
 						if ent:GetPlayer() ~= ply then
 							ply:ChatPrint("You do not own this.")
 							return false 
@@ -687,7 +718,7 @@ function ToolCheck( ply, tr, toolmode )
 					end
 				end
 			elseif ent.GetPlayer and type(ent.GetPlayer) == "function" then
-				if ent:GetPlayer():IsValid() then
+				if ent:GetPlayer() then
 					if ent:GetPlayer() ~= ply then
 						ply:ChatPrint("You do not own this.")
 						return false 
@@ -734,6 +765,8 @@ function ToolCheck( ply, tr, toolmode )
 		DoClassToolCheck = true
 	end
 	
+	
+	
 	if DoClassToolCheck then
 		if not (toolmode == "remover" or toolmode == "weld" or toolmode == "weld_ez" 
 		  or toolmode == "easy_precision" or toolmode == "duplicator" 
@@ -747,6 +780,14 @@ function ToolCheck( ply, tr, toolmode )
 	--Restricts most tools on items in the item base
 	local DoToolCheck = false
 	local myClass = ent:GetClass()
+	
+	if string.find(toolmode, "dup") then
+		if PNRP.FindItemID( myClass ) and myClass != "prop_physics" then
+			print(tostring(PNRP.FindItemID( myClass )))
+			ply:ChatPrint("Duplication blocked")
+			return false
+		end
+	end
 
 	--If prop_physics then check by model
 	if myClass == "prop_physics" then

@@ -156,7 +156,7 @@ function SWEP:PrimaryAttack()
 	self.Owner:ViewPunch(Angle(math.Rand(-0.5,-2.5) * 0.2, math.Rand(-1,1) * 0.2, 0))
 	-- Punch the screen
 
-	if ((SinglePlayer() and SERVER) or CLIENT) then
+	if ((game.SinglePlayer() and SERVER) or CLIENT) then
 		self.Weapon:SetNetworkedFloat("LastShootTime", CurTime())
 	end
 end
@@ -226,7 +226,7 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
 
 		util.Effect(self.ShellEffect,fx)				-- Shell ejection
 
-	if ((SinglePlayer() and SERVER) or (not SinglePlayer() and CLIENT)) then
+	if ((game.SinglePlayer() and SERVER) or (not game.SinglePlayer() and CLIENT)) then
 		local eyeang = self.Owner:EyeAngles()
 		eyeang.pitch = eyeang.pitch - recoil
 		self.Owner:SetEyeAngles(eyeang)

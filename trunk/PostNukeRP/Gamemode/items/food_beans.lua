@@ -17,7 +17,7 @@ ITEM.Ent = "food_beans"
 ITEM.Model = "models/props_junk/garbage_metalcan001a.mdl"
 ITEM.Script = ""
 ITEM.Weight = 1
-
+ITEM.ShopHide = true
 
 function ITEM.ToolCheck( p )
 	return true
@@ -36,6 +36,12 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create(class)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+end
 
 PNRP.AddItem(ITEM)
 

@@ -21,6 +21,11 @@ ITEM.Weight = 4
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "none"
 
+function ITEM.ToolCheck( p )
+	-- This one returns required items.
+	return {["intm_hudint"]=1, ["intm_elecboard"]=1}
+end
+
 function ITEM.Use( ply )
 	local WepName = "weapon_radio"
 	local gotWep = false
@@ -37,6 +42,17 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create("ent_weapon")
+	--ent:SetNetworkedInt("Ammo", self.Energy)
+	ent:SetNWString("WepClass", ITEM.Ent)
+	ent:SetModel(ITEM.Model)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+	
+	return ent
+end
 
 PNRP.AddItem(ITEM)
 PNRP.AddWeapon(WEAPON)

@@ -17,9 +17,13 @@ ITEM.Ent = "food_baby"
 ITEM.Model = "models/props_c17/doll01.mdl"
 ITEM.Script = ""
 ITEM.Weight = 1
+ITEM.ShopHide = true
 
 
 function ITEM.ToolCheck( p )
+	if (CLIENT) then
+		return false
+	end
 	if p:HasInInventory("tool_skillet") then
 		return true
 	else
@@ -30,10 +34,20 @@ end
 function ITEM.Use( ply )
 	local hunger = ply:GetTable().Hunger
 	if not ( hunger == 100 ) then
-		local sound = Sound("npc/ichthyosaur/snap.wav")
+		local sound = Sound("ambient/creatures/town_child_scream1.wav")
 		ply:EmitSound( sound )
+		ply:ChatPrint("April Fools :)")
 		
-		ply:GiveHunger( 30 )
+		for i=1, 5 do
+			local zomb = ents.Create("npc_zombie")
+			local x = math.random(-64, 64 )
+			local y = math.random(-64, 64 )
+			zomb:SetPos( ply:GetPos() + Vector( x, y, 8 ) )
+			zomb:DropToFloor()
+			zomb:Spawn()
+		end
+		
+		ply:GiveHunger( 20 )
 	
 		return true	
 	else
@@ -41,6 +55,12 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create(class)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+end
 
 PNRP.AddItem(ITEM)
 

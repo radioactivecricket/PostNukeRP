@@ -22,6 +22,10 @@ ITEM.Weight = 1
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "grenade"
 
+function ITEM.ToolCheck( p )
+	return true
+end
+
 function ITEM.Use( ply )
 	local WepName = "weapon_frag"
 	local gotWep = false
@@ -38,6 +42,17 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create("ent_weapon")
+	--ent:SetNetworkedInt("Ammo", self.Energy)
+	ent:SetNWString("WepClass", ITEM.Ent)
+	ent:SetModel(ITEM.Model)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+	
+	return ent
+end
 
 PNRP.AddItem(ITEM)
 PNRP.AddWeapon(WEAPON)

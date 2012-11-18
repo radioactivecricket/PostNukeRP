@@ -151,7 +151,7 @@ function SWEP:PrimaryAttack()
 		self.Reloadaftershoot = CurTime() + 3
 	end
 
-	if ((SinglePlayer() and SERVER) or CLIENT) then
+	if ((game.SinglePlayer() and SERVER) or CLIENT) then
 		self.Weapon:SetNetworkedFloat("LastShootTime", CurTime())
 	end
 end
@@ -171,7 +171,7 @@ function SWEP:Reload()
 	if ( self.Reloadaftershoot > CurTime() ) then return end 
 	-- If you're firering, you can't reload
 
-	if not ValidEntity(self.Owner) then return end
+	if not IsValid(self.Owner) then return end
 
 	if self.data.silenced then
 		self.Weapon:DefaultReload(ACT_VM_RELOAD_SILENCED)
@@ -255,7 +255,7 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
 			util.Effect(self.ShellEffect,fx)				-- Shell ejection
 	end)
 
-	if ((SinglePlayer() and SERVER) or (not SinglePlayer() and CLIENT)) then
+	if ((game.SinglePlayer() and SERVER) or (not game.SinglePlayer() and CLIENT)) then
 		local eyeang = self.Owner:EyeAngles()
 		eyeang.pitch = eyeang.pitch - recoil
 		self.Owner:SetEyeAngles(eyeang)

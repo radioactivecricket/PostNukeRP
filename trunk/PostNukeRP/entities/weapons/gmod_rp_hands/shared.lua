@@ -6,8 +6,8 @@ SWEP.Contact		= "slob187.pb@gmail.com"
 SWEP.Purpose		= "Hands."
 SWEP.Instructions	= "Left click to punch and gather.\nRight click to knock the door."
 
-SWEP.ViewModel		= "models/Weapons/V_hands.mdl"
-SWEP.WorldModel		= "models/weapons/w_camphone.mdl"
+SWEP.ViewModel		= ""
+SWEP.WorldModel		= ""
 
 SWEP.Spawnable      = false
 SWEP.AdminSpawnable = false
@@ -78,48 +78,37 @@ function SWEP:PrimaryAttack()
 	
     if !tr.Entity:IsValid() then return end
 	if self.Owner:KeyDown(IN_WALK) then
-		-- local owner = tr.Entity:GetNWString( "Owner", "None" )
-		-- if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
-			-- tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
-			-- self.Owner:ChatPrint("Unlocked.")
-			-- tr.Entity:Fire("unlock", "", 0)
-		-- elseif tr.Entity:IsVehicle() and self.Owner:Nick() == owner then
-			-- tr.Entity:EmitSound(Sound("doors/latchunlocked1.wav"))
-			-- self.Owner:ChatPrint("Unlocked.")
-			-- tr.Entity:Fire("unlock", "", 0)
-		-- elseif tr.Entity:IsVehicle() or tr.Entity:IsDoor() then
-			-- self.Owner:ChatPrint("You do not own it!")
-		-- end
+		
 	else
-		if tr.Entity:IsJunkPile() then
-			local data = {}
-			data.Entity = tr.Entity
+		-- if tr.Entity:IsJunkPile() then
+			-- local data = {}
+			-- data.Entity = tr.Entity
 
-			data.Chance = 50
-			data.MinAmount = 1
-			data.MaxAmount = 3
-			self.Owner:DoProcess("ScavScrap",2,data)
-		end
+			-- data.Chance = 50
+			-- data.MinAmount = 1
+			-- data.MaxAmount = 3
+			-- self.Owner:DoProcess("ScavScrap",2,data)
+		-- end
 		
-		if tr.Entity:IsChemPile() then
-			local data = {}
-			data.Entity = tr.Entity
+		-- if tr.Entity:IsChemPile() then
+			-- local data = {}
+			-- data.Entity = tr.Entity
 
-			data.Chance = 50
-			data.MinAmount = 1
-			data.MaxAmount = 3
-			self.Owner:DoProcess("ScavChems",2,data)
-		end
+			-- data.Chance = 50
+			-- data.MinAmount = 1
+			-- data.MaxAmount = 3
+			-- self.Owner:DoProcess("ScavChems",2,data)
+		-- end
 		
-		if tr.Entity:IsSmallPile() then
-			local data = {}
-			data.Entity = tr.Entity
+		-- if tr.Entity:IsSmallPile() then
+			-- local data = {}
+			-- data.Entity = tr.Entity
 
-			data.Chance = 50
-			data.MinAmount = 1
-			data.MaxAmount = 3
-			self.Owner:DoProcess("ScavParts",2,data)
-		end
+			-- data.Chance = 50
+			-- data.MinAmount = 1
+			-- data.MaxAmount = 3
+			-- self.Owner:DoProcess("ScavParts",2,data)
+		-- end
 		
 		if !tr.Entity:IsPlayer() then return end
 		

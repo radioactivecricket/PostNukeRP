@@ -1,5 +1,5 @@
 
-require("datastream")
+--require("datastream")
 
 local textColor =
 	{
@@ -19,12 +19,12 @@ local textColor =
 	-- tr = util.TraceLine(trace)
 	-- local ent = tr.Entity
 	
-	-- if not ent:IsValid() then return end
+	-- if not ent then return end
 	
 	-- if ent:IsDoor() then
-		-- local doorowner = ent:GetNWEntity( "ownerent", NullEntity() )
+		-- local doorowner = ent:GetNWEntity( "ownerent", nil )
 		
-		-- if doorowner:IsValid() then
+		-- if doorowner then
 			-- surface.SetFont( "Trebuchet20" )
 			-- local textw, texth = surface.GetTextSize("Owner:  "..doorowner:Nick())
 
@@ -46,10 +46,11 @@ local textColor =
 -------------------------------------------
 
 --	Door Management
-local function ManageDoor( handle, id, encoded, decoded )
-	local door = decoded.doorEnt
-	local doorCoowners = decoded.coowners
-	
+local function ManageDoor( )
+	local door = net.ReadEntity()
+	local doorCoowners = net.ReadTable()
+
+	local ply = LocalPlayer()
 	local manage_frame = vgui.Create( "DFrame" )
 	manage_frame:SetSize( 400, 300 )
 	manage_frame:Center()
@@ -60,10 +61,11 @@ local function ManageDoor( handle, id, encoded, decoded )
 	manage_frame:MakePopup()
 	
 	local found = false
-	local PlyComboBox = vgui.Create( "DComboBox", manage_frame )
-		PlyComboBox:SetPos( 20, 30 )
-		PlyComboBox:SetSize( 125, 250 )
-		PlyComboBox:SetMultiple( false )
+	local PlyListView = vgui.Create( "DListView", manage_frame )
+		PlyListView:SetPos( 20, 30 )
+		PlyListView:SetSize( 125, 250 )
+		PlyListView:SetMultiSelect( false ) -- <removed sarcastic and useless comment>
+		PlyListView:AddColumn("Players")
 		
 		for k, v in pairs(player.GetAll()) do
 			found = false
@@ -72,21 +74,22 @@ local function ManageDoor( handle, id, encoded, decoded )
 					if v == v2 then found = true end
 				end
 			end
-			if v == LocalPlayer() then found = true end
-			if not found and v:IsValid() then
-				PlyComboBox:AddItem( v:GetName())
+			if v == ply then found = true end
+			if not found and v then
+				PlyListView:AddLine( v:GetName())
 			end
 		end
 	
-	local COComboBox = vgui.Create( "DComboBox", manage_frame )
-		COComboBox:SetPos( 255, 30 )
-		COComboBox:SetSize( 125, 250 )
-		COComboBox:SetMultiple( false )
+	local CoOwnerListView = vgui.Create( "DListView", manage_frame )
+		CoOwnerListView:SetPos( 255, 30 )
+		CoOwnerListView:SetSize( 125, 250 )
+		CoOwnerListView:SetMultiSelect( false ) -- <removed sarcastic and useless comment>
+		CoOwnerListView:AddColumn("Co-Owers")
 		
 		if doorCoowners and doorCoowners[1] then
 			for k, v in pairs(doorCoowners) do
-				if v:IsValid() then
-					COComboBox:AddItem( v:GetName())
+				if v and IsValid(v) then
+					CoOwnerListView:AddLine( v:GetName())
 				end
 			end
 		end
@@ -106,10 +109,10 @@ local function ManageDoor( handle, id, encoded, decoded )
 		AddCoownerBTN:SetPos( 150, 30 )
 		AddCoownerBTN:SetSize(100, 25)
 		AddCoownerBTN.DoClick = function()
-			--datastream.StreamToServer( "ReleaseOwnership", { ["doorEnt"] = door } )
-			if PlyComboBox:GetSelectedItems() and PlyComboBox:GetSelectedItems()[1] then
-				local plyValue = PlyComboBox:GetSelectedItems()[1]:GetValue()
-				local newCoowner = NullEntity()
+
+			if PlyListView:GetSelectedLine() then
+				local plyValue = PlyListView:GetLine(PlyListView:GetSelectedLine()):GetValue(1)
+				local newCoowner = nil
 				
 				for k, v in pairs(player.GetAll()) do
 					if plyValue == v:GetName() then
@@ -117,8 +120,12 @@ local function ManageDoor( handle, id, encoded, decoded )
 					end
 				end
 				
-				if newCoowner:IsValid() then
-					datastream.StreamToServer( "SKAddCoowner", { ["doorEnt"] = door, ["newCoowner"] = newCoowner } )
+				if newCoowner then
+					net.Start("SKAddCoowner")
+						net.WriteEntity(ply)
+						net.WriteEntity(door)
+						net.WriteEntity(newCoowner)
+					net.SendToServer()
 					manage_frame:Close()
 				else
 					print("Player not found.")
@@ -131,9 +138,9 @@ local function ManageDoor( handle, id, encoded, decoded )
 		RemCoownerBTN:SetPos( 150, 60 )
 		RemCoownerBTN:SetSize(100, 25)
 		RemCoownerBTN.DoClick = function()
-			if COComboBox:GetSelectedItems() and COComboBox:GetSelectedItems()[1] then
-				local COValue = COComboBox:GetSelectedItems()[1]:GetValue()
-				local coowner = NullEntity()
+			if CoOwnerListView:GetSelectedLine() then
+				local COValue = CoOwnerListView:GetLine(CoOwnerListView:GetSelectedLine()):GetValue(1)
+				local coowner = nil
 				
 				for k, v in pairs(player.GetAll()) do
 					if COValue == v:GetName() then
@@ -141,8 +148,12 @@ local function ManageDoor( handle, id, encoded, decoded )
 					end
 				end
 				
-				if coowner:IsValid() then
-					datastream.StreamToServer( "SKRemCoowner", { ["doorEnt"] = door, ["coowner"] = coowner } )
+				if coowner then
+					net.Start("SKRemCoowner")
+						net.WriteEntity(ply)
+						net.WriteEntity(door)
+						net.WriteEntity(coowner)
+					net.SendToServer()
 					manage_frame:Close()
 				end
 			end
@@ -153,12 +164,14 @@ local function ManageDoor( handle, id, encoded, decoded )
 		RemAllCoownerBTN:SetPos( 150, 90 )
 		RemAllCoownerBTN:SetSize(100, 25)
 		RemAllCoownerBTN.DoClick = function()
-			datastream.StreamToServer( "SKRemAllCoowner", { ["doorEnt"] = door } )
+			net.Start("SKRemAllCoowner")
+				net.WriteEntity(ply)
+				net.WriteEntity(door)
+			net.SendToServer()
 			manage_frame:Close()
 		end
 end
-datastream.Hook( "manageDoor", ManageDoor );
-
+net.Receive( "manageDoor", ManageDoor );
 
 -------------------------------------------
 -- Client-Side Utilities

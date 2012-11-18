@@ -29,6 +29,10 @@ function PNRP.AddItem( itemtable )
 		Weight = itemtable.Weight,
 		Create = itemtable.Create,
 		ToolCheck = itemtable.ToolCheck,
+		ShopHide = itemtable.ShopHide,
+		Capacity = itemtable.Capacity,
+		ProfileCost = itemtable.ProfileCost,
+		Persistant = itemtable.Persistant,
 	}
 	
 end	

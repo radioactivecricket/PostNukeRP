@@ -18,6 +18,10 @@ ITEM.Model = "models/props_c17/metalpot002a.mdl"
 ITEM.Script = ""
 ITEM.Weight = 4
 
+function ITEM.ToolCheck( p )
+	return true
+end
+
 function ITEM.Create( ply, class, pos )
 	local ent = ents.Create(class)
 	ent:SetAngles(Angle(0,0,0))

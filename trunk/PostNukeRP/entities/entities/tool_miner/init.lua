@@ -3,6 +3,10 @@ AddCSLuaFile( "shared.lua" )
  
 include('shared.lua')
 
+util.AddNetworkString("miner_online_stream")
+util.AddNetworkString("miner_shutdown_stream")
+util.AddNetworkString("miner_repair_stream")
+
 util.PrecacheModel ("models/props_combine/combinethumper002.mdl")
 
 function ENT:Initialize()	
@@ -12,11 +16,19 @@ function ENT:Initialize()
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	self:SetHealth( 200 )
 	self.entOwner = "none"
+	self.moveActive = true
 	self.Entity:PhysWake()
 	
 	self.Power = 0
 	self.entOwner = "none"
 	self.playbackRate = 0
+	
+	-- Important power vars!
+	self.PowerItem = true
+	self.PowerLevel = 0
+	self.NetworkContainer = nil
+	self.LinkedItems = {}
+	self.DirectLinks = {}
 	
 	self.Entity:NextThink(CurTime() + 1.0)
 	self.ToggleTime = CurTime()
@@ -31,12 +43,19 @@ function ENT:ThumperEnable()
 	local sequence = self.Entity:LookupSequence("idle")
 	self.Entity:SetSequence(sequence)
 	
-	self:GetPhysicsObject():EnableMotion(false)
-	for k, v in pairs( ents.GetAll() ) do
-		if v:IsWorld() then
-			constraint.Weld(self.Entity, v, 0, 0, 0, true)
-		end
+	self.PowerLevel = -100
+	if IsValid(self.NetworkContainer) then
+		self.NetworkContainer:UpdatePower()
 	end
+	
+	--Keeps miner from beeing moved.
+	self:GetPhysicsObject():EnableMotion(false)
+	self.moveActive = false
+--	for k, v in pairs( ents.GetAll() ) do
+--		if v:IsWorld() then
+--			constraint.Weld(self.Entity, v, 0, 0, 0, true)
+--		end
+--	end
 	
 	self.playbackRate = 0.1
 	
@@ -55,17 +74,19 @@ function ENT:ThumperEnable()
 	--self.repellent:Fire("EmitAISound", "", 0)
 	self.ToggleTime = CurTime()
 	
-	local MyPlayer = NullEntity()
+	local MyPlayer = nil
 	local MySkill = 0
 	
 	if self.Entity:GetNetworkedString("Owner", "none") ~= "World" and self.Entity:GetNetworkedString("Owner", "none") ~= "none" then
-		for k, v in pairs(player.GetAll()) do
-			if v:Nick() == self.Entity:GetNetworkedString("Owner", "none") then
-				MyPlayer = v
-				MySkill = MyPlayer:GetSkill("Mining")
-				break
-			end
-		end
+		MyPlayer = self.Entity:GetNetworkedString("ownerent", nil)
+		MySkill = MyPlayer:GetSkill("Mining")
+		-- for k, v in pairs(player.GetAll()) do
+			-- if v:GetNetworkedString( "UID" , "none" ) == self.Entity:GetNetworkedString("Owner_UID", "none") then
+				-- MyPlayer = v
+				-- MySkill = MyPlayer:GetSkill("Mining")
+				-- break
+			-- end
+		-- end
 	end
 	
 	-- The mining code
@@ -76,14 +97,14 @@ function ENT:ThumperEnable()
 			local myResource = ents.Create("msc_smallnug")
 			myResource:SetModel("models/props_wasteland/gear02.mdl")
 			myResource:SetAngles(Angle(0,0,0))
-			myResource:SetPos(self.Entity:LocalToWorld(Vector(0,-80+math.random(0,10),math.random(-15,15))))
+			myResource:SetPos(self.Entity:LocalToWorld(Vector(math.random(-10,20),-80+math.random(0,15),math.random(10,15))))
 			myResource:SetKeyValue( "gmod_allowtools", "0" )
 			myResource:Spawn()
 		else
 			local myResource = ents.Create("msc_scrapnug")
 			myResource:SetModel("models/gibs/scanner_gib02.mdl")
 			myResource:SetAngles(Angle(0,0,0))
-			myResource:SetPos(self.Entity:LocalToWorld(Vector(0,-80+math.random(0,10),math.random(-15,15))))
+			myResource:SetPos(self.Entity:LocalToWorld(Vector(math.random(-10,20),-80+math.random(0,15),math.random(10,15))))
 			myResource:SetKeyValue( "gmod_allowtools", "0" )
 			myResource:Spawn()
 		end
@@ -94,9 +115,14 @@ function ENT:ThumperDisable()
 	self.Entity:EmitSound("ambient/machines/thumper_shutdown1.wav", 100, 100)
 	self.ThmpAmb:Stop()
 	self.Power = 0
+	self.moveActive = true
 	--self.Entity:SetPlaybackRate(0.0)
 	
-	constraint.RemoveAll(self.Entity)
+	self.PowerLevel = 0
+	if IsValid(self.NetworkContainer) then
+		self.NetworkContainer:UpdatePower()
+	end
+	--constraint.RemoveAll(self.Entity)
 	
 	--self.repellent:Remove()
 	self.ToggleTime = CurTime()
@@ -153,45 +179,54 @@ function ENT:OnTakeDamage(dmg)
 	end
 end 
 
-function DoOnline( pl, handler, id, encoded, decoded )
-	local ent = decoded[1]
+function DoOnline( )
+	local ply = net.ReadEntity()
+	local ent = net.ReadEntity()
+	--local ent = decoded[1]
 
-	pl:ChatPrint("Initializing Automated Sonic Miner...")
+	ply:ChatPrint("Initializing Automated Sonic Miner...")
 	
 	ent.Entity:ThumperEnable()
 	
 end
-datastream.Hook( "miner_online_stream", DoOnline )
+--datastream.Hook( "miner_online_stream", DoOnline )
+net.Receive( "miner_online_stream", DoOnline )
 
-function DoOffline( pl, handler, id, encoded, decoded )
-	local ent = decoded[1]
+function DoOffline( )
+	local ply = net.ReadEntity()
+	local ent = net.ReadEntity()
+	--local ent = decoded[1]
 
-	pl:ChatPrint("Shutting Down Automated Sonic Miner...")
+	ply:ChatPrint("Shutting Down Automated Sonic Miner...")
 	
 	ent.Entity:ThumperDisable()
 	
 end
-datastream.Hook( "miner_shutdown_stream", DoOffline )
+--datastream.Hook( "miner_shutdown_stream", DoOffline )
+net.Receive( "miner_shutdown_stream", DoOffline )
 
-function DoRepair( pl, handler, id, encoded, decoded )
-	local ent = decoded[1]
+function DoRepair( )
+	local ply = net.ReadEntity()
+	local ent = net.ReadEntity()
+	--local ent = decoded[1]
 	local amount = 200 - ent:Health()
 	
-	pl:Freeze(true)
-	pl:ChatPrint("Fixing Unit...")
+	ply:Freeze(true)
+	ply:ChatPrint("Fixing Unit...")
 	
 	timer.Simple( amount/10, function ()
-		pl:Freeze(false)
+		ply:Freeze(false)
 		
 		ent:SetHealth( 200 )
 		
 		if ent:Health() > 200 then ent:SetHealth( 200 ) end
 		
-		pl:ChatPrint("Repair compleate!")
+		ply:ChatPrint("Repair compleate!")
 		
 	end )
 end
-datastream.Hook( "miner_repair_stream", DoRepair )
+--datastream.Hook( "miner_repair_stream", DoRepair )
+net.Receive( "miner_repair_stream", DoRepair )
 
 function ENT:Think()
 	local myFrame = self.Entity:GetCycle()
@@ -233,14 +268,18 @@ function ENT:Think()
 		
 		if self.playbackRate < 1 then
 			self.playbackRate = (CurTime() - self.ToggleTime) / 10
-			self.ThmpAmb:ChangePitch(100*self.playbackRate)
+			self.ThmpAmb:ChangePitch(100*self.playbackRate, 0)
 			if self.playbackRate > 1 then
-				self.ThmpAmb:ChangePitch(100)
+				self.ThmpAmb:ChangePitch(100, 0)
 				self.playbackRate = 1
 			end
 		end
 		
 		self.Entity:SetPlaybackRate(self.playbackRate)
+		
+		if (not self.NetworkContainer) or (not self.NetworkContainer.NetPower) or self.NetworkContainer.NetPower < 0 then
+			self:ThumperDisable()
+		end
 	elseif self.Power == 0 and self.playbackRate > 0 then
 		self.playbackRate = 1 -((CurTime() - self.ToggleTime) / 5)
 		if self.playbackRate < 0 then
@@ -277,7 +316,12 @@ function ENT:OnRemove()
 	self.ThmpAmb:Stop()
 	self.Entity:StopSound("ambient/machines/thumper_dust.wav")
 	self.Entity:StopSound("ambient/machines/thumper_hit.wav")
-	self.repellent:Remove()
+	if self.repellent then
+		if self.repellent:IsValid() then
+			self.repellent:Remove()
+		end
+	end
+	self:UnLink()
 	timer.Destroy( "minerupdate_"..tostring(self.Entity:EntIndex()) )
 end
 

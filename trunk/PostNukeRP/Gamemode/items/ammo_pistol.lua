@@ -18,6 +18,9 @@ ITEM.Model = "models/items/boxsrounds.mdl"
 ITEM.Script = ""
 ITEM.Weight = 2
 
+function ITEM.ToolCheck( p )
+	return true
+end
 
 function ITEM.Use( ply )
 	local ammoType = ITEM.ID
@@ -26,6 +29,13 @@ function ITEM.Use( ply )
 	return true
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create(class)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+	ent:SetNetworkedString("Ammo", tostring(ITEM.Energy))
+end
 
 PNRP.AddItem(ITEM)
 

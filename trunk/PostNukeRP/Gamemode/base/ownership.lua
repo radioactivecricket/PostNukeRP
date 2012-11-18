@@ -26,14 +26,23 @@ function PNRP.SetOwnership( ply )
 			ply:ConCommand("pnrp_removeowner")
 			ent:EmitSound( "buttons/button14.wav" )
 		else
-			--ent:SetNetworkedString("Owner_UID", plUID)
-			--ent:SetNetworkedString("Owner", ply:Nick())
-			--ent:SetNWEntity( "ownerent", ply )
 			PNRP.SetOwner(ply, ent)
+			
+			local myClass = ent:GetClass()
+			local ItemID = PNRP.FindItemID( myClass )
+			
+			if ItemID != nil then
+				local myType = PNRP.Items[ItemID].Type
+				if myType == "vehicle" then
+					local myModel = ent:GetModel()			
+					if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
+				end		
+				PNRP.AddWorldCache( ply, ItemID )
+			end
+			
 			ply:ChatPrint("Admin override of ownership.")
 			ent:EmitSound( "buttons/combine_button_locked.wav" )
 		end
-		
 		return
 	end
 	--If spawn door	
@@ -47,11 +56,13 @@ function PNRP.SetOwnership( ply )
 		ent:EmitSound( "buttons/button14.wav" )
 	else
 		if not ent:IsDoor() then
-			ply:ConCommand("pnrp_addowner")
+			--ply:ConCommand("pnrp_addowner")
+			AddOwner(ply, 0)
 			ent:EmitSound( "buttons/blip1.wav" )
 		end
 		if DoorsOwned < GetConVarNumber("pnrp_maxOwnDoors") and ent:IsDoor() then
-			ply:ConCommand("pnrp_addowner")
+			--ply:ConCommand("pnrp_addowner")
+			AddOwner(ply, 0)
 			ent:EmitSound( "buttons/blip1.wav" )
 		elseif ent:IsDoor() then
 			ply:ChatPrint("You own too many doors!")
@@ -63,7 +74,6 @@ concommand.Add( "pnrp_setOwner", PNRP.SetOwnership )
 --PNRP.ChatConCmd( "/setowner", "pnrp_setOwner" )
 
 function AddOwner(ply, args)
-
 	local trace = {}
 	trace.start = ply:EyePos()
 	trace.endpos = trace.start + ply:GetAimVector() * 300
@@ -76,10 +86,6 @@ function AddOwner(ply, args)
 	local plUID = PNRP:GetUID( ply )
 	
 	if ent:GetNetworkedString("Owner") == "World" or ent:GetNetworkedString("Owner") == "None" or ent:GetNetworkedString("Owner") == "" then
-		--ent:SetNetworkedString("Owner", "" )
-		--ent:SetNetworkedString("Owner", playerNick )
-		--ent:SetNetworkedString("Owner_UID", plUID)
-		--ent:SetNWEntity( "ownerent", ply )
 		PNRP.SetOwner(ply, ent)
 		
 		local myClass = ent:GetClass()
@@ -119,9 +125,9 @@ function removeOwner(ply, args)
 		ent:SetNetworkedString("Owner", "" )
 		ent:SetNetworkedString("Owner", "World" )
 		ent:SetNetworkedString("Owner_UID", "None")
-		ent:SetNWEntity( "ownerent", NullEntity() )
-		SK_Srv.ReleaseOwner( ply, nil, nil, nil, {["doorEnt"] = ent} )
-		
+		ent:SetNWEntity( "ownerent", nil )
+		SK_Srv.ReleaseOwner( ply, ent )
+	
 		local myClass = ent:GetClass()
 		local ItemID = PNRP.FindItemID( myClass )
 		
@@ -141,6 +147,7 @@ function removeOwner(ply, args)
 	return ""
 end
 concommand.Add( "pnrp_removeowner", removeOwner )
+util.AddNetworkString( "SKReleaseOwner" )
 
 --AddChatCommand("/addowner", AddOwner)
 function ReadOwner(ply, args)
@@ -189,9 +196,12 @@ function PNRP.OpenBuddyWindow(ply)
 			end
 		end
 	end 
-	datastream.StreamToClients(ply, "pnrp_OpenBuddyWindow", { ["buddyTable"] = tbl })
+	net.Start("pnrp_OpenBuddyWindow")
+		net.WriteTable(tbl)
+	net.Send(ply)
 end
 concommand.Add("pnrp_OpenBuddy", PNRP.OpenBuddyWindow)
+util.AddNetworkString( "pnrp_OpenBuddyWindow" )
 
 function PNRP.AddBuddy( ply, cmd, args )
 	local UID = table.concat(args, "")
@@ -200,6 +210,22 @@ function PNRP.AddBuddy( ply, cmd, args )
 	ply:ChatPrint("Buddy Added.")
 end
 concommand.Add("PNRP_AddBuddy", PNRP.AddBuddy)
+
+function PNRP.AddCommBuddy( ply, cmd, args )
+	ply.PropBuddyList = ply.PropBuddyList or {}
+	
+	local cid = ply:GetTable().Community
+	local query = "SELECT * FROM community_members WHERE cid="..tostring(cid)
+	
+	local result = querySQL(query)
+	
+	if result then
+	
+	end
+	
+	ply:ChatPrint("Buddy Added.")
+end
+concommand.Add("PNRP_AddCommBuddy", PNRP.AddCommBuddy)
 
 function PNRP.RemoveBuddy(  ply, cmd, args )
 	local UID = table.concat(args, "")

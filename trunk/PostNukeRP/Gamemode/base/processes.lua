@@ -6,6 +6,11 @@ local EntityMeta = FindMetaTable("Entity")
   
   This is based entirely on the GMStranded gamemode's code.
   Seemed to be an elegent implementation.
+  
+  10/20/2012
+  Alright, years after we started this, looking back at 
+  this code, it's a clusterfuck.  What was wrong with me
+  back then?  Yeesh...
 ---------------------------------------------------------*/
 PNRP.Processes = {}
 
@@ -93,7 +98,7 @@ end
 local PROCESS = {}
 
 function PROCESS:BaseThink()
-		if ValidEntity(ent) then
+		if IsValid(ent) then
          if self == nil or self.Owner == nil or !self.Owner:Alive() then
             return true
          end
@@ -137,7 +142,7 @@ end
 function PROCESS:OnStop()
          local num = math.random(1,100)
 
-		 if self.Owner:Team() == 2 then
+		 if self.Owner:Team() == TEAM_SCAVENGER then
 			self.Data.Chance = self.Data.Chance * 1.5
 			self.Data.MaxAmount = self.Data.MaxAmount * 2
 		 end
@@ -194,7 +199,7 @@ end
 function PROCESS:OnStop()
          local num = math.random(1,100)
 		 
-		 if self.Owner:Team() == 2 then
+		 if self.Owner:Team() == TEAM_SCAVENGER then
 			self.Data.Chance = self.Data.Chance * 1.5
 			self.Data.MaxAmount = self.Data.MaxAmount * 2
 		 end
@@ -251,7 +256,7 @@ end
 function PROCESS:OnStop()
          local num = math.random(1,100)
 		 
-		 if self.Owner:Team() == 2 then
+		 if self.Owner:Team() == TEAM_SCAVENGER then
 			self.Data.Chance = self.Data.Chance * 1.5
 			self.Data.MaxAmount = self.Data.MaxAmount * 2
 		 end

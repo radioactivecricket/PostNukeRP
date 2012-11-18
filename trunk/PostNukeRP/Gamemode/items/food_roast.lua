@@ -5,9 +5,9 @@ ITEM.ID = "food_roast"
 
 ITEM.Name = "Headcrab Roast"
 ITEM.ClassSpawn = "Cultivator"
-ITEM.Scrap = 6
+ITEM.Scrap = 0
 ITEM.Small_Parts = 0
-ITEM.Chemicals = 6
+ITEM.Chemicals = 4
 ITEM.Chance = 100
 ITEM.Info = "A roast of headcrab.  Very filling.  Needs both a skillet and a deep pot."
 ITEM.Type = "food"
@@ -20,11 +20,7 @@ ITEM.Weight = 1
 
 
 function ITEM.ToolCheck( p )
-	if p:HasInInventory("tool_skillet") and p:HasInInventory("tool_deeppot") then
-		return true
-	else
-		return false
-	end
+	return {["tool_skillet"]=0, ["tool_deeppot"]=0, ["food_rawhead"]=1}
 end
 
 function ITEM.Use( ply )
@@ -33,7 +29,7 @@ function ITEM.Use( ply )
 		local sound = Sound("npc/ichthyosaur/snap.wav")
 		ply:EmitSound( sound )
 		
-		ply:GiveHunger( 50 )
+		ply:GiveHunger( 30 )
 
 		return true	
 	else
@@ -41,6 +37,12 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create(class)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+end
 
 PNRP.AddItem(ITEM)
 

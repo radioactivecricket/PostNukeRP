@@ -22,6 +22,10 @@ ITEM.Weight = 2
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "pistol"
 
+function ITEM.ToolCheck( p )
+	return true
+end
+
 function ITEM.Use( ply )
 	local WepName = "weapon_pnrp_57luck"
 	local gotWep = false
@@ -33,9 +37,21 @@ function ITEM.Use( ply )
 		ply:GetWeapon(WepName):SetClip1(0)
 		return true
 	else
-		ply:ChatPrint("Weapon allready equipped.")
+		ply:ChatPrint("Weapon already equipped.")
 		return false
 	end
+end
+
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create("ent_weapon")
+	--ent:SetNetworkedInt("Ammo", self.Energy)
+	ent:SetNWString("WepClass", ITEM.Ent)
+	ent:SetModel(ITEM.Model)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+	
+	return ent
 end
 
 

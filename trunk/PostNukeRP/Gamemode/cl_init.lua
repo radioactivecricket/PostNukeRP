@@ -1,10 +1,25 @@
 include( 'shared.lua' ) --Tell the client to load shared.lua
 
-for k, v in pairs(file.FindInLua("PostNukeRP/gamemode/vgui/*.lua")) do
+--Msg("Ping \n")
+--local files, directories = file.Find("postnukerp/gamemode/*", "LUA")
+-- for k, v in pairs(file.Find("*", "GAME")) do
+	-- Msg("File "..v.."\n")	
+-- end
+
+--for k, v in pairs(files) do
+--	Msg("Files "..v.."\n")
+--end
+
+--for k, v in pairs(directories) do
+--	Msg("Dirs "..v.."\n")
+--end
+
+--Msg("Pong \n")
+for k, v in pairs(file.Find(PNRP_Path.."gamemode/vgui/*.lua", "LUA")) do
 	include("vgui/"..v)	
 end
 
-for k, v in pairs(file.FindInLua("PostNukeRP/gamemode/derma/*.lua")) do
+for k, v in pairs(file.Find(PNRP_Path.."gamemode/derma/*.lua", "LUA")) do
 	include("derma/"..v)
 end
 
@@ -23,6 +38,72 @@ timer.Create( "autosave", 300, 0, function()
 	LocalPlayer():ChatPrint("Heeeyyy!  Autosaved.")
 end )
 
+-- Once again, pretty much the same as DarkRP
+-- Make sure the client sees the RP name where they expect to see the name
+local pmeta = FindMetaTable("Player")
+
+pmeta.SteamName = pmeta.Name
+function pmeta:Name()
+	if IsValid(self) then
+		return self.rpname or self:SteamName()
+	else
+		return "Unknown"
+	end
+
+	--if not self or not self.IsValid or not IsValid(self) then return "" end
+	--return self.rpname or self:SteamName()
+end
+
+pmeta.GetName = pmeta.Name
+pmeta.Nick = pmeta.Name
+
+local function RcvNewRPName( data )
+	local target = data:ReadEntity()
+	local newname = data:ReadString()
+	local suppressMessage = data:ReadBool()
+	
+	if not suppressMessage then LocalPlayer():ChatPrint(target:Nick().." changed their name to "..newname..".") end
+	target.rpname = newname
+end
+usermessage.Hook( "RPNameChange", RcvNewRPName )
+-- End
+
+-- Chat override
+function GM:OnPlayerChat( ply, strText, bTeamOnly, bPlayerIsDead )
+ 
+	-- I've made this all look more complicated than it is. Here's the easy version
+	-- chat.AddText( ply:GetName(), Color( 255, 255, 255 ), ": ", strText )
+ 
+	local tab = {}
+ 
+	if ( bPlayerIsDead ) then
+		table.insert( tab, Color( 255, 30, 40 ) )
+		table.insert( tab, "*DEAD* " )
+	end
+ 
+	if ( bTeamOnly ) then
+		table.insert( tab, Color( 30, 160, 40 ) )
+		table.insert( tab, "[RADIO] " )
+	end
+ 
+	if ( IsValid( ply ) ) then
+		local curTeam = ply:Team()
+		local teamColor = team.GetColor(curTeam)
+		table.insert( tab, Color(teamColor.r, teamColor.g, teamColor.b) )
+
+		table.insert( tab, ply:GetName() )
+	else
+		table.insert( tab, "Console" )
+	end
+ 
+	table.insert( tab, Color( 255, 255, 255 ) )
+	table.insert( tab, ": "..strText )
+ 
+	chat.AddText( unpack(tab) )
+ 
+	return true
+ 
+end
 
 --Get resource
 function GetResource(resource)
@@ -215,5 +296,4 @@ function PNRP:GetUID( ply )
 	
 	return plUID
 end
-
 

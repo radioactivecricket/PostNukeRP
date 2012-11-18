@@ -5,6 +5,7 @@ function ENT:Draw()
 	local myPlayer = LocalPlayer()
 	
 	local distance = tonumber(self.Entity:GetNWString("distance"))
+	if not distance then return end
 	
 	local tracedata = {}
 	tracedata.start = myPlayer:GetShootPos()

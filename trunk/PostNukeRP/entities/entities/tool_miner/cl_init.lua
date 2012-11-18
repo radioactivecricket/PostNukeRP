@@ -78,15 +78,21 @@ function MinerMenu( um )
 		
 			if minerState == "off" then
 				if minerEnt:IsOutside() then
-					local minerButtonOn = vgui.Create( "DButton" )
-					minerButtonOn:SetParent( miner_frame )
-					minerButtonOn:SetText( "Set Miner Online" )
-					minerButtonOn:SetPos( 10, 75 )
-					minerButtonOn:SetSize( 125, 25 )
-					minerButtonOn.DoClick = function ()
-						minerState = "on"
-						datastream.StreamToServer( "miner_online_stream", { minerEnt } )
-						miner_frame:Close()
+					if minerHP > 0 then
+						local minerButtonOn = vgui.Create( "DButton" )
+						minerButtonOn:SetParent( miner_frame )
+						minerButtonOn:SetText( "Set Miner Online" )
+						minerButtonOn:SetPos( 10, 75 )
+						minerButtonOn:SetSize( 125, 25 )
+						minerButtonOn.DoClick = function ()
+							minerState = "on"
+							--datastream.StreamToServer( "miner_online_stream", { minerEnt } )
+							net.Start("miner_online_stream")
+								net.WriteEntity(ply)
+								net.WriteEntity(minerEnt)
+							net.SendToServer()
+							miner_frame:Close()
+						end
 					end
 				else
 					local entOMSGLabel = vgui.Create("DLabel", miner_frame)
@@ -103,7 +109,11 @@ function MinerMenu( um )
 				minerButtonOff:SetSize( 125, 25 )
 				minerButtonOff.DoClick = function ()
 					minerState = "off"
-					datastream.StreamToServer( "miner_shutdown_stream", { minerEnt } )
+					--datastream.StreamToServer( "miner_shutdown_stream", { minerEnt } )
+					net.Start("miner_shutdown_stream")
+						net.WriteEntity(ply)
+						net.WriteEntity(minerEnt)
+					net.SendToServer()
 					miner_frame:Close()
 				end
 			end
@@ -123,7 +133,11 @@ function MinerMenu( um )
 			FixButton:SetPos( 10, 125 )
 			FixButton:SetSize( 125, 25 )
 			FixButton.DoClick = function ()
-				datastream.StreamToServer( "miner_repair_stream", { minerEnt } )
+				--datastream.StreamToServer( "miner_repair_stream", { minerEnt } )
+				net.Start("miner_repair_stream")
+					net.WriteEntity(ply)
+					net.WriteEntity(minerEnt)
+				net.SendToServer()
 				miner_frame:Close()
 			end
 		end

@@ -13,21 +13,21 @@ function BoxViewCheck()
 	tracedata.filter = myPlayer
 	local trace = util.TraceLine(tracedata)
 	
-	if trace.Entity == NullEntity() then return end
+	if !trace.Entity:IsValid() then return end
 	
 	if trace.Entity:GetClass() == "msc_itembox" then
 		local item = trace.Entity:GetNWString("itemname")
 		local amount = trace.Entity:GetNWInt("amount")
-		
+		amount = math.Round(amount)
 		if (not item) or (not amount) then return end
 		
-		surface.SetFont("TargetIDSmall")
+		surface.SetFont("CenterPrintText")
 		local tWidth, tHeight = surface.GetTextSize(tostring(amount).." "..item)
 		
 		-- surface.SetTextColor(Color(255,255,255,255))
 		-- surface.SetTextPos(ScrW() / 2, ScrH() / 2)
 		-- surface.DrawText( community.." Community Stockpile" )
-		draw.WordBox( 8, (ScrW() / 2) - (8 + (tWidth / 2)), (ScrH() / 2) - (16 + tHeight), tostring(amount).." "..item, "TargetIDSmall", Color(50,50,75,100), Color(255,255,255,255) )
+		draw.WordBox( 8, (ScrW() / 2) - (8 + (tWidth / 2)), (ScrH() / 2) - (16 + tHeight), tostring(amount).." "..item, "CenterPrintText", Color(50,50,75,100), Color(255,255,255,255) )
 		
 		-- local gridMessage = "Distance:  "..tostring(distance).."\nSpawn Resources:  "..tostring(resources).."\nSpawn Antlions:  "..tostring(antlions).."\nSpawn Zombies:  "..tostring(zombies).."\nCan Make Mounds:  "..tostring(mounds).."\nIs Indoor:  "..tostring(indoor)
 		-- AddWorldTip( self.Entity:EntIndex(), gridMessage, 0.5, self.Entity:GetPos(), self.Entity )

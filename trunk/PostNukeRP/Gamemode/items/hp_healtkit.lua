@@ -18,6 +18,10 @@ ITEM.Model = "models/items/healthkit.mdl"
 ITEM.Script = ""
 ITEM.Weight = 4
 
+function ITEM.ToolCheck( p )
+	return true
+end
+
 function ITEM.Spawn( p )
 	PNRP.BaseItemSpawn( p, ITEM )
 end
@@ -39,6 +43,12 @@ function ITEM.Use( ply )
 	end
 end
 
+function ITEM.Create( ply, class, pos )
+	local ent = ents.Create(class)
+	ent:SetAngles(Angle(0,0,0))
+	ent:SetPos(pos)
+	ent:Spawn()
+end
 
 PNRP.AddItem(ITEM)
 

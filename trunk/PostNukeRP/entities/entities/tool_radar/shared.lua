@@ -1,11 +1,13 @@
 ENT.Type 			= "anim"
 ENT.Base 			= "base_gmodentity"
  
-ENT.PrintName		= "Wasteland Radar Model SCXU 8034"
+ENT.PrintName		= "Wasteland Radar"
 ENT.Author			= "Eldar Storm"
 ENT.Contact			= ""  --fill in these if you want it to be in the spawn menu
-ENT.Purpose			= "Radar for use by Wastelanders."
-ENT.Instructions	= "Ping!"
+ENT.Purpose			= "Detects NPC's and Players."
+ENT.Instructions	= "?"
+
+ENT.AutomaticFrameAdvance = true 
  
 ENT.Spawnable			= false
 ENT.AdminSpawnable		= false
@@ -28,7 +30,7 @@ function ENT:IsOutside()
 
 	local trace = {}
 	trace.start = self:GetLocalPos()
-	trace.endpos = trace.start + ( self:GetUp() * 300 )
+	trace.endpos = trace.start + ( self:GetUp() * 500 )
 	trace.filter = self
 	local tr = util.TraceLine( trace )
 
@@ -40,8 +42,12 @@ function ENT:IsOutside()
 	
 	return false
 
-end	
+end
 
-function ENT:StopRunningSound()
-	self:StopSound("plats/tram_move.wav")
+
+
+function ENT:SetAutomaticFrameAdvance( bUsingAnim )
+ 
+	self.AutomaticFrameAdvance = bUsingAnim
+ 
 end
