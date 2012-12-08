@@ -26,6 +26,7 @@ PNRP.ChatConCmd( "/shop", "pnrp_buy_shop" )
 PNRP.ChatConCmd( "/inv", "pnrp_inv" )
 PNRP.ChatConCmd( "/salvage", "pnrp_salvage" )
 PNRP.ChatConCmd( "/hud", "pnrp_HUD" )
+PNRP.ChatConCmd( "/devmode", "pnrp_plydevmode" )
 
 -- Pretty much taken from DarkRP code.  If it works, it works.
 local meta = FindMetaTable("Player")
@@ -116,9 +117,18 @@ function GM.SaveCharacter(ply,cmd,args)
 	for k, v in pairs(ply:GetWeapons()) do
 		local ammo = ply:GetAmmoCount( v:GetPrimaryAmmoType() )
 		local ammoType = PNRP.ConvertAmmoType(v:GetPrimaryAmmoType()) or "none"
-
-		weaponList = weaponList..v:GetClass()..","
-		ammoTbl[ammoType] = ammo
+		
+		--Fix for the frag and charg bug
+		if v:GetClass() == "weapon_frag" and ammo < 1 then
+			ply:StripWeapon( v:GetClass() )
+		elseif v:GetClass() == "weapon_pnrp_charge" and ammo == 0 then
+			--Do nothing
+			--skips saving this but does not remove so player can still use the trigger
+			--ply:StripWeapon( v:GetClass() )
+		else
+			weaponList = weaponList..v:GetClass()..","
+			ammoTbl[ammoType] = ammo
+		end
 	end
 	string.TrimRight(weaponList, ",")
 
@@ -1147,7 +1157,9 @@ function PlyRemStockpile(ply, cmd, args)
 					local stockpile = v
 					ply:ChatPrint( "Your stockpile will take 1 minute to break down.  It can be interacted with in that time." )
 					timer.Simple(60, function ()
-						stockpile:Remove()
+						if IsValid(stockpile) then
+							stockpile:Remove()
+						end
 					end)
 					return
 				end
@@ -1169,15 +1181,17 @@ function PlyRemLocker(ply, cmd, args)
 			local foundComLockers = ents.FindByClass("msc_equiplocker")
 			for _, v in pairs(foundComLockers) do
 				if tostring(v:GetNWString("community_owner")) == tostring(ply:GetTable().Community) then
-					local stockpile = v
+					local locker = v
 					ply:ChatPrint( "Your locker will take 1 minute to break down.  It can be interacted with in that time." )
 					timer.Simple(60, function ()
-						stockpile:Remove()
+						if IsValid(locker) then
+							locker:Remove()
+						end
 					end)
 					return
 				end
 			end
-			ply:ChatPrint( "No stockpile found!" )
+			ply:ChatPrint( "No locker found!" )
 		else
 			ply:ChatPrint( "You do not have the community permissions to do this!" )
 		end
@@ -1221,6 +1235,8 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	local int
 	local cost = GetConVarNumber("pnrp_deathCost") / 100
 
+	contents.name = ply:Nick()
+	
 	getRec = ply:GetResource("Scrap")
 	int = getRec * cost
 	int = math.Round(int / 2)
@@ -1652,4 +1668,46 @@ end
 concommand.Add( "pnrp_seatSetup", seatSetup )
 PNRP.ChatConCmd( "/carseat", "pnrp_seatSetup" )
 
+function plyAFK(ply, cmd, args)
+	if ply.AFK then
+		ply.AFK = false
+		ply:Freeze(false)
+		ply:SetRenderMode(0)
+		ply:SetColor( Color(255,255,255,255) )
+		umsg.Start("sleepeffects", ply)
+			umsg.Bool(false)
+		umsg.End()
+		ply:ChatPrint("You are no longer AFK")
+		
+		timer.Create( "AFK_"..tostring(ply), 900, 1, function() 
+			if IsValid(ply) then
+				ply.CantAFK = false
+				ply:ChatPrint("AFK Available again.")
+			end
+		end)
+		
+		return
+	end
+	if not ply.CantAFK then
+		if not ply.AFK then
+			ply.AFK = true
+			ply:Freeze(true)
+			ply:SetRenderMode(1)
+			ply:SetColor( Color(255,255,255,150) )
+			if ply:HasWeapon( "gmod_rp_hands" ) then
+				ply:SelectWeapon( "gmod_rp_hands")
+			end
+			umsg.Start("sleepeffects", ply)
+				umsg.Bool(true)
+			umsg.End()
+			ply:ChatPrint("You are now AFK")
+			ply:ChatPrint("You can still be hurt while AFK")
+			ply.CantAFK = true
+		end	
+	else
+		ply:ChatPrint("You can only go AFK every 15 minuts.")
+	end
+end
+concommand.Add( "pnrp_afk", plyAFK )
+PNRP.ChatConCmd( "/afk", "pnrp_afk" )
 --EOF

@@ -35,6 +35,9 @@ function ENT:Initialize()
 	
 	local Thumper_Sound = Sound("coast.thumper_ambient")
 	self.ThmpAmb = CreateSound(self.Entity, Thumper_Sound )
+	
+	self.PowerUsage = -100
+	self.Entity:SetNWString("PowerUsage", self.PowerUsage)
 end
 
 function ENT:ThumperEnable()
@@ -43,7 +46,7 @@ function ENT:ThumperEnable()
 	local sequence = self.Entity:LookupSequence("idle")
 	self.Entity:SetSequence(sequence)
 	
-	self.PowerLevel = -100
+	self.PowerLevel = self.PowerUsage
 	if IsValid(self.NetworkContainer) then
 		self.NetworkContainer:UpdatePower()
 	end
@@ -321,7 +324,7 @@ function ENT:OnRemove()
 			self.repellent:Remove()
 		end
 	end
-	self:UnLink()
+	self:PowerUnLink()
 	timer.Destroy( "minerupdate_"..tostring(self.Entity:EntIndex()) )
 end
 

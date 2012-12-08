@@ -32,7 +32,7 @@ function PNRP.AddItem( itemtable )
 		ShopHide = itemtable.ShopHide,
 		Capacity = itemtable.Capacity,
 		ProfileCost = itemtable.ProfileCost,
-		Persistant = itemtable.Persistant,
+		Persistent = itemtable.Persistent
 	}
 	
 end	

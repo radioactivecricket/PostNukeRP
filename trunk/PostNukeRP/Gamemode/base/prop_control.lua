@@ -37,7 +37,7 @@ function PNRP.AddItem( itemtable )
 		ShopHide = itemtable.ShopHide,
 		Capacity = itemtable.Capacity,
 		ProfileCost = itemtable.ProfileCost,
-		Persistant = itemtable.Persistant,
+		Persistent = itemtable.Persistent
 	}
 	
 	AddBannedProp(itemtable.Model)
@@ -765,7 +765,15 @@ function ToolCheck( ply, tr, toolmode )
 		DoClassToolCheck = true
 	end
 	
+	if string.find(toolmode, "turret") then
+		ply:ChatPrint("Turrets blocked")
+		return false
+	end
 	
+	if string.find(toolmode, "igniter") then
+		ply:ChatPrint("Igniter blocked")
+		return false
+	end
 	
 	if DoClassToolCheck then
 		if not (toolmode == "remover" or toolmode == "weld" or toolmode == "weld_ez" 

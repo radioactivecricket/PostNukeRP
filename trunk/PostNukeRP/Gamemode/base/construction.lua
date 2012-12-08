@@ -207,6 +207,17 @@ function GM.BuildItem( ply, command, arg )
 			else allowed = false end
 			
 			if team.GetName(ply:Team()) == item.ClassSpawn or item.ClassSpawn == "All" or allowed == true then
+				--Apply construction skill
+				if ply:GetSkill("Construction") > 0 then
+					for _, team in pairs(PNRP.Skills["Construction"].class) do
+						if ply:Team() == team then
+							item.Scrap = math.ceil(item.Scrap * (1 - (0.02 * ply:GetSkill("Construction"))))
+							item.SmallParts = math.ceil(item.SmallParts * (1 - (0.02 * ply:GetSkill("Construction"))))
+							item.Chemicals = math.ceil(item.Chemicals * (1 - (0.02 * ply:GetSkill("Construction"))))
+						end
+					end
+				end
+				
 				local tr = ply:TraceFromEyes(200)
 				--Verifies Player has the needed Materials to build the item
 				if ply:GetResource("Scrap") >= item.Scrap and ply:GetResource("Chemicals") >= item.Chemicals and ply:GetResource("Small_Parts") >= item.SmallParts then 

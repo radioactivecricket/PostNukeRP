@@ -46,7 +46,7 @@ end
 -- hook.Add( "PhysgunPickup", "SKpickupCheck", SK_Srv.PickupCheck )
 
 --Entity Functions (Mostly ownership functions)
-function EntityMeta:SKSetOwner( ply )
+function EntityMeta:SKSetOwner( ply )		
 	local plUID = PNRP:GetUID( ply )
 	self:SetNWEntity( "ownerent", ply )
 	self:SetNWString("Owner", ply:Nick())

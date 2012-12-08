@@ -50,8 +50,8 @@ function SmeltMenu()
 		--datastream.StreamToServer( "smelt_stream", { ScrapSlider:GetValue() } )
 		net.Start("smelt_stream")
 			net.WriteEntity(ply)
-			net.WriteLong(ScrapSlider:GetValue())
-		net.SendTopServer()
+			net.WriteDouble(ScrapSlider:GetValue())
+		net.SendToServer()
 		smelt_frame:Close()
 	end
 	

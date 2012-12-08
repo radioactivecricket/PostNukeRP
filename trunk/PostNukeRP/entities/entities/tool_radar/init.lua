@@ -40,6 +40,9 @@ function ENT:Initialize()
 	self.RadarAmb = CreateSound(self.Entity, Radar_Sound )
 	
 	self.Entity:NextThink(CurTime() + 1.0)
+	
+	self.PowerUsage = -50
+	self.Entity:SetNWString("PowerUsage", self.PowerUsage)
 end
 
 function ENT:Use( activator, caller )
@@ -424,5 +427,5 @@ end
 
 function ENT:OnRemove()
 	RADAR_Shutdown(self)
-	self:UnLink()
+	self:PowerUnLink()
 end

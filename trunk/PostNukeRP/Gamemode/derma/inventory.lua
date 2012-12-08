@@ -206,7 +206,7 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 									net.Start("DropBulkCrate")
 										net.WriteEntity(ply)
 										net.WriteString(itemname)
-										net.WriteDouble(pnlPanel.bulkSlider:GetValue())
+										net.WriteDouble(math.Round(tonumber(pnlPanel.bulkSlider:GetValue())))
 									net.SendToServer()
 									parent_frame:Close()
 								end

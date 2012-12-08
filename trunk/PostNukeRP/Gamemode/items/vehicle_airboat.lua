@@ -19,7 +19,7 @@ ITEM.Script = "scripts/vehicles/airboat.txt"
 ITEM.Weight = 200
 
 function ITEM.ToolCheck( p )
-	return true
+	return {["intm_engine"]=1}
 end
 
 function ITEM.Use( ply )

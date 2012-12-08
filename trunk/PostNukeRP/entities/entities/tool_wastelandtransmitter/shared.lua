@@ -1,0 +1,5 @@
+ENT.Type 			= "anim"
+ENT.Base 			= "base_gmodentity"
+ENT.PrintName		= "Wasteland FM Transmitter"
+ENT.Author			= "Eldar Storm"
+ENT.Purpose			= "Wasteland FM Trasnmitter"

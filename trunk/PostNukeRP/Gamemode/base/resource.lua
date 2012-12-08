@@ -339,10 +339,10 @@ function GM.ReproduceRes()
 								validSpawn = false
 							end
 							
-							local height = groundtrace.HitPos:Distance(rooftrace.HitPos)
-							if height < 149 then
-								validSpawn = false
-							end
+							-- local height = groundtrace.HitPos:Distance(rooftrace.HitPos)
+							-- if height < 149 then
+								-- validSpawn = false
+							-- end
 							
 							local nearby = ents.FindInSphere(groundtrace.HitPos,100)
 							for k,v in pairs(nearby) do

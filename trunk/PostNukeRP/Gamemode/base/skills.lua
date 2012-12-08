@@ -146,6 +146,10 @@ function DeathXP( victim, killer, weapon )
 	
 	if victim:GetClass() == "npc_antlionguard" then
 		killer:IncXP(30)
+	elseif victim:GetClass() == "npc_fastzombie" then
+		killer:IncXP(3)
+	elseif victim:GetClass() == "npc_poisonzombie" then
+		killer:IncXP(3)
 	else
 		killer:IncXP(1)
 	end
@@ -161,7 +165,7 @@ function DeathXP( victim, killer, weapon )
 	if victim:GetClass() == "npc_antlion" then
 		if math.random(1,100) <= 30 + spawnMod then
 			if math.random(1,100) <= 30 + (spawnMod / 2) then
-				PNRP.Items["fuel_grubfood"].Create(killer, PNRP.Items["food_rawant"].Ent, victim:GetPos()+ Vector(0,0,20))
+				PNRP.Items["fuel_grubfood"].Create(killer, PNRP.Items["fuel_grubfood"].Ent, victim:GetPos()+ Vector(0,0,20))
 			else
 				PNRP.Items["food_rawant"].Create(killer, PNRP.Items["food_rawant"].Ent, victim:GetPos()+ Vector(0,0,20))
 			end
@@ -173,7 +177,7 @@ function DeathXP( victim, killer, weapon )
 	elseif victim:GetClass() == "npc_antlionguard" then
 		if math.random(1,100) <= 20 + spawnMod then
 			if math.random(1,100) <= 60 then
-				PNRP.Items["fuel_grubfood"].Create(killer, PNRP.Items["food_rawant"].Ent, victim:GetPos()+ Vector(0,0,20))
+				PNRP.Items["fuel_grubfood"].Create(killer, PNRP.Items["fuel_grubfood"].Ent, victim:GetPos()+ Vector(0,0,20))
 			else
 				PNRP.Items["food_rawguard"].Create(killer, PNRP.Items["food_rawguard"].Ent, victim:GetPos()+ Vector(0,0,20))
 			end

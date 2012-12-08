@@ -19,7 +19,7 @@ ITEM.Script = "scripts/vehicles/jalopy.txt"
 ITEM.Weight = 500
 
 function ITEM.ToolCheck( p )
-	return true
+	return {["intm_engine"]=1}
 end
 
 function ITEM.Use( ply )

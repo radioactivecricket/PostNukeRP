@@ -1,7 +1,8 @@
-GM.Name 	= "PostNukeRP v49" --Set the gamemode name
-GM.Author 	= "EldarStorm LostInTheWird MainError(Gmod Addict)" --Set the author name
+GM.Name 	= "PostNukeRP" --Set the gamemode name
+GM.Author 	= "EldarStorm LostInTheWird MainError" --Set the author name
 GM.Email 	= "N/A" --Set the author email
-GM.Website 	= "http://radioactivecricket.com" --Set the author website
+GM.Website 	= "http://postnukerp.com" --Set the author website
+GM.Version  = "50"
 
 DeriveGamemode("sandbox") 
 
@@ -9,7 +10,7 @@ PNRP = {}
 
 PNRP_Path = "PostNukeRP/"
 
-PNRP_MOTDPath = "http://postnukerp.com"
+PNRP_MOTDPath = "http://postnukerp.com/rules.php"
 PNRP_WIKIPath = "http://postnukerp.com/wiki"
 
 --Team Variables
@@ -44,18 +45,18 @@ PNRP.Skills["Farming"] 			= {name = "Farming", desc ="Take care of those plants 
 PNRP.Skills["Salvaging"] 		= {name = "Salvaging", desc ="Lose less when taking stuff apart!", basecost = 100, maxlvl = 5, class = nil}
 
 PNRP.ScavItems = {}
-PNRP.ScavItems["fuel_h2pod"]		=	5
-PNRP.ScavItems["fuel_uranrods"]		=	5
-PNRP.ScavItems["intm_sensorpod"]	=	20
-PNRP.ScavItems["intm_seeds"]		=	15
-PNRP.ScavItems["intm_pulsecore"]	=	15
-PNRP.ScavItems["intm_servo"]		=	20
-PNRP.ScavItems["intm_diamsaw"]		=	30
-PNRP.ScavItems["intm_waterjet"]		=	10
-PNRP.ScavItems["intm_solarthinfilm"]=	5
+PNRP.ScavItems["fuel_h2pod"]		=	80
+PNRP.ScavItems["fuel_uranrods"]		=	80
+PNRP.ScavItems["intm_sensorpod"]	=	300
+PNRP.ScavItems["intm_seeds"]		=	150
+PNRP.ScavItems["intm_pulsecore"]	=	150
+PNRP.ScavItems["intm_servo"]		=	200
+PNRP.ScavItems["intm_diamsaw"]		=	300
+PNRP.ScavItems["intm_waterjet"]		=	100
+PNRP.ScavItems["intm_solarthinfilm"]=	40
 PNRP.ScavItems["intm_fusioncore"]	=	1
-PNRP.ScavItems["intm_nukecore"]		=	1
-PNRP.ScavItems["food_beans"]		=	250
+PNRP.ScavItems["intm_nukecore"]		=	20
+PNRP.ScavItems["food_beans"]		=	2500
 
 local PlayerMeta = FindMetaTable("Player")
 
@@ -114,8 +115,8 @@ CreateConVar("pnrp_adminCreateAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR
 CreateConVar("pnrp_adminTouchAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_adminNoCost", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_exp2Level", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_toolLevel", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_exp2Level", "4", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_toolLevel", "4", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_voiceLimit", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_voiceDist", "750", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
@@ -127,6 +128,8 @@ CreateConVar("pnrp_deathPay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHI
 CreateConVar("pnrp_deathCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_maxOwnDoors", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_debug", "0", 0)
 
 local pmeta = FindMetaTable("Player")
 

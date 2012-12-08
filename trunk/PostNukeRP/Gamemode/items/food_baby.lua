@@ -18,6 +18,7 @@ ITEM.Model = "models/props_c17/doll01.mdl"
 ITEM.Script = ""
 ITEM.Weight = 1
 ITEM.ShopHide = true
+ITEM.AllHide = true
 
 
 function ITEM.ToolCheck( p )

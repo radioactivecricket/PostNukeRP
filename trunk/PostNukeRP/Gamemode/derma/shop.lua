@@ -188,7 +188,7 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 							net.Start("SpawnBulkCrate")
 								net.WriteEntity(ply)
 								net.WriteString(itemname)
-								net.WriteDouble(pnlPanel.bulkSlider:GetValue())
+								net.WriteDouble(math.Round(tonumber(pnlPanel.bulkSlider:GetValue())))
 							net.SendToServer()
 							parent_frame:Close()
 						end
