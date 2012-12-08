@@ -4,8 +4,8 @@
 
 function PNRP.GetWorldCache( p )
 	
-	query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid)
-	result = sql.Query(query)
+	local query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid)
+	local result = querySQL(query)
 	
 	return result
 	
@@ -14,26 +14,41 @@ end
 function PNRP.AddWorldCache( p, theitem )
 	if PNRP.Items[theitem].Type == "tool" or PNRP.Items[theitem].Type == "vehicle" then
 		if PNRP.Items[theitem] != nil then
-			query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid).." AND item="..theitem
-			result = sql.Query(query)
+			local query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
+			local result = querySQL(query)
 			if result then
 				local newCount = tonumber(result[1]["count"]) + 1
-				query = "UPDATE world_cache SET count="..newCount.." WHERE pid="..tostring(ply.pid)
-				result = sql.Query(query)
+				query = "UPDATE world_cache SET count="..newCount.." WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
+				result = querySQL(query)
 			else
 				query = "INSERT INTO world_cache VALUES ( '"..tostring(p.pid).."', '"..theitem.."', '1')"
-				result = sql.Query(query)
+				result = querySQL(query)
 			end			
 		end
 	end
 end
---Removes Item from WorldCache
-function PNRP.TakeFromWorldCache( p, theitem )
+--Removes Item class from WorldCache
+function PNRP.TakeAllFromWorldCache( p, theitem )
 	if PNRP.Items[theitem] != nil then
-		query = "DELETE FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
-		result = sql.Query(query)
+		local query = "DELETE FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
+		local result = querySQL(query)
 	end
 end
+--Removes Item from WorldCache
+function PNRP.TakeFromWorldCache( p, theitem )
+	local query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
+	local result = querySQL(query)
+	
+	if result and tonumber(result[1]["count"]) > 1 then
+		local newCount = tonumber(result[1]["count"]) - 1
+		query = "UPDATE world_cache SET count="..newCount.." WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
+		result = querySQL(query)
+	else
+		local query = "DELETE FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
+		result = querySQL(query)
+	end
+end
+		
 --Returns the Iten to the player
 function PNRP.ReturnWorldCache( ply )
 	local worldCache = PNRP.GetWorldCache( ply )
@@ -41,7 +56,7 @@ function PNRP.ReturnWorldCache( ply )
 	
 	for k, v in pairs(worldCache) do
 		PNRP.AddToInventory( ply, v["item"], tonumber(v["count"]) )
-		PNRP.TakeFromWorldCache( ply, v["item"] )
+		PNRP.TakeAllFromWorldCache( ply, v["item"] )
 	end
 
 	PNRP.CleanWorldAfterReturn( ply )

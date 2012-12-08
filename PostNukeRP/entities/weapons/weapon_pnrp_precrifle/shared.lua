@@ -316,7 +316,9 @@ function SWEP:ShootBullet( damage, num_bullets, aimcone, recoil )
 	bullet.Damage	= damage
 	bullet.AmmoType = "smg1"
  
-	self.Owner:FireBullets( bullet )
+	if SERVER then self.Owner:LagCompensation( true ) end
+		self.Owner:FireBullets( bullet )
+	if SERVER then self.Owner:LagCompensation( false ) end
 	
 	self:ShootEffects()
 	
@@ -340,7 +342,7 @@ if CLIENT then
 	local function AdjustSensitivity()
 		if LocalPlayer():GetActiveWeapon() and LocalPlayer():GetActiveWeapon():IsValid() then
 			if LocalPlayer():GetActiveWeapon():GetClass() == "weapon_pnrp_precrifle" then
-				local ironSights = LocalPlayer():GetActiveWeapon():GetNWBool("IronSights", false)
+				local ironSights = LocalPlayer():GetActiveWeapon():GetDTBool(1)
 				if ironSights then
 					return 0.35
 				else

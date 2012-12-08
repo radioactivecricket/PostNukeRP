@@ -1,0 +1,13 @@
+"gamemode"
+{
+	"base"		"base"
+	"title"		"PostNukeRP"
+	"version"	"1.0"
+
+	"author_name"	"Radioactive Cricket"
+	"author_email"	""
+	"author_url"	"http://www.postnukerp.com/"
+	
+	"info"		"Survive the apocalypse!"
+	"hide"		"0"
+}

@@ -297,3 +297,13 @@ function PNRP:GetUID( ply )
 	return plUID
 end
 
+--Debugs, REMOVE LATER
+function SendUmsgTable()
+	local umsgTable = usermessage.GetTable()
+	
+	net.Start("printUmsgTable")
+		net.WriteTable(umsgTable)
+	net.SendToServer()
+end
+net.Receive( "sendUmsgTable", SendUmsgTable)
+

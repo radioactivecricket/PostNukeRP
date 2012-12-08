@@ -28,7 +28,7 @@ local function KeyThink( )
 			elseif i == KEY_F10 then -- Enter Code Here
 			elseif i == KEY_F11 then RunConsoleCommand("pnrp_setowner")
 			elseif i == KEY_F12 then 
-			elseif i == KEY_C then RunConsoleCommand("pnrp_open_voice")
+			--elseif i == KEY_C then RunConsoleCommand("pnrp_open_voice")
 			end
 		
 		--Key Release
@@ -41,7 +41,7 @@ local function KeyThink( )
 			elseif i == KEY_F10 then -- Enter Code Here
 			elseif i == KEY_F11 then -- Enter Code Here
 			elseif i == KEY_F12 then -- Enter Code Here
-			elseif i == KEY_C then RunConsoleCommand("pnrp_close_voice")
+			--elseif i == KEY_C then RunConsoleCommand("pnrp_close_voice")
 			end
 		
 		end

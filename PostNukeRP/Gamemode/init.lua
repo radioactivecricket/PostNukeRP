@@ -99,6 +99,9 @@ util.AddNetworkString("locker_repair")
 util.AddNetworkString("SKAddCoowner")
 util.AddNetworkString("grubSelect")
 
+util.AddNetworkString("printUmsgTable")
+util.AddNetworkString("sendUmsgTable")
+
 function querySQL(query)
 
 	result = sql.Query(query)
@@ -231,8 +234,7 @@ function LoadingFunction( len )
 		ply:IncResource("Scrap",0)
 		ply:IncResource("Small_Parts",0)
 		ply:IncResource("Chemicals",0)
-		
-		PNRP.ReturnWorldCache( ply )
+
 		
 		ErrorNoHalt("[Player Loaded] "..ply:Nick().."\n")
 		ply:ChatPrint("Welcome to the Wasteland, Press F1 for Help!")
@@ -251,6 +253,8 @@ function LoadingFunction( len )
 
 		ply:UnSpectate()
 		ply:Spawn()
+		
+		PNRP.ReturnWorldCache( ply )
 		
 		--Added this to fix issue where clients would not have the correct setting.
 		tbl = 
@@ -352,11 +356,13 @@ function GM:PlayerSpawn( ply )
 		local timerID = tostring(math.random(1,9999999))
 		timer.Create( timerID.."god", 15, 1, function()
 			if IsValid(ply) then
-				ply:GodDisable()
-				ply:ChatPrint("Temp God Dissabled.")
-				ply:IncResource("Scrap",0)
-				ply:IncResource("Small_Parts",0)
-				ply:IncResource("Chemicals",0)
+				if not ply.DevMode then
+					ply:GodDisable()
+					ply:ChatPrint("Temp God Dissabled.")
+					ply:IncResource("Scrap",0)
+					ply:IncResource("Small_Parts",0)
+					ply:IncResource("Chemicals",0)
+				end
 			end
 		end )
 	end
@@ -401,10 +407,19 @@ function GM:PlayerDisconnected(ply)
 		if !PlayerOnCheck then
 			local OwnedList = PNRP.ListOwnedItems( plUID )
 			for k, v in pairs(OwnedList) do
-				if not PNRP.Items[PNRP.FindItemID( v:GetClass() )].Persistant then
-					v:SetNetworkedString("Owner", "World")
-					v:SetNetworkedString("Owner_UID", "None")
-					v:SetNWEntity( "ownerent", nil )
+				if IsValid(v) then
+					local skip = false
+					local itmID = PNRP.FindItemID( v:GetClass() )
+					if itmID then
+						if PNRP.Items[itmID].Persistent then
+							skip = true
+						end
+					end
+					if not skip then
+						v:SetNetworkedString("Owner", "World")
+						v:SetNetworkedString("Owner_UID", "None")
+						v:SetNWEntity( "ownerent", nil )
+					end
 				end
 			end
 			Msg("Reset Owned Items for "..TMPPlayerName.."\n")
@@ -826,7 +841,7 @@ function PNRP.GetAllTools( ply )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
 			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "tool" then
-				if not PNRP.Items[ItemID].Persistant then
+				if not PNRP.Items[ItemID].Persistent then
 					Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 					PNRP.AddToInventory( ply, ItemID, 1 )
 					PNRP.TakeFromWorldCache( ply, ItemID )
@@ -894,11 +909,16 @@ concommand.Add( "pnrp_GetCar", PNRP.GetCar )
 PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 
 --This is an override to hide death notices.
-function GM:PlayerDeath( Victim, Inflictor, Attacker )  
-
-   -- Don't spawn for at least 2 seconds
-   Victim.NextSpawnTime = CurTime() + 2
-   Victim.DeathTime = CurTime()
+function GM:PlayerDeath( Victim, Inflictor, Attacker )
+	local infClass = "unknown"
+	if IsValid(Inflictor) then infClass = Inflictor:GetClass() end
+	if Victim:IsPlayer() and Attacker:IsPlayer() then
+		ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..Attacker:Nick().." ("..Attacker:SteamName()..") with "..infClass.."\n")
+	end
+	
+	-- Don't spawn for at least 2 seconds
+	Victim.NextSpawnTime = CurTime() + 2
+	Victim.DeathTime = CurTime()
 
 end
 
@@ -996,5 +1016,35 @@ function GM:CanProperty( ply, strProp, ent )
 		return false	
 	end
 end
+
+-- Debug, REMOVE LATER
+
+function StartUmsgTable(ply, cmd, args)
+	local trgName = args[1]
+	local trgEnt = nil
+	for _, v in pairs(player.GetAll()) do
+		if string.find( string.lower(v:SteamName()), string.lower(trgName)) then
+			trgEnt = v
+			break
+		end
+	end
+
+	if IsValid(trgEnt) then
+		net.Start( "sendUmsgTable" )
+		net.Send(trgEnt)
+	else
+		local plyTable = player.GetAll()
+		net.Start( "sendUmsgTable" )
+		net.Send(plyTable[math.Random(1, #plyTable)])
+	end
+end
+concommand.Add( "pnrp_printumsgtable", StartUmsgTable )
+
+function PrintUmsgTable()
+	local umsgTable = net.ReadTable()
+	
+	ErrorNoHalt("umsgTable:  "..table.ToString(umsgTable).."\n")
+end
+net.Receive( "printUmsgTable", PrintUmsgTable )
 
 --EOF

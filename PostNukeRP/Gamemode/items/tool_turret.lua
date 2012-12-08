@@ -53,9 +53,14 @@ function ITEM.Create( ply, class, pos )
 	-- Important power vars!
 	ent.PowerItem = true
 	ent.PowerLevel = -50
+	ent.Entity:SetNWString("PowerUsage", ent.PowerLevel)	
 	ent.NetworkContainer = nil
 	ent.LinkedItems = {}
 	ent.DirectLinks = {}
+	
+	-- Turret programming vars
+	ent.Whitelist = false
+	ent.ProgTable = {}
 	
 	PNRP.AddWorldCache( ply,ITEM.ID )
 end

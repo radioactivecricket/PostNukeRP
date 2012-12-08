@@ -114,11 +114,20 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 			for k, v in pairs(ply:GetWeapons()) do
 			--	local wepCheck = CheckDefWeps(v)
 			--	if !wepCheck then
+
 				if string.lower(v:GetModel()) == "models/weapons/v_hands.mdl" and string.lower(v:GetClass()) ~= "weapon_radio" then
 					--Do Nothing
 				else
-					if PNRP.FindWepItem(v:GetModel()) and checkGren(ply, v) then
-						local myItem = PNRP.FindWepItem(v:GetModel())
+					
+					if PNRP.FindWepItem(v:GetModel()) and checkGren(ply, v) or string.lower(v:GetClass()) == "weapon_radio" then
+						local myItem
+						if string.lower(v:GetClass()) == "weapon_radio" then
+						--	myItem = PNRP.FindItemID( v:GetClass() )
+							myItem = PNRP.Items["wep_radio"]
+						else
+							myItem = PNRP.FindWepItem( v:GetModel() )
+						end
+
 						local pnlPanel = vgui.Create("DPanel", Scroller)
 						--	pnlPanel:SetTall(pnlList:GetTall() - 20)
 							pnlPanel:SetSize( 75, eqPanel:GetTall() - 20 )
@@ -386,13 +395,20 @@ function GM.BackpackWindow()
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_6b.png" )
 			screenBG:SetSize(pack_frame:GetWide(), pack_frame:GetTall())	
 			
-		local funnyLbl = vgui.Create("DLabel", pack_frame)
-			funnyLbl:SetPos( 40,2 )
-			funnyLbl:SetColor( Color( 245, 218, 210, 180 ) )
-			funnyLbl:SetText( "End of the world device (aka Poof Device or Bee Hive)" )
-			funnyLbl:SetFont("Trebuchet24")
-			funnyLbl:SizeToContents()	
-				
+	--	local funnyLbl = vgui.Create("DLabel", pack_frame)
+	--		funnyLbl:SetPos( 40,2 )
+	--		funnyLbl:SetColor( Color( 245, 218, 210, 180 ) )
+	--		funnyLbl:SetText( "End of the world device (aka Poof Device or Bee Hive)" )
+	--		funnyLbl:SetFont("Trebuchet24")
+	--		funnyLbl:SizeToContents()	
+		
+		local ownerLbl = vgui.Create("DLabel", pack_frame)
+			ownerLbl:SetPos( 40,2 )
+			ownerLbl:SetColor( Color( 245, 218, 210, 180 ) )
+			ownerLbl:SetText( "" )
+			ownerLbl:SetFont("Trebuchet24")
+			ownerLbl:SizeToContents()
+		
 		local ResListView = vgui.Create( "DListView", pack_frame )
 			ResListView:SetPos( pack_frame:GetWide() - 205, 40 )
 			ResListView:SetSize( 155, 100 )
@@ -713,94 +729,99 @@ function GM.TShopInterface()
 			for _, v in pairs(ItemTable) do
 				if PNRP.Items[v] then
 					local item = PNRP.Items[v] 
+					local override = false
 					
-					local neededParts = item.ToolCheck( )
-					local partsText = nil
-					if type(neededParts) == "table" then
-						partsText = "Needed Parts: \n--------------------"
-						for p, n in pairs(neededParts) do
-							if PNRP.Items[p] then
-								partsText = partsText.."\n"..PNRP.Items[p].Name.." : "..tostring(n)
+					if (item.AllHide == true and not (ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1)) and not override then
+						--do nothing
+					else
+						local neededParts = item.ToolCheck( )
+						local partsText = nil
+						if type(neededParts) == "table" then
+							partsText = "Needed Parts: \n--------------------"
+							for p, n in pairs(neededParts) do
+								if PNRP.Items[p] then
+									partsText = partsText.."\n"..PNRP.Items[p].Name.." : "..tostring(n)
+								end
 							end
 						end
-					end
-					
-					local pnlPanel = vgui.Create("DPanel")
-					pnlPanel:SetTall(75)
-					pnlPanel.Paint = function()
-						draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
-					end
-					pnlList:AddItem(pnlPanel)
-					
-					pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
-						pnlPanel.Icon:SetModel(item.Model)
-						pnlPanel.Icon:SetPos(3, 5)
-						pnlPanel.Icon:SetToolTip( partsText )
-						pnlPanel.Icon.DoClick = function()
-								RunConsoleCommand("pnrp_buildItem", v)
-								tShopIntFrame:Close()
-						end	
 						
-					pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
-					pnlPanel.Title:SetPos(90, 5)
-					pnlPanel.Title:SetText(item.Name)
-					pnlPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
-					pnlPanel.Title:SizeToContents() 
-					pnlPanel.Title:SetContentAlignment( 5 )	
-					
-					if ply:Team() == TEAM_ENGINEER then
-						if item.Scrap != nil then sc = math.ceil( item.Scrap * (1 - (0.02 * ply:GetSkill("Construction"))))  else sc = 0 end
-						if item.SmallParts != nil then sp = math.ceil(item.SmallParts * (1 - (0.02 * ply:GetSkill("Construction")))) else sp = 0 end
-						if item.Chemicals != nil then ch = math.ceil(item.Chemicals * (1 - (0.02 * ply:GetSkill("Construction")))) else ch = 0 end
-					else
-						if item.Scrap != nil then sc = item.Scrap else sc = 0 end
-						if item.SmallParts != nil then sp =item.SmallParts else sp = 0 end
-						if item.Chemicals != nil then ch = item.Chemicals else ch = 0 end
-					end
-					
-					pnlPanel.Cost = vgui.Create("DLabel", pnlPanel)		
-					pnlPanel.Cost:SetPos(90, 55)
-					pnlPanel.Cost:SetText("Cost: Scrap "..tostring(sc).." | Small Parts "..tostring(sp).." | Chemicals "..tostring(ch))
-					pnlPanel.Cost:SetColor(Color( 0, 0, 0, 255 ))
-					pnlPanel.Cost:SizeToContents() 
-					pnlPanel.Cost:SetContentAlignment( 5 )	
-					
-					pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
-					pnlPanel.ClassBuild:SetPos(90, 25)
-					pnlPanel.ClassBuild:SetText(item.Info)
-					pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
-					pnlPanel.ClassBuild:SetWide(300)
-					pnlPanel.ClassBuild:SetTall(25)
-					pnlPanel.ClassBuild:SetWrap(true)
-					pnlPanel.ClassBuild:SetContentAlignment( 5 )
-					
-					pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
-					pnlPanel.ItemWeight:SetPos(340, 55)
-					pnlPanel.ItemWeight:SetText("Weight: "..item.Weight)
-					pnlPanel.ItemWeight:SetColor(Color( 0, 0, 0, 255 ))
-					pnlPanel.ItemWeight:SizeToContents() 
-					pnlPanel.ItemWeight:SetContentAlignment( 5 )
-					
-					pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
-					pnlPanel.bulkSlider:SetPos(400, 30)
-					pnlPanel.bulkSlider:SetSize( 75, 40 ) 
-					pnlPanel.bulkSlider:SetText( " " )
-					pnlPanel.bulkSlider:SetMin( 1 )
-					pnlPanel.bulkSlider:SetMax( 100 )
-					pnlPanel.bulkSlider:SetDecimals( 0 )
-					pnlPanel.bulkSlider:SetValue( 1 )
-					
-					pnlPanel.BulkBtn = vgui.Create("DButton", pnlPanel )
-					pnlPanel.BulkBtn:SetPos(485, 30)
-					pnlPanel.BulkBtn:SetSize(80,17)
-					pnlPanel.BulkBtn:SetText( "Create Bulk" )
-					pnlPanel.BulkBtn.DoClick = function() 
-						net.Start("SpawnBulkCrate")
-							net.WriteEntity(ply)
-							net.WriteString(itemname)
-							net.WriteDouble(pnlPanel.bulkSlider:GetValue())
-						net.SendToServer()
-						tShopIntFrame:Close()
+						local pnlPanel = vgui.Create("DPanel")
+						pnlPanel:SetTall(75)
+						pnlPanel.Paint = function()
+							draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+						end
+						pnlList:AddItem(pnlPanel)
+						
+						pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
+							pnlPanel.Icon:SetModel(item.Model)
+							pnlPanel.Icon:SetPos(3, 5)
+							pnlPanel.Icon:SetToolTip( partsText )
+							pnlPanel.Icon.DoClick = function()
+									RunConsoleCommand("pnrp_buildItem", v)
+									tShopIntFrame:Close()
+							end	
+							
+						pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
+						pnlPanel.Title:SetPos(90, 5)
+						pnlPanel.Title:SetText(item.Name)
+						pnlPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
+						pnlPanel.Title:SizeToContents() 
+						pnlPanel.Title:SetContentAlignment( 5 )	
+						
+						if ply:Team() == TEAM_ENGINEER then
+							if item.Scrap != nil then sc = math.ceil( item.Scrap * (1 - (0.02 * ply:GetSkill("Construction"))))  else sc = 0 end
+							if item.SmallParts != nil then sp = math.ceil(item.SmallParts * (1 - (0.02 * ply:GetSkill("Construction")))) else sp = 0 end
+							if item.Chemicals != nil then ch = math.ceil(item.Chemicals * (1 - (0.02 * ply:GetSkill("Construction")))) else ch = 0 end
+						else
+							if item.Scrap != nil then sc = item.Scrap else sc = 0 end
+							if item.SmallParts != nil then sp =item.SmallParts else sp = 0 end
+							if item.Chemicals != nil then ch = item.Chemicals else ch = 0 end
+						end
+						
+						pnlPanel.Cost = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.Cost:SetPos(90, 55)
+						pnlPanel.Cost:SetText("Cost: Scrap "..tostring(sc).." | Small Parts "..tostring(sp).." | Chemicals "..tostring(ch))
+						pnlPanel.Cost:SetColor(Color( 0, 0, 0, 255 ))
+						pnlPanel.Cost:SizeToContents() 
+						pnlPanel.Cost:SetContentAlignment( 5 )	
+						
+						pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.ClassBuild:SetPos(90, 25)
+						pnlPanel.ClassBuild:SetText(item.Info)
+						pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
+						pnlPanel.ClassBuild:SetWide(300)
+						pnlPanel.ClassBuild:SetTall(25)
+						pnlPanel.ClassBuild:SetWrap(true)
+						pnlPanel.ClassBuild:SetContentAlignment( 5 )
+						
+						pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.ItemWeight:SetPos(340, 55)
+						pnlPanel.ItemWeight:SetText("Weight: "..item.Weight)
+						pnlPanel.ItemWeight:SetColor(Color( 0, 0, 0, 255 ))
+						pnlPanel.ItemWeight:SizeToContents() 
+						pnlPanel.ItemWeight:SetContentAlignment( 5 )
+						
+						pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
+						pnlPanel.bulkSlider:SetPos(400, 30)
+						pnlPanel.bulkSlider:SetSize( 75, 40 ) 
+						pnlPanel.bulkSlider:SetText( " " )
+						pnlPanel.bulkSlider:SetMin( 1 )
+						pnlPanel.bulkSlider:SetMax( 100 )
+						pnlPanel.bulkSlider:SetDecimals( 0 )
+						pnlPanel.bulkSlider:SetValue( 1 )
+						
+						pnlPanel.BulkBtn = vgui.Create("DButton", pnlPanel )
+						pnlPanel.BulkBtn:SetPos(485, 30)
+						pnlPanel.BulkBtn:SetSize(80,17)
+						pnlPanel.BulkBtn:SetText( "Create Bulk" )
+						pnlPanel.BulkBtn.DoClick = function() 
+							net.Start("SpawnBulkCrate")
+								net.WriteEntity(ply)
+								net.WriteString(itemname)
+								net.WriteDouble(pnlPanel.bulkSlider:GetValue())
+							net.SendToServer()
+							tShopIntFrame:Close()
+						end
 					end
 				end
 			end

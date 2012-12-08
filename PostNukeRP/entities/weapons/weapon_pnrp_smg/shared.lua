@@ -227,7 +227,9 @@ function SWEP:ShootBullet( damage, num_bullets, aimcone, recoil )
 	bullet.Damage	= damage
 	bullet.AmmoType = "smg1"
  
-	self.Owner:FireBullets( bullet )
+	if SERVER then self.Owner:LagCompensation( true ) end
+		self.Owner:FireBullets( bullet )
+	if SERVER then self.Owner:LagCompensation( false ) end
 	
 	self:ShootEffects()
 	

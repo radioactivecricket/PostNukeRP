@@ -16,6 +16,8 @@ function RadarMenu( um )
 	local radarEnt = um:ReadEntity()
 	syncMaxTime = um:ReadShort()
 	
+	ply = LocalPlayer( )
+	
 	local radarGPR = radarEnt:GetNWString("EnabledGPR", false)
 	local radarState = radarEnt:GetNWString("Status", 0)
 	local plyRadarIndex = ply:GetNWString("RadarENTIndex", nil)
@@ -23,7 +25,6 @@ function RadarMenu( um )
 	local Allowed = false
 	local entMSG = "none"
 	
-	ply = LocalPlayer( )
 	local owner = radarEnt:GetNWString( "Owner", "None" )
 	
 	if radarState >= 0 then

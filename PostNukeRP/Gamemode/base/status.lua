@@ -54,6 +54,13 @@ function StatCheck()
 						EndUpdateTime = UpdateTime / 5 
 					end
 				end
+				
+				--If End and Hunger need to be overidden
+				local overide = false
+				if v.DevMode or v.AFK then
+					overide = true
+				end
+				
 				--Endurance checks
 				if v:Alive() and CurTime() - v:GetTable().LastEndUpdate > EndUpdateTime then
 					local endur = v:GetTable().Endurance
@@ -61,7 +68,9 @@ function StatCheck()
 					if v:GetTable().IsAsleep then
 						v:GetTable().Endurance = endur + 2
 					else
-						v:GetTable().Endurance = endur - 1
+						if not overide then  --Checks for overide
+							v:GetTable().Endurance = endur - 1
+						end
 					end
 					
 					if v:GetTable().Endurance <= 0 then
@@ -83,16 +92,18 @@ function StatCheck()
 				if v:Alive() and CurTime() - v:GetTable().LastHunUpdate > HunUpdateTime and not (v:GetTable().IsAsleep) then
 					local hunger = v:GetTable().Hunger
 					
-					v:GetTable().Hunger = hunger - 1
-					
-					if v:GetTable().Hunger <= 0 then
-						v:GetTable().Hunger = 0
+					if not overide then --Checks for overide
+						v:GetTable().Hunger = hunger - 1
 						
-						v:SetHealth( v:Health() - 5 )
-						if v:Health() <= 0 then
-							timer.Create("kill_timer",  1, 1, function()
-									v:Kill()
-								end )
+						if v:GetTable().Hunger <= 0 then
+							v:GetTable().Hunger = 0
+							
+							v:SetHealth( v:Health() - 5 )
+							if v:Health() <= 0 then
+								timer.Create("kill_timer",  1, 1, function()
+										v:Kill()
+									end )
+							end
 						end
 					end
 					v:GetTable().LastHunUpdate = CurTime()

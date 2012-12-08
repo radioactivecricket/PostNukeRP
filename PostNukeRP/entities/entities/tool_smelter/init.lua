@@ -27,7 +27,7 @@ end
 
 function DoSmelt( )
 	local pl = net.ReadEntity()
-	local smallparts = net.ReadLong()
+	local smallparts = math.Round(net.ReadDouble())
 	--local smallparts = tonumber(decoded[1])
 	
 	if pl:Team() ~= TEAM_ENGINEER then

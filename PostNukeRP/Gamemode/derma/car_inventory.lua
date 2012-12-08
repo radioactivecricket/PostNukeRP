@@ -198,7 +198,7 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 								net.Start("DropBulkCrateCar")
 									net.WriteEntity(ply)
 									net.WriteString(itemname)
-									net.WriteDouble(pnlPanel.bulkSlider:GetValue())
+									net.WriteDouble(math.Round(tonumber(pnlPanel.bulkSlider:GetValue())))
 								net.SendToServer()
 								parent_frame:Close()
 							end
@@ -235,7 +235,29 @@ net.Receive( "pnrp_OpenCarInvWindow", GM.car_inventory_window )
 
 function GM.initCarInventory(ply)
 
-	RunConsoleCommand("pnrp_OpenCarInventory")
+	local foundCar = false
+	for _, car in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
+		local ItemID = PNRP.FindItemID( car:GetClass() )
+		if ItemID != nil then
+			if ItemID == "vehicle_jalopy" and car:GetModel() == "models/buggy.mdl" then
+				ItemID = "vehicle_jeep"
+			end
+			local myType = PNRP.Items[ItemID].Type
+			if tostring(car:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
+				foundCar = true
+			end
+		end
+	end
+	
+	if foundCar then
+		if CurCarMaxWeight != nil then
+			RunConsoleCommand("pnrp_OpenCarInventory")
+		else
+			ply:ChatPrint("You need to use F3 on your car.")
+		end
+	else
+		ply:ChatPrint("You are not near your car.")
+	end
 
 end
 concommand.Add( "pnrp_carinv",  GM.initCarInventory )

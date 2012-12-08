@@ -4,6 +4,8 @@ include('shared.lua')
 
 util.PrecacheModel ("models/props_forest/footlocker01_closed.mdl")
 
+util.AddNetworkString("locker_breakin")
+
 function ENT:Initialize()
 	self.Entity:SetModel("models/props_forest/footlocker01_closed.mdl")
 	self.Entity:PhysicsInit( SOLID_VPHYSICS )      -- Make us work with physics,
@@ -61,7 +63,7 @@ function ENT:Use( activator, caller )
 					net.WriteEntity(self)
 					net.WriteDouble(math.Round((self.BreakInTimer / 60) * 100))
 					net.WriteTable(communityTbl["inv"])
-					net.WriteTable(PNRP.Inventory( activator ))
+					net.WriteTable(PNRP.Inventory( activator ) or {})
 				net.Send(activator)
 				
 				-- umsg.Start("locker_menu", activator)
