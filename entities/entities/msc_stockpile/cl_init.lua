@@ -37,15 +37,15 @@ function StockViewCheck()
 end
 hook.Add( "HUDPaint", "StockViewCheck", StockViewCheck )
 
-function StockpileMenu( data )
+function StockpileMenu( )
 	local ply = LocalPlayer()
 	
-	local stockpile = data:ReadEntity()
-	local Scrap = data:ReadLong()
-	local Small = data:ReadLong()
-	local Chems = data:ReadLong()
+	local stockpile = net:ReadEntity()
+	local Scrap = math.Round(net:ReadDouble())
+	local Small = math.Round(net:ReadDouble())
+	local Chems = math.Round(net:ReadDouble())
 	
-	local stockHealth = data:ReadShort()
+	local stockHealth = math.Round(net:ReadDouble())
 	
 	local localScrap = GetResource("Scrap")
 	local localSmall = GetResource("Small_Parts")
@@ -208,7 +208,7 @@ function StockpileMenu( data )
 				repairBtn.DoClick = function() 
 					net.Start("stockpile_repair")
 						net.WriteEntity(ply)
-						net.WriteENtity(sockpile)
+						net.WriteEntity(sockpile)
 					net.SendToServer()
 					stockmenu_frame:Close() 
 				end
@@ -306,7 +306,7 @@ function StockpileMenu( data )
 				stockStatusNameLabel:SizeToContents()
 				stockStatusList:AddItem( stockStatusNameLabel )
 end
-usermessage.Hook("stockpile_menu", StockpileMenu)
+net.Receive("stockpile_menu", StockpileMenu)
 
 local function BreakInBar ()
 	surface.SetDrawColor( 0, 0, 0, 100)
@@ -330,9 +330,9 @@ local function RepairBar ()
 	surface.DrawRect(ScrW()/2 - 50 , ScrH()/2, 100*percentage, 25 )
 end
 
-function StockpileBreakIn( data )
-	local stockpile = data:ReadEntity()
-	local length = data:ReadShort()
+function StockpileBreakIn( )
+	local stockpile = net:ReadEntity()
+	local length = net:ReadDouble()
 	
 	StartTime = CurTime()
 	TimeLeft = length
@@ -345,25 +345,25 @@ function StockpileBreakIn( data )
 		net.WriteEntity(stockpile)
 	net.SendToServer()
 end
-usermessage.Hook("stockpile_breakin", StockpileBreakIn)
+net.Receive("stockpile_breakin", StockpileBreakIn)
 
-function StopBreakIn( data )
+function StopBreakIn( )
 	hook.Remove( "HUDPaint", "BreakInBar")
 end
-usermessage.Hook("stockpile_stopbreakin", StopBreakIn)
+net.Receive("stockpile_stopbreakin", StopBreakIn)
 
-function StockpileRepair( data )
-	local stockpile = data:ReadEntity()
-	local length = data:ReadShort()
+function StockpileRepair( )
+	local stockpile = net:ReadEntity()
+	local length = net:ReadDouble()
 	
 	StartTime = CurTime()
 	TimeLeft = length
 	
 	hook.Add( "HUDPaint", "RepairBar", RepairBar )
 end
-usermessage.Hook("stockpile_repair", StockpileRepair)
+net.Receive("stockpile_repair", StockpileRepair)
 
-function StopRepair( data )
+function StopRepair( )
 	hook.Remove( "HUDPaint", "RepairBar")
 end
-usermessage.Hook("stockpile_stoprepair", StopRepair)
+net.Receive("stockpile_stoprepair", StopRepair)

@@ -275,9 +275,9 @@ local function LckrRepairBar ()
 	surface.DrawRect(ScrW()/2 - 50 , ScrH()/2, 100*percentage, 25 )
 end
 
-function LockerBreakIn( data )
-	local locker = data:ReadEntity()
-	local length = data:ReadShort()
+function LockerBreakIn( )
+	local locker = net:ReadEntity()
+	local length = net:ReadDouble()
 	local ply = LocalPlayer()
 	StartTime = CurTime()
 	TimeLeft = length
@@ -290,25 +290,25 @@ function LockerBreakIn( data )
 		net.WriteEntity(locker)
 	net.SendToServer()
 end
-usermessage.Hook("locker_breakin", LockerBreakIn)
+net.Receive("locker_breakin", LockerBreakIn)
 
 function LckrStopBreakIn( data )
 	hook.Remove( "HUDPaint", "BreakInBar")
 end
-usermessage.Hook("locker_stopbreakin", LckrStopBreakIn)
+net.Receive("locker_stopbreakin", LckrStopBreakIn)
 
-function LockerRepair( data )
-	local locker = data:ReadEntity()
-	local length = data:ReadShort()
+function LockerRepair( )
+	local locker = net:ReadEntity()
+	local length = net:ReadDouble()
 	
 	StartTime = CurTime()
 	TimeLeft = length
 	
 	hook.Add( "HUDPaint", "RepairBar", LckrRepairBar )
 end
-usermessage.Hook("locker_repair", LockerRepair)
+net.Receive("locker_repair", LockerRepair)
 
-function LckrStopRepair( data )
+function LckrStopRepair( )
 	hook.Remove( "HUDPaint", "RepairBar")
 end
-usermessage.Hook("locker_stoprepair", LckrStopRepair)
+net.Receive("locker_stoprepair", LckrStopRepair)

@@ -622,20 +622,20 @@ function ProgressBar()
 	surface.DrawRect(ScrW()/2 - 50 , ScrH()/2, 100*percentage, 25 )
 end
 
-function StartProgressBar( data )
-	local length = data:ReadShort()
+function StartProgressBar( )
+	local length = net:ReadDouble()
 	
 	pbarStartTime = CurTime()
 	pbarMaxTime = length
 	
 	hook.Add( "HUDPaint", "ProgressBar", ProgressBar )
 end
-usermessage.Hook("startProgressBar", StartProgressBar)
+net.Receive("startProgressBar", StartProgressBar)
 
-function StopProgressBar( data )
+function StopProgressBar( )
 	hook.Remove( "HUDPaint", "ProgressBar")
 end
-usermessage.Hook("stopProgressBar", StopProgressBar)
+net.Receive("stopProgressBar", StopProgressBar)
 ---
 
 function GM:DrawDeathNotice(x, y)

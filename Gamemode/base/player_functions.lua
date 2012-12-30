@@ -28,6 +28,23 @@ PNRP.ChatConCmd( "/salvage", "pnrp_salvage" )
 PNRP.ChatConCmd( "/hud", "pnrp_HUD" )
 PNRP.ChatConCmd( "/devmode", "pnrp_plydevmode" )
 
+function SetItmName(ply, cmd, args)
+	local tr = ply:TraceFromEyes(200)
+	local ent = tr.Entity
+	
+	if IsValid(ent) then
+		if !ent:IsPlayer() then
+			if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then
+				if args[1] then
+					ent:SetNWString("name", args[1])
+				end
+			end
+		end
+	end
+end
+concommand.Add( "pnrp_setname", SetItmName )
+PNRP.ChatConCmd( "/name", "pnrp_setname" )
+
 -- Pretty much taken from DarkRP code.  If it works, it works.
 local meta = FindMetaTable("Player")
 meta.SteamName = meta.Name
@@ -41,26 +58,27 @@ end
 meta.Nick = meta.Name
 meta.GetName = meta.Name
 
-function SetRPName(ply, cmd, args)
+function SetRPName(ply, cmd, args, fullstr)
 	if (not args[1]) or args[1] == "" or args[1] == nil then
 		ply.rpname = ply:SteamName()
 	else
-		if string.len(args[1]) > 40 then
+		if string.len(fullstr) > 40 then
 			ply:ChatPrint("RP name is too long.  Must be under 40 characters.")
 			return
 		end
 
-		ply.rpname = args[1]
+		ply.rpname = fullstr
 	end
-
-	umsg.Start("RPNameChange")
-		umsg.Entity(ply)
-		umsg.String(ply.rpname)
-		umsg.Bool(false)
-	umsg.End()
+	
+	net.Start("RPNameChange")
+		net.WriteEntity(ply)
+		net.WriteString(ply.rpname)
+		net.WriteBit(false)
+	net.Broadcast()
 end
 concommand.Add( "pnrp_setrpname", SetRPName )
 PNRP.ChatConCmd( "/rpname", "pnrp_setrpname" )
+util.AddNetworkString("RPNameChange")
 
 function GetAllRPNames(ply)
 	local plyList = player.GetAll()
@@ -68,16 +86,15 @@ function GetAllRPNames(ply)
 	for _, pent in pairs(plyList) do
 		if pent and IsValid(pent) then
 			if pent ~= ply then
-				umsg.Start("RPNameChange", ply)
-					umsg.Entity(pent)
-					umsg.String(pent:Name())
-					umsg.Bool(true)
-				umsg.End()
+				net.Start("RPNameChange")
+					net.WriteEntity(pent)
+					net.WriteString(pent:Name())
+					net.WriteBit(true)
+				net.Send(ply)
 			end
 		end
 	end
 end
-
 concommand.Add( "pnrp_newcomm", PlyNewComm )
 PNRP.ChatConCmd( "/newcomm", "pnrp_newcomm" )
 
@@ -892,10 +909,10 @@ function PlyInvComm(ply, cmd, args)
 			ply:ChatPrint( trgEnt:Nick().." has been invited to the community!" )
 
 			PNRP.PendingInvites[trgEnt:Nick()] = ply:GetNWString("community")
-			umsg.Start( "sendinvite", trgEnt )
-				umsg.String( ply:Nick() )
-				umsg.String( ply:GetTable().Community )
-			umsg.End()
+			net.Start( "sendinvite" )
+				net.WriteString( ply:Nick() )
+				net.WriteString( ply:GetTable().Community )
+			net.Send(trgEnt)
 
 		else
 			ply:ChatPrint( "Player not found!" )
@@ -906,6 +923,7 @@ function PlyInvComm(ply, cmd, args)
 end
 concommand.Add( "pnrp_invcomm", PlyInvComm )
 PNRP.ChatConCmd( "/invite", "pnrp_invcomm" )
+util.AddNetworkString("sendinvite")
 
 function PlyRankComm(ply, cmd, args)
 	--function AmendCommunityInfo( cid, name, title, rank, lastlog, model, pid* )
@@ -1273,7 +1291,13 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 		local wepCheck = PNRP.CheckDefWeps(v) and v != "weapon_real_cs_admin_weapon"
 		if !wepCheck then
 			if PNRP.FindWepItem(v:GetModel()) then
-				local myItem = PNRP.FindWepItem(v:GetModel())
+				local myItem
+				if string.lower(v:GetClass()) == "weapon_radio" then
+				--	myItem = PNRP.FindItemID( v:GetClass() )
+					myItem = PNRP.Items["wep_radio"]
+				else
+					myItem = PNRP.FindWepItem( v:GetModel() )
+				end
 				Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
 				-- local ent = ents.Create("ent_weapon")
 				-- --ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
@@ -1674,9 +1698,9 @@ function plyAFK(ply, cmd, args)
 		ply:Freeze(false)
 		ply:SetRenderMode(0)
 		ply:SetColor( Color(255,255,255,255) )
-		umsg.Start("sleepeffects", ply)
-			umsg.Bool(false)
-		umsg.End()
+		net.Start("sleepeffects")
+			net.WriteBit(false)
+		net.Send(ply)
 		ply:ChatPrint("You are no longer AFK")
 		
 		timer.Create( "AFK_"..tostring(ply), 900, 1, function() 
@@ -1697,9 +1721,9 @@ function plyAFK(ply, cmd, args)
 			if ply:HasWeapon( "gmod_rp_hands" ) then
 				ply:SelectWeapon( "gmod_rp_hands")
 			end
-			umsg.Start("sleepeffects", ply)
-				umsg.Bool(true)
-			umsg.End()
+			net.Start("sleepeffects")
+				net.WriteBit(true)
+			net.Send(ply)
 			ply:ChatPrint("You are now AFK")
 			ply:ChatPrint("You can still be hurt while AFK")
 			ply.CantAFK = true

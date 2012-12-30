@@ -10,11 +10,11 @@ function ENT:Draw()
 	self.Entity:DrawModel()
 end
 
-function RadarMenu( um )
-	local radarHP = um:ReadShort()
-	local endIndex = um:ReadShort()
-	local radarEnt = um:ReadEntity()
-	syncMaxTime = um:ReadShort()
+function RadarMenu( )
+	local radarHP = math.Round(net:ReadDouble())
+	local endIndex = math.Round(net:ReadDouble())
+	local radarEnt = net:ReadEntity()
+	syncMaxTime = math.Round(net:ReadDouble())
 	
 	ply = LocalPlayer( )
 	
@@ -224,7 +224,7 @@ function RadarMenu( um )
 		end
 		
 end
-usermessage.Hook("radar_menu", RadarMenu)
+net.Receive("radar_menu", RadarMenu)
 
 RADAR_HUD = { }
 local syncTimer = 0

@@ -35,6 +35,7 @@ function ITEM.Create( ply, class, pos )
 	ent:AddRelationship("npc_floor_turret D_LI 99")
 	ent:AddRelationship("npc_chemgrub D_LI 99")
 	ent:AddRelationship("player D_LI 99")
+	ent:AddRelationship("npc_hdvermin D_LI 99")
 	
 	-- Turned off, so friendly with all.
 	ent:AddRelationship("npc_zombie D_LI 99")

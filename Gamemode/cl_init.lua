@@ -57,15 +57,15 @@ end
 pmeta.GetName = pmeta.Name
 pmeta.Nick = pmeta.Name
 
-local function RcvNewRPName( data )
-	local target = data:ReadEntity()
-	local newname = data:ReadString()
-	local suppressMessage = data:ReadBool()
+local function RcvNewRPName( )
+	local target = net:ReadEntity()
+	local newname = net:ReadString()
+	local suppressMessage = tobool(net:ReadBit())
 	
 	if not suppressMessage then LocalPlayer():ChatPrint(target:Nick().." changed their name to "..newname..".") end
 	target.rpname = newname
 end
-usermessage.Hook( "RPNameChange", RcvNewRPName )
+net.Receive( "RPNameChange", RcvNewRPName )
 -- End
 
 -- Chat override
@@ -111,13 +111,13 @@ function GetResource(resource)
 end
 
 --Set Resource
-function GM.SetResource(um)
-	local res = um:ReadString()
-	local amount = um:ReadShort()
+function GM.SetResource( )
+	local res = net:ReadString()
+	local amount = math.Round(net:ReadDouble())
 
 	Resources[res] = amount
 end
-usermessage.Hook("pnrp_SetResource",GM.SetResource)
+net.Receive("pnrp_SetResource",GM.SetResource)
 
 local PlayerMeta = FindMetaTable("Player")
 
@@ -131,13 +131,13 @@ function GetSkill(skill)
 end
 
 --Set skill
-function GM.SetSkill(um)
-	local skill = um:ReadString()
-	local amount = um:ReadShort()
+function GM.SetSkill( )
+	local skill = net:ReadString()
+	local amount = math.Round(net:ReadDouble())
 
 	Skills[skill] = amount
 end
-usermessage.Hook("pnrp_SetSkill",GM.SetSkill)
+net.Receive("pnrp_SetSkill",GM.SetSkill)
 
 --Get experience
 function GetXP()
@@ -145,12 +145,12 @@ function GetXP()
 end
 
 --Set experience
-function GM.SetXP(um)
-	local amount = um:ReadLong()
+function GM.SetXP( )
+	local amount = math.Round(net:ReadDouble())
 	
 	XP = amount
 end
-usermessage.Hook("pnrp_SetXP",GM.SetXP)
+net.Receive("pnrp_SetXP",GM.SetXP)
 
 function set_class()
  

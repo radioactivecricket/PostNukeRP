@@ -27,9 +27,10 @@ local function SetPlyFreqSWEP( )
 	
 	ply:ChatPrint("Radio frequency now set to "..frequency..".")
 	
-	umsg.Start("radiofreq_recieve", ply)
-		umsg.String(frequency)
-	umsg.End()
+	net.Start("radiofreq_recieve")
+		net.WriteString(frequency)
+	net.Send(ply)
 end
---datastream.Hook( "setfreq_stream", SetPlyFreqSWEP )
+util.AddNetworkString("radiofreq_recieve")
 net.Receive( "setfreq_stream", SetPlyFreqSWEP )
+

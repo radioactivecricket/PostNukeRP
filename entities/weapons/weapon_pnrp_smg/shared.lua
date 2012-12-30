@@ -40,6 +40,14 @@ function SWEP:Initialize()
 	util.PrecacheSound(self.Primary.Sound)
 	util.PrecacheSound("Weapon_SMG1.Reload")
     self:SetWeaponHoldType(self.HoldType)
+	
+	if SERVER and self.Owner:IsNPC() then
+		self:SetWeaponHoldType(SWEP.HoldType)                          	-- Hold type style ("pistol" "pistol" "shotgun" "rpg" "normal" "melee" "grenade" "smg")
+		self:SetNPCMinBurst(3)			
+		self:SetNPCMaxBurst(10)			// None of this really matters but you need it here anyway
+		self:SetNPCFireRate(1)	
+		self:SetCurrentWeaponProficiency( WEAPON_PROFICIENCY_VERY_GOOD )
+	end
 end
 
 function SWEP:SetupDataTables()

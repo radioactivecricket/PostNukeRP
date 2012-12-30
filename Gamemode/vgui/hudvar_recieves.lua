@@ -5,12 +5,12 @@
 Hunger = 100
 Endurance = 100
 
-function ReceiveEndurance( um )
-	Endurance = um:ReadShort()
+function ReceiveEndurance( )
+	Endurance = math.Round(net:ReadDouble())
 end
-usermessage.Hook("endurancemsg", ReceiveEndurance)
+net.Receive("endurancemsg", ReceiveEndurance)
 
-function ReceiveHunger( um )
-	Hunger = um:ReadShort()
+function ReceiveHunger( )
+	Hunger = math.Round(net:ReadDouble())
 end
-usermessage.Hook("hungermsg", ReceiveHunger)
+net.Receive("hungermsg", ReceiveHunger)
