@@ -911,9 +911,18 @@ PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 --This is an override to hide death notices.
 function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	local infClass = "unknown"
+	local attClass = "unknown"
 	if IsValid(Inflictor) then infClass = Inflictor:GetClass() end
+	if IsValid(Attacker) then attClass = Attacker:GetClass() end
 	if Victim:IsPlayer() and Attacker:IsPlayer() then
 		ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..Attacker:Nick().." ("..Attacker:SteamName()..") with "..infClass.."\n")
+	elseif Victim:IsPlayer() then
+		if Inflictor:GetNWString("Owner", nil) then
+			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by (Object Owner)"..tostring(Inflictor:GetNWString("Owner",nil)).." with "..infClass.."\n")
+		else
+			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..attClass.." with "..infClass.."\n")
+		end
+		
 	end
 	
 	-- Don't spawn for at least 2 seconds
