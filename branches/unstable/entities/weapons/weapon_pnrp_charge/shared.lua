@@ -62,7 +62,7 @@ function SWEP:PrimaryAttack()
 	self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
 	self.Weapon:SetNextSecondaryFire(CurTime() + 0.5)
 
-	if not trace.Hit or (trace.Entity:GetClass() ~= "prop_door_rotating" and trace.Entity:GetClass() ~= "func_door_rotating" and trace.Entity:GetClass() ~= "pnrp_antmound") or trace.HitWorld then
+	if not trace.Hit or (trace.Entity:GetClass() ~= "prop_door_rotating" and trace.Entity:GetClass() ~= "func_door_rotating" and trace.Entity:GetClass() ~= "pnrp_antmound" and trace.Entity:GetClass() ~= "func_door") or trace.HitWorld then
 		if (SERVER) then
 			self.Owner:PrintMessage(HUD_PRINTTALK, "The shaped charge can only be installed on doors or mounds!")
 		end 
@@ -112,7 +112,7 @@ function SWEP:PrimaryAttack()
 	Charge:SetNWEntity("door", trace.Entity)
 	table.insert(self.SetCharges, Charge)
 	
-	if trace.Entity and trace.Entity:IsValid() and (trace.Entity:GetClass() == "prop_door_rotating" or trace.Entity:GetClass() == "func_door_rotating") then
+	if trace.Entity and trace.Entity:IsValid() and (trace.Entity:GetClass() == "prop_door_rotating" or trace.Entity:GetClass() == "func_door_rotating" or trace.Entity:GetClass() == "func_door") then
 		if not trace.Entity:IsNPC() and not trace.Entity:IsPlayer() and trace.Entity:GetPhysicsObject():IsValid() then
 			constraint.Weld(Charge, trace.Entity)
 		end

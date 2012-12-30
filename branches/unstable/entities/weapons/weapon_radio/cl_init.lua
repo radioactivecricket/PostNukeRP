@@ -12,9 +12,9 @@ SWEP.WepSelectIcon		= nil
 
 
 
-local function RadioFreq( data )
-	local ply = data:ReadEntity()
-	local frequency = data:ReadString()
+local function RadioFreq( )
+	local ply = net:ReadEntity()
+	local frequency = net:ReadString()
 	local freqNumber = tonumber(frequency)
 	
 	local w = 250
@@ -57,16 +57,16 @@ local function RadioFreq( data )
 			freq_frame:Close()
 		end
 end
-usermessage.Hook("radiofreq_select", RadioFreq)
+net.Receive("radiofreq_select", RadioFreq)
 
-function RecieveFixedFreq( data )
+function RecieveFixedFreq( )
 	local curPly = LocalPlayer()
-	curPly.radioFreq = data:ReadString()
+	curPly.radioFreq = net:ReadString()
 end
-usermessage.Hook("radiofreq_recieve", RecieveFixedFreq)
+net.Receive("radiofreq_recieve", RecieveFixedFreq)
 
-function RadioPower( data )
+function RadioPower( )
 	local curPly = LocalPlayer()
-	curPly.radioPower = data:ReadBool()
+	curPly.radioPower = tobool(net:ReadBit())
 end
-usermessage.Hook("radiopower_select", RadioPower)
+net.Receive("radiopower_select", RadioPower)

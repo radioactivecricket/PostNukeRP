@@ -206,16 +206,16 @@ function DoPrune( )
 	ent.Pruning = ply
 	ent.CanPrune = false
 	
-	umsg.Start("startProgressBar", ply)
-		umsg.Short((100 - ent.PlantStatus)/2)
-	umsg.End()
+	net.Start("startProgressBar")
+		net.WriteDouble((100 - ent.PlantStatus)/2)
+	net.Send(ply)
 	
 	timer.Create( ply:UniqueID().."_prune_"..tostring(ent), 0.25, ((100 - ent.PlantStatus)*4)/2, function()
 		ply:SelectWeapon("gmod_rp_hands")
 		if (not ent:IsValid()) or (not ply:Alive()) then
 			ply:SetMoveType(MOVETYPE_WALK)
-			umsg.Start("stopProgressBar", ply)
-			umsg.End()
+			net.Start("stopProgressBar")
+			net.Send(ply)
 			ent.Pruning = nil
 			if ent:IsValid() then 
 				timer.Stop(ply:UniqueID().."_prune_"..tostring(ent))
@@ -250,8 +250,8 @@ function ENT:Use( activator, caller )
 				activator:ChatPrint("You stop pruning the plant.")
 				
 				activator:SetMoveType(MOVETYPE_WALK)
-				umsg.Start("stopProgressBar", activator)
-				umsg.End()
+				net.Start("stopProgressBar")
+				net.Send(activator)
 				self.Pruning = nil
 				self.CanPrune = true
 				if self:IsValid() then 
@@ -262,23 +262,20 @@ function ENT:Use( activator, caller )
 			end
 		else
 			self.LastUser = activator
-			
-			local rp = RecipientFilter()
-			rp:RemoveAllPlayers()
-			rp:AddPlayer( activator )
 			 
-			umsg.Start("plant_menu", rp)
-				umsg.Short(self.FruitLevel)
-				umsg.Short(self.PlantStatus)
-				umsg.Bool(IsValid(self.Filtered))
-				umsg.Bool(self.Fertilized)
-				umsg.Bool(IsValid(self.Airator))
-				umsg.Bool(self.CanPrune)
-				umsg.Entity(self.Entity)
-			umsg.End()
+			net.Start("plant_menu")
+				net.WriteDouble(self.FruitLevel)
+				net.WriteDouble(self.PlantStatus)
+				net.WriteBit(IsValid(self.Filtered))
+				net.WriteBit(self.Fertilized)
+				net.WriteBit(IsValid(self.Airator))
+				net.WriteBit(self.CanPrune)
+				net.WriteEntity(self.Entity)
+			net.Send(activator)
 		end
 	end
 end
+util.AddNetworkString("plant_menu")
 
 function ENT:Think()
 	if self.Pruning then
@@ -289,8 +286,8 @@ function ENT:Think()
 			self.Pruning:ChatPrint("You finish pruning the plant.")
 			
 			self.Pruning:SetMoveType(MOVETYPE_WALK)
-			umsg.Start("stopProgressBar", self.Pruning)
-			umsg.End()
+			net.Start("stopProgressBar")
+			net.Send(self.Pruning)
 			if self:IsValid() and IsValid(self.Pruning) then 
 				timer.Stop(self.Pruning:UniqueID().."_prune_"..tostring(self))
 			end

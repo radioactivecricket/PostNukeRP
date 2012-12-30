@@ -6,12 +6,12 @@ end
 
 local minerSuperState = "off"
 
-function SuperMinerMenu( um )
+function SuperMinerMenu( )
 	local smallparts = GetResource("Small_Parts")
-	local minerHP = um:ReadShort()
-	local endIndex = um:ReadShort()
-	local minerPower = um:ReadShort()
-	local minerEnt = um:ReadEntity()
+	local minerHP = math.Round(net:ReadDouble())
+	local endIndex = math.Round(net:ReadDouble())
+	local minerPower = math.Round(net:ReadDouble())
+	local minerEnt = net:ReadEntity()
 	local Allowed = "true"
 	local entMSG = "none"
 	ply = LocalPlayer( )
@@ -23,14 +23,14 @@ function SuperMinerMenu( um )
 		minerSuperState = "on"
 	end
 	
-	if owner ~= ply:Nick() then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
-			ply:ChatPrint("Admin overide.")
-		else
-			entMSG = "You do not own this unit."
-			Allowed = "false"
-		end
-	end
+--	if owner ~= ply:Nick() then
+--		if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+--			ply:ChatPrint("Admin overide.")
+--		else
+--			entMSG = "You do not own this unit."
+--			Allowed = "false"
+--		end
+--	end
 	
 	if minerHP <= 0 then minerSuperState = "off" end
 	
@@ -142,6 +142,5 @@ function SuperMinerMenu( um )
 			end
 		end
 end
-
-usermessage.Hook("super_miner_menu", SuperMinerMenu)
+net.Receive("super_miner_menu", SuperMinerMenu)
 

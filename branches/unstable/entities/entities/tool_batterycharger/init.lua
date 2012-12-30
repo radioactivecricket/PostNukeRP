@@ -43,8 +43,8 @@ function ENT:Use( activator, caller )
 				activator:ChatPrint("You stop repairing the battery.")
 				
 				activator:SetMoveType(MOVETYPE_WALK)
-				umsg.Start("stopProgressBar", activator)
-				umsg.End()
+				net.Start("stopProgressBar")
+				net.Send(activator)
 				self.Repairing = nil
 				if self:IsValid() then 
 					timer.Stop(activator:UniqueID().."_repair_"..tostring(self))
@@ -57,28 +57,6 @@ function ENT:Use( activator, caller )
 			if self.entOwner == "none" then
 				self.entOwner = activator:Nick()
 			end
-			
-			--[[local actInv = {}
-			local availFuel = 0
-			
-			local rp = RecipientFilter()
-			rp:RemoveAllPlayers()
-			rp:AddPlayer( activator )
-			 
-			umsg.Start("batgen_menu", rp)
-				umsg.Short(self:Health())
-				if self.NetworkContainer then
-					umsg.Short(self.NetworkContainer.NetPower or self.PowerLevel)
-				else
-					umsg.Short(self.PowerLevel)
-				end
-				umsg.Short(self.UnitLeft)
-				umsg.Short(availFuel or 0)
-				umsg.Bool(self.Status)
-				umsg.Bool(false)
-				umsg.Entity(self.Entity)
-				umsg.Entity(activator)
-			umsg.End()]]--
 			
 			if IsValid(self.ChargeEnt) then
 				self:UnhookBattery(self.ChargeEnt)

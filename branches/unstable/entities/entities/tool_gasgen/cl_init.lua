@@ -4,15 +4,15 @@ function ENT:Draw()
 	self.Entity:DrawModel()
 end
 
-function GasGenMenu( um )
-	local health = um:ReadShort()
-	local powerLevel = um:ReadShort()
-	local fuel = um:ReadShort()
-	local fuelLeft = um:ReadShort()
-	local availFuel = um:ReadShort()
-	local isOn = um:ReadBool()
-	local isMeltdown = um:ReadBool()
-	local genEnt = um:ReadEntity()
+function GasGenMenu( )
+	local health = math.Round(net:ReadDouble())
+	local powerLevel = math.Round(net:ReadDouble())
+	local fuel = math.Round(net:ReadDouble())
+	local fuelLeft = math.Round(net:ReadDouble())
+	local availFuel = math.Round(net:ReadDouble())
+	local isOn = tobool(net:ReadBit())
+	local isMeltdown = tobool(net:ReadBit())
+	local genEnt = net:ReadEntity()
 	local ply = LocalPlayer()
 	
 	local w = 575
@@ -250,6 +250,6 @@ function GasGenMenu( um )
 	
 	
 end
-usermessage.Hook("gasgen_menu", GasGenMenu)
+net.Receive("gasgen_menu", GasGenMenu)
 
 

@@ -8,29 +8,32 @@ local spawnTbl = GM.spawnTbl
   Resource functions
 ---------------------------------------------------------*/
 function PlayerMeta:GetResource(resource)
-	return self.Resources[resource] or 0
+	return math.Round(self.Resources[resource]) or 0
 end
 
 function PlayerMeta:SetResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 end
 
 	self.Resources[resource] = int
-
-	umsg.Start("pnrp_SetResource",self)
-	umsg.String(resource)
-	umsg.Short(int)
-	umsg.End()
+	
+	net.Start("pnrp_SetResource")
+		net.WriteString(resource)
+		net.WriteDouble(int)
+	net.Send(self)
+	
 end
+util.AddNetworkString("pnrp_SetResource")
 
 function PlayerMeta:IncResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 return end
 
 	self.Resources[resource] = self.Resources[resource] + int
-
-	umsg.Start("pnrp_SetResource",self)
-	umsg.String(resource)
-	umsg.Short(self:GetResource(resource))
-	umsg.End()
+	
+	net.Start("pnrp_SetResource")
+		net.WriteString(resource)
+		net.WriteDouble(self:GetResource(resource))
+	net.Send(self)
+	
 end
 
 function PlayerMeta:DecResource(resource,int)
@@ -44,10 +47,11 @@ function PlayerMeta:DecResource(resource,int)
 	if int == nil then int = 0 end
 --	Msg(tostring(int).."\n")
 	self.Resources[resource] = self.Resources[resource] - int
-	umsg.Start("pnrp_SetResource",self)
-	umsg.String(resource)
-	umsg.Short(self:GetResource(resource))
-	umsg.End()
+	net.Start("pnrp_SetResource")
+		net.WriteString(resource)
+		net.WriteDouble(self:GetResource(resource))
+	net.Send(self)
+
 end
 
 function PlayerMeta:GiveResource(resource,int)

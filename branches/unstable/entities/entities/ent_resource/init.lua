@@ -2,6 +2,8 @@ AddCSLuaFile( "cl_init.lua" )
 AddCSLuaFile( "shared.lua" )
 include('shared.lua')
 
+util.AddNetworkString("stopProgressBar")
+
 function ENT:Initialize()
 	self.Entity:PhysicsInit( SOLID_VPHYSICS )      -- Make us work with physics,
 	self.Entity:SetSolid( SOLID_VPHYSICS )
@@ -23,8 +25,8 @@ function ENT:Use( activator, caller )
 		
 		activator:SetMoveType(MOVETYPE_WALK)
 		activator.scavving = nil
-		umsg.Start("stopProgressBar", activator)
-		umsg.End()
+		net.Start("stopProgressBar")
+		net.Send(activator)
 		return
 	elseif activator.scavving then
 		return end
@@ -35,17 +37,17 @@ function ENT:Use( activator, caller )
 	
 	activator:EmitSound(Sound("ambient/levels/streetwar/building_rubble"..tostring(math.random(1,5))..".wav"))
 	
-	umsg.Start("startProgressBar", activator)
-		umsg.Short(3)
-	umsg.End()
+	net.Start("startProgressBar")
+		net.WriteDouble(3)
+	net.Send(activator)
 	
 	local respile = self
 	timer.Create( activator:UniqueID().."_respile_"..tostring(self:EntIndex()), 0.25, 12, function()
 			activator:SelectWeapon("gmod_rp_hands")
 			if (not respile:IsValid()) or (not activator:Alive()) then
 				activator:SetMoveType(MOVETYPE_WALK)
-				umsg.Start("stopProgressBar", activator)
-				umsg.End()
+				net.Start("stopProgressBar")
+				net.Send(activator)
 				activator.scavving = nil
 				if respile:IsValid() then 
 					timer.Stop(activator:UniqueID().."_respile_"..tostring(respile:EntIndex()))
@@ -57,8 +59,8 @@ function ENT:Use( activator, caller )
 		end )
 	local myself = self
 	timer.Create( activator:UniqueID().."_respile_"..tostring(self:EntIndex()).."_end", 3, 1, function() 
-			umsg.Start("stopProgressBar", activator)
-			umsg.End()
+			net.Start("stopProgressBar")
+			net.Send(activator)
 			-- ply:Freeze(false)
 			activator:SetMoveType(MOVETYPE_WALK)
 			activator.scavving = nil
