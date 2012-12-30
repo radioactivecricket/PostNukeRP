@@ -59,7 +59,7 @@ meta.Nick = meta.Name
 meta.GetName = meta.Name
 
 function SetRPName(ply, cmd, args, fullstr)
-	if (not args[1]) or args[1] == "" or args[1] == nil then
+	if (not args[1]) or args[1] == "" or args[1] == nil or (not fullstr) or fullstr == "" or fullstr == nil then
 		ply.rpname = ply:SteamName()
 	else
 		if string.len(fullstr) > 40 then
