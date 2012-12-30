@@ -1,0 +1,10 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "Solar Panel\Solar\Solar Panel"
+	"$surfaceprop" "metal"
+	"$bumpmap" "Solar Panel\Solar reflex\Solarnorm"
+	"$envmap" "env_cubemap"
+	"$normalmapalphaenvmapmask" 1
+	"$envmapcontrast" 1
+	"$envmapsaturation" 0.15
+}
