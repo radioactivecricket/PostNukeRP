@@ -792,7 +792,7 @@ function pnrp_ev_PreWar_DropPod( pos )
 			ent:SetKeyValue("squadname", "Combine_Unit_1")
 			ent:SetKeyValue( "NumGrenades", "2" );
 			ent:SetKeyValue( "tacticalvariant", "true" );
-			ent:SetKeyValue( "spawnflags", tostring(bit.bor(8192, 256)) );
+			ent:SetKeyValue( "spawnflags", tostring(bit.bor(8192, 256, 4)) );
 			ent:SetModel( "models/combine_soldier.mdl" )
 
 			ent:SetPos(point+Vector(0,0,50))
