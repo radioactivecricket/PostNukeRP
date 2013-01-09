@@ -248,7 +248,7 @@ function LoadingFunction( len )
 				net.WriteEntity(ply)
 				net.WriteString(ply.rpname)
 				net.WriteBit(true)
-			net.Send(ply)
+			net.Broadcast()
 		end
 
 		ply:UnSpectate()

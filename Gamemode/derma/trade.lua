@@ -258,24 +258,27 @@ function openTradeToMenu(ply, targetPly, option)
 				tradeBtn:SetPos( btnWPos,btnHPos )
 				tradeBtn:SetSize(30,30)
 				tradeBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-				tradeBtn.DoClick = function() 					
+				tradeBtn.DoClick = function() 	
 					local scrapAmount = giveScrap:GetValue()
-					if tonumber(scrapAmount) < 0 then
-						scrapAmount = 0
-					elseif tonumber(scrapAmount) > scrap then
-						scrapAmount = scrap
-					end
 					local partsAmount = giveParts:GetValue()
-					if tonumber(partsAmount) < 0 then
-						partsAmount = 0
-					elseif tonumber(partsAmount) > scrap then
-						partsAmount = smallparts
-					end
 					local chemsAmount = giveChems:GetValue()
-					if tonumber(chemsAmount) < 0 then
-						chemsAmount = 0
-					elseif tonumber(chemsAmount) > scrap then
-						chemsAmount = chems
+					
+					if option ~= "admin_trade" then
+						if tonumber(scrapAmount) < 0 then
+							scrapAmount = 0
+						elseif tonumber(scrapAmount) > scrap then
+							scrapAmount = scrap
+						end
+						if tonumber(partsAmount) < 0 then
+							partsAmount = 0
+						elseif tonumber(partsAmount) > scrap then
+							partsAmount = smallparts
+						end
+						if tonumber(chemsAmount) < 0 then
+							chemsAmount = 0
+						elseif tonumber(chemsAmount) > scrap then
+							chemsAmount = chems
+						end
 					end
 					
 					net.Start("tradeResTo")
