@@ -70,6 +70,64 @@ function PlayerMeta:GiveResource(resource,int)
 	end
 end
 
+function PNRP.tradeResToPlayer()
+	local ply = net.ReadEntity()
+	local target = net.ReadEntity()
+	local scrap = math.Round(net.ReadDouble())
+	local parts = math.Round(net.ReadDouble())
+	local chems = math.Round(net.ReadDouble())
+	local option = net.ReadString()
+	
+	local ply_scrap = ply:GetResource("Scrap")
+	local ply_parts = ply:GetResource("Small_Parts")
+	local ply_chems = ply:GetResource("Chemicals")
+	
+	if not IsValid(target) then 
+		ply:ChatPrint("Unable to find player")
+		return 
+	end
+	
+	if option == "trade" then
+		if scrap < 0 or scrap == nil then scrap = 0 end
+		if parts < 0 or parts == nil then parts = 0 end
+		if chems < 0 or chems == nil then chems = 0 end
+		
+		if scrap > ply_scrap then scrap = ply_scrap end
+		if parts > ply_parts then parts = ply_parts end
+		if chems > ply_chems then chems = ply_chems end
+		
+		if scrap > 0 then
+			giveResChatPrint(ply, target, scrap, "Scrap")
+		end
+		if parts > 0 then
+			giveResChatPrint(ply, target, parts, "Small_Parts")
+		end
+		if chems > 0 then
+			giveResChatPrint(ply, target, chems, "Chemicals")		
+		end
+		
+	elseif option == "admin_trade" then
+		AdmingiveResChatPrint(ply, target, scrap, "Scrap", option)
+		AdmingiveResChatPrint(ply, target, parts, "Scrap", option)
+		AdmingiveResChatPrint(ply, target, chems, "Scrap", option)
+	end	
+end
+net.Receive( "tradeResTo", PNRP.tradeResToPlayer )
+util.AddNetworkString("tradeResTo")
+
+function giveResChatPrint(ply, target, int, resource)
+	target:ChatPrint("You received "..tostring(int).." "..tostring(resource).." from "..ply:Nick()..".")
+	target:IncResource(resource,int)
+	ply:ChatPrint("You gave "..target:Nick().." "..tostring(int).." "..tostring(resource)..".")
+	ply:DecResource(resource,int)
+end
+
+function AdmingiveResChatPrint(ply, target, int, resource)
+	target:ChatPrint("[Admin Trade] You received "..tostring(int).." "..tostring(resource).." from "..ply:Nick()..".")
+	target:IncResource(resource,int)
+	ply:ChatPrint("[Admin Trade] You gave "..target:Nick().." "..tostring(int).." "..tostring(resource)..".")
+end
+
 function GM.GiveResource(ply,command,args)
 	local trace = {}
 	local resource = args[1] 
