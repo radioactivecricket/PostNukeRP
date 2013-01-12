@@ -108,8 +108,8 @@ function PNRP.tradeResToPlayer()
 		
 	elseif option == "admin_trade" then
 		AdmingiveResChatPrint(ply, target, scrap, "Scrap", option)
-		AdmingiveResChatPrint(ply, target, parts, "Scrap", option)
-		AdmingiveResChatPrint(ply, target, chems, "Scrap", option)
+		AdmingiveResChatPrint(ply, target, parts, "Small_Parts", option)
+		AdmingiveResChatPrint(ply, target, chems, "Chemicals", option)
 	end	
 end
 net.Receive( "tradeResTo", PNRP.tradeResToPlayer )
