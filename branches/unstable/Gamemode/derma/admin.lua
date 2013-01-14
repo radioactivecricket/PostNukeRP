@@ -12,7 +12,7 @@ function GM.open_admin()
 	local importList = net.ReadTable()
 	if ply:IsAdmin() then	
 		admin_frame = vgui.Create( "DFrame" )
-				admin_frame:SetSize( 400, 650 ) --Set the size
+				admin_frame:SetSize( 400, 660 ) --Set the size
 				admin_frame:SetPos(ScrW() / 2 - admin_frame:GetWide() / 2, ScrH() / 2 - admin_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 				admin_frame:SetTitle( "Admin Menu" ) --Set title
 				admin_frame:SetVisible( true )
@@ -559,6 +559,12 @@ function GM.open_admin()
 				    end
 				mobGridSetup:AddItem( mDLGridBTN )
 			
+			local mgDBLabel = vgui.Create("DLabel", mobGridSetup)
+				--	mgDBLabel:SetPos(10, 25)
+					mgDBLabel:SetText("Map Grids in Database")
+					mgDBLabel:SizeToContents() 
+				mobGridSetup:AddItem( mgDBLabel )
+				
 			local MapExpListView = vgui.Create( "DListView", mobGridSetup )
 					MapExpListView:SetSize( mobGridSetup:GetWide(), 150 )
 					MapExpListView:SetMultiSelect( false ) -- <removed sarcastic and useless comment>
@@ -567,7 +573,6 @@ function GM.open_admin()
 					for k, v in pairs( mapList ) do
 						MapExpListView:AddLine( v["map"], v["nodes"] )
 					end
-				
 				mobGridSetup:AddItem( MapExpListView )
 			
 			local mapExpBTN = vgui.Create("DButton", mobGridSetup )
@@ -583,7 +588,27 @@ function GM.open_admin()
 						admin_frame:Close() 
 				    end
 				mobGridSetup:AddItem( mapExpBTN )
+				
+			local mapDelBTN = vgui.Create("DButton", mobGridSetup )
+				    mapDelBTN:SetText( "Delete Map Grid" )
+				    mapDelBTN.DoClick = function()
+						if MapExpListView:GetSelectedLine() then
+							local mapName = MapExpListView:GetLine(MapExpListView:GetSelectedLine()):GetValue(1)
+							net.Start( "deleteMapGrid" )
+								net.WriteEntity(ply)
+								net.WriteString(mapName)
+							net.SendToServer()
+						end
+						admin_frame:Close() 
+				    end
+				mobGridSetup:AddItem( mapDelBTN )
 			
+			local mgIELabel = vgui.Create("DLabel", mobGridSetup)
+				--	mgIELabel:SetPos(10, 25)
+					mgIELabel:SetText("Map Grid Import/Export List")
+					mgIELabel:SizeToContents() 
+				mobGridSetup:AddItem( mgIELabel )
+				
 			local MapImpListView = vgui.Create( "DListView", mobGridSetup )
 					MapImpListView:SetSize( mobGridSetup:GetWide(), 150 )
 					MapImpListView:SetMultiSelect( false ) -- <removed sarcastic and useless comment>
