@@ -271,12 +271,12 @@ function openTradeToMenu(ply, targetPly, option)
 						end
 						if tonumber(partsAmount) < 0 then
 							partsAmount = 0
-						elseif tonumber(partsAmount) > scrap then
+						elseif tonumber(partsAmount) > smallparts then
 							partsAmount = smallparts
 						end
 						if tonumber(chemsAmount) < 0 then
 							chemsAmount = 0
-						elseif tonumber(chemsAmount) > scrap then
+						elseif tonumber(chemsAmount) > chems then
 							chemsAmount = chems
 						end
 					end
