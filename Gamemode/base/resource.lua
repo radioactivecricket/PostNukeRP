@@ -13,12 +13,12 @@ end
 
 function PlayerMeta:SetResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 end
-
+	int = math.Round(int)
 	self.Resources[resource] = int
 	
 	net.Start("pnrp_SetResource")
 		net.WriteString(resource)
-		net.WriteDouble(int)
+		net.WriteDouble(math.Round(int))
 	net.Send(self)
 	
 end
@@ -26,7 +26,7 @@ util.AddNetworkString("pnrp_SetResource")
 
 function PlayerMeta:IncResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 return end
-
+	int = math.Round(int)
 	self.Resources[resource] = self.Resources[resource] + int
 	
 	net.Start("pnrp_SetResource")
@@ -39,7 +39,7 @@ end
 function PlayerMeta:DecResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 return end
 	
-	
+	int = math.Round(int)
 	if self:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
 		Msg("Admin No Cost\n")
 		return
@@ -59,7 +59,7 @@ function PlayerMeta:GiveResource(resource,int)
 	trace.start = self:GetShootPos()
 	trace.endpos = trace.start + (self:GetAimVector() * dist)
 	trace.filter = self
-
+	int = math.Round(int)
 	local traceLine = util.TraceLine(trace)
 	if traceLine.HitNonWorld then
 		target = traceLine.Entity

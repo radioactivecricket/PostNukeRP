@@ -368,7 +368,7 @@ function PNRP.Salvage( ply, command, arg )
 	if tostring(command) == "pnrp_dosalvage"  or tostring(command) == "pnrp_docarsalvage" then
 		local split = string.Explode(",",arg[1])
 		ItemID = split[1]
-		count = tonumber(split[2])
+		count = math.Round(tonumber(split[2]))
 		allowed = true
 	else
 		local tr = ply:TraceFromEyes(400)

@@ -259,9 +259,9 @@ function openTradeToMenu(ply, targetPly, option)
 				tradeBtn:SetSize(30,30)
 				tradeBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 				tradeBtn.DoClick = function() 	
-					local scrapAmount = giveScrap:GetValue()
-					local partsAmount = giveParts:GetValue()
-					local chemsAmount = giveChems:GetValue()
+					local scrapAmount = math.Round(giveScrap:GetValue())
+					local partsAmount = math.Round(giveParts:GetValue())
+					local chemsAmount = math.Round(giveChems:GetValue())
 					
 					if option ~= "admin_trade" then
 						if tonumber(scrapAmount) < 0 then
