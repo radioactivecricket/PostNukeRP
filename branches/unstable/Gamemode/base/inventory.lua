@@ -102,7 +102,7 @@ function PNRP.CarInventory( p )
 	local invLongStr = string.Explode( " ", result[1]["car_inventory"] )
 	for _, invStr in pairs( invLongStr ) do
 		local invSplit = string.Explode( ",", invStr )
-		invTbl[invSplit[1]] = tonumber(invSplit[2])
+		invTbl[invSplit[1]] =  math.Round(tonumber(invSplit[2]) or 0)
 	end
 	
 	return invTbl

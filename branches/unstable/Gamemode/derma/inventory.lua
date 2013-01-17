@@ -184,9 +184,8 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 				 		pnlPanel.ItemWeight:SetContentAlignment( 5 )	
 				 		
 						pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
-						pnlPanel.bulkSlider:SetPos(400, 5)
-						--pnlPanel.bulkSlider:SetSize( 75, 40 ) 
-						pnlPanel.bulkSlider:SetWide( 100 )
+						pnlPanel.bulkSlider:SetPos(400, 20) 
+						pnlPanel.bulkSlider:SetWide( 175 )
 						pnlPanel.bulkSlider:SetText( "" )
 						pnlPanel.bulkSlider:SetMin( 1 )
 						pnlPanel.bulkSlider:SetMax( v )
@@ -221,85 +220,56 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 									local myType = PNRP.Items[ItemID].Type
 									if tostring(car:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
 									
-										pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
-								 		pnlPanel.sendCarInv:SetPos(400, 55)
-								 		pnlPanel.sendCarInv:SetSize(80,18)
-								    	pnlPanel.sendCarInv:SetText( "Send to Car Inv" )
-								    	pnlPanel.sendCarInv.DoClick = function()
-								    		local weight = CurCarInvWeight + item.Weight
-											local weightCap
+										pnlPanel.sendCarInvBlk = vgui.Create("DButton", pnlPanel )
+										pnlPanel.sendCarInvBlk:SetPos(400, 55)
+										pnlPanel.sendCarInvBlk:SetSize(80,18)
+										pnlPanel.sendCarInvBlk:SetText( "Send to Car Inv" )
+										pnlPanel.sendCarInvBlk.DoClick = function()
+											local weightCur = CurCarInvWeight + item.Weight
+											local weightBlk
+											local weightCapBlk
+											local amt = pnlPanel.bulkSlider:GetValue()
+											
+											--Idiot ammount check
+											if amt <= 0 then amt = 1 end
+											if amt >= v then amt = v end
+
+											weightBlk = item.Weight * amt
 											
 											weightCap = PNRP.Items[ItemID].Weight
-											
-											if weight <= weightCap then
-
+											if weightCur <= weightCap then
 												net.Start( "pnrp_addtocarinentory" )
 													net.WriteEntity(ply)
 													net.WriteString("BlkCarInv")
 													net.WriteString(item.ID)
-													net.WriteDouble(1)
+													net.WriteDouble(math.Round(amt))
 												net.SendToServer()
-												
+
 												parent_frame:Close()
 											else
-												parent_frame:Close()
-												ply:ChatPrint("You're car trunk is full.")
-											end										
-										end
-										
-										if item.Type == "tool" or item.Type == "junk" then
-											--Since GMod does not like Not or's
-										else
-											pnlPanel.sendCarInvBlk = vgui.Create("DButton", pnlPanel )
-											pnlPanel.sendCarInvBlk:SetPos(485, 30)
-											pnlPanel.sendCarInvBlk:SetSize(80,18)
-											pnlPanel.sendCarInvBlk:SetText( "Bulk to Car" )
-											pnlPanel.sendCarInvBlk.DoClick = function()
-												local weightCur = CurCarInvWeight + item.Weight
-												local weightBlk
-												local weightCapBlk
-												local amt = pnlPanel.bulkSlider:GetValue()
-												
-												--Idiot ammount check
-												if amt <= 0 then amt = 1 end
-												if amt >= v then amt = v end
-
-												weightBlk = item.Weight * amt
-												
-												weightCap = PNRP.Items[ItemID].Weight
-												if weightCur <= weightCap then
-													net.Start( "pnrp_addtocarinentory" )
-														net.WriteEntity(ply)
-														net.WriteString("BlkCarInv")
-														net.WriteString(item.ID)
-														net.WriteDouble(amt)
-													net.SendToServer()
-
-													parent_frame:Close()
-												else
-													local RemainingW = weightCap - weightCur
-													if RemainingW >= 1 then
-														amt = RemainingW / item.Weight
-														amt = floor(amt)
-														if amt >= 1 then
-															net.Start( "pnrp_addtocarinentory" )
-																net.WriteEntity(ply)
-																net.WriteString("BlkCarInv")
-																net.WriteString(item.ID)
-																net.WriteDouble(amt)
-															net.SendToServer()
-															parent_frame:Close()
-														else
-															parent_frame:Close()
-															ply:ChatPrint("You're car trunk is full.")
-														end
+												local RemainingW = weightCap - weightCur
+												if RemainingW >= 1 then
+													amt = RemainingW / item.Weight
+													amt = floor(amt)
+													if amt >= 1 then
+														net.Start( "pnrp_addtocarinentory" )
+															net.WriteEntity(ply)
+															net.WriteString("BlkCarInv")
+															net.WriteString(item.ID)
+															net.WriteDouble(math.Round(amt))
+														net.SendToServer()
+														parent_frame:Close()
 													else
 														parent_frame:Close()
 														ply:ChatPrint("You're car trunk is full.")
 													end
-												end										
-											end
+												else
+													parent_frame:Close()
+													ply:ChatPrint("You're car trunk is full.")
+												end
+											end										
 										end
+										
 									end
 						
 								end
@@ -321,7 +291,7 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 								if getBSalvageCount > v then
 									getBSalvageCount = v
 								end
-								local sndSTR = item.ID..","..tostring(getBSalvageCount)
+								local sndSTR = item.ID..","..tostring(math.Round(getBSalvageCount))
 								PNRP.OptionVerify( "pnrp_dosalvage", sndSTR, nil, nil) parent_frame:Close() 
 							end
 						end

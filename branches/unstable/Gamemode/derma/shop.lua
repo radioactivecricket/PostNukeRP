@@ -97,6 +97,16 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 						draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
 					end
 					pnlList:AddItem(pnlPanel)
+										
+					if ply:Team() == TEAM_ENGINEER then
+						if item.Scrap != nil then sc = math.ceil( item.Scrap * (1 - (0.02 * ply:GetSkill("Construction"))))  else sc = 0 end
+						if item.SmallParts != nil then sp = math.ceil(item.SmallParts * (1 - (0.02 * ply:GetSkill("Construction")))) else sp = 0 end
+						if item.Chemicals != nil then ch = math.ceil(item.Chemicals * (1 - (0.02 * ply:GetSkill("Construction")))) else ch = 0 end
+					else
+						if item.Scrap != nil then sc = item.Scrap else sc = 0 end
+						if item.SmallParts != nil then sp = item.SmallParts else sp = 0 end
+						if item.Chemicals != nil then ch = item.Chemicals else ch = 0 end
+					end
 					
 					local neededParts = item.ToolCheck( )
 					local partsText = nil
@@ -107,6 +117,18 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 								partsText = partsText.."\n"..PNRP.Items[p].Name.." : "..tostring(n)
 							end
 						end
+					end
+					
+					if ply:Team() == TEAM_ENGINEER then
+						if partsText == nil then 
+							partsText = ""
+						else
+							partsText = partsText.."\n \n"
+						end
+						partsText = partsText.."Skill Discount: \n-------------------- \n"
+						partsText = partsText.."Scrap: "..tostring(sc).." | "..item.Scrap.."\n"
+						partsText = partsText.."Small Parts: "..tostring(sp).." | "..item.SmallParts.."\n"
+						partsText = partsText.."Chemicals: "..tostring(ch).." | "..item.Chemicals.."\n"
 					end
 					
 					pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
@@ -124,17 +146,7 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 					pnlPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
 					pnlPanel.Title:SizeToContents() 
 					pnlPanel.Title:SetContentAlignment( 5 )
-					
-					if ply:Team() == TEAM_ENGINEER then
-						if item.Scrap != nil then sc = math.ceil( item.Scrap * (1 - (0.02 * ply:GetSkill("Construction"))))  else sc = 0 end
-						if item.SmallParts != nil then sp = math.ceil(item.SmallParts * (1 - (0.02 * ply:GetSkill("Construction")))) else sp = 0 end
-						if item.Chemicals != nil then ch = math.ceil(item.Chemicals * (1 - (0.02 * ply:GetSkill("Construction")))) else ch = 0 end
-					else
-						if item.Scrap != nil then sc = item.Scrap else sc = 0 end
-						if item.SmallParts != nil then sp =item.SmallParts else sp = 0 end
-						if item.Chemicals != nil then ch = item.Chemicals else ch = 0 end
-					end
-					
+															
 					pnlPanel.Cost = vgui.Create("DLabel", pnlPanel)		
 					pnlPanel.Cost:SetPos(90, 55)
 					pnlPanel.Cost:SetText("Cost: Scrap "..tostring(sc).." | Small Parts "..tostring(sp).." | Chemicals "..tostring(ch))
@@ -169,8 +181,8 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 						--Since GMod does not like Not or's	
 					else
 						pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
-						pnlPanel.bulkSlider:SetPos(310, 45)
-						pnlPanel.bulkSlider:SetWide( 250 )
+						pnlPanel.bulkSlider:SetPos(300, 45)
+						pnlPanel.bulkSlider:SetWide( 280 )
 						pnlPanel.bulkSlider:SetText( "" )
 						pnlPanel.bulkSlider:SetMin( 1 )
 						pnlPanel.bulkSlider:SetMax( 100 )
