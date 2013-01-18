@@ -614,7 +614,7 @@ function ToolCheck( ply, tr, toolmode )
 		local ASS_Plugin = ASS_FindPlugin("Sandbox Tool/Swep/Sent Protection")
 		if ASS_Plugin then
 			ASS_Check = ASS_Plugin.CanTool( ply, tr, toolmode )
-			if !ASS_Check then return false end
+			if ASS_Check == false then return false end
 		end
 	end
 	if SAT then
