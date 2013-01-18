@@ -415,7 +415,7 @@ function StorageMenu()
 							pnlLIPanel.Icon:SetToolTip( toolTip )
 							pnlLIPanel.Icon.DoClick = function() 
 								--Remove item and place in inventory (Not Sell Item)
-								local takeCount = pnlLIPanel.NumberWang:GetValue()
+								local takeCount = math.Round(pnlLIPanel.NumberWang:GetValue())
 								if tonumber(takeCount) > tonumber(count) then
 									takeCount = count
 								elseif tonumber(takeCount) < 1 then
@@ -472,7 +472,7 @@ function StorageMenu()
 							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
 							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
 							pnlUserIPanel.Icon.DoClick = function() 
-								local sendCount = pnlUserIPanel.NumberWang:GetValue()
+								local sendCount = math.Round(pnlUserIPanel.NumberWang:GetValue())
 								if sendCount > v then
 									sendCount = v
 								end

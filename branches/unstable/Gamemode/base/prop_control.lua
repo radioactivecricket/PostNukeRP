@@ -609,6 +609,18 @@ function ToolCheck( ply, tr, toolmode )
 		return true
 	end
 	
+	--Add tool checks for ASSMod and SAT
+	if ASS_VERSION then
+		local ASS_Plugin = ASS_FindPlugin("Sandbox Tool/Swep/Sent Protection")
+		if ASS_Plugin then
+			ASS_Plugin.CanTool( ply, tr, toolmode )
+		end
+	end
+	if SAT then
+		SAT_CHECK = SAT_ToolCheck( ply, tr, toolmode )
+		if !SAT_CHECK then return false end
+	end
+	
 	if toolmode == "pnrp_powerlinker" then return true end
 	
 	if ent.moveActive == false then return false end
