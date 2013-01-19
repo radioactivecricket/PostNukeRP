@@ -12,10 +12,10 @@ SWEP.WepSelectIcon		= nil
 
 function open_prgmenu()
 	local turretEnt = net.ReadEntity()
-	local whitelist = net.ReadBit()
+	local whitelist = tobool(net.ReadBit())
 	local ProgTable = net.ReadTable()
 	
-	if whitelist > 0 then
+	if whitelist then
 		whitelist = true
 	else
 		whitelist = false

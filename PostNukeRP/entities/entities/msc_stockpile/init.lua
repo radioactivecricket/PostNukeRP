@@ -4,6 +4,9 @@ include('shared.lua')
 
 util.PrecacheModel ("models/props/cs_office/crates_indoor.mdl")
 util.AddNetworkString("stockpile_breakin")
+util.AddNetworkString("stockpile_stoprepair")
+util.AddNetworkString("stockpile_menu")
+util.AddNetworkString("stockpile_stopbreakin")
 
 function ENT:Initialize()
 	self.Entity:SetModel("models/props/cs_office/crates_indoor.mdl")
@@ -45,26 +48,26 @@ function ENT:Use( activator, caller )
 				timer.Stop(activator:UniqueID()..tostring(self:EntIndex()))
 				self.Repairing = nil
 				activator:SetMoveType(MOVETYPE_WALK)
-				umsg.Start("stockpile_stoprepair", activator)
-				umsg.End()
+				net.Start("stockpile_stoprepair")
+				net.Send(activator)
 			end
 			if activator.Community == self.Community then
 				local communityTbl = GetCommunityTbl(self.Community)
 				if communityTbl == nil then return end
 				
-				umsg.Start("stockpile_menu", activator)
-					umsg.Entity(self)
-					umsg.Long(communityTbl["res"]["Scrap"])
-					umsg.Long(communityTbl["res"]["Small_Parts"])
-					umsg.Long(communityTbl["res"]["Chemicals"])
-					umsg.Short( math.Round((self.BreakInTimer / 30) * 100) )
-				umsg.End()
+				net.Start("stockpile_menu")
+					net.WriteEntity(self)
+					net.WriteDouble(communityTbl["res"]["Scrap"])
+					net.WriteDouble(communityTbl["res"]["Small_Parts"])
+					net.WriteDouble(communityTbl["res"]["Chemicals"])
+					net.WriteDouble( math.Round((self.BreakInTimer / 30) * 100) )
+				net.Send(activator)
 			else
 				-- Just a placeholder for breaking into these things.
-				umsg.Start("stockpile_breakin", activator)
-					umsg.Entity(self)
-					umsg.Short(self.BreakInTimer)
-				umsg.End()
+				net.Start("stockpile_breakin")
+					net.WriteEntity(self)
+					net.WriteDouble(self.BreakInTimer)
+				net.Send(activator)
 			end
 		end
 	end
@@ -174,16 +177,16 @@ function StockBreakIn( )
 	
 	if not stockpile.BreakingIn then
 		if stockpile.BreakInTimer <= 0 then
-			umsg.Start("stockpile_stopbreakin", ply)
-			umsg.End()
-			umsg.Start("stockpile_menu", ply)
+			net.Start("stockpile_stopbreakin")
+			net.Send(ply)
+			net.Start("stockpile_menu")
 				local communityTbl = GetCommunityTbl(stockpile.Community)
-				umsg.Entity(stockpile)
-				umsg.Long(communityTbl["res"]["Scrap"])
-				umsg.Long(communityTbl["res"]["Small_Parts"])
-				umsg.Long(communityTbl["res"]["Chemicals"])
-				umsg.Short( math.Round((stockpile.BreakInTimer / 30) * 100) )
-			umsg.End()
+				net.WriteEntity(stockpile)
+				net.WriteDouble(communityTbl["res"]["Scrap"])
+				net.WriteDouble(communityTbl["res"]["Small_Parts"])
+				net.WriteDouble(communityTbl["res"]["Chemicals"])
+				net.WriteDouble( math.Round((stockpile.BreakInTimer / 30) * 100) )
+			net.Send(ply)
 		else
 			-- ply:Freeze(true)
 			ply:SetMoveType(MOVETYPE_NONE)
@@ -193,8 +196,8 @@ function StockBreakIn( )
 				if (not stockpile:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
-					umsg.Start("stockpile_stopbreakin", ply)
-					umsg.End()
+					net.Start("stockpile_stopbreakin")
+					net.Send(ply)
 					if stockpile:IsValid() then 
 						stockpile.BreakingIn = nil 
 						timer.Stop(ply:UniqueID()..tostring(stockpile:EntIndex()))
@@ -203,8 +206,8 @@ function StockBreakIn( )
 				end
 				stockpile.BreakInTimer = stockpile.BreakInTimer - 1
 				if stockpile.BreakInTimer <= 0 then
-					umsg.Start("stockpile_stopbreakin", ply)
-					umsg.End()
+					net.Start("stockpile_stopbreakin")
+					net.Send(ply)
 					
 					ply:SetMoveType(MOVETYPE_WALK)
 					stockpile.BreakingIn = nil
@@ -212,13 +215,13 @@ function StockBreakIn( )
 					local communityTbl = GetCommunityTbl(stockpile.Community)
 					if communityTbl == nil then return end
 					
-					umsg.Start("stockpile_menu", ply)
-						umsg.Entity(stockpile)
-						umsg.Long(communityTbl["res"]["Scrap"])
-						umsg.Long(communityTbl["res"]["Small_Parts"])
-						umsg.Long(communityTbl["res"]["Chemicals"])
-						umsg.Short( math.Round((stockpile.BreakInTimer / 30) * 100) )
-					umsg.End()
+					net.Start("stockpile_menu")
+						net.WriteEntity(stockpile)
+						net.WriteDouble(communityTbl["res"]["Scrap"])
+						net.WriteDouble(communityTbl["res"]["Small_Parts"])
+						net.WriteDouble(communityTbl["res"]["Chemicals"])
+						net.WriteDouble( math.Round((stockpile.BreakInTimer / 30) * 100) )
+					net.Send(ply)
 					-- ply:Freeze(false)
 					stockpile:EmitSound("physics/wood/wood_box_break2.wav",100,100)
 					timer.Stop(ply:UniqueID()..tostring(stockpile:EntIndex()))
@@ -229,8 +232,8 @@ function StockBreakIn( )
 		end
 	elseif ply == stockpile.BreakingIn then
 		timer.Destroy(ply:UniqueID()..tostring(stockpile:EntIndex()))
-		umsg.Start("stockpile_stopbreakin", ply)
-		umsg.End()
+		net.Start("stockpile_stopbreakin")
+		net.Send(ply)
 		-- ply:Freeze(false)
 		ply:SetMoveType(MOVETYPE_WALK)
 		if stockpile:IsValid() then
@@ -253,10 +256,10 @@ function StockRepair( )
 	end
 	if not stockpile.Repairing then
 		if not stockpile.BreakingIn then
-			umsg.Start("stockpile_repair", ply)
-				umsg.Entity(stockpile)
-				umsg.Short(stockpile.BreakInTimer)
-			umsg.End()
+			net.Start("stockpile_repair")
+				net.WriteEntity(stockpile)
+				net.WriteDouble(stockpile.BreakInTimer)
+			net.Send(ply)
 			
 			ply:SetMoveType(MOVETYPE_NONE)
 			stockpile.Repairing = ply
@@ -265,8 +268,8 @@ function StockRepair( )
 				if (not stockpile:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
-					umsg.Start("stockpile_stoprepair", ply)
-					umsg.End()
+					net.Start("stockpile_stoprepair")
+					net.Send(ply)
 					if stockpile:IsValid() then 
 						stockpile.Repairing = nil
 						timer.Stop(ply:UniqueID()..tostring(stockpile:EntIndex()))
@@ -275,8 +278,8 @@ function StockRepair( )
 				end
 				stockpile.BreakInTimer = stockpile.BreakInTimer + 1
 				if stockpile.BreakInTimer >= 30 then
-					umsg.Start("stockpile_stoprepair", ply)
-					umsg.End()
+					net.Start("stockpile_stoprepair")
+					net.Send(ply)
 					
 					ply:SetMoveType(MOVETYPE_WALK)
 					stockpile.Repairing = nil
@@ -285,13 +288,13 @@ function StockRepair( )
 					local communityTbl = GetCommunityTbl(stockpile.Community)
 					if communityTbl == nil then return end
 					
-					umsg.Start("stockpile_menu", ply)
-						umsg.Entity(stockpile)
-						umsg.Long(communityTbl["res"]["Scrap"])
-						umsg.Long(communityTbl["res"]["Small_Parts"])
-						umsg.Long(communityTbl["res"]["Chemicals"])
-						umsg.Short( math.Round((stockpile.BreakInTimer / 30) * 100) )
-					umsg.End()
+					net.Start("stockpile_menu")
+						net.WriteEntity(stockpile)
+						net.WriteDouble(communityTbl["res"]["Scrap"])
+						net.WriteDouble(communityTbl["res"]["Small_Parts"])
+						net.WriteDouble(communityTbl["res"]["Chemicals"])
+						net.WriteDouble( math.Round((stockpile.BreakInTimer / 30) * 100) )
+					net.Send(ply)
 					-- ply:Freeze(false)
 					timer.Stop(ply:UniqueID()..tostring(stockpile:EntIndex()))
 				else
@@ -302,13 +305,12 @@ function StockRepair( )
 			ply:ChatPrint("You cannot repair it while someone is breaking in!")
 		end
 	elseif stockpile.Repairing == ply then
-		umsg.Start("stockpile_stoprepair", ply)
-		umsg.End()
+		net.Start("stockpile_stoprepair")
+		net.Send(ply)
 	else
 		ply:ChatPrint("Someone is already repairing this stockpile.")
 	end
 end
---datastream.Hook( "stockpile_repair", StockRepair )
 net.Receive("stockpile_repair", StockRepair )
 
 function ENT:KeyValue (key, value)

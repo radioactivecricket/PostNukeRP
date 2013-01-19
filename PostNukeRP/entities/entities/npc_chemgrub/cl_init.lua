@@ -65,11 +65,11 @@ function ENT:DoRagdollBone( PhysBoneNum, BoneNum )
  
 end
 
-function GrubMenu( um )
-	local grubEnt = um:ReadEntity()
-	local partnerEnt = um:ReadEntity()
-	local availFood = um:ReadShort()
-	local foodLevel = um:ReadShort()
+function GrubMenu( )
+	local grubEnt = net:ReadEntity()
+	local partnerEnt = net:ReadEntity()
+	local availFood = math.Round(net:ReadDouble())
+	local foodLevel = math.Round(net:ReadDouble())
 	local ply = LocalPlayer()
 	
 	local w = 300
@@ -139,4 +139,4 @@ function GrubMenu( um )
 		grub_frame:Close()
 	end
 end
-usermessage.Hook("grub_menu", GrubMenu)
+net.Receive("grub_menu", GrubMenu)

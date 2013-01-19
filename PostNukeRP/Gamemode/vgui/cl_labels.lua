@@ -43,7 +43,10 @@ function GM:HUDDrawTargetID()
 	local ents = ents.FindInSphere(ply:GetPos(), 1024)
 	for _, ent in ipairs( ents ) do
 		if IsValid(ent) then
-			if ( ent != ply and ent:Health() > 0 and ent:IsPlayer() ) then
+			--ent:SetNWString("Pet", true)
+			if ( ent != ply and ent:Health() > 0 and ent:GetNWString("pet", false) ) then
+				PetHUDLabel(ent)
+			elseif ( ent != ply and ent:Health() > 0 and ent:IsPlayer() ) then
 			
 				local td = {}
 				td.start = LocalPlayer():GetShootPos()
@@ -175,3 +178,60 @@ function PowerUsageHUDLabel()
 	end
 end
 hook.Add( "HUDPaint", "PowerUsageHUDLabel", PowerUsageHUDLabel )
+
+function PetHUDLabel(ent)
+	local ply = LocalPlayer()
+	
+	if IsValid(ent) then
+		if ( ent != ply and ent:Health() > 0 ) then
+		
+			local td = {}
+			td.start = LocalPlayer():GetShootPos()
+			td.endpos = ent:GetPos()
+			local trace = util.TraceLine( td )
+			
+			if ( !trace.HitWorld ) then	
+				local pos = ent:GetPos()
+				local bone = ent:LookupBone( "ValveBiped.Bip01_Head1" )
+				if ( bone ) then
+					pos = ent:GetBonePosition( bone )
+				end		
+				
+				local name = ent:GetNWString("name", "Pet")
+				
+				local drawPos = ent:GetPos():ToScreen()
+				local textXPos = ent:GetPos():ToScreen()
+				local distance = ply:GetShootPos():Distance( pos )
+				
+				local font = "TargetIDSmall"
+				local font2 = "HudHintTextSmall"
+				local h = 24
+				
+				surface.SetFont( font )
+				local wName = surface.GetTextSize( name ) + 32
+				local w = wName
+								
+				drawPos.x = drawPos.x - w / 2
+				drawPos.y = drawPos.y - h - 80
+				
+				local alpha = 180
+				if ( distance > 64 ) then
+					alpha = 120 - math.Clamp( ( distance - 128 ) / ( 1024 - 128 ) * 255, 0, 255 )
+				end
+				
+				surface.SetDrawColor( 62, 62, 62, alpha )
+				surface.DrawRect( drawPos.x, drawPos.y, w, h )
+				surface.SetDrawColor( 150,150,150,alpha )
+				surface.DrawOutlinedRect( drawPos.x, drawPos.y, w, h )
+				
+				local text
+				
+				text = name
+				
+				draw.DrawText( text, font, textXPos.x, drawPos.y + 5, Color(255,255,255,alpha), TEXT_ALIGN_CENTER )
+			end
+		end
+	end
+	
+end
+

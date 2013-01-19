@@ -239,12 +239,12 @@ function ENT:AcceptInput( name, activator, caller )
 					local actInv = PNRP.Inventory( activator )
 					local availFood = actInv["fuel_grubfood"]
 					
-					umsg.Start("grub_menu", activator)
-						umsg.Entity(self.Entity)
-						umsg.Entity(self.partner)
-						umsg.Short(availFood or 0)
-						umsg.Short(self.FoodLevel)
-					umsg.End()
+					net.Start("grub_menu")
+						net.WriteEntity(self.Entity)
+						net.WriteEntity(self.partner)
+						net.WriteDouble(availFood or 0)
+						net.WriteDouble(self.FoodLevel)
+					net.Send(activator)
 				else
 					activator:ChatPrint("You can't mess with this grub!  You don't know what to do!")
 				end
@@ -254,6 +254,7 @@ function ENT:AcceptInput( name, activator, caller )
 		end
 	end
 end
+util.AddNetworkString("grub_menu")
 
 function GrubSelect()
 	local ply = net.ReadEntity()

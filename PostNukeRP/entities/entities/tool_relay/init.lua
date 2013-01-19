@@ -39,8 +39,8 @@ function ENT:Use( activator, caller )
 				activator:ChatPrint("You stop repairing the relay.")
 				
 				activator:SetMoveType(MOVETYPE_WALK)
-				umsg.Start("stopProgressBar", activator)
-				umsg.End()
+				net.Start("stopProgressBar")
+				net.Send(activator)
 				self.Repairing = nil
 				if self:IsValid() then 
 					timer.Stop(activator:UniqueID().."_repair_"..tostring(self))

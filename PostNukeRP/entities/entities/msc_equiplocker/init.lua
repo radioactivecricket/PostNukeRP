@@ -5,6 +5,7 @@ include('shared.lua')
 util.PrecacheModel ("models/props_forest/footlocker01_closed.mdl")
 
 util.AddNetworkString("locker_breakin")
+util.AddNetworkString("locker_stopbreakin")
 
 function ENT:Initialize()
 	self.Entity:SetModel("models/props_forest/footlocker01_closed.mdl")
@@ -45,19 +46,13 @@ function ENT:Use( activator, caller )
 				timer.Stop(activator:UniqueID()..tostring(self:EntIndex()))
 				self.Repairing = nil
 				activator:SetMoveType(MOVETYPE_WALK)
-				umsg.Start("locker_stoprepair", activator)
-				umsg.End()
+				net.Start("locker_stoprepair")
+				net.End(activator)
 			end
 			if activator.Community == self.Community then
 				local communityTbl = GetCommunityTbl(self.Community)
 				if communityTbl == nil then return end
 				
---				local playerTbl = { }
---				local ILoc = PNRP.GetInventoryLocation( activator )
---				if file.Exists( ILoc ) then 
---					playerTbl = util.KeyValuesToTable(file.Read(ILoc))
---				end
-				--datastream.StreamToClients( activator, "locker_menu",{ ["locker"] = self, ["health"] = math.Round((self.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
 				net.Start("locker_menu")
 					net.WriteEntity(activator)
 					net.WriteEntity(self)
@@ -66,24 +61,19 @@ function ENT:Use( activator, caller )
 					net.WriteTable(PNRP.Inventory( activator ) or {})
 				net.Send(activator)
 				
-				-- umsg.Start("locker_menu", activator)
-					-- umsg.Entity(self)
-					-- umsg.Long(communityTbl["res"]["Scrap"])
-					-- umsg.Long(communityTbl["res"]["Small_Parts"])
-					-- umsg.Long(communityTbl["res"]["Chemicals"])
-					-- umsg.Short( math.Round((self.BreakInTimer / 30) * 100) )
-				-- umsg.End()
 			else
 				-- Just a placeholder for breaking into these things.
-				umsg.Start("locker_breakin", activator)
-					umsg.Entity(self)
-					umsg.Short(self.BreakInTimer)
-				umsg.End()
+				net.Start("locker_breakin")
+					net.WriteEntity(self)
+					net.WriteDouble(self.BreakInTimer)
+				net.Send(activator)
 			end
 		end
 	end
 end
 util.AddNetworkString( "locker_menu" )
+util.AddNetworkString("locker_stoprepair")
+util.AddNetworkString("locker_breakin")
 
 function TakeItems( )
 	local ply = net.ReadEntity()
@@ -175,8 +165,8 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 	
 	if not locker.BreakingIn then
 		if locker.BreakInTimer <= 0 then
-			umsg.Start("locker_stopbreakin", ply)
-			umsg.End()
+			net.Start("locker_stopbreakin")
+			net.Send(ply)
 			
 			local playerTbl = { }
 			local ILoc = PNRP.GetInventoryLocation( ply )
@@ -203,8 +193,8 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 				if (not locker:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
-					umsg.Start("locker_stopbreakin", ply)
-					umsg.End()
+					net.Start("locker_stopbreakin")
+					net.Send(ply)
 					if locker:IsValid() then 
 						locker.BreakingIn = nil 
 						timer.Stop(ply:UniqueID()..tostring(locker:EntIndex()))
@@ -213,8 +203,8 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 				end
 				locker.BreakInTimer = locker.BreakInTimer - 1
 				if locker.BreakInTimer <= 0 then
-					umsg.Start("locker_stopbreakin", ply)
-					umsg.End()
+					net.Start("locker_stopbreakin")
+					net.Send(ply)
 					
 					ply:SetMoveType(MOVETYPE_WALK)
 					locker.BreakingIn = nil
@@ -248,8 +238,8 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 		end
 	elseif ply == locker.BreakingIn then
 		timer.Destroy(ply:UniqueID()..tostring(locker:EntIndex()))
-		umsg.Start("locker_stopbreakin", ply)
-		umsg.End()
+		net.Start("locker_stopbreakin")
+		net.Send(ply)
 		-- ply:Freeze(false)
 		ply:SetMoveType(MOVETYPE_WALK)
 		if locker:IsValid() then
@@ -272,10 +262,10 @@ function LockerRepair( )
 	end
 	if not locker.Repairing then
 		if not locker.BreakingIn then
-			umsg.Start("locker_repair", ply)
-				umsg.Entity(locker)
-				umsg.Short(locker.BreakInTimer)
-			umsg.End()
+			net.Start("locker_repair")
+				net.Entity(locker)
+				net.WriteDouble(locker.BreakInTimer)
+			net.Send(ply)
 			
 			ply:SetMoveType(MOVETYPE_NONE)
 			locker.Repairing = ply
@@ -285,8 +275,8 @@ function LockerRepair( )
 				if (not locker:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
-					umsg.Start("locker_stoprepair", ply)
-					umsg.End()
+					net.Start("locker_stoprepair")
+					net.Send(ply)
 					if locker:IsValid() then 
 						locker.Repairing = nil 
 						timer.Stop(ply:UniqueID()..tostring(locker:EntIndex()))
@@ -295,8 +285,8 @@ function LockerRepair( )
 				end
 				locker.BreakInTimer = locker.BreakInTimer + 1
 				if locker.BreakInTimer >= 60 then
-					umsg.Start("locker_stoprepair", ply)
-					umsg.End()
+					net.Start("locker_stoprepair")
+					net.Send(ply)
 					
 					ply:SetMoveType(MOVETYPE_WALK)
 					locker.Repairing = nil
@@ -311,7 +301,6 @@ function LockerRepair( )
 						playerTbl = util.KeyValuesToTable(file.Read(ILoc))
 					end
 					
-					--datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
 					net.Start("locker_menu")
 						net.WriteEntity(ply)
 						net.WriteEntity(locker)
@@ -329,13 +318,13 @@ function LockerRepair( )
 			ply:ChatPrint("You cannot repair it while someone is breaking in!")
 		end
 	elseif locker.Repairing == ply then
-		umsg.Start("locker_stoprepair", ply)
-		umsg.End()
+		net.Start("locker_stoprepair")
+		net.Send(ply)
 	else
 		ply:ChatPrint("Someone is already repairing this locker.")
 	end
 end
---datastream.Hook( "locker_repair", LockerRepair )
+util.AddNetworkString("locker_repair")
 net.Receive( "locker_repair", LockerRepair )
 
 function ENT:KeyValue (key, value)

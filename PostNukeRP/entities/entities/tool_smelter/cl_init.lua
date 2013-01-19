@@ -56,5 +56,5 @@ function SmeltMenu()
 	end
 	
 end
-usermessage.Hook("smelt_menu", SmeltMenu)
+net.Receive("smelt_menu", SmeltMenu)
 

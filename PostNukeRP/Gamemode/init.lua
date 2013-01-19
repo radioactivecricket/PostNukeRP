@@ -5,8 +5,6 @@ AddCSLuaFile( "cl_init.lua" ) --Tell the server that the client needs to downloa
 AddCSLuaFile( "shared.lua" ) --Tell the server that the client needs to download shared.lua
 AddCSLuaFile("itembase.lua")
 
---require("datastream")
-
 local PlayerMeta = FindMetaTable("Player")
 local EntityMeta = FindMetaTable("Entity")
 
@@ -184,7 +182,7 @@ hook.Add( "InitPostEntity", "tableCheck", SQLiteTableCheck )
 
 function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server and spawns" function
 	
-	ply:SetTeam( TEAM_WASTELANDER ) --Add the player to team 1
+	ply:SetTeam( TEAM_WASTELANDER ) --Add the player to team TEAM_WASTELANDER
 	
 	ply.Resources = {}
 	ply.Skills = {}
@@ -245,11 +243,13 @@ function LoadingFunction( len )
 		ConVarExists("pnrp_adminNoCost")
 		ConVarExists("pnrp_propPay")
 	
-		umsg.Start("RPNameChange")
-			umsg.Entity(ply)
-			umsg.String(ply.rpname)
-			umsg.Bool(true)
-		umsg.End()
+		if ply.rpname then
+			net.Start("RPNameChange")
+				net.WriteEntity(ply)
+				net.WriteString(ply.rpname)
+				net.WriteBit(true)
+			net.Broadcast()
+		end
 
 		ply:UnSpectate()
 		ply:Spawn()
@@ -620,7 +620,7 @@ function GM:ShowTeam( ply )
 	else
 		myClass = ent:GetClass()
 	end
-	
+
 	if myClass == "prop_physics" then
 		if ent.CanF2 then
 			myClass = ent.ID
@@ -652,7 +652,7 @@ function GM:ShowTeam( ply )
 	end
 	
 	local ItemID = PNRP.FindItemID( myClass )
-	print(tostring(ItemID))
+--	print(tostring(ItemID))
 	if ItemID != nil then
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
@@ -838,7 +838,7 @@ function PNRP.GetAllTools( ply )
 	for k,v in pairs(ents.GetAll()) do
 		local myClass = v:GetClass()
 		local ItemID = PNRP.FindItemID( myClass )
-		if ItemID != nil then
+		if ItemID != nil then		
 			local myType = PNRP.Items[ItemID].Type
 			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "tool" then
 				if not PNRP.Items[ItemID].Persistent then
@@ -911,9 +911,18 @@ PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 --This is an override to hide death notices.
 function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	local infClass = "unknown"
+	local attClass = "unknown"
 	if IsValid(Inflictor) then infClass = Inflictor:GetClass() end
+	if IsValid(Attacker) then attClass = Attacker:GetClass() end
 	if Victim:IsPlayer() and Attacker:IsPlayer() then
 		ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..Attacker:Nick().." ("..Attacker:SteamName()..") with "..infClass.."\n")
+	elseif Victim:IsPlayer() then
+		if Inflictor:GetNWString("Owner", nil) then
+			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by (Object Owner)"..tostring(Inflictor:GetNWString("Owner",nil)).." with "..infClass.."\n")
+		else
+			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..attClass.." with "..infClass.."\n")
+		end
+		
 	end
 	
 	-- Don't spawn for at least 2 seconds
@@ -1016,6 +1025,16 @@ function GM:CanProperty( ply, strProp, ent )
 		return false	
 	end
 end
+
+function VehicleDamageFix( target, dmginfo )
+	if dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep_old" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_airboat" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep" then
+		if target:GetClass() == "npc_combine_s" then
+			dmginfo:SetDamage(0)
+		end
+	end
+end
+hook.Add("EntityTakeDamage", "vehDamageFix", VehicleDamageFix )
+
 
 -- Debug, REMOVE LATER
 

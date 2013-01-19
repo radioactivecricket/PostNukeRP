@@ -8,35 +8,38 @@ local spawnTbl = GM.spawnTbl
   Resource functions
 ---------------------------------------------------------*/
 function PlayerMeta:GetResource(resource)
-	return self.Resources[resource] or 0
+	return math.Round(self.Resources[resource]) or 0
 end
 
 function PlayerMeta:SetResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 end
-
+	int = math.Round(int)
 	self.Resources[resource] = int
-
-	umsg.Start("pnrp_SetResource",self)
-	umsg.String(resource)
-	umsg.Short(int)
-	umsg.End()
+	
+	net.Start("pnrp_SetResource")
+		net.WriteString(resource)
+		net.WriteDouble(math.Round(int))
+	net.Send(self)
+	
 end
+util.AddNetworkString("pnrp_SetResource")
 
 function PlayerMeta:IncResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 return end
-
+	int = math.Round(int)
 	self.Resources[resource] = self.Resources[resource] + int
-
-	umsg.Start("pnrp_SetResource",self)
-	umsg.String(resource)
-	umsg.Short(self:GetResource(resource))
-	umsg.End()
+	
+	net.Start("pnrp_SetResource")
+		net.WriteString(resource)
+		net.WriteDouble(self:GetResource(resource))
+	net.Send(self)
+	
 end
 
 function PlayerMeta:DecResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 return end
 	
-	
+	int = math.Round(int)
 	if self:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
 		Msg("Admin No Cost\n")
 		return
@@ -44,10 +47,11 @@ function PlayerMeta:DecResource(resource,int)
 	if int == nil then int = 0 end
 --	Msg(tostring(int).."\n")
 	self.Resources[resource] = self.Resources[resource] - int
-	umsg.Start("pnrp_SetResource",self)
-	umsg.String(resource)
-	umsg.Short(self:GetResource(resource))
-	umsg.End()
+	net.Start("pnrp_SetResource")
+		net.WriteString(resource)
+		net.WriteDouble(self:GetResource(resource))
+	net.Send(self)
+
 end
 
 function PlayerMeta:GiveResource(resource,int)
@@ -55,7 +59,7 @@ function PlayerMeta:GiveResource(resource,int)
 	trace.start = self:GetShootPos()
 	trace.endpos = trace.start + (self:GetAimVector() * dist)
 	trace.filter = self
-
+	int = math.Round(int)
 	local traceLine = util.TraceLine(trace)
 	if traceLine.HitNonWorld then
 		target = traceLine.Entity
@@ -64,6 +68,64 @@ function PlayerMeta:GiveResource(resource,int)
 			self.Resources[resource] = self.Resources[resource] - int
 		end
 	end
+end
+
+function PNRP.tradeResToPlayer()
+	local ply = net.ReadEntity()
+	local target = net.ReadEntity()
+	local scrap = math.Round(net.ReadDouble())
+	local parts = math.Round(net.ReadDouble())
+	local chems = math.Round(net.ReadDouble())
+	local option = net.ReadString()
+	
+	local ply_scrap = ply:GetResource("Scrap")
+	local ply_parts = ply:GetResource("Small_Parts")
+	local ply_chems = ply:GetResource("Chemicals")
+	
+	if not IsValid(target) then 
+		ply:ChatPrint("Unable to find player")
+		return 
+	end
+	
+	if option == "trade" then
+		if scrap < 0 or scrap == nil then scrap = 0 end
+		if parts < 0 or parts == nil then parts = 0 end
+		if chems < 0 or chems == nil then chems = 0 end
+		
+		if scrap > ply_scrap then scrap = ply_scrap end
+		if parts > ply_parts then parts = ply_parts end
+		if chems > ply_chems then chems = ply_chems end
+		
+		if scrap > 0 then
+			giveResChatPrint(ply, target, scrap, "Scrap")
+		end
+		if parts > 0 then
+			giveResChatPrint(ply, target, parts, "Small_Parts")
+		end
+		if chems > 0 then
+			giveResChatPrint(ply, target, chems, "Chemicals")		
+		end
+		
+	elseif option == "admin_trade" then
+		AdmingiveResChatPrint(ply, target, scrap, "Scrap", option)
+		AdmingiveResChatPrint(ply, target, parts, "Small_Parts", option)
+		AdmingiveResChatPrint(ply, target, chems, "Chemicals", option)
+	end	
+end
+net.Receive( "tradeResTo", PNRP.tradeResToPlayer )
+util.AddNetworkString("tradeResTo")
+
+function giveResChatPrint(ply, target, int, resource)
+	target:ChatPrint("You received "..tostring(int).." "..tostring(resource).." from "..ply:Nick()..".")
+	target:IncResource(resource,int)
+	ply:ChatPrint("You gave "..target:Nick().." "..tostring(int).." "..tostring(resource)..".")
+	ply:DecResource(resource,int)
+end
+
+function AdmingiveResChatPrint(ply, target, int, resource)
+	target:ChatPrint("[Admin Trade] You received "..tostring(int).." "..tostring(resource).." from "..ply:Nick()..".")
+	target:IncResource(resource,int)
+	ply:ChatPrint("[Admin Trade] You gave "..target:Nick().." "..tostring(int).." "..tostring(resource)..".")
 end
 
 function GM.GiveResource(ply,command,args)

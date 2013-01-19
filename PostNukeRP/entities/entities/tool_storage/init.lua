@@ -64,9 +64,9 @@ function ENT:Use( activator, caller )
 							net.WriteTable(result)
 						net.Send(activator)
 					else
-						umsg.Start("storage_new_menu", activator)
-							umsg.Entity(self)
-						umsg.End()
+						net.Start("storage_new_menu")
+							net.WriteEntity(self)
+						net.Send(activator)
 					end
 				else
 					local result = querySQL("SELECT * FROM player_storage WHERE storageid="..tostring(storageID))
@@ -85,15 +85,17 @@ function ENT:Use( activator, caller )
 					activator:ChatPrint( "This Storage Container has not been set!" )
 				else
 					--If not owner then start break in
-					umsg.Start("storage_breakin", activator)
-						umsg.Entity(self)
-						umsg.Short(self.BreakInTimer)
-					umsg.End()
+					net.Start("storage_breakin")
+						net.WriteEntity(self)
+						net.WriteDouble(self.BreakInTimer)
+					net.Send(activator)
 				end
 			end
 		end
 	end
 end
+util.AddNetworkString("storage_new_menu")
+util.AddNetworkString("storage_breakin")
 
 function getStorageCapacity(storageID)
 
@@ -283,7 +285,7 @@ function TakeFromStorage( )
 			ply:ChatPrint("You can't carry any of these!")
 		else
 			local taken = Amount - extra
-			if remStorageItem( storageENT.storageID, Item, Amount ) then
+			if remStorageItem( storageENT.storageID, Item, taken ) then
 				ply:AddToInventory( Item, taken )
 				
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
@@ -354,7 +356,7 @@ function sendToPlayerStorage( p, command, arg )
 	local count = net.ReadDouble()
 	local storageID = storageENT.storageID
 
-	print("["..tostring(itemID).."] "..tostring(count))
+--	print("["..tostring(itemID).."] "..tostring(count))
 	local item = {}
 	
 	local query
@@ -443,8 +445,8 @@ function StorageBreakIn( )
 			
 	if not storage.BreakingIn then
 		if storage.BreakInTimer <= 0 then
-			umsg.Start("storage_stopbreakin", ply)
-			umsg.End()
+			net.Start("storage_stopbreakin")
+			net.Send(ply)
 						
 			net.Start("storage_menu")
 				net.WriteEntity(storage)
@@ -464,8 +466,8 @@ function StorageBreakIn( )
 				if (not storage:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
-					umsg.Start("storage_stopbreakin", ply)
-					umsg.End()
+					net.Start("storage_stopbreakin")
+					net.Send(ply)
 					if storage:IsValid() then 
 						storage.BreakingIn = nil 
 						timer.Stop(ply:UniqueID()..tostring(storage:EntIndex()))
@@ -474,8 +476,8 @@ function StorageBreakIn( )
 				end
 				storage.BreakInTimer = storage.BreakInTimer - 1
 				if storage.BreakInTimer <= 0 then
-					umsg.Start("storage_stopbreakin", ply)
-					umsg.End()
+					net.Start("storage_stopbreakin")
+					net.Send(ply)
 					
 					ply:SetMoveType(MOVETYPE_WALK)
 					storage.BreakingIn = nil
@@ -498,8 +500,8 @@ function StorageBreakIn( )
 		end
 	elseif ply == storage.BreakingIn then
 		timer.Destroy(ply:UniqueID()..tostring(storage:EntIndex()))
-		umsg.Start("storage_stopbreakin", ply)
-		umsg.End()
+		net.Start("storage_stopbreakin")
+		net.Send(ply)
 		-- ply:Freeze(false)
 		ply:SetMoveType(MOVETYPE_WALK)
 		if storage:IsValid() then
@@ -509,8 +511,8 @@ function StorageBreakIn( )
 		ply:ChatPrint("Someone is already breaking into this storage.")
 	end
 end
---datastream.Hook( "storage_breakin", StorageBreakIn )
 net.Receive( "storage_breakin", StorageBreakIn )
+util.AddNetworkString("storage_stopbreakin")
 
 function StorageRepair( )
 	local ply = net.ReadEntity()
@@ -523,10 +525,10 @@ function StorageRepair( )
 	end
 	if not storage.Repairing then
 		if not storage.BreakingIn then
-			umsg.Start("storage_repair", ply)
-				umsg.Entity(storage)
-				umsg.Short(storage.BreakInTimer)
-			umsg.End()
+			net.Start("storage_repair")
+				net.WriteEntity(storage)
+				net.WriteDouble(storage.BreakInTimer)
+			net.Send(ply)
 			
 			ply:SetMoveType(MOVETYPE_NONE)
 			storage.Repairing = ply
@@ -535,8 +537,8 @@ function StorageRepair( )
 				if (not storage:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
-					umsg.Start("storage_stoprepair", ply)
-					umsg.End()
+					net.Start("storage_stoprepair")
+					net.Send(ply)
 					if storage:IsValid() then 
 						storage.Repairing = nil 
 						timer.Stop(ply:UniqueID()..tostring(storage:EntIndex()))
@@ -545,8 +547,8 @@ function StorageRepair( )
 				end
 				storage.BreakInTimer = storage.BreakInTimer + 1
 				if storage.BreakInTimer >= 60 then
-					umsg.Start("storage_stoprepair", ply)
-					umsg.End()
+					net.Start("storage_stoprepair")
+					net.Send(ply)
 					
 					ply:SetMoveType(MOVETYPE_WALK)
 					storage.Repairing = nil
@@ -572,13 +574,14 @@ function StorageRepair( )
 			ply:ChatPrint("You cannot repair it while someone is breaking in!")
 		end
 	elseif storage.Repairing == ply then
-		umsg.Start("storage_stoprepair", ply)
-		umsg.End()
+		net.Start("storage_stoprepair")
+		net.Send(ply)
 	else
 		ply:ChatPrint("Someone is already repairing this storage.")
 	end
 end
 net.Receive( "StorageRepair", StorageRepair )
+util.AddNetworkString("storage_repair")
 
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value
@@ -593,9 +596,11 @@ function PlyRemStorage(ply, cmd, args)
 		if tostring(v.storageID) == tostring(storageID) then
 			ply:ChatPrint( "Your storage will take 1 minute to break down.  It can be interacted with in that time." )
 			timer.Simple(60, function ()
-				PNRP.AddToInventory( ply, "tool_storage", 1 )
-				PNRP.TakeFromWorldCache( ply, "tool_storage" )
-				v:Remove()
+				if IsValid(v) then
+					PNRP.AddToInventory( ply, "tool_storage", 1 )
+					PNRP.TakeFromWorldCache( ply, "tool_storage" )
+					v:Remove()
+				end
 			end)
 		end
 	end

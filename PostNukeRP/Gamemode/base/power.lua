@@ -589,11 +589,13 @@ function EntityMeta:UpdatePower()
 						v:AddRelationship("player D_LI 99")
 					end
 					for _, ply in pairs(player.GetAll()) do
-						v:AddEntityRelationship(ply, D_LI, 99)
+						if IsValid(ply) then
+							v:AddEntityRelationship(ply, D_LI, 99)
+						end
 					end
 					if table.Count(v.ProgTable) > 0 then
 						for _, trg in pairs(v.ProgTable) do
-							if IsValid(v) then
+							if IsValid(trg) then
 								v:AddEntityRelationship(trg, D_LI, 99)
 							end
 						end
@@ -615,17 +617,21 @@ function EntityMeta:UpdatePower()
 					if v.Whitelist then
 						v:AddRelationship("player D_HT 99")
 						for _, ply in pairs(player.GetAll()) do
-							v:AddEntityRelationship(ply, D_HT, 99)
+							if IsValid(ply) then
+								v:AddEntityRelationship(ply, D_HT, 99)
+							end
 						end
 					else
 						v:AddRelationship("player D_LI 99")
 						for _, ply in pairs(player.GetAll()) do
-							v:AddEntityRelationship(ply, D_LI, 99)
+							if IsValid(ply) then
+								v:AddEntityRelationship(ply, D_LI, 99)
+							end
 						end
 					end
 					if table.Count(v.ProgTable) > 0 then
 						for _, trg in pairs(v.ProgTable) do
-							if IsValid(v) then
+							if IsValid(trg) then
 								if v.Whitelist then
 									v:AddEntityRelationship(trg, D_LI, 99)
 								else

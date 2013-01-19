@@ -277,8 +277,8 @@ function StorageSelectMenu( len )
 end
 net.Receive("storage_select_menu", StorageSelectMenu)
 
-function OpenStorageNewMenu( data )
-	local storageENT = data:ReadEntity()
+function OpenStorageNewMenu( )
+	local storageENT = net:ReadEntity()
 	StorageNewMenu( storageENT )
 end
 function StorageNewMenu( storageENT )
@@ -321,7 +321,7 @@ function StorageNewMenu( storageENT )
 			end
 
 end
-usermessage.Hook("storage_new_menu", OpenStorageNewMenu)
+net.Receive("storage_new_menu", OpenStorageNewMenu)
 
 function StorageMenu()
 	local ply = LocalPlayer()
@@ -415,7 +415,7 @@ function StorageMenu()
 							pnlLIPanel.Icon:SetToolTip( toolTip )
 							pnlLIPanel.Icon.DoClick = function() 
 								--Remove item and place in inventory (Not Sell Item)
-								local takeCount = pnlLIPanel.NumberWang:GetValue()
+								local takeCount = math.Round(pnlLIPanel.NumberWang:GetValue())
 								if tonumber(takeCount) > tonumber(count) then
 									takeCount = count
 								elseif tonumber(takeCount) < 1 then
@@ -472,7 +472,7 @@ function StorageMenu()
 							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
 							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
 							pnlUserIPanel.Icon.DoClick = function() 
-								local sendCount = pnlUserIPanel.NumberWang:GetValue()
+								local sendCount = math.Round(pnlUserIPanel.NumberWang:GetValue())
 								if sendCount > v then
 									sendCount = v
 								end
@@ -754,9 +754,9 @@ local function StorageRepairBar ()
 	surface.DrawRect(ScrW()/2 - 50 , ScrH()/2, 100*percentage, 25 )
 end
 
-function StorageBreakIn( data )
-	local storageENT = data:ReadEntity()
-	local length = data:ReadShort()
+function StorageBreakIn( )
+	local storageENT = net:ReadEntity()
+	local length = net:ReadDouble()
 	local ply = LocalPlayer()
 	StartTime = CurTime()
 	TimeLeft = length
@@ -768,25 +768,25 @@ function StorageBreakIn( data )
 		net.WriteEntity(storageENT)
 	net.SendToServer()
 end
-usermessage.Hook("storage_breakin", StorageBreakIn)
+net.Receive("storage_breakin", StorageBreakIn)
 
 function StorageStopBreakIn( data )
 	hook.Remove( "HUDPaint", "StorageBreakInBar")
 end
-usermessage.Hook("storage_stopbreakin", StorageStopBreakIn)
+net.Receive("storage_stopbreakin", StorageStopBreakIn)
 
-function StorageRepair( data )
-	local storage = data:ReadEntity()
-	local length = data:ReadShort()
+function StorageRepair( )
+	local storage = net:ReadEntity()
+	local length = net:ReadDouble()
 	
 	StartTime = CurTime()
 	TimeLeft = length
 	
 	hook.Add( "HUDPaint", "StorageRepairBar", StorageRepairBar )
 end
-usermessage.Hook("storage_repair", StorageRepair)
+net.Receive("storage_repair", StorageRepair)
 
 function StorageStopRepair( data )
 	hook.Remove( "HUDPaint", "StorageRepairBar")
 end
-usermessage.Hook("storage_stoprepair", StorageStopRepair)
+net.Receive("storage_stoprepair", StorageStopRepair)

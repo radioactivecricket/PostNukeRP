@@ -44,7 +44,7 @@ function StatCheck()
 				
 				local EndUpdateTime 
 				if v:Team() == TEAM_WASTELANDER then
-					EndUpdateTime = UpdateTime / (1 - (0.05 * v:GetSkill("Endurance")))
+					EndUpdateTime = UpdateTime / (1 - (0.5 * (v:GetSkill("Endurance") / 6)))
 					if v:GetTable().IsAsleep then
 						EndUpdateTime = UpdateTime / 5 
 					end
@@ -177,16 +177,12 @@ function EnterSleep ( ply )
 			-- ragdoll:SetNetworkedString("Owner", ply:Nick())
 		end
 		
-		
-		local rfilter = RecipientFilter()
-		rfilter:RemoveAllPlayers()
-		rfilter:AddPlayer( ply )
-		
-		umsg.Start("sleepeffects", rfilter)
-			umsg.Bool(true)
-		umsg.End()
+		net.Start("sleepeffects")
+			net.WriteBit(true)
+		net.Send(ply)
 	end
 end
+util.AddNetworkString("sleepeffects")
 
 function EnterSleepCmd( ply )
 	if not ply:IsOutside() then
@@ -286,13 +282,9 @@ function ExitSleep( ply )
 			-- end)
 		end
 		
-		local rfilter = RecipientFilter()
-		rfilter:RemoveAllPlayers()
-		rfilter:AddPlayer( ply )
-		
-		umsg.Start("sleepeffects", rfilter)
-			umsg.Bool(false)
-		umsg.End()
+		net.Start("sleepeffects")
+			net.WriteBit(false)
+		net.Send(ply)
 	end
 end
 
@@ -340,24 +332,18 @@ hook.Add("EntityTakeDamage", "Sleepdamage", DamageSleepers)]]--
 ------------------------------
 
 function SendEndurance( ply )
-	local rfilter = RecipientFilter()
-	rfilter:RemoveAllPlayers()
-	rfilter:AddPlayer( ply )
-	
-	umsg.Start("endurancemsg", rfilter)
-		umsg.Short(ply:GetTable().Endurance)
-	umsg.End()
+	net.Start("endurancemsg")
+		net.WriteDouble(ply:GetTable().Endurance)
+	net.Send(ply)
 end
+util.AddNetworkString("endurancemsg")
 
 function SendHunger( ply )
-	local rfilter = RecipientFilter()
-	rfilter:RemoveAllPlayers()
-	rfilter:AddPlayer( ply )
-	
-	umsg.Start("hungermsg", rfilter)
-		umsg.Short(ply:GetTable().Hunger)
-	umsg.End()
+	net.Start("hungermsg")
+		net.WriteDouble(ply:GetTable().Hunger)
+	net.Send(ply)
 end
+util.AddNetworkString("hungermsg")
 
 function PlayerMeta:GiveEndurance( amount )
 	self:GetTable().Endurance = self:GetTable().Endurance + amount
