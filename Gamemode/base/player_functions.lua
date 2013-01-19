@@ -1288,9 +1288,16 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	local pos = ply:GetPos() + Vector(0,0,20)
 	--Drop Weapons
 	for k, v in pairs(ply:GetWeapons()) do
+		local wepModel
+		if string.lower(v:GetClass()) == "weapon_radio" then
+			wepModel = "models/Weapons/V_hands.mdl"
+		else
+			wepModel = v:GetModel()
+		end
+		
 		local wepCheck = PNRP.CheckDefWeps(v) and v != "weapon_real_cs_admin_weapon"
 		if !wepCheck then
-			if PNRP.FindWepItem(v:GetModel()) then
+			if PNRP.FindWepItem(wepModel) then
 				local myItem
 				if string.lower(v:GetClass()) == "weapon_radio" then
 				--	myItem = PNRP.FindItemID( v:GetClass() )
