@@ -1327,7 +1327,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				-- --	ply:SendHint( "Dropped "..myItem.Name,5)
 					local ammoFType
 					-- --grenade fix
-					if myItem.ID == "wep_grenade" then
+					if myItem.ID == "wep_grenade" or  myItem.ID == "wep_shapedcharge" then
 						contents.inv[myItem.ID] = contents.inv[myItem.ID] + ammoDrop - 1
 					else
 						ammoFType = "ammo_"..myAmmoType
