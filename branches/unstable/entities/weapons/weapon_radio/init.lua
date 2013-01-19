@@ -32,5 +32,8 @@ local function SetPlyFreqSWEP( )
 	net.Send(ply)
 end
 util.AddNetworkString("radiofreq_recieve")
+util.AddNetworkString("radiofreq_select")
+util.AddNetworkString("radiopower_select")
+util.AddNetworkString("setfreq_stream")
 net.Receive( "setfreq_stream", SetPlyFreqSWEP )
 
