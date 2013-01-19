@@ -73,10 +73,10 @@ function SWEP:PrimaryAttack()
 	local Channel = self.Owner.Channel
 	if not Channel then Channel = 400.00 end
 	
-	umsg.Start("radiofreq_select", self.Owner)
-		umsg.Entity(self.Owner)
-		umsg.String(Channel)
-	umsg.End()
+	net.Start("radiofreq_select")
+		net.WriteEntity(self.Owner)
+		net.WriteString(Channel)
+	net.Send(self.Owner)
 	
 	self.NextLeft = CurTime() + 1
 end
@@ -99,9 +99,9 @@ function SWEP:SecondaryAttack()
 		self.Power = "off"
 	end
 	
-	umsg.Start("radiopower_select", self.Owner)
-		umsg.Bool(self.Owner.RdioPower)
-	umsg.End()
+	net.Start("radiopower_select")
+		net.WriteBit(self.Owner.RdioPower)
+	net.Send(self.Owner)
 	
 	self.Owner:ChatPrint(mystring)
 	
