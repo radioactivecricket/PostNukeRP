@@ -285,7 +285,7 @@ function TakeFromStorage( )
 			ply:ChatPrint("You can't carry any of these!")
 		else
 			local taken = Amount - extra
-			if remStorageItem( storageENT.storageID, Item, Amount ) then
+			if remStorageItem( storageENT.storageID, Item, taken ) then
 				ply:AddToInventory( Item, taken )
 				
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
@@ -356,7 +356,7 @@ function sendToPlayerStorage( p, command, arg )
 	local count = net.ReadDouble()
 	local storageID = storageENT.storageID
 
-	print("["..tostring(itemID).."] "..tostring(count))
+--	print("["..tostring(itemID).."] "..tostring(count))
 	local item = {}
 	
 	local query
