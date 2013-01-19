@@ -76,7 +76,7 @@ function GM.skills_window( ply )
 			
 			Skills_DPanel.XP = vgui.Create("DLabel", Skills_DPanel)
 			Skills_DPanel.XP:SetPos(90, 60)
-			Skills_DPanel.XP:SetText("Current Experiance: "..GetXP())
+			Skills_DPanel.XP:SetText("Current Experience: "..GetXP())
 			Skills_DPanel.XP:SetColor( Color( 255, 255, 255, 255 ) )
 			Skills_DPanel.XP:SizeToContents() 
 			Skills_DPanel.XP:SetContentAlignment( 5 )

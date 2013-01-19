@@ -132,7 +132,9 @@ function PNRP.UpdateFromAdminMenu( )
 		RunConsoleCommand("pnrp_MoundGuardChance", tostring(SpawnSettings.MoundGuardChance))
 		RunConsoleCommand("pnrp_ReproduceRes", tostring(SpawnSettings.ReproduceRes))
 		RunConsoleCommand("pnrp_MaxReproducedRes", tostring(SpawnSettings.MaxReproducedRes))
-
+		
+		ErrorNoHalt( "[INFO] "..ply:Name().." Changed Admin settings ".."\n")
+		
 		ply:ChatPrint("Settings Confirmed!")
 	else
 		ply:ChatPrint("You are not an admin on this server!")
@@ -220,6 +222,19 @@ function PNRP.ImportMapGrid()
 	end
 end
 net.Receive( "importMapGrid", PNRP.ImportMapGrid )
+
+--Delete the selected map's Node Grid
+function PNRP.DeleteMapGrid()
+	local ply = net.ReadEntity()
+	local mapName = net.ReadString()
+
+	local result = querySQL("DELETE FROM spawn_grids WHERE map='"..mapName.."'")
+
+	ply:ChatPrint("Grid deleted for "..mapName)
+
+end
+net.Receive( "deleteMapGrid", PNRP.DeleteMapGrid )
+util.AddNetworkString( "deleteMapGrid" )
 
 function PlyDevMode(ply, cmd, args)
 	if not ply:IsAdmin() then

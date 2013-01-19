@@ -84,9 +84,9 @@ function PNRP.SpawnBulkCrate( )
 					
 					ply:Freeze(true)
 					ply:ChatPrint("Construction in progress...")
-					umsg.Start("startProgressBar", ply)
-						umsg.Short(totalTime)
-					umsg.End()
+					net.Start("startProgressBar")
+						net.WriteDouble(tonumber(totalTime))
+					net.Send(ply)
 					
 					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
 						ply:ChatPrint("Admin No Cost")
@@ -98,8 +98,8 @@ function PNRP.SpawnBulkCrate( )
 					
 					timer.Simple( totalTime, function() 
 						ply:Freeze(false)
-						umsg.Start("stopProgressBar", ply)
-						umsg.End()
+						net.Start("stopProgressBar")
+						net.Send(ply)
 						local ent = ents.Create("msc_itembox")
 						--Spawns the entity
 						ent:SetPos(pos)
@@ -126,6 +126,8 @@ function PNRP.SpawnBulkCrate( )
 	
 end
 net.Receive( "SpawnBulkCrate", PNRP.SpawnBulkCrate )
+util.AddNetworkString("startProgressBar")
+util.AddNetworkString("stopProgressBar")
 
 function PNRP.DropBulkCrate( )
 	local ply = net.ReadEntity()
@@ -263,9 +265,9 @@ function GM.BuildItem( ply, command, arg )
 					end
 					
 					ply:Freeze(true)
-					umsg.Start("startProgressBar", ply)
-						umsg.Short(2)
-					umsg.End()
+					net.Start("startProgressBar")
+						net.WriteDouble(2)
+					net.Send(ply)
 					local myscrap = item.Scrap
 					local mysmall = item.SmallParts
 					local mychems = item.Chemicals
@@ -273,8 +275,8 @@ function GM.BuildItem( ply, command, arg )
 					timer.Simple( 2, function() 
 							if ply and IsValid(ply) and ply:Alive() then
 								ply:Freeze(false)
-								umsg.Start("stopProgressBar", ply)
-								umsg.End()
+								net.Start("stopProgressBar")
+								net.Send(ply)
 								if item.Type == "food" then
 									ply:EmitSound(Sound("ambient/materials/dinnerplates5.wav"))
 								else
@@ -366,7 +368,7 @@ function PNRP.Salvage( ply, command, arg )
 	if tostring(command) == "pnrp_dosalvage"  or tostring(command) == "pnrp_docarsalvage" then
 		local split = string.Explode(",",arg[1])
 		ItemID = split[1]
-		count = tonumber(split[2])
+		count = math.Round(tonumber(split[2]))
 		allowed = true
 	else
 		local tr = ply:TraceFromEyes(400)

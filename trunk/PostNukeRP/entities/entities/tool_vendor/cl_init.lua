@@ -277,8 +277,8 @@ function VendorSelectMenu( len )
 end
 net.Receive("vendor_select_menu", VendorSelectMenu)
 
-function OpenVendorNewMenu( data )
-	local vendorENT = data:ReadEntity()
+function OpenVendorNewMenu( )
+	local vendorENT = net:ReadEntity()
 	VendorNewMenu( vendorENT )
 end
 function VendorNewMenu( vendorENT )
@@ -321,7 +321,7 @@ function VendorNewMenu( vendorENT )
 			end
 
 end
-usermessage.Hook("vendor_new_menu", OpenVendorNewMenu)
+net.Receive("vendor_new_menu", OpenVendorNewMenu)
 
 function VendorMenu()
 	local ply = LocalPlayer()

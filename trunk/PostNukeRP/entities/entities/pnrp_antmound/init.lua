@@ -294,8 +294,8 @@ function ENT:Use( activator, caller )
 		
 		activator:SetMoveType(MOVETYPE_WALK)
 		activator.scavving = nil
-		umsg.Start("stopProgressBar", activator)
-		umsg.End()
+		net.Start("stopProgressBar")
+		net.Send(activator)
 		return
 	elseif activator.scavving then
 		return end
@@ -308,17 +308,17 @@ function ENT:Use( activator, caller )
 	
 	activator:EmitSound(Sound("ambient/levels/streetwar/building_rubble"..tostring(math.random(1,5))..".wav"))
 	
-	umsg.Start("startProgressBar", activator)
-		umsg.Short(30)
-	umsg.End()
+	net.Start("startProgressBar")
+		net.WriteDouble(30)
+	net.Send(activator)
 	
 	local mound = self
 	timer.Create( activator:UniqueID().."_mound_"..tostring(self), 0.25, 120, function()
 			activator:SelectWeapon("gmod_rp_hands")
 			if (not mound:IsValid()) or (not activator:Alive()) then
 				activator:SetMoveType(MOVETYPE_WALK)
-				umsg.Start("stopProgressBar", activator)
-				umsg.End()
+				net.Start("stopProgressBar")
+				net.Send(activator)
 				activator.scavving = nil
 				if mound:IsValid() then 
 					timer.Stop(activator:UniqueID().."_mound_"..tostring(mound:EntIndex()))
@@ -329,8 +329,8 @@ function ENT:Use( activator, caller )
 	
 	local myself = self
 	timer.Create( activator:UniqueID().."_mound_"..tostring(self).."_end", 30, 1, function() 
-			umsg.Start("stopProgressBar", activator)
-			umsg.End()
+			net.Start("stopProgressBar")
+			net.Send(activator)
 			-- ply:Freeze(false)
 			activator:SetMoveType(MOVETYPE_WALK)
 			activator.scavving = nil

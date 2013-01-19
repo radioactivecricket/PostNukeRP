@@ -22,22 +22,26 @@ function PlayerMeta:SetSkill(skill,int)
 	if !self.Skills[skill] then self.Skills[skill] = 0 end
 
 	self.Skills[skill] = int
-
-	umsg.Start("pnrp_SetSkill",self)
-	umsg.String(skill)
-	umsg.Short(int)
-	umsg.End()
+	
+	if int == nil then int = 0 end
+	
+	net.Start("pnrp_SetSkill")
+		net.WriteString(skill)
+		net.WriteDouble(int)
+	net.Send(self)
 end
+util.AddNetworkString("pnrp_SetSkill")
 
 function PlayerMeta:IncSkill(skill,int)
 	if !self.Skills[skill] then self.Skills[skill] = 0 end
 
 	self.Skills[skill] = self.Skills[skill] + int
+	
+	net.Start("pnrp_SetSkill")
+		net.WriteString(skill)
+		net.WriteDouble(tonumber(self:GetSkill(skill)))
+	net.Send(self)
 
-	umsg.Start("pnrp_SetSkill",self)
-	umsg.String(skill)
-	umsg.Short(self:GetSkill(skill))
-	umsg.End()
 end
 
 function PlayerMeta:DecSkill(skill,int)
@@ -45,10 +49,12 @@ function PlayerMeta:DecSkill(skill,int)
 	
 	self.Skills[skill] = self.Skills[skill] - int
 	if self.Skills[skill] < 0 then self.Skills[skill] = 0 end
-	umsg.Start("pnrp_SetSkill",self)
-	umsg.String(skill)
-	umsg.Short(self:GetSkill(skill))
-	umsg.End()
+	
+	net.Start("pnrp_SetSkill")
+		net.WriteString(skill)
+		net.WriteDouble(tonumber(self:GetSkill(skill)))
+	net.Send(self)
+	
 end
 
 function PlayerMeta:GetXP()
@@ -60,19 +66,21 @@ function PlayerMeta:SetXP(int)
 
 	self.Experience = int
 
-	umsg.Start("pnrp_SetXP",self)
-	umsg.Long(int)
-	umsg.End()
+	net.Start("pnrp_SetXP")
+		net.WriteDouble(tonumber(int))
+	net.Send(self)
 end
+util.AddNetworkString("pnrp_SetXP")
 
 function PlayerMeta:IncXP(int)
 	if !self.Experience then self.Experience = 0 end
 
 	self.Experience = self.Experience + int
+	
+	net.Start("pnrp_SetXP")
+		net.WriteDouble(tonumber(self:GetXP()))
+	net.Send(self)
 
-	umsg.Start("pnrp_SetXP",self)
-	umsg.Long(self:GetXP())
-	umsg.End()
 end
 
 function PlayerMeta:DecXP(int)
@@ -80,9 +88,11 @@ function PlayerMeta:DecXP(int)
 	
 	self.Experience = self.Experience - int
 	if self.Experience < 0 then self.Experience = 0 end
-	umsg.Start("pnrp_SetXP",self)
-	umsg.Long(self:GetXP())
-	umsg.End()
+	
+	net.Start("pnrp_SetXP")
+		net.WriteDouble(tonumber(self:GetXP()))
+	net.Send(self)
+	
 end
 
 local function UpgradeSkill(ply, cmd, args)
@@ -150,6 +160,8 @@ function DeathXP( victim, killer, weapon )
 		killer:IncXP(3)
 	elseif victim:GetClass() == "npc_poisonzombie" then
 		killer:IncXP(3)
+	elseif victim:GetClass() == "npc_combine_s" then
+		killer:IncXP(10)
 	else
 		killer:IncXP(1)
 	end

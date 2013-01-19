@@ -5,14 +5,14 @@ function ENT:Draw()
 end
 
 
-function PlantMenu( um )
-	local fruitLevel = um:ReadShort()
-	local plantStatus = um:ReadShort()
-	local filtered = um:ReadBool()
-	local fertilized = um:ReadBool()
-	local airator = um:ReadBool()
-	local canPrune = um:ReadBool()
-	local plantEnt = um:ReadEntity()
+function PlantMenu( )
+	local fruitLevel = math.Round(net:ReadDouble())
+	local plantStatus = math.Round(net:ReadDouble())
+	local filtered = tobool(net:ReadBit())
+	local fertilized = tobool(net:ReadBit())
+	local airator = tobool(net:ReadBit())
+	local canPrune = tobool(net:ReadBit())
+	local plantEnt = net:ReadEntity()
 	local ply = LocalPlayer()
 	
 	local w = 300
@@ -171,4 +171,4 @@ function PlantMenu( um )
 		end
 	end
 end
-usermessage.Hook("plant_menu", PlantMenu)
+net.Receive("plant_menu", PlantMenu)

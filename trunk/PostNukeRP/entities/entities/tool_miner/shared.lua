@@ -18,10 +18,11 @@ ENT.AdminSpawnable		= false
 ---------------------------------------------------------
 function ENT:OnRemove()
 	if (SERVER) then
-		umsg.Start("radar_state", rp)
-		umsg.String("none")
-		umsg.Short(self.Entity:EntIndex())
-		umsg.End()
+		util.AddNetworkString("radar_state")
+		net.Start("radar_state")
+			net.WriteString("none")
+			net.WriteDouble(self.Entity:EntIndex())
+		net.Send(rp)
 		self.Ready = 0
 	end
 end

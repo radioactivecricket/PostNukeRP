@@ -43,8 +43,8 @@ function ENT:Use( activator, caller )
 				activator:ChatPrint("You stop repairing the battery.")
 				
 				activator:SetMoveType(MOVETYPE_WALK)
-				umsg.Start("stopProgressBar", activator)
-				umsg.End()
+				net.Start("stopProgressBar")
+				net.Send(activator)
 				self.Repairing = nil
 				if self:IsValid() then 
 					timer.Stop(activator:UniqueID().."_repair_"..tostring(self))
@@ -57,28 +57,6 @@ function ENT:Use( activator, caller )
 			if self.entOwner == "none" then
 				self.entOwner = activator:Nick()
 			end
-			
-			--[[local actInv = {}
-			local availFuel = 0
-			
-			local rp = RecipientFilter()
-			rp:RemoveAllPlayers()
-			rp:AddPlayer( activator )
-			 
-			umsg.Start("batgen_menu", rp)
-				umsg.Short(self:Health())
-				if self.NetworkContainer then
-					umsg.Short(self.NetworkContainer.NetPower or self.PowerLevel)
-				else
-					umsg.Short(self.PowerLevel)
-				end
-				umsg.Short(self.UnitLeft)
-				umsg.Short(availFuel or 0)
-				umsg.Bool(self.Status)
-				umsg.Bool(false)
-				umsg.Entity(self.Entity)
-				umsg.Entity(activator)
-			umsg.End()]]--
 			
 			activator:ChatPrint("Charge Left:  "..tostring(math.Round(self.UnitLeft/100)).."%")
 		end
@@ -108,16 +86,16 @@ function ENT.Repair()
 	ply:SetMoveType(MOVETYPE_NONE)
 	ent.Repairing = ply
 	
-	umsg.Start("startProgressBar", ply)
-		umsg.Short(200 - ent:Health())
-	umsg.End()
+	net.Start("startProgressBar")
+		net.WriteDouble(200 - ent:Health())
+	net.Send(ply)
 	
 	timer.Create( ply:UniqueID().."_repair_"..tostring(ent), 0.25, (200 - ent:Health())*4, function()
 		ply:SelectWeapon("gmod_rp_hands")
 		if (not ent:IsValid()) or (not ply:Alive()) then
 			ply:SetMoveType(MOVETYPE_WALK)
-			umsg.Start("stopProgressBar", ply)
-			umsg.End()
+			net.Start("stopProgressBar")
+			net.Send(ply)
 			ent.Repairing = nil
 			if ent:IsValid() then 
 				timer.Stop(ply:UniqueID().."_repair_"..tostring(ent))
@@ -136,8 +114,8 @@ function ENT:Think()
 			self.Repairing:ChatPrint("You finish repairing the generator.")
 			
 			self.Repairing:SetMoveType(MOVETYPE_WALK)
-			umsg.Start("stopProgressBar", self.Repairing)
-			umsg.End()
+			net.Start("stopProgressBar")
+			net.Send(self.Repairing)
 			if self:IsValid() then 
 				timer.Stop(self.Repairing:UniqueID().."_repair_"..tostring(self))
 			end

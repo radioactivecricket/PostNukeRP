@@ -72,20 +72,19 @@ function ENT:Use( activator, caller )
 		end
 				
 		if allowedtouse then
-			local rp = RecipientFilter()
-			rp:RemoveAllPlayers()
-			rp:AddPlayer( activator )
 			
-			umsg.Start("radar_menu", rp)
-				umsg.Short(self:Health())
-				umsg.Short(self.Entity:EntIndex())
-				umsg.Entity(self.Entity)
-				umsg.Short(self.SyncTime)
-			umsg.End()
+			net.Start("radar_menu")
+				net.WriteDouble(self:Health())
+				net.WriteDouble(self.Entity:EntIndex())
+				net.WriteEntity(self.Entity)
+				net.WriteDouble(self.SyncTime)
+			net.Send(activator)
 		end
 		
 	end
 end
+util.AddNetworkString("radar_menu")
+
 --Fixes DySych Issues
 function RADAR_FixPlayer(ply, ent)
 	local plyRadarIndex = ply.RadarENTIndex

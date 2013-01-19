@@ -2,7 +2,7 @@ GM.Name 	= "PostNukeRP" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://postnukerp.com" --Set the author website
-GM.Version  = "50"
+GM.Version  = "1.1.0"
 
 DeriveGamemode("sandbox") 
 
@@ -34,7 +34,7 @@ table.insert(PNRP.Resources,"Chemicals")
 
 PNRP.Skills = {}
 PNRP.Skills["Scavenging"] 		= {name = "Scavenging", desc ="Better scavenging through experience.", basecost = 150, maxlvl = 5, class = nil}
-PNRP.Skills["Endurance"] 		= {name = "Endurance", desc ="Staying on your feet longer, to survive better", basecost = 50, maxlvl = 10, class = {TEAM_WASTELANDER}}
+PNRP.Skills["Endurance"] 		= {name = "Endurance", desc ="Staying on your feet longer, to survive better", basecost = 100, maxlvl = 6, class = {TEAM_WASTELANDER}}
 PNRP.Skills["Athletics"] 		= {name = "Athletics", desc ="Running a bit faster always helps.", basecost = 100, maxlvl = 5, class = nil}
 PNRP.Skills["Weapon Handling"] 	= {name = "Weapon Handling", desc ="Accuracy with firearms.  Who wouldn't want that?", basecost = 100, maxlvl = 5, class = nil}
 PNRP.Skills["Construction"] 	= {name = "Construction", desc ="Know-how to make things cost less.", basecost = 100, maxlvl = 5, class = {TEAM_ENGINEER}}
@@ -258,7 +258,7 @@ end
 local RP_Default_Weapons = {}
 RP_Default_Weapons = { "weapon_pnrp_ak-comp", "weapon_pnrp_badlands", "weapon_pnrp_charge", "weapon_pnrp_knife", 
 		"weapon_pnrp_p228", "weapon_pnrp_precrifle", "weapon_pnrp_pumpshotgun", "weapon_pnrp_revolver", "weapon_pnrp_saw", 
-		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck", "weapon_pnrp_ump", "weapon_pnrp_m82" }
+		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck", "weapon_pnrp_ump", "weapon_pnrp_m82", "weapon_pnrp_pulserifle" }
 
 local function HoldTypeFix()
 	for k, v in pairs(player.GetAll()) do

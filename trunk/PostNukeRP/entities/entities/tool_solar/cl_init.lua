@@ -4,14 +4,14 @@ function ENT:Draw()
 	self.Entity:DrawModel()
 end
 
-function SolGenMenu( um )
-	local health = um:ReadShort()
-	local powerLevel = um:ReadShort()
-	local fuel = um:ReadShort()
-	local availFuel = um:ReadShort()
-	local isOn = um:ReadBool()
-	local isMeltdown = um:ReadBool()
-	local genEnt = um:ReadEntity()
+function SolGenMenu( )
+	local health = math.Round(net:ReadDouble())
+	local powerLevel = math.Round(net:ReadDouble())
+	local fuel = math.Round(net:ReadDouble())
+	local availFuel = math.Round(net:ReadDouble())
+	local isOn = tobool(net:ReadBit())
+	local isMeltdown = tobool(net:ReadBit())
+	local genEnt = net:ReadEntity()
 	local ply = LocalPlayer()
 	
 	local w = 575
@@ -172,4 +172,4 @@ function SolGenMenu( um )
 				RepairBtnLbl:SetFont("Trebuchet24")
 				RepairBtnLbl:SizeToContents()
 end
-usermessage.Hook("solgen_menu", SolGenMenu)
+net.Receive("solgen_menu", SolGenMenu)

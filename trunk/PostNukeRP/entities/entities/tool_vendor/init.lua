@@ -58,9 +58,9 @@ function ENT:Use( activator, caller )
 							net.WriteTable(result)
 						net.Send(activator)
 					else
-						umsg.Start("vendor_new_menu", activator)
-							umsg.Entity(self)
-						umsg.End()
+						net.Start("vendor_new_menu")
+							net.WriteEntity(self)
+						net.Send(activator)
 					end
 				else
 					local result = querySQL("SELECT * FROM vending_table WHERE vendorid="..tostring(vendorID))
@@ -92,6 +92,7 @@ function ENT:Use( activator, caller )
 end
 util.AddNetworkString("CreateNewVendor")
 util.AddNetworkString("vendor_menu")
+util.AddNetworkString("vendor_new_menu")
 
 function getVendorCapacity(vendorID)
 
@@ -353,7 +354,7 @@ function TakeFromVendor( )
 			ply:ChatPrint("You can't carry any of these!")
 		else
 			local taken = Amount - extra
-			if remVendorItem( vendorENT.vendorID, Item, Amount ) then
+			if remVendorItem( vendorENT.vendorID, Item, taken ) then
 				ply:AddToInventory( Item, taken )
 				
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
@@ -512,6 +513,10 @@ function BuyFromVendor( )
 	local totalSmall = 0
 	local totalChems = 0
 	
+	Cost[1] = tonumber(Cost[1])
+	Cost[2] = tonumber(Cost[2])
+	Cost[3] = tonumber(Cost[3])
+	
 	local weight = PNRP.Items[Item].Weight
 	if PNRP.Items[Item].Type == "vehicle" then weight = 0 end
 	local sumWeight = weight*Amount
@@ -530,7 +535,7 @@ function BuyFromVendor( )
 		totalScrap = Cost[1] * Amount
 		totalSmall = Cost[2] * Amount
 		totalChems = Cost[3] * Amount
-		if ply:GetResource("Scrap") >= totalScrap and ply:GetResource("Chemicals") >= totalChems and ply:GetResource("Small_Parts") >= totalSmall then 
+		if math.Round(ply:GetResource("Scrap")) >= totalScrap and math.Round(ply:GetResource("Chemicals")) >= totalChems and math.Round(ply:GetResource("Small_Parts")) >= totalSmall then 
 			enough = true
 		else
 			enough = false
@@ -564,9 +569,9 @@ function BuyFromVendor( )
 				if remVendorItem( vendorID, Item, taken ) then
 					ply:AddToInventory( Item, taken )
 					
-					totalScrap = Cost[1].Scrap * taken
-					totalSmall = Cost[2].SmallParts * taken
-					totalChems = Cost[3].Chemicals * taken
+					totalScrap = Cost[1] * taken
+					totalSmall = Cost[2] * taken
+					totalChems = Cost[3] * taken
 					
 					ply:DecResource("Scrap", totalScrap)
 					ply:DecResource("Small_Parts", totalSmall)

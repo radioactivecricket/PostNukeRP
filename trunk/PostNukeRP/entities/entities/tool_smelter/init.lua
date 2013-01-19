@@ -14,16 +14,13 @@ end
 
 function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
-		if activator:KeyPressed( IN_USE ) then
-			local rp = RecipientFilter()
-			rp:RemoveAllPlayers()
-			rp:AddPlayer( activator )
-			 
-			umsg.Start("smelt_menu", rp)
-			umsg.End()
+		if activator:KeyPressed( IN_USE ) then			 
+			net.Start("smelt_menu")
+			net.Send(activator)
 		end
 	end
 end
+util.AddNetworkString("smelt_menu")
 
 function DoSmelt( )
 	local pl = net.ReadEntity()

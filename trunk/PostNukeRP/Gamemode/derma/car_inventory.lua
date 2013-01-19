@@ -176,13 +176,12 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 						end	
 							
 						pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
-						pnlPanel.bulkSlider:SetPos(300, 5)
-						--pnlPanel.bulkSlider:SetSize( 75, 40 ) 
-						pnlPanel.bulkSlider:SetWide( 100 )
+						pnlPanel.bulkSlider:SetPos(400, 20) 
+						pnlPanel.bulkSlider:SetWide( 175 )
 						pnlPanel.bulkSlider:SetText( "" )
+						pnlPanel.bulkSlider:SetDecimals( 0 )
 						pnlPanel.bulkSlider:SetMin( 1 )
 						pnlPanel.bulkSlider:SetMax( v )
-						pnlPanel.bulkSlider:SetDecimals( 0 )
 						pnlPanel.bulkSlider:SetValue( 1 )
 						pnlPanel.bulkSlider.Label:SizeToContents()
 						
@@ -217,7 +216,7 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 								if getBSalvageCount > v then
 									getBSalvageCount = v
 								end
-								local sndSTR = item.ID..","..tostring(getBSalvageCount)
+								local sndSTR = item.ID..","..tostring(math.Round(getBSalvageCount))
 								PNRP.OptionVerify( "pnrp_docarsalvage", sndSTR, nil, nil) 
 								parent_frame:Close() 
 							end

@@ -160,7 +160,7 @@ function ENT:Use( activator, caller )
 --		elseif self.Power == 1 then
 --			self.Entity:ThumperDisable()
 --		end
-		if activator:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+		if activator:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 			if activator:Team() ~= TEAM_SCAVENGER then
 				activator:ChatPrint("Admin overide.")
 			end
@@ -175,28 +175,21 @@ function ENT:Use( activator, caller )
 			self.entOwner = activator
 		end
 		
-		local rp = RecipientFilter()
-		rp:RemoveAllPlayers()
-		rp:AddPlayer( activator )
-		
-		umsg.Start("super_miner_menu", rp)
-		umsg.Short(self:Health())
-		umsg.Short(self.Entity:EntIndex())
-		umsg.Short(self.Power)
-		umsg.Entity(self.Entity)
-		umsg.End()
+		net.Start("super_miner_menu")
+			net.WriteDouble(self:Health())
+			net.WriteDouble(self.Entity:EntIndex())
+			net.WriteDouble(self.Power)
+			net.WriteEntity(self.Entity)
+		net.Send(activator)
 	end
 end
+util.AddNetworkString("super_miner_menu")
 
 function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
 	if self:Health() <= 0 then --run on death
 --		self:Remove()
 		self:SetHealth( 0 )
---		umsg.Start("radar_state", rp)
---		umsg.String("dead")
---		umsg.Short(self.Entity:EntIndex())
---		umsg.End()
 
 		self.Entity:ThumperDisable()
 	end

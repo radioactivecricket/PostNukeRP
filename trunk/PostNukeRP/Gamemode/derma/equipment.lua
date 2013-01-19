@@ -31,11 +31,7 @@ function ConvertWepEnt( weaponModel )
 	return nil
 end
 
-function GM.EquipmentWindow( handler, id, encoded, decoded )
---	local ply = LocalPlayer() 
---	local MyWeight = decoded[1]
---	local CarWeight = decoded[2]
---	local MyWeightCap = decoded[3]
+function GM.EquipmentWindow( )
 	local ply = net.ReadEntity() 
 	local MyWeight = tonumber(net.ReadString())
 	local CarWeight = net.ReadString()
@@ -238,10 +234,10 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 			ammoSlide:SetWide( 250 )
 			ammoSlide:SetPos( eq_frame:GetWide() - 290, AmmoListView:GetTall() + 35 )
 			ammoSlide:SetText( "" )
-			ammoSlide:SetMin( 0 )
-			ammoSlide:SetValue( 0 )
-			ammoSlide:SetMax( maxAmmo )
 			ammoSlide:SetDecimals( 0 )
+			ammoSlide:SetMin( 0 )
+			ammoSlide:SetMax( maxAmmo )
+			ammoSlide:SetValue( 0 )
 			ammoSlide.Paint = function() -- Paint function
 				surface.SetDrawColor( 255, 255, 255, 255 )
 			end
@@ -278,6 +274,7 @@ function GM.EquipmentWindow( handler, id, encoded, decoded )
 					if ammoAMT > ply:GetAmmoCount(ammoATYPE) then
 						ammoAMT = ply:GetAmmoCount(ammoATYPE)
 					end
+					ammoAMT = math.Round(ammoAMT)
 					RunConsoleCommand("pnrp_dropAmmo",ammoATYPE, ammoAMT)
 					eq_frame:Close()
 				end
@@ -688,6 +685,8 @@ function GM.TShopInterface()
 	local ToolEnt = net.ReadEntity()
 	local ItemTable = net.ReadTable()
 	
+	local textColor = Color(200,200,200,255)
+	
 	tShopIntFrame = vgui.Create( "DFrame" )
 		tShopIntFrame:SetSize( 710, 520 ) --Set the size
 		tShopIntFrame:SetPos(ScrW() / 2 - tShopIntFrame:GetWide() / 2, ScrH() / 2 - tShopIntFrame:GetTall() / 2)
@@ -802,13 +801,15 @@ function GM.TShopInterface()
 						pnlPanel.ItemWeight:SetContentAlignment( 5 )
 						
 						pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
-						pnlPanel.bulkSlider:SetPos(400, 30)
-						pnlPanel.bulkSlider:SetSize( 75, 40 ) 
+						pnlPanel.bulkSlider:SetPos(300, 45)
+						pnlPanel.bulkSlider:SetWide( 300 ) 
 						pnlPanel.bulkSlider:SetText( " " )
+						pnlPanel.bulkSlider:SetDecimals( 0 )
 						pnlPanel.bulkSlider:SetMin( 1 )
 						pnlPanel.bulkSlider:SetMax( 100 )
-						pnlPanel.bulkSlider:SetDecimals( 0 )
 						pnlPanel.bulkSlider:SetValue( 1 )
+						pnlPanel.bulkSlider.Label:SetColor(textColor)
+						pnlPanel.bulkSlider:SetBGColor(textColor)
 						
 						pnlPanel.BulkBtn = vgui.Create("DButton", pnlPanel )
 						pnlPanel.BulkBtn:SetPos(485, 30)
@@ -817,8 +818,8 @@ function GM.TShopInterface()
 						pnlPanel.BulkBtn.DoClick = function() 
 							net.Start("SpawnBulkCrate")
 								net.WriteEntity(ply)
-								net.WriteString(itemname)
-								net.WriteDouble(pnlPanel.bulkSlider:GetValue())
+								net.WriteString(item.ID)
+								net.WriteDouble(math.Round(pnlPanel.bulkSlider:GetValue()))
 							net.SendToServer()
 							tShopIntFrame:Close()
 						end
