@@ -664,7 +664,7 @@ function PNRP.OptionVerify(Command, Option, returnToMenu, frame)
 				opv_yes:SetSize( 50, 20 ) 
 				opv_yes.DoClick = function() 
 					if Option != nil then
-						ply:ChatPrint(Option)
+					--	ply:ChatPrint(Option)
 						RunConsoleCommand( Command, Option )
 					else
 						RunConsoleCommand( Command )

@@ -354,7 +354,7 @@ function TakeFromVendor( )
 			ply:ChatPrint("You can't carry any of these!")
 		else
 			local taken = Amount - extra
-			if remVendorItem( vendorENT.vendorID, Item, Amount ) then
+			if remVendorItem( vendorENT.vendorID, Item, taken ) then
 				ply:AddToInventory( Item, taken )
 				
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
