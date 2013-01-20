@@ -24,25 +24,25 @@ function ITEM.ToolCheck( p )
 end
 
 function ITEM.Use( ply )
-	local drunkness = activator:GetTable().Drunkness
+	local drunkness = ply:GetTable().Drunkness
 		
 	if not drunkness then
-		activator.Drunkness = 0
+		ply.Drunkness = 0
 	end
 	
 	local sound = Sound("npc/ichthyosaur/snap.wav")
-	self.Entity:EmitSound( sound )
+	ply:EmitSound( sound )
 	
-	activator:GiveHunger( 30 )
-	activator:GiveDrunkness(20)
+	ply:GiveHunger( 30 )
+	ply:GiveDrunkness(20)
 	
-	if activator.Drunkness >= 100 then
-		activator:ChatPrint("You've passed out completely!")
+	if ply.Drunkness >= 100 then
+		ply:ChatPrint("You've passed out completely!")
 		
-		activator.Endurance = 0
-		SendEndurance( activator )
+		ply.Endurance = 0
+		SendEndurance( ply )
 		
-		EnterSleep(activator)
+		EnterSleep(ply)
 	end
 	
 	return true
