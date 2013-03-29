@@ -172,6 +172,8 @@ function StockBreakIn( )
 	
 	if stockpile.Repairing then
 		ply:ChatPrint("You can't break in while someone's repairing this stockpile!")
+		net.Start("stockpile_stoprepair")
+		net.Send(ply)
 		return
 	end
 	
@@ -241,6 +243,8 @@ function StockBreakIn( )
 		end
 	else
 		ply:ChatPrint("Someone is already breaking into this stockpile.")
+		net.Start("stockpile_stopbreakin")
+		net.Send(ply)
 	end
 end
 --datastream.Hook( "stockpile_breakin", StockBreakIn )
@@ -248,7 +252,7 @@ net.Receive( "stockpile_breakin", StockBreakIn )
 
 function StockRepair( )
 	local ply = net.ReadEntity()
-	local stockpile = met.ReadEntity()
+	local stockpile = net.ReadEntity()
 	--local stockpile = decoded["stockpile"]
 	if stockpile.BreakInTimer >= 30 then
 		ply:ChatPrint("This stockpile is fully repaired!")
@@ -303,12 +307,16 @@ function StockRepair( )
 			end )
 		else
 			ply:ChatPrint("You cannot repair it while someone is breaking in!")
+			net.Start("stockpile_stoprepair")
+			net.Send(ply)
 		end
 	elseif stockpile.Repairing == ply then
 		net.Start("stockpile_stoprepair")
 		net.Send(ply)
 	else
 		ply:ChatPrint("Someone is already repairing this stockpile.")
+		net.Start("stockpile_stoprepair")
+		net.Send(ply)
 	end
 end
 net.Receive("stockpile_repair", StockRepair )

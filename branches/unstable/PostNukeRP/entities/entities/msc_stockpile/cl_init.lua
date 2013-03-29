@@ -208,7 +208,7 @@ function StockpileMenu( )
 				repairBtn.DoClick = function() 
 					net.Start("stockpile_repair")
 						net.WriteEntity(ply)
-						net.WriteEntity(sockpile)
+						net.WriteEntity(stockpile)
 					net.SendToServer()
 					stockmenu_frame:Close() 
 				end
@@ -333,6 +333,7 @@ end
 function StockpileBreakIn( )
 	local stockpile = net:ReadEntity()
 	local length = net:ReadDouble()
+	local ply = LocalPlayer()
 	
 	StartTime = CurTime()
 	TimeLeft = length
