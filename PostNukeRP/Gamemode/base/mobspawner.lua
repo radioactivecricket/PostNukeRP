@@ -7,7 +7,14 @@ GM.spawnTbl = {}
 local spawnTbl = GM.spawnTbl
 --Spawns a zombie when player dies
 function PNRP.PlyDeathZombie(ply, packTbl)
-	if GetConVarNumber("pnrp_PlyDeathZombie") == 1 then
+	local zombies = ents.FindByClass( "npc_zombie" )
+	local counter = 0
+	for _, v in pairs(zombies) do
+		if v:GetNetworkedString("deadplayername") == ply:Nick() then
+			counter = counter + 1
+		end
+	end
+	if GetConVarNumber("pnrp_PlyDeathZombie") == 1 and counter < 4 then
 		local pos = ply:GetPos()
 		timer.Create(tostring(ply:UniqueID()), 5, 1, function()
 			local ent = ents.Create("npc_zombie")
