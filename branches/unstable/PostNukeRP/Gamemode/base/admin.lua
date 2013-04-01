@@ -75,12 +75,26 @@ function PNRP.OpenMainAdmin(ply)
 				table.insert(ImportList, {v, table.getn(imtbl)})
 			end
 		end
-
+		
+		--Event Admin Stuff
+		local EventsTable = { }
+		local EventsFunction = { }
+		for k, v in pairs(PNRP.Events) do
+			EventsTable[k] = v["vars"]
+			
+			for fName, func in pairs(v["funcs"]) do
+				table.insert(EventsFunction[k], fName)
+			end
+		end
+		
+		print(table.ToString(EventsFunction))
 		net.Start( "pnrp_OpenAdminWindow" )
 			net.WriteTable(GMSettingstbl)
 			net.WriteTable(SpawnSettingstbl)
 			net.WriteTable(mapList)
 			net.WriteTable(ImportList)
+			net.WriteTable(EventsTable)
+			net.WriteTable(EventsFunction)
 		net.Send(ply)
 	else
 		ply:ChatPrint("You are not an admin on this server!")

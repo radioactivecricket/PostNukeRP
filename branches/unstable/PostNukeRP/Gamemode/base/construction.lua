@@ -403,6 +403,24 @@ function PNRP.Salvage( ply, command, arg )
 			local smallparts
 			local chemicals
 			
+			if tostring(command) == "pnrp_dosalvage" then
+				local Check = PNRP.TakeFromInventoryBulk( ply, ItemID, count )
+				if !Check then
+					ply:ChatPrint("Item not found!")
+					return
+				end
+			else
+				if tostring(command) == "pnrp_docarsalvage" then
+					local Check = PNRP.TakeFromCarInventoryBulk( ply, ItemID, count )
+					if !Check then
+						ply:ChatPrint("Item not found!")
+						return
+					end
+				else
+					ent:Remove()
+				end
+			end
+			
 			if team.GetName(ply:Team()) == "Wastelander" or team.GetName(ply:Team()) == "Scavenger" then
 				scrap = math.Round(PNRP.Items[ItemID].Scrap * (0.5 + (ply:GetSkill("Salvaging") * 0.05)))
 				smallparts =  math.Round(PNRP.Items[ItemID].SmallParts * (0.5 + (ply:GetSkill("Salvaging") * 0.05))) 
@@ -421,16 +439,6 @@ function PNRP.Salvage( ply, command, arg )
 			ply:IncResource("Scrap", scrap)
 			ply:IncResource("Small_Parts", smallparts)
 			ply:IncResource("Chemicals", chemicals)
-
-			if tostring(command) == "pnrp_dosalvage" then
-				PNRP.TakeFromInventoryBulk( ply, ItemID, count )
-			else
-				if tostring(command) == "pnrp_docarsalvage" then
-					PNRP.TakeFromCarInventoryBulk( ply, ItemID, count )
-				else
-					ent:Remove()
-				end
-			end
 			
 			ply:ChatPrint("You have salvaged: "..tostring(scrap).." Scrap, "..tostring(smallparts).." Small Parts and "..tostring(chemicals).." Chemicals")
 		end
