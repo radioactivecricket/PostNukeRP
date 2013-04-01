@@ -10,9 +10,11 @@ function GM.open_admin()
 	local SpawnSettings = net.ReadTable()
 	local mapList = net.ReadTable()
 	local importList = net.ReadTable()
+	local EventsTbl = net.ReadTable()
+	local EventsFunctions = net.ReadTable()
 	if ply:IsAdmin() then	
 		admin_frame = vgui.Create( "DFrame" )
-				admin_frame:SetSize( 400, 660 ) --Set the size
+				admin_frame:SetSize( 425, 660 ) --Set the size
 				admin_frame:SetPos(ScrW() / 2 - admin_frame:GetWide() / 2, ScrH() / 2 - admin_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 				admin_frame:SetTitle( "Admin Menu" ) --Set title
 				admin_frame:SetVisible( true )
@@ -521,6 +523,20 @@ function GM.open_admin()
 				SpawnerList:AddItem( RecSpawnerSettingsCats )
 		
 		AdminTabSheet:AddSheet( "Spawn Settings", SpawnerList, "gui/icons/bug_add.png", false, false, "Spawn Settings" )
+-- Event Settings EventsTbl
+		local EventsList = vgui.Create( "DPanelList", AdminTabSheet )
+				EventsList:SetPos( 10,10 )
+				EventsList:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 10 )
+				EventsList:SetSpacing( 5 ) -- Spacing between items
+				EventsList:EnableHorizontal( false ) -- Only vertical items
+				EventsList:EnableVerticalScrollbar( true ) -- Allow scrollbar if you exceed the Y axis	
+
+		for event, var in pairs(EventsTbl) do
+			local EventsSettingsCats = buildEventList(event, var, EventsFunctions, EventsList)
+			EventsList:AddItem( EventsSettingsCats )
+		end
+		AdminTabSheet:AddSheet( "Events", EventsList, "gui/icons/cog.png", false, false, "Events" )
+		
 -- Mob Grid Settings		
 		local mobGridRange = 1000
 		
@@ -632,9 +648,9 @@ function GM.open_admin()
 						end
 						admin_frame:Close() 
 				    end
-				mobGridSetup:AddItem( mapImpBTN )
-		
+				mobGridSetup:AddItem( mapImpBTN )	
 		AdminTabSheet:AddSheet( "Mob Grid Settings", mobGridSetup, "gui/icons/bug_edit.png", false, false, "Mob Grid Settings" )
+
 				
 		local saveBtn = vgui.Create("DButton") -- Create the button
 			saveBtn:SetParent( admin_frame ) -- parent the button to the frame
@@ -694,6 +710,46 @@ function GM.open_admin()
 end
 --datastream.Hook( "pnrp_OpenAdminWindow", GM.open_admin )
 net.Receive( "pnrp_OpenAdminWindow", GM.open_admin )
+
+function buildEventList(event, var, funcs, parent)
+	local EventsSettingsCats = vgui.Create("DCollapsibleCategory", parent)
+			EventsSettingsCats:SetSize( parent:GetWide()-4, 50 ) -- Keep the second number at 50
+			EventsSettingsCats:SetExpanded( 0 ) -- Expanded when popped up
+			EventsSettingsCats:SetLabel( event )
+			 
+			EventsSettingsList = vgui.Create( "DPanelList" )
+			EventsSettingsList:SetAutoSize( true )
+			EventsSettingsList:SetSpacing( 5 )
+			EventsSettingsList:EnableHorizontal( false )
+			EventsSettingsList:EnableVerticalScrollbar( true )
+			EventsSettingsList.Paint = function()
+			--	draw.RoundedBox( 8, 0, 0, EventsSettingsList:GetWide(), EventsSettingsList:GetTall(), Color( 50, 50, 50, 255 ) )
+			end
+			
+			EventsSettingsCats:SetContents( EventsSettingsList )
+			
+			for name, value in pairs(var) do
+				local varPanel = vgui.Create( "DPanel", EventsSettingsList )
+					varPanel:SetPos( 0,0 ) -- Set the position of the panel
+					varPanel:SetSize( EventsSettingsCats:GetWide() - 20, 25 )
+				
+					local DLabel = vgui.Create( "DLabel", varPanel )
+						DLabel:SetPos( 5, 5 ) -- Set the position of the label
+						DLabel:SetText( name ) --  Set the text of the label
+						DLabel:SizeToContents() -- Size the label to fit the text in it
+						DLabel:SetDark( 1 )
+						
+					local valueNWang = vgui.Create( "DNumberWang", varPanel )
+							valueNWang:SetPos(EventsSettingsCats:GetWide() - 100, 2 )
+							valueNWang:SetMin( 1 )
+							valueNWang:SetMax( 10000 )
+							valueNWang:SetDecimals( 0 )
+							valueNWang:SetValue( value )
+						
+				EventsSettingsList:AddItem( varPanel )
+			end
+	return EventsSettingsCats
+end
 
 function GM.initAdmin(ply)
 	if ply:IsAdmin() then	
