@@ -740,13 +740,36 @@ function buildEventList(event, var, funcs, parent)
 						DLabel:SetDark( 1 )
 						
 					local valueNWang = vgui.Create( "DNumberWang", varPanel )
-							valueNWang:SetPos(EventsSettingsCats:GetWide() - 100, 2 )
-							valueNWang:SetMin( 1 )
+						valueNWang:SetPos(varPanel:GetWide() - 135, 2 )
+						valueNWang:SetMin( 0 )
+						if name == "Active" then
+							valueNWang:SetMax( 1 )
+						else
 							valueNWang:SetMax( 10000 )
-							valueNWang:SetDecimals( 0 )
-							valueNWang:SetValue( value )
+						end
+						valueNWang:SetDecimals( 0 )
+						valueNWang:SetValue( value )
+						--event, varname, value, vartype )
+					local funcSetBTN = vgui.Create("DButton", varPanel )
+						funcSetBTN:SetPos(varPanel:GetWide() - 65, 2.5 )
+						funcSetBTN:SetText( "Set" )
+						funcSetBTN.DoClick = function()
+							local sValue = valueNWang:GetValue()
+							RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "number")
+							admin_frame:Close()
+						end
 						
 				EventsSettingsList:AddItem( varPanel )
+			end
+			
+			for _, fName in pairs(funcs[event]) do
+				local funcBTN = vgui.Create("DButton", EventsSettingsList )
+				    funcBTN:SetText( fName )
+				    funcBTN.DoClick = function()
+						RunConsoleCommand( "pnrp_ev_runfunc", event, fName)
+						admin_frame:Close()
+				    end
+				EventsSettingsList:AddItem( funcBTN )	
 			end
 	return EventsSettingsCats
 end
