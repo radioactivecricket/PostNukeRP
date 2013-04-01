@@ -77,17 +77,19 @@ function PNRP.OpenMainAdmin(ply)
 		end
 		
 		--Event Admin Stuff
-		local EventsTable = { }
-		local EventsFunction = { }
+		local EventsTable = {}
+		local EventsFunction = {}
 		for k, v in pairs(PNRP.Events) do
 			EventsTable[k] = v["vars"]
 			
+			local tmpfName = {}
 			for fName, func in pairs(v["funcs"]) do
-				table.insert(EventsFunction[k], fName)
+				table.insert(tmpfName, fName)
 			end
+			
+			EventsFunction[k] = tmpfName
 		end
-		
-		print(table.ToString(EventsFunction))
+
 		net.Start( "pnrp_OpenAdminWindow" )
 			net.WriteTable(GMSettingstbl)
 			net.WriteTable(SpawnSettingstbl)
