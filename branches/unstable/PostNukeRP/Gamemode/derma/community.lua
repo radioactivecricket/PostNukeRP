@@ -69,7 +69,7 @@ function GM.community_window( )
 		local community_TabSheet = vgui.Create( "DPropertySheet" )
 			community_TabSheet:SetParent( community_frame )
 			community_TabSheet:SetPos( 40, 70 )
-			community_TabSheet:SetSize( community_frame:GetWide() - 350, community_frame:GetTall() - 120 )
+			community_TabSheet:SetSize( community_frame:GetWide() - 340, community_frame:GetTall() - 120 )
 			community_TabSheet.Paint = function() -- Paint function
 				surface.SetDrawColor( 50, 50, 50, 0 )
 			end
@@ -82,7 +82,7 @@ function GM.community_window( )
 				end
 			local cMemberList = vgui.Create("DPanelList", cMemberPanel)
 				cMemberList:SetPos(0, 0)
-				cMemberList:SetSize(cMemberPanel:GetWide() - 5, cMemberPanel:GetTall() - 40)
+				cMemberList:SetSize(cMemberPanel:GetWide() - 15, cMemberPanel:GetTall() - 40)
 				cMemberList:EnableVerticalScrollbar(true) 
 				cMemberList:EnableHorizontal(false) 
 				cMemberList:SetSpacing(1)
@@ -144,7 +144,7 @@ function GM.community_window( )
 						MemberPanel.LastOn:SetContentAlignment( 5 )
 						
 						MemberPanel.TitleBtn = vgui.Create("DButton", MemberPanel )
-						MemberPanel.TitleBtn:SetPos(255, 5)
+						MemberPanel.TitleBtn:SetPos(240, 5)
 						MemberPanel.TitleBtn:SetSize(75,15)
 						MemberPanel.TitleBtn:SetText( "Set Title" )
 						MemberPanel.TitleBtn.DoClick = function() 
@@ -162,7 +162,7 @@ function GM.community_window( )
 						if !isLocalUser then
 							
 							MemberPanel.PromoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.PromoteBtn:SetPos(255, 20)
+							MemberPanel.PromoteBtn:SetPos(240, 20)
 							MemberPanel.PromoteBtn:SetSize(75,15)
 							MemberPanel.PromoteBtn:SetText( "Promote" )
 							MemberPanel.PromoteBtn.DoClick = function() 
@@ -177,7 +177,7 @@ function GM.community_window( )
 							end
 							
 							MemberPanel.DemoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.DemoteBtn:SetPos(255, 35)
+							MemberPanel.DemoteBtn:SetPos(240, 35)
 							MemberPanel.DemoteBtn:SetSize(75,15)
 							MemberPanel.DemoteBtn:SetText( "Demote" )
 							MemberPanel.DemoteBtn.DoClick = function() 
@@ -192,7 +192,7 @@ function GM.community_window( )
 							end
 							
 							MemberPanel.BootBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.BootBtn:SetPos(255, 50)
+							MemberPanel.BootBtn:SetPos(240, 50)
 							MemberPanel.BootBtn:SetSize(75,17)
 							MemberPanel.BootBtn:SetText( "Remove" )
 							MemberPanel.BootBtn.DoClick = function() 
