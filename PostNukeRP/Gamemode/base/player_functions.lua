@@ -907,11 +907,15 @@ function PlyInvComm(ply, cmd, args)
 				return
 			end
 			ply:ChatPrint( trgEnt:Nick().." has been invited to the community!" )
+			
+			local CommunityID = ply:GetTable().Community
+			local CommunityName = ply:GetNWString("community")
 
 			PNRP.PendingInvites[trgEnt:Nick()] = ply:GetNWString("community")
 			net.Start( "sendinvite" )
 				net.WriteString( ply:Nick() )
-				net.WriteString( ply:GetTable().Community )
+				net.WriteString( CommunityID )
+				net.WriteString( CommunityName )
 			net.Send(trgEnt)
 
 		else

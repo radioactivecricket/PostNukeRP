@@ -621,7 +621,7 @@ end
 
 function RecCInvite( )
 	local PlayerNIC = net:ReadString() 
---	local CommunityID = net:ReadString() 
+	local CommunityID = net:ReadString() 
 	local CommunityName = net:ReadString() 
 	local ply = LocalPlayer()
 	
@@ -798,6 +798,7 @@ concommand.Add( "pnrp_communitysearch",  GM.commSearchWindow )
 
 function sCommDispResults()
 	local result = net.ReadTable()
+	local ply = LocalPlayer()
 	
 	CommSearchBody_Frame = vgui.Create( "DPanel", commSearch_Frame )
 		CommSearchBody_Frame:SetPos( 25, 40 ) -- Set the position of the panel
