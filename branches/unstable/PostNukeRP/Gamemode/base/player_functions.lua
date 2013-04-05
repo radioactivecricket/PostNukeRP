@@ -264,6 +264,7 @@ function GM.LoadCharacter( ply, pid )
 	ply:SetArmor( tonumber(result[1]["armor"]) or 0 )
 	ply.Endurance = tonumber(result[1]["endurance"])
 	ply.Hunger = tonumber(result[1]["hunger"])
+	ply.LoadArmor = tonumber(result[1]["armor"]) or 0 
 
 	local resStr = string.Explode( ",", result[1]["res"] )
 	ply:SetResource( "Scrap", tonumber(resStr[1]) )
@@ -1704,6 +1705,10 @@ concommand.Add( "pnrp_seatSetup", seatSetup )
 PNRP.ChatConCmd( "/carseat", "pnrp_seatSetup" )
 
 function plyAFK(ply, cmd, args)
+	if ply:GetTable().IsAsleep then
+		ply:ChatPrint("You can not go afk while asleep.")
+		return
+	end
 	if ply.AFK then
 		ply.AFK = false
 		ply:Freeze(false)
