@@ -364,6 +364,7 @@ function PNRP.Salvage( ply, command, arg )
 	local playerNick = ply:Nick()
 	local plUID = PNRP:GetUID( ply )
 	local count = 1
+	local myClass
 	
 	if tostring(command) == "pnrp_dosalvage"  or tostring(command) == "pnrp_docarsalvage" then
 		local split = string.Explode(",",arg[1])
@@ -374,25 +375,24 @@ function PNRP.Salvage( ply, command, arg )
 		local tr = ply:TraceFromEyes(400)
 		ent = tr.Entity
 
---		if ent:GetNetworkedString("Owner") == playerNick then
 		if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
 			allowed = true
 		else
 			allowed = false
 		end
 		
---		if ent:GetClass() == "prop_vehicle_prisoner_pod" then
---			myClass = "weapon_seat"
---		else
-			myClass = ent:GetClass()
---		end
+		myClass = ent:GetClass()
 		
 		if myClass == "prop_physics" then return end
 		
 		ItemID = PNRP.FindItemID( myClass )
+
+		if string.find(tostring(ItemID), "ammo_") then
+			ply:ChatPrint("Can not salvage dropped ammo.")
+			return
+		end
 	end
 	
-	local myClass
 	--Added to remove the Null Entity error
 	if tostring(ent) == "[NULL Entity]" then return end
 	
