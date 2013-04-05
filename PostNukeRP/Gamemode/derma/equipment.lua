@@ -31,7 +31,10 @@ function ConvertWepEnt( weaponModel )
 	return nil
 end
 
+local eq_frame
+local eqFrameOpen = false
 function GM.EquipmentWindow( )
+	if eqFrameOpen then return end 
 	local ply = net.ReadEntity() 
 	local MyWeight = tonumber(net.ReadString())
 	local CarWeight = net.ReadString()
@@ -39,6 +42,7 @@ function GM.EquipmentWindow( )
 	local foundCar = false
 	local CarItemID
 	local CarWeightCap
+	eqFrameOpen = true
 
 	for n,c in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
 		CarItemID = PNRP.FindItemID( c:GetClass() )
@@ -54,7 +58,7 @@ function GM.EquipmentWindow( )
 		end
 	end
 	
-	local eq_frame = vgui.Create( "DFrame" )
+	eq_frame = vgui.Create( "DFrame" )
 		eq_frame:SetSize( 585, 289 ) --Set the size
 		eq_frame:SetPos(ScrW() / 2 - eq_frame:GetWide() / 2, ScrH() / 2 - eq_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 		eq_frame:SetTitle( "Equipment Menu" ) --Set title
@@ -361,6 +365,11 @@ function GM.EquipmentWindow( )
 				ammoToCarBtnLbl:SetFont("Trebuchet24")
 				ammoToCarBtnLbl:SizeToContents()	
 		end
+	function eq_frame:Close()                  
+		eqFrameOpen = false                  
+		self:SetVisible( false )                  
+		self:Remove()          
+	end 
 end
 net.Receive( "pnrp_OpenEquipmentWindow", GM.EquipmentWindow)
 
