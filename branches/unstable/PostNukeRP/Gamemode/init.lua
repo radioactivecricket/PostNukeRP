@@ -338,6 +338,11 @@ function GM:PlayerSpawn( ply )
 		ply.LoadHealth = nil
 	end
 	
+	if ply.LoadArmor and ply.LoadArmor > 0 then
+		ply:SetArmor(ply.LoadArmor)
+		ply.LoadArmor = nil
+	end
+	
     ply:SetNetworkedInt("MaxHealth", ply:GetMaxHealth())
     if ply:Team() == TEAM_SCAVENGER then
 		ply:SetRunSpeed( 325 + (ply:GetSkill("Athletics") * 10) ) 
@@ -466,19 +471,21 @@ function giveDefWep(ply)
 end
 
 function team_set_wastelander( ply )
- 
+	
+	classChangeCheck( ply )
     ply:SetTeam( TEAM_WASTELANDER )
     classChangeCost(ply, "Scrap")
     classChangeCost(ply, "Small_Parts")
     classChangeCost(ply, "Chemicals")
     ply:Spawn() -- Make the player respawn
- 
+	
 end
  
 function team_set_scavenger( ply )
- 
+	
+	classChangeCheck( ply )
     ply:SetTeam( TEAM_SCAVENGER )
-   classChangeCost(ply, "Scrap")
+    classChangeCost(ply, "Scrap")
     classChangeCost(ply, "Small_Parts")
     classChangeCost(ply, "Chemicals")
     ply:Spawn() -- Make the player respawn
@@ -487,6 +494,7 @@ end
 
 function team_set_science( ply )
  
+	classChangeCheck( ply )
     ply:SetTeam( TEAM_SCIENCE )
     classChangeCost(ply, "Scrap")
     classChangeCost(ply, "Small_Parts")
@@ -496,7 +504,8 @@ function team_set_science( ply )
 end
 
 function team_set_engineer( ply )
- 
+	
+	classChangeCheck( ply )
     ply:SetTeam( TEAM_ENGINEER )
     classChangeCost(ply, "Scrap")
     classChangeCost(ply, "Small_Parts")
@@ -506,7 +515,8 @@ function team_set_engineer( ply )
 end
 
 function team_set_cultivator( ply )
- 
+	
+	classChangeCheck( ply )
     ply:SetTeam( TEAM_CULTIVATOR )    
     classChangeCost(ply, "Scrap")
     classChangeCost(ply, "Small_Parts")
@@ -520,6 +530,11 @@ concommand.Add( "team_set_scavenger", team_set_scavenger )
 concommand.Add( "team_set_science", team_set_science )
 concommand.Add( "team_set_engineer", team_set_engineer )
 concommand.Add( "team_set_cultivator", team_set_cultivator )
+
+--May expand this function for other checks
+function classChangeCheck( ply )	
+	ply.LoadArmor = ply:Armor()
+end
 
 function classChangeCost(ply, Recource)
 	

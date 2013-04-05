@@ -69,7 +69,7 @@ function StatCheck()
 						v:GetTable().Endurance = endur + 2
 					else
 						if not overide then  --Checks for overide
-							v:GetTable().Endurance = endur - 10
+							v:GetTable().Endurance = endur - 1
 						end
 					end
 					
