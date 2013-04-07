@@ -136,8 +136,8 @@ local pmeta = FindMetaTable("Player")
 function pmeta:IsOutside()
 
 	local trace = {}
-	trace.start = self:GetShootPos()
-	trace.endpos = trace.start + ( self:GetUp() * 300 )
+	trace.start = self:GetPos()
+	trace.endpos = trace.start + Vector( 0, 0, 300 )
 	trace.filter = self
 	local tr = util.TraceLine( trace )
 
