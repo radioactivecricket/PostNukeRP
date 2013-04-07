@@ -225,7 +225,7 @@ function RemoveFromBackpack()
 					backEnt.contents.inv[k] = nil
 					subtractItem = false
 				elseif wepClass == "weapon_pnrp_charge" then
-					
+					ply:Give(wepClass)
 					ply:GiveAmmo(backEnt.contents.inv[k], "slam")
 					backEnt.contents.inv[k] = nil
 					subtractItem = false
@@ -244,6 +244,9 @@ function RemoveFromBackpack()
 		end
 		
 		for k, v in pairs(backEnt.contents.ammo) do
+			if k == "slam" then
+				ply:Give("weapon_pnrp_charge")
+			end
 			ply:GiveAmmo(v, k)
 			backEnt.contents.ammo[k] = nil
 		end

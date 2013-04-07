@@ -1326,7 +1326,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				-- ent:SetNetworkedInt("Ammo", v:Clip1())
 				-- ent:SetNetworkedString("Owner", "World")
 				local ammoDrop = ply:GetAmmoCount(v:GetPrimaryAmmoType())
-				if myItem.ID == "wep_grenade" or  myItem.ID == "wep_shapedcharge" then
+				if myItem.ID == "wep_grenade" or myItem.ID == "wep_shapedcharge" then
 					--skip
 				else
 					contents.inv[myItem.ID] = 1
@@ -1340,12 +1340,15 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				-- --	ply:SendHint( "Dropped "..myItem.Name,5)
 					local ammoFType
 					-- --grenade fix
-					if myItem.ID == "wep_grenade" or  myItem.ID == "wep_shapedcharge" then
+					if myItem.ID == "wep_grenade" then
 					--	contents.inv[myItem.ID] = contents.inv[myItem.ID] + ammoDrop - 1
+						print(ammoDrop)
 						contents.inv[myItem.ID] = ammoDrop - 1
+					elseif myItem.ID == "wep_shapedcharge" then
+						ammoFType = "slam"
+						contents.ammo[myAmmoType] = ammoDrop + v:Clip1() - 1
 					else
 						ammoFType = "ammo_"..myAmmoType
-						
 						contents.ammo[myAmmoType] = ammoDrop + v:Clip1()
 					end
 				end
