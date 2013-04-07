@@ -10,4 +10,5 @@
 	
 	"info"		"Survive the apocalypse!"
 	"hide"		"0"
+	"menusystem"	"1"
 }

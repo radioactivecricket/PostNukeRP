@@ -144,7 +144,11 @@ function GM.SaveCharacter(ply,cmd,args)
 			--ply:StripWeapon( v:GetClass() )
 		else
 			weaponList = weaponList..v:GetClass()..","
-			ammoTbl[ammoType] = ammo
+			if v:GetClass() == "weapon_frag" or v:GetClass() == "weapon_pnrp_charge" then
+				ammoTbl[ammoType] = ammo - 1
+			else
+				ammoTbl[ammoType] = ammo
+			end
 		end
 	end
 	string.TrimRight(weaponList, ",")
@@ -1310,7 +1314,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				else
 					myItem = PNRP.FindWepItem( v:GetModel() )
 				end
-				Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
+			--	Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
 				-- local ent = ents.Create("ent_weapon")
 				-- --ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
 				-- --ply:ChatPrint( "Dropped "..myItem.Name)
@@ -1321,9 +1325,13 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				-- ent:SetNWString("WepClass", myItem.Ent)
 				-- ent:SetNetworkedInt("Ammo", v:Clip1())
 				-- ent:SetNetworkedString("Owner", "World")
-				contents.inv[myItem.ID] = 1
-
 				local ammoDrop = ply:GetAmmoCount(v:GetPrimaryAmmoType())
+				if myItem.ID == "wep_grenade" or  myItem.ID == "wep_shapedcharge" then
+					--skip
+				else
+					contents.inv[myItem.ID] = 1
+				end
+								
 				if ammoDrop > 0 then
 					local myAmmoType = PNRP.ConvertAmmoType(v:GetPrimaryAmmoType())
 					-- local entClass
@@ -1333,7 +1341,8 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 					local ammoFType
 					-- --grenade fix
 					if myItem.ID == "wep_grenade" or  myItem.ID == "wep_shapedcharge" then
-						contents.inv[myItem.ID] = contents.inv[myItem.ID] + ammoDrop - 1
+					--	contents.inv[myItem.ID] = contents.inv[myItem.ID] + ammoDrop - 1
+						contents.inv[myItem.ID] = ammoDrop - 1
 					else
 						ammoFType = "ammo_"..myAmmoType
 						
