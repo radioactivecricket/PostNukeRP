@@ -37,10 +37,13 @@ function PNRP.AddItem( itemtable )
 		ShopHide = itemtable.ShopHide,
 		Capacity = itemtable.Capacity,
 		ProfileCost = itemtable.ProfileCost,
-		Persistent = itemtable.Persistent
+		Persistent = itemtable.Persistent,
+		UnBlock = itemtable.UnBlock
 	}
 	
-	AddBannedProp(itemtable.Model)
+	if not itemtable.UnBlock then
+		AddBannedProp(itemtable.Model)
+	end
 	
 end	
 
@@ -814,7 +817,7 @@ function ToolCheck( ply, tr, toolmode )
 	if myClass == "prop_physics" then
 		local myModel = ent:GetModel()
 		for itemname, item in pairs( PNRP.Items ) do
-			if myModel == item.Model then DoToolCheck = true end
+			if myModel == item.Model and not item.UnBlock then DoToolCheck = true end
 		end		
 	else
 		--Checks the itembase for the item
