@@ -17,6 +17,7 @@ ITEM.Ent = "tool_solar"
 ITEM.Model = "models/hunter/plates/plate1x2.mdl"
 ITEM.Script = ""
 ITEM.Weight = 15
+ITEM.UnBlock = true
 
 function ITEM.ToolCheck( p )
 	-- This one returns required items.
