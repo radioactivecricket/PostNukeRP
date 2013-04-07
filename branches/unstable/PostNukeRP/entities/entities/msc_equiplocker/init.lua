@@ -32,6 +32,9 @@ function ENT:Initialize()
 		self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
 		self.Entity:GetPhysicsObject():EnableMotion(false)
 		self.Entity:SetMoveType(MOVETYPE_NONE)
+		self.Entity:SetNWString("Owner", "Unownable")
+		self.Entity:SetNWString("Owner_UID", "")
+		self.Entity:SetNWEntity( "ownerent", self.Entity )
 
 		--self.Entity:SetPos(position)
 		self.Enabled = true

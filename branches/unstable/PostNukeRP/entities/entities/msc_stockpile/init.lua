@@ -25,6 +25,7 @@ function ENT:Initialize()
 	self.Entity:SetColor(Color(200, 200, 200, 50))
 --	self.Entity:SetKeyValue( "renderfx", 16 )
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_WORLD)
+	self.Entity:GetPhysicsObject():EnableMotion(true)
 	
 	local position = self.Entity:GetPos()
 	
@@ -34,7 +35,10 @@ function ENT:Initialize()
 		self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
 		self.Entity:GetPhysicsObject():EnableMotion(false)
 		self.Entity:SetMoveType(MOVETYPE_NONE)
-
+		self.Entity:SetNWString("Owner", "Unownable")
+		self.Entity:SetNWString("Owner_UID", "")
+		self.Entity:SetNWEntity( "ownerent", self.Entity )
+		
 		--self.Entity:SetPos(position)
 		self.Enabled = true
 	end )
