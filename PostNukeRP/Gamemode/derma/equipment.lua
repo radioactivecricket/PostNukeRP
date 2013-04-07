@@ -532,7 +532,7 @@ function GM.BackpackWindow()
 			--//Ammo
 			for k, v in pairs(contents.ammo) do
 				itemID = "ammo_"..k
-				Msg(itemID.."\n")
+			--	Msg(itemID.."\n")
 				local item = PNRP.Items[itemID]
 				if item then
 					local pnlPanel = vgui.Create("DPanel", Scroller)
