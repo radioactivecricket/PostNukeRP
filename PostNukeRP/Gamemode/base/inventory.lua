@@ -312,7 +312,7 @@ function PNRP.AddToInvFromEQ( p, command, arg )
 		end
 		
 	else
-		p:ChatPrint("You're pack is too full and cannot carry this.")
+		p:ChatPrint("Your pack is too full and cannot carry this.")
 		return
 	end
 	
