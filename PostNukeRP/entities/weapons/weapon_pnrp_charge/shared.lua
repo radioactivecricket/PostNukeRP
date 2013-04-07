@@ -151,6 +151,9 @@ function SWEP:SecondaryAttack()
 				if charge then
 					if charge:IsValid() then
 						charge:Explosion()
+						if self.Owner:GetAmmoCount(self.Primary.Ammo) <= 0 then
+							self.Owner:StripWeapon(self:GetClass())
+						end
 					end
 				end
 			end
