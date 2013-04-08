@@ -529,7 +529,7 @@ function BuyFromVendor( )
 	end
 	
 	--Verifies Player has the needed Resources to buy the item
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+	if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then
 		enough = true
 	else
 		totalScrap = Cost[1] * Amount
@@ -547,6 +547,10 @@ function BuyFromVendor( )
 		if weightCalc <= weightCap then
 			if remVendorItem( vendorID, Item, Amount ) then
 				ply:AddToInventory( Item, Amount )
+				
+				totalScrap = Cost[1] * Amount
+				totalSmall = Cost[2] * Amount
+				totalChems = Cost[3] * Amount
 				
 				ply:DecResource("Scrap", totalScrap)
 				ply:DecResource("Small_Parts", totalSmall)

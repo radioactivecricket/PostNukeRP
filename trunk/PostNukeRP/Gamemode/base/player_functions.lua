@@ -144,7 +144,11 @@ function GM.SaveCharacter(ply,cmd,args)
 			--ply:StripWeapon( v:GetClass() )
 		else
 			weaponList = weaponList..v:GetClass()..","
-			ammoTbl[ammoType] = ammo
+			if v:GetClass() == "weapon_frag" or v:GetClass() == "weapon_pnrp_charge" then
+				ammoTbl[ammoType] = ammo - 1
+			else
+				ammoTbl[ammoType] = ammo
+			end
 		end
 	end
 	string.TrimRight(weaponList, ",")
@@ -264,6 +268,7 @@ function GM.LoadCharacter( ply, pid )
 	ply:SetArmor( tonumber(result[1]["armor"]) or 0 )
 	ply.Endurance = tonumber(result[1]["endurance"])
 	ply.Hunger = tonumber(result[1]["hunger"])
+	ply.LoadArmor = tonumber(result[1]["armor"]) or 0 
 
 	local resStr = string.Explode( ",", result[1]["res"] )
 	ply:SetResource( "Scrap", tonumber(resStr[1]) )
@@ -907,11 +912,15 @@ function PlyInvComm(ply, cmd, args)
 				return
 			end
 			ply:ChatPrint( trgEnt:Nick().." has been invited to the community!" )
+			
+			local CommunityID = ply:GetTable().Community
+			local CommunityName = ply:GetNWString("community")
 
 			PNRP.PendingInvites[trgEnt:Nick()] = ply:GetNWString("community")
 			net.Start( "sendinvite" )
 				net.WriteString( ply:Nick() )
-				net.WriteString( ply:GetTable().Community )
+				net.WriteString( CommunityID )
+				net.WriteString( CommunityName )
 			net.Send(trgEnt)
 
 		else
@@ -1104,7 +1113,9 @@ function PlyPlaceStockpile(ply, cmd, args)
 				local ent = ents.Create ("msc_stockpile")
 				ent:SetNWString("communityName", ply:GetNWString("community"))
 				ent:SetNWString("community_owner", ply:GetTable().Community)
-				ent:SetNWString("Owner", "Unownable")
+				ent:SetNWString("Owner", ply:Name())
+				ent:SetNWString("Owner_UID", PNRP:GetUID( ply ))
+				ent:SetNWEntity( "ownerent", ply )
 				ent:SetPos( trace.HitPos + Vector(0,0,80) )
 				ent:Spawn()
 				ply:ChatPrint( "You have placed a community stockpile.  It will take 10 seconds to become active." )
@@ -1148,7 +1159,9 @@ function PlyPlaceLocker(ply, cmd, args)
 				local ent = ents.Create ("msc_equiplocker")
 				ent:SetNWString("communityName", ply:GetNWString("community"))
 				ent:SetNWString("community_owner", ply:GetTable().Community)
-				ent:SetNWString("Owner", "Unownable")
+				ent:SetNWString("Owner", ply:Name())
+				ent:SetNWString("Owner_UID", PNRP:GetUID( ply ))
+				ent:SetNWEntity( "ownerent", ply )
 				ent:SetPos( trace.HitPos + Vector(0,0,12) )
 				ent:Spawn()
 
@@ -1305,7 +1318,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				else
 					myItem = PNRP.FindWepItem( v:GetModel() )
 				end
-				Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
+			--	Msg(tostring(v:GetModel()).." "..tostring(myItem.ID).."\n")
 				-- local ent = ents.Create("ent_weapon")
 				-- --ply:PrintMessage( HUD_PRINTTALK, v:GetPrintName( ) )
 				-- --ply:ChatPrint( "Dropped "..myItem.Name)
@@ -1316,9 +1329,13 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				-- ent:SetNWString("WepClass", myItem.Ent)
 				-- ent:SetNetworkedInt("Ammo", v:Clip1())
 				-- ent:SetNetworkedString("Owner", "World")
-				contents.inv[myItem.ID] = 1
-
 				local ammoDrop = ply:GetAmmoCount(v:GetPrimaryAmmoType())
+				if myItem.ID == "wep_grenade" or myItem.ID == "wep_shapedcharge" then
+					--skip
+				else
+					contents.inv[myItem.ID] = 1
+				end
+								
 				if ammoDrop > 0 then
 					local myAmmoType = PNRP.ConvertAmmoType(v:GetPrimaryAmmoType())
 					-- local entClass
@@ -1327,11 +1344,15 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 				-- --	ply:SendHint( "Dropped "..myItem.Name,5)
 					local ammoFType
 					-- --grenade fix
-					if myItem.ID == "wep_grenade" or  myItem.ID == "wep_shapedcharge" then
-						contents.inv[myItem.ID] = contents.inv[myItem.ID] + ammoDrop - 1
+					if myItem.ID == "wep_grenade" then
+					--	contents.inv[myItem.ID] = contents.inv[myItem.ID] + ammoDrop - 1
+						print(ammoDrop)
+						contents.inv[myItem.ID] = ammoDrop - 1
+					elseif myItem.ID == "wep_shapedcharge" then
+						ammoFType = "slam"
+						contents.ammo[myAmmoType] = ammoDrop + v:Clip1() - 1
 					else
 						ammoFType = "ammo_"..myAmmoType
-						
 						contents.ammo[myAmmoType] = ammoDrop + v:Clip1()
 					end
 				end
@@ -1700,6 +1721,10 @@ concommand.Add( "pnrp_seatSetup", seatSetup )
 PNRP.ChatConCmd( "/carseat", "pnrp_seatSetup" )
 
 function plyAFK(ply, cmd, args)
+	if ply:GetTable().IsAsleep then
+		ply:ChatPrint("You can not go afk while asleep.")
+		return
+	end
 	if ply.AFK then
 		ply.AFK = false
 		ply:Freeze(false)

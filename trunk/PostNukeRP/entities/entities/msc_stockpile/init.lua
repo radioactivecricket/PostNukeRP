@@ -25,6 +25,7 @@ function ENT:Initialize()
 	self.Entity:SetColor(Color(200, 200, 200, 50))
 --	self.Entity:SetKeyValue( "renderfx", 16 )
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_WORLD)
+	self.Entity:GetPhysicsObject():EnableMotion(true)
 	
 	local position = self.Entity:GetPos()
 	
@@ -34,7 +35,10 @@ function ENT:Initialize()
 		self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
 		self.Entity:GetPhysicsObject():EnableMotion(false)
 		self.Entity:SetMoveType(MOVETYPE_NONE)
-
+		self.Entity:SetNWString("Owner", "Unownable")
+		self.Entity:SetNWString("Owner_UID", "")
+		self.Entity:SetNWEntity( "ownerent", self.Entity )
+		
 		--self.Entity:SetPos(position)
 		self.Enabled = true
 	end )
@@ -172,6 +176,8 @@ function StockBreakIn( )
 	
 	if stockpile.Repairing then
 		ply:ChatPrint("You can't break in while someone's repairing this stockpile!")
+		net.Start("stockpile_stoprepair")
+		net.Send(ply)
 		return
 	end
 	
@@ -241,6 +247,8 @@ function StockBreakIn( )
 		end
 	else
 		ply:ChatPrint("Someone is already breaking into this stockpile.")
+		net.Start("stockpile_stopbreakin")
+		net.Send(ply)
 	end
 end
 --datastream.Hook( "stockpile_breakin", StockBreakIn )
@@ -248,7 +256,7 @@ net.Receive( "stockpile_breakin", StockBreakIn )
 
 function StockRepair( )
 	local ply = net.ReadEntity()
-	local stockpile = met.ReadEntity()
+	local stockpile = net.ReadEntity()
 	--local stockpile = decoded["stockpile"]
 	if stockpile.BreakInTimer >= 30 then
 		ply:ChatPrint("This stockpile is fully repaired!")
@@ -303,12 +311,16 @@ function StockRepair( )
 			end )
 		else
 			ply:ChatPrint("You cannot repair it while someone is breaking in!")
+			net.Start("stockpile_stoprepair")
+			net.Send(ply)
 		end
 	elseif stockpile.Repairing == ply then
 		net.Start("stockpile_stoprepair")
 		net.Send(ply)
 	else
 		ply:ChatPrint("Someone is already repairing this stockpile.")
+		net.Start("stockpile_stoprepair")
+		net.Send(ply)
 	end
 end
 net.Receive("stockpile_repair", StockRepair )

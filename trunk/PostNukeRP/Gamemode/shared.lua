@@ -2,7 +2,7 @@ GM.Name 	= "PostNukeRP" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://postnukerp.com" --Set the author website
-GM.Version  = "1.1.0"
+GM.Version  = "1.1.1"
 
 DeriveGamemode("sandbox") 
 
@@ -136,8 +136,8 @@ local pmeta = FindMetaTable("Player")
 function pmeta:IsOutside()
 
 	local trace = {}
-	trace.start = self:GetShootPos()
-	trace.endpos = trace.start + ( self:GetUp() * 300 )
+	trace.start = self:GetPos()
+	trace.endpos = trace.start + Vector( 0, 0, 300 )
 	trace.filter = self
 	local tr = util.TraceLine( trace )
 

@@ -122,6 +122,11 @@ function EnterSleep ( ply )
 	local IsSleeping = ply:GetTable().IsAsleep
 	local curEndurance = ply:GetTable().Endurance
 	
+	if ply.AFK then
+		ply:ChatPrint("You can not sleep while AFK.")
+		return
+	end
+	
 	if IsSleeping == false and curEndurance < 100 then
 		if not ply:GetTable().SleepSound then
 			ply:GetTable().SleepSound = CreateSound(ply, "npc/ichthyosaur/water_breath.wav")

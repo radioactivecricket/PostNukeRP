@@ -136,6 +136,11 @@ function ChangeStorageModel( )
 	
 	local storageID = storageENT.storageID
 	
+	if math.Round((storageENT.BreakInTimer / 60) * 100) < 99 then
+		ply:ChatPrint("Unable to change model. Repair Storage first.")
+		return
+	end
+	
 	local effectdata = EffectData()
 	effectdata:SetStart( storageENT:LocalToWorld( Vector( 0, 0, 0 ) ) ) 
 	effectdata:SetOrigin( storageENT:LocalToWorld( Vector( 0, 0, 0 ) ) )
@@ -582,6 +587,7 @@ function StorageRepair( )
 end
 net.Receive( "StorageRepair", StorageRepair )
 util.AddNetworkString("storage_repair")
+util.AddNetworkString("storage_stoprepair")
 
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value

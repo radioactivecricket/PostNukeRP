@@ -31,7 +31,10 @@ function ConvertWepEnt( weaponModel )
 	return nil
 end
 
+local eq_frame
+local eqFrameOpen = false
 function GM.EquipmentWindow( )
+	if eqFrameOpen then return end 
 	local ply = net.ReadEntity() 
 	local MyWeight = tonumber(net.ReadString())
 	local CarWeight = net.ReadString()
@@ -39,6 +42,8 @@ function GM.EquipmentWindow( )
 	local foundCar = false
 	local CarItemID
 	local CarWeightCap
+	eqFrameOpen = true
+	local maxAmmo = 0	
 
 	for n,c in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
 		CarItemID = PNRP.FindItemID( c:GetClass() )
@@ -54,7 +59,7 @@ function GM.EquipmentWindow( )
 		end
 	end
 	
-	local eq_frame = vgui.Create( "DFrame" )
+	eq_frame = vgui.Create( "DFrame" )
 		eq_frame:SetSize( 585, 289 ) --Set the size
 		eq_frame:SetPos(ScrW() / 2 - eq_frame:GetWide() / 2, ScrH() / 2 - eq_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 		eq_frame:SetTitle( "Equipment Menu" ) --Set title
@@ -82,8 +87,10 @@ function GM.EquipmentWindow( )
 			Scroller:AlignBottom(5)
 			Scroller:AlignLeft(4)
 			Scroller:SetOverlap(-1) --Set how much to overlap, negative numbers will space out the panels.
-			
-			local AmmoListView = vgui.Create( "DListView", eq_frame )
+		
+		--Ammo Section
+					
+		local AmmoListView = vgui.Create( "DListView", eq_frame )
 			AmmoListView:SetPos( eq_frame:GetWide() - 205, 40 )
 			AmmoListView:SetSize( 155, 80 )
 			AmmoListView:SetMultiSelect( false ) -- <removed sarcastic and useless comment>
@@ -92,6 +99,7 @@ function GM.EquipmentWindow( )
 			AmmoListView.Paint = function() -- Paint function
 				surface.SetDrawColor( 180, 180, 180, 80 )
 			end
+			
 			local ammoCount_str = "Equipped Ammo \n"
 			for itemname, item in pairs( PNRP.Items ) do
 				if item.Type == "ammo" then
@@ -107,6 +115,32 @@ function GM.EquipmentWindow( )
 			end	
 			AmmoListView:SetToolTip( ammoCount_str )
 			
+		local ammoSlide = vgui.Create( "DNumSlider", eq_frame )
+			ammoSlide:SetWide( 250 )
+			ammoSlide:SetPos( eq_frame:GetWide() - 290, AmmoListView:GetTall() + 35 )
+			ammoSlide:SetText( "" )
+			ammoSlide:SetDecimals( 0 )
+			ammoSlide:SetMin( 0 )
+			ammoSlide:SetMax( maxAmmo )
+			ammoSlide:SetValue( 0 )
+			ammoSlide.Paint = function() -- Paint function
+				surface.SetDrawColor( 255, 255, 255, 255 )
+			end
+		local ammoSlideLabel = vgui.Create("DLabel", eq_frame)		
+			ammoSlideLabel:SetPos(eq_frame:GetWide() - 205, AmmoListView:GetTall() + 45)
+			ammoSlideLabel:SetText("Amount")
+			ammoSlideLabel:SetColor(Color( 255, 255, 255, 255 ))
+			ammoSlideLabel:SizeToContents() 
+			ammoSlideLabel:SetContentAlignment( 5 )
+			
+			--Resize Max Ammo
+			AmmoListView.OnRowSelected = function()
+				local newMaxAmmo = tonumber(AmmoListView:GetLine(AmmoListView:GetSelectedLine()):GetValue(2))
+				ammoSlide:SetMax( newMaxAmmo )
+				ammoSlide:SetValue( 0 )
+			end
+			
+			--Weapons
 			for k, v in pairs(ply:GetWeapons()) do
 			--	local wepCheck = CheckDefWeps(v)
 			--	if !wepCheck then
@@ -228,25 +262,6 @@ function GM.EquipmentWindow( )
 					end
 				end
 			end
-			
-		local maxAmmo = 100		
-		local ammoSlide = vgui.Create( "DNumSlider", eq_frame )
-			ammoSlide:SetWide( 250 )
-			ammoSlide:SetPos( eq_frame:GetWide() - 290, AmmoListView:GetTall() + 35 )
-			ammoSlide:SetText( "" )
-			ammoSlide:SetDecimals( 0 )
-			ammoSlide:SetMin( 0 )
-			ammoSlide:SetMax( maxAmmo )
-			ammoSlide:SetValue( 0 )
-			ammoSlide.Paint = function() -- Paint function
-				surface.SetDrawColor( 255, 255, 255, 255 )
-			end
-		local ammoSlideLabel = vgui.Create("DLabel", eq_frame)		
-			ammoSlideLabel:SetPos(eq_frame:GetWide() - 205, AmmoListView:GetTall() + 45)
-			ammoSlideLabel:SetText("Amount")
-			ammoSlideLabel:SetColor(Color( 255, 255, 255, 255 ))
-			ammoSlideLabel:SizeToContents() 
-			ammoSlideLabel:SetContentAlignment( 5 )
 		
 		--//Menu	
 		local btnHPos = 170
@@ -361,6 +376,11 @@ function GM.EquipmentWindow( )
 				ammoToCarBtnLbl:SetFont("Trebuchet24")
 				ammoToCarBtnLbl:SizeToContents()	
 		end
+	function eq_frame:Close()                  
+		eqFrameOpen = false                  
+		self:SetVisible( false )                  
+		self:Remove()          
+	end 
 end
 net.Receive( "pnrp_OpenEquipmentWindow", GM.EquipmentWindow)
 
@@ -512,7 +532,7 @@ function GM.BackpackWindow()
 			--//Ammo
 			for k, v in pairs(contents.ammo) do
 				itemID = "ammo_"..k
-				Msg(itemID.."\n")
+			--	Msg(itemID.."\n")
 				local item = PNRP.Items[itemID]
 				if item then
 					local pnlPanel = vgui.Create("DPanel", Scroller)

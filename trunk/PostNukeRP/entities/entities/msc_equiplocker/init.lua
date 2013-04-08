@@ -32,6 +32,9 @@ function ENT:Initialize()
 		self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
 		self.Entity:GetPhysicsObject():EnableMotion(false)
 		self.Entity:SetMoveType(MOVETYPE_NONE)
+		self.Entity:SetNWString("Owner", "Unownable")
+		self.Entity:SetNWString("Owner_UID", "")
+		self.Entity:SetNWEntity( "ownerent", self.Entity )
 
 		--self.Entity:SetPos(position)
 		self.Enabled = true
@@ -47,12 +50,11 @@ function ENT:Use( activator, caller )
 				self.Repairing = nil
 				activator:SetMoveType(MOVETYPE_WALK)
 				net.Start("locker_stoprepair")
-				net.End(activator)
+				net.Send(activator)
 			end
 			if activator.Community == self.Community then
 				local communityTbl = GetCommunityTbl(self.Community)
 				if communityTbl == nil then return end
-				
 				net.Start("locker_menu")
 					net.WriteEntity(activator)
 					net.WriteEntity(self)
@@ -62,6 +64,7 @@ function ENT:Use( activator, caller )
 				net.Send(activator)
 				
 			else
+				print(tostring(self.Community))
 				-- Just a placeholder for breaking into these things.
 				net.Start("locker_breakin")
 					net.WriteEntity(self)
@@ -160,6 +163,8 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 	
 	if locker.Repairing then
 		ply:ChatPrint("You can't break in while someone's repairing this locker!")
+		net.Start("locker_stopbreakin")
+		net.Send(ply)
 		return
 	end
 	
@@ -168,11 +173,13 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 			net.Start("locker_stopbreakin")
 			net.Send(ply)
 			
-			local playerTbl = { }
-			local ILoc = PNRP.GetInventoryLocation( ply )
-			if file.Exists( ILoc ) then 
-				playerTbl = util.KeyValuesToTable(file.Read(ILoc))
-			end
+--			local playerTbl = { }
+--			local ILoc = PNRP.GetInventoryLocation( ply ) or { }
+--			if file.Exists( ILoc ) then 
+--				playerTbl = util.KeyValuesToTable(file.Read(ILoc))
+--			end
+			
+			local playerTbl = PNRP.Inventory( ply ) or {}
 			
 			local communityTbl = GetCommunityTbl(locker.Community)
 			--datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 30) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
@@ -212,11 +219,13 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 					local communityTbl = GetCommunityTbl(locker.Community)
 					if communityTbl == nil then return end
 					
-					local playerTbl = { }
-					local ILoc = PNRP.GetInventoryLocation( ply )
-					if file.Exists( ILoc ) then 
-						playerTbl = util.KeyValuesToTable(file.Read(ILoc))
-					end
+				--	local playerTbl = { }
+				--	local ILoc = PNRP.GetInventoryLocation( ply ) or { }
+				--	if file.Exists( ILoc ) then 
+				--		playerTbl = util.KeyValuesToTable(file.Read(ILoc))
+				--	end
+					
+					local playerTbl = PNRP.Inventory( ply ) or {}
 					
 					--datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 60) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
 					net.Start("locker_menu")
@@ -247,6 +256,8 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 		end
 	else
 		ply:ChatPrint("Someone is already breaking into this locker.")
+		net.Start("locker_stopbreakin")
+		net.Send(ply)
 	end
 end
 --datastream.Hook( "locker_breakin", LockerBreakIn )
@@ -256,14 +267,14 @@ function LockerRepair( )
 	local ply = net.ReadEntity()
 	local locker = net.ReadEntity()
 	--local locker = decoded["locker"]
-	if locker.BreakInTimer >= 30 then
+	if locker.BreakInTimer >= 60 then
 		ply:ChatPrint("This locker is fully repaired!")
 		return
 	end
 	if not locker.Repairing then
 		if not locker.BreakingIn then
 			net.Start("locker_repair")
-				net.Entity(locker)
+				net.WriteEntity(locker)
 				net.WriteDouble(locker.BreakInTimer)
 			net.Send(ply)
 			
@@ -316,12 +327,16 @@ function LockerRepair( )
 			end )
 		else
 			ply:ChatPrint("You cannot repair it while someone is breaking in!")
+			net.Start("locker_stoprepair")
+			net.Send(ply)
 		end
 	elseif locker.Repairing == ply then
 		net.Start("locker_stoprepair")
 		net.Send(ply)
 	else
 		ply:ChatPrint("Someone is already repairing this locker.")
+		net.Start("locker_stoprepair")
+		net.Send(ply)
 	end
 end
 util.AddNetworkString("locker_repair")

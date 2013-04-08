@@ -284,7 +284,6 @@ function LockerBreakIn( )
 	
 	hook.Add( "HUDPaint", "BreakInBar", LckrBreakInBar )
 	
-	--datastream.StreamToServer( "locker_breakin", {["locker"] = locker} )
 	net.Start("locker_breakin")
 		net.WriteEntity(ply)
 		net.WriteEntity(locker)
@@ -292,7 +291,7 @@ function LockerBreakIn( )
 end
 net.Receive("locker_breakin", LockerBreakIn)
 
-function LckrStopBreakIn( data )
+function LckrStopBreakIn( )
 	hook.Remove( "HUDPaint", "BreakInBar")
 end
 net.Receive("locker_stopbreakin", LckrStopBreakIn)
