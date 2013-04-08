@@ -300,8 +300,19 @@ function PNRP.AddToInvFromEQ( p, command, arg )
 	if weight <= weightCap then
 		PNRP.AddToInventory( p, theitem, 1 )
 		
+		if command == "pnrp_addtoinvfromeq" then
+			for _, wep in pairs(p:GetWeapons()) do
+				if wep:GetClass() == PNRP.Items[theitem].Ent then
+					if wep:Clip1() > 0 then
+						p:ChatPrint("You've pocketed the magazine.")
+						p:GiveAmmo( wep:Clip1(), wep:GetPrimaryAmmoType(), false )
+					end
+				end
+			end
+		end
+		
 	else
-		p:ChatPrint("You're pack is too full and cannot carry this.")
+		p:ChatPrint("Your pack is too full and cannot carry this.")
 		return
 	end
 	

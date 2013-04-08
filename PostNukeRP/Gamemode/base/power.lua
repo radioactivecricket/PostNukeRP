@@ -9,10 +9,10 @@ function EntityMeta:PowerLink( ent )
 	if !self.PowerItem or !ent.PowerItem then return false end
 	
 	if self.NetworkContainer ~= nil and self.NetworkContainer == ent.NetworkContainer then return false end
-	--ErrorNoHalt("Ent1:  "..tostring(self).."  Ent2:  "..tostring(ent))
+	-- ErrorNoHalt("Ent1:  "..tostring(self).."  Ent2:  "..tostring(ent))
 	-- are these both on a network?
 	if self.NetworkContainer and ent.NetworkContainer then 
-		-- ErrorNoHalt("NetworkContainer Both\n")
+		 -- ErrorNoHalt("NetworkContainer Both\n")
 		if self.NetworkContainer.PowerGenerator then
 			table.insert(self.DirectLinks, ent)
 			table.insert(ent.DirectLinks, self)
@@ -20,15 +20,27 @@ function EntityMeta:PowerLink( ent )
 			-- ErrorNoHalt("ent.LinkedItems:  "..table.ToString(ent.NetworkContainer.LinkedItems).."\n")
 			table.Add(self.NetworkContainer.LinkedItems, ent.NetworkContainer.LinkedItems)
 			-- ErrorNoHalt("self.LinkedItems, Added:  "..table.ToString(self.NetworkContainer.LinkedItems).."\n")
+			table.insert(self.NetworkContainer.LinkedItems, ent.NetworkContainer)
+			-- ErrorNoHalt("self.LinkedItems, Added x2:  "..table.ToString(self.NetworkContainer.LinkedItems).."\n")
+			ent.LinkedItems = {}
+			
 			for k, v in pairs(self.NetworkContainer.LinkedItems) do
 				-- ErrorNoHalt("LinkedItems loop:  "..tostring(v).."\n")
 				v.NetworkContainer = self.NetworkContainer
 			end
-			table.insert(self.NetworkContainer.LinkedItems, ent)
-			-- ErrorNoHalt("self.LinkedItems, Added x2:  "..table.ToString(self.NetworkContainer.LinkedItems).."\n")
-			ent.NetworkContainer.LinkedItems = {}
-			-- ErrorNoHalt("self.LinkedItems, Wipe:  "..table.ToString(self.NetworkContainer.LinkedItems).."\n")
-			ent.NetworkContainer = self.NetworkContainer
+			
+			--Hacky fix.  Clear out duplicates.
+			local sanatizedTbl = {}
+			local flags = {}
+			
+			for i=1,#self.NetworkContainer.LinkedItems do
+			   if not flags[self.NetworkContainer.LinkedItems[i]] then
+				  table.insert(sanatizedTbl, self.NetworkContainer.LinkedItems[i])
+				  flags[self.NetworkContainer.LinkedItems[i]] = true
+			   end
+			end
+			table.CopyFromTo(sanatizedTbl, self.NetworkContainer.LinkedItems)
+			-- ErrorNoHalt("NetworkContainer.LinkedItems, Sanitized:  "..table.ToString(self.NetworkContainer.LinkedItems).."\n")
 		elseif ent.NetworkContainer.PowerGenerator then
 			table.insert(self.DirectLinks, ent)
 			table.insert(ent.DirectLinks, self)
@@ -52,7 +64,7 @@ function EntityMeta:PowerLink( ent )
 		end
 	-- is the first on a network?
 	elseif self.NetworkContainer then
-		--ErrorNoHalt("NetworkContainer Only 1st")
+		-- ErrorNoHalt("NetworkContainer Only 1st\n")
 		if self.NetworkContainer.PowerGenerator then
 			ent.NetworkContainer = self.NetworkContainer
 			table.insert(self.DirectLinks, ent)
@@ -66,10 +78,10 @@ function EntityMeta:PowerLink( ent )
 			ent.NetworkContainer = ent
 			table.insert(self.DirectLinks, ent)
 			table.insert(ent.DirectLinks, self)
-			--ErrorNoHalt("self.LinkedItems:  "..table.ToString(self.LinkedItems).."\n")
+			-- ErrorNoHalt("self.LinkedItems:  "..table.ToString(self.LinkedItems).."\n")
 			table.insert(self.NetworkContainer.LinkedItems, self)
 			table.Add(ent.NetworkContainer.LinkedItems, self.LinkedItems)
-			--ErrorNoHalt("NetCont.LinkedItems:  "..table.ToString(ent.NetworkContainer.LinkedItems).."\n")
+			-- ErrorNoHalt("NetCont.LinkedItems:  "..table.ToString(ent.NetworkContainer.LinkedItems).."\n")
 			for k, v in pairs(ent.NetworkContainer.LinkedItems) do
 				v.NetworkContainer = self.NetworkContainer
 			end
@@ -85,7 +97,7 @@ function EntityMeta:PowerLink( ent )
 		end
 	--the second?
 	elseif ent.NetworkContainer then
-		--ErrorNoHalt("NetworkContainer Only 2nd")
+		-- ErrorNoHalt("NetworkContainer Only 2nd\n")
 		if ent.NetworkContainer.PowerGenerator then
 			self.NetworkContainer = ent.NetworkContainer
 			table.insert(self.DirectLinks, ent)
@@ -116,7 +128,7 @@ function EntityMeta:PowerLink( ent )
 		end
 	--fuck it, neither of them are
 	else
-		--ErrorNoHalt("NetworkContainer Neither")
+		-- ErrorNoHalt("NetworkContainer Neither\n")
 		if ent.PowerGenerator then
 			self.NetworkContainer = ent
 			ent.NetworkContainer = ent
@@ -147,6 +159,7 @@ function EntityMeta:PowerUnLink()
 	if not IsValid(self.NetworkContainer) then return false	end
 	
 	for _, v in pairs(self.DirectLinks) do
+		-- -- ErrorNoHalt("Self ("..tostring(self)..") DirectLink --> "..tostring(v).."\n")
 		for key, node in pairs(v.DirectLinks) do
 			if node == self then
 				table.remove(v.DirectLinks, key)
@@ -161,12 +174,17 @@ function EntityMeta:PowerUnLink()
 		end
 	end
 	
+	-- -- ErrorNoHalt("self.NetworkContainer = ("..tostring(self.NetworkContainer).."\n")
+	
 	if self.NetworkContainer == self then
+		-- -- ErrorNoHalt("Self ("..tostring(self)..") is NetworkContainer.\n")
 		local linkedNodes = {}
 		for k, node in pairs(self.DirectLinks) do
+			-- -- ErrorNoHalt("Self.DirectLinks["..tostring(k).."] = "..tostring(node).."\n")
 			local found = false
 			for _, check in pairs(linkedNodes) do
 				if check == node then
+					-- -- ErrorNoHalt("Self.DirectLinks["..tostring(k).."] = found\n")
 					found = true
 				end
 			end
@@ -192,6 +210,7 @@ function EntityMeta:PowerUnLink()
 						node.NetworkContainer = node
 						for _, connectNode in pairs(self.LinkedItems) do
 							if connectNode ~= node then
+								-- -- ErrorNoHalt("PathToNode:  "..tostring(node).. " --> "..tostring(connectNode).."\n")
 								if PathToNode( node, connectNode) then
 									table.insert(node.LinkedItems, connectNode)
 									connectNode.NetworkContainer = node
@@ -202,10 +221,13 @@ function EntityMeta:PowerUnLink()
 						end
 					else
 						local generator = PathToGenerator( node )
+						-- -- ErrorNoHalt("PathToGenerator:  "..tostring(node).."\n")
 						if IsValid(generator) then
+							-- -- ErrorNoHalt("Generator is valid:  "..tostring(node).." --> "..tostring(generator).."\n")
 							node.NetworkContainer = generator
 							for _, connectNode in pairs(self.LinkedItems) do
 								if connectNode ~= node then
+									-- -- ErrorNoHalt("PathToNode:  "..tostring(node).. " --> "..tostring(connectNode).."\n")
 									if PathToNode( node, connectNode) then
 										table.insert(generator.LinkedItems, connectNode)
 										connectNode.NetworkContainer = generator
@@ -215,9 +237,11 @@ function EntityMeta:PowerUnLink()
 								end
 							end
 						else
+							-- -- ErrorNoHalt("Generator is not valid: "..tostring(node).." --> ?\n")
 							node.NetworkContainer = node
 							for _, connectNode in pairs(self.LinkedItems) do
 								if connectNode ~= node then
+									-- -- ErrorNoHalt("PathToNode:  "..tostring(node).. " --> "..tostring(connectNode).."\n")
 									if PathToNode( node, connectNode) then
 										table.insert(node.LinkedItems, connectNode)
 										connectNode.NetworkContainer = node
@@ -232,8 +256,11 @@ function EntityMeta:PowerUnLink()
 			end
 		end
 	else
+		-- -- ErrorNoHalt("Self ("..tostring(self)..") is not NetworkContainer.\n")
 		local unlinkedNodes = {}
+		-- -- ErrorNoHalt("Self.NetworkContainer ("..tostring(self.NetworkContainer)..") LinkedItems = "..table.ToString(self.NetworkContainer.LinkedItems).."\n")
 		for k, node in pairs(self.NetworkContainer.LinkedItems) do
+			-- -- ErrorNoHalt("PathToNode:  "..tostring(node).. " --> "..tostring(self.NetworkContainer).."\n")
 			if not PathToNode(self.NetworkContainer, node) then
 				table.insert(unlinkedNodes, node)
 				
@@ -279,6 +306,7 @@ function EntityMeta:PowerUnLink()
 						node.NetworkContainer = node
 						for _, connectNode in pairs(unlinkedNodes) do
 							if connectNode ~= node then
+								-- -- ErrorNoHalt("PathToNode:  "..tostring(node).. " --> "..tostring(connectNode).."\n")
 								if PathToNode( node, connectNode) then
 									table.insert(node.LinkedItems, connectNode)
 									connectNode.NetworkContainer = node
@@ -289,10 +317,12 @@ function EntityMeta:PowerUnLink()
 						end
 					else
 						local generator = PathToGenerator( node )
+						-- -- ErrorNoHalt("PathToGenerator:  "..tostring(node).."\n")
 						if IsValid(generator) then
 							node.NetworkContainer = generator
 							for _, connectNode in pairs(unlinkedNodes) do
 								if connectNode ~= node then
+									-- -- ErrorNoHalt("PathToNode:  "..tostring(node).. " --> "..tostring(connectNode).."\n")
 									if PathToNode( node, connectNode) then
 										table.insert(generator.LinkedItems, connectNode)
 										connectNode.NetworkContainer = generator
@@ -305,6 +335,7 @@ function EntityMeta:PowerUnLink()
 							node.NetworkContainer = node
 							for _, connectNode in pairs(unlinkedNodes) do
 								if connectNode ~= node then
+									-- -- ErrorNoHalt("PathToNode:  "..tostring(node).. " --> "..tostring(connectNode).."\n")
 									if PathToNode( node, connectNode) then
 										table.insert(node.LinkedItems, connectNode)
 										connectNode.NetworkContainer = node
@@ -334,11 +365,11 @@ function PathToNode( sNode, tNode )
 	local found = false
 	repeat
 		local path = table.GetFirstValue(pathQueue)
-		--ErrorNoHalt("path:  "..table.ToString(path))
+		---- ErrorNoHalt("path:  "..table.ToString(path))
 		table.remove(pathQueue, 1)
 		local newPaths = {}
 		local lastInPath = path[table.Count(path)]
-		--ErrorNoHalt("lastInPath:  "..tostring(lastInPath))
+		---- ErrorNoHalt("lastInPath:  "..tostring(lastInPath))
 		for _, link in pairs(lastInPath.DirectLinks) do
 			local tempPath = table.Copy(path)
 			local match = false
@@ -351,7 +382,7 @@ function PathToNode( sNode, tNode )
 					tableCheck[tostring(v)] = tableCheck[tostring(v)] + 1
 				end
 				-- for k2, v2 in pairs(tempPath) do
-					-- ErrorNoHalt("PathToGenerator TempPath: "..tostring(v).."   "..tostring(v2))
+					-- -- ErrorNoHalt("PathToGenerator TempPath: "..tostring(v).."   "..tostring(v2))
 					-- if v == v2 and k ~= k2 then
 						-- match = true
 					-- end
@@ -394,12 +425,12 @@ function PathToGenerator( sNode )
 	local found = false
 	repeat
 		local path = table.GetFirstValue(pathQueue)
-		--ErrorNoHalt("PathToGenerator path:  "..table.ToString(path))
+		---- ErrorNoHalt("PathToGenerator path:  "..table.ToString(path))
 		table.remove(pathQueue, 1)
 		local newPaths = {}
 		local lastInPath = path[table.Count(path)]
-		--ErrorNoHalt("PathToGenerator lastInPath:  "..tostring(lastInPath))
-		--ErrorNoHalt("PathToGenerator Links: "..table.ToString(lastInPath.DirectLinks))
+		---- ErrorNoHalt("PathToGenerator lastInPath:  "..tostring(lastInPath))
+		---- ErrorNoHalt("PathToGenerator Links: "..table.ToString(lastInPath.DirectLinks))
 		for _, link in pairs(lastInPath.DirectLinks) do
 			local tempPath = table.Copy(path)
 			local match = false
@@ -412,7 +443,7 @@ function PathToGenerator( sNode )
 					tableCheck[tostring(v)] = tableCheck[tostring(v)] + 1
 				end
 				-- for k2, v2 in pairs(tempPath) do
-					-- ErrorNoHalt("PathToGenerator TempPath: "..tostring(v).."   "..tostring(v2))
+					-- -- ErrorNoHalt("PathToGenerator TempPath: "..tostring(v).."   "..tostring(v2))
 					-- if v == v2 and k ~= k2 then
 						-- match = true
 					-- end
@@ -459,24 +490,24 @@ function EntityMeta:PathToGenerator( )
 	local found = false
 	repeat
 		path = pathQueue[1]
-		--ErrorNoHalt("PathToGenerator path:  "..table.ToString(path).."\n")
+		---- ErrorNoHalt("PathToGenerator path:  "..table.ToString(path).."\n")
 		table.remove(pathQueue, 1)
 		local newPaths = {}
 		local lastInPath = path[table.Count(path)]
-		--ErrorNoHalt("PathToGenerator lastInPath:  "..tostring(lastInPath).."\n")
-		--ErrorNoHalt("PathToGenerator Links: "..table.ToString(lastInPath.DirectLinks).."\n")
-		--ErrorNoHalt("Repeat!\n")
+		---- ErrorNoHalt("PathToGenerator lastInPath:  "..tostring(lastInPath).."\n")
+		---- ErrorNoHalt("PathToGenerator Links: "..table.ToString(lastInPath.DirectLinks).."\n")
+		---- ErrorNoHalt("Repeat!\n")
 		for _, link in pairs(lastInPath.DirectLinks) do
-			--ErrorNoHalt("PathToGenerator DL Loop: "..table.ToString(path).."\n")
+			---- ErrorNoHalt("PathToGenerator DL Loop: "..table.ToString(path).."\n")
 			local tempPath = table.Copy(path)
 			local match = false
 			
-			--ErrorNoHalt("PathToGenerator Link: "..tostring(link).."\n")
+			---- ErrorNoHalt("PathToGenerator Link: "..tostring(link).."\n")
 			
 			--Problem Lies Here.  Need new code for loop removal.
 			local tableCheck = {}
 			table.insert(tempPath, link)
-			--ErrorNoHalt("PathToGenerator Path pre-loop: "..table.ToString(tempPath).."  Path="..table.ToString(path).."\n")
+			---- ErrorNoHalt("PathToGenerator Path pre-loop: "..table.ToString(tempPath).."  Path="..table.ToString(path).."\n")
 			for k, v in pairs(tempPath) do
 				if not tableCheck[tostring(v)] then
 					tableCheck[tostring(v)] = 1
@@ -484,7 +515,7 @@ function EntityMeta:PathToGenerator( )
 					tableCheck[tostring(v)] = tableCheck[tostring(v)] + 1
 				end
 				-- for k2, v2 in pairs(tempPath) do
-					-- ErrorNoHalt("PathToGenerator TempPath: "..tostring(v).."   "..tostring(v2))
+					-- -- ErrorNoHalt("PathToGenerator TempPath: "..tostring(v).."   "..tostring(v2))
 					-- if v == v2 and k ~= k2 then
 						-- match = true
 					-- end
@@ -497,7 +528,7 @@ function EntityMeta:PathToGenerator( )
 				end
 			end
 			
-			--ErrorNoHalt("PathToGenerator Match: "..tostring(match).."\n")
+			---- ErrorNoHalt("PathToGenerator Match: "..tostring(match).."\n")
 			
 			if not match then
 				table.insert(newPaths, tempPath)
@@ -510,7 +541,7 @@ function EntityMeta:PathToGenerator( )
 		
 		if not found then
 			for _, newPath in pairs(newPaths) do
-				--ErrorNoHalt("PathToGenerator AddPathToQueue: "..table.ToString(newPath).."\n")
+				---- ErrorNoHalt("PathToGenerator AddPathToQueue: "..table.ToString(newPath).."\n")
 				table.insert( pathQueue, math.random(table.Count(pathQueue)), newPath )
 			end
 		end
@@ -521,12 +552,12 @@ function EntityMeta:PathToGenerator( )
 end
 
 function EntityMeta:UpdatePower()
-	-- ErrorNoHalt("UpdatePower called")
+	-- -- ErrorNoHalt("UpdatePower called")
 	if self ~= self.NetworkContainer then return end
 	
 	local sumPower = 0
 	sumPower = sumPower + self.PowerLevel
-	-- ErrorNoHalt("Initial sumPower:  "..tostring(sumPower).."\n")
+	-- -- ErrorNoHalt("Initial sumPower:  "..tostring(sumPower).."\n")
 	
 	local batteries = {}
 	if self:GetClass() == "tool_battery" then
@@ -541,11 +572,11 @@ function EntityMeta:UpdatePower()
 		if v.PowerLevel == nil then v.PowerLevel = 0 end
 		sumPower = sumPower + v.PowerLevel
 		
-		-- ErrorNoHalt("v.PowerLevel:  "..tostring(v.PowerLevel).."\n")
-		-- ErrorNoHalt("sumPower:  "..tostring(sumPower).."\n")
+		-- -- ErrorNoHalt("v.PowerLevel:  "..tostring(v.PowerLevel).."\n")
+		-- -- ErrorNoHalt("sumPower:  "..tostring(sumPower).."\n")
 		
 		--  SPECIAL CONSIDERATIONS
-		--ErrorNoHalt("Class:  "..v:GetClass().."\n")
+		---- ErrorNoHalt("Class:  "..v:GetClass().."\n")
 		if v:GetClass() == "tool_battery" then
 			if v.UnitLeft > 0 and !v.Charging then
 				table.insert(batteries, v)
@@ -559,15 +590,15 @@ function EntityMeta:UpdatePower()
 	
 	
 	if table.Count(batteries) > 0 then
-		--ErrorNoHalt("Batteries! \n")
+		---- ErrorNoHalt("Batteries! \n")
 		if sumPower < 0 then
-		--ErrorNoHalt("sumPower < 0 = true! \n")
+		---- ErrorNoHalt("sumPower < 0 = true! \n")
 			local tempSumPower = sumPower
 			for k, v in pairs(batteries) do
-				--ErrorNoHalt("battery.PowerLevel = "..tostring(math.abs(math.ceil( tempSumPower / #batteries ))).."\n")
-				--ErrorNoHalt("Key:  "..tostring(k).." \n")
+				---- ErrorNoHalt("battery.PowerLevel = "..tostring(math.abs(math.ceil( tempSumPower / #batteries ))).."\n")
+				---- ErrorNoHalt("Key:  "..tostring(k).." \n")
 				v.PowerLevel = math.abs(math.ceil( tempSumPower / #batteries ))
-				--ErrorNoHalt("sumPower = "..tostring(sumPower + math.abs(math.ceil( tempSumPower / #batteries ))).." \n")
+				---- ErrorNoHalt("sumPower = "..tostring(sumPower + math.abs(math.ceil( tempSumPower / #batteries ))).." \n")
 				sumPower = sumPower + math.abs(math.ceil( tempSumPower / #batteries ))
 			end
 		end
@@ -656,5 +687,5 @@ function EntityMeta:UpdatePower()
 	
 	self.NetPower = sumPower
 	
-	--ErrorNoHalt( "Ent:  "..tostring(self).."  Power:  "..tostring(self.NetPower) )
+	---- ErrorNoHalt( "Ent:  "..tostring(self).."  Power:  "..tostring(self.NetPower) )
 end

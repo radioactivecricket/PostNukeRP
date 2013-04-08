@@ -68,7 +68,10 @@ local function VoiceClean()
 	for k, v in pairs( pn_PlayerVoicePanels ) do
 	
 		if ( !IsValid( k ) ) then
-			GAMEMODE:PlayerEndVoice( k )
+		--	GAMEMODE:PlayerEndVoice( k )
+			pn_VoicePanelList:RemoveItem( pn_PlayerVoicePanels[ k ] )
+			pn_PlayerVoicePanels[ k ]:Remove()
+			pn_PlayerVoicePanels[ k ] = nil
 		end
 	
 	end

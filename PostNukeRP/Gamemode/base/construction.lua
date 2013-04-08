@@ -364,6 +364,7 @@ function PNRP.Salvage( ply, command, arg )
 	local playerNick = ply:Nick()
 	local plUID = PNRP:GetUID( ply )
 	local count = 1
+	local myClass
 	
 	if tostring(command) == "pnrp_dosalvage"  or tostring(command) == "pnrp_docarsalvage" then
 		local split = string.Explode(",",arg[1])
@@ -374,25 +375,24 @@ function PNRP.Salvage( ply, command, arg )
 		local tr = ply:TraceFromEyes(400)
 		ent = tr.Entity
 
---		if ent:GetNetworkedString("Owner") == playerNick then
 		if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
 			allowed = true
 		else
 			allowed = false
 		end
 		
---		if ent:GetClass() == "prop_vehicle_prisoner_pod" then
---			myClass = "weapon_seat"
---		else
-			myClass = ent:GetClass()
---		end
+		myClass = ent:GetClass()
 		
 		if myClass == "prop_physics" then return end
 		
 		ItemID = PNRP.FindItemID( myClass )
+
+		if string.find(tostring(ItemID), "ammo_") then
+			ply:ChatPrint("Can not salvage dropped ammo.")
+			return
+		end
 	end
 	
-	local myClass
 	--Added to remove the Null Entity error
 	if tostring(ent) == "[NULL Entity]" then return end
 	
@@ -402,6 +402,24 @@ function PNRP.Salvage( ply, command, arg )
 			local scrap
 			local smallparts
 			local chemicals
+			
+			if tostring(command) == "pnrp_dosalvage" then
+				local Check = PNRP.TakeFromInventoryBulk( ply, ItemID, count )
+				if !Check then
+					ply:ChatPrint("Item not found!")
+					return
+				end
+			else
+				if tostring(command) == "pnrp_docarsalvage" then
+					local Check = PNRP.TakeFromCarInventoryBulk( ply, ItemID, count )
+					if !Check then
+						ply:ChatPrint("Item not found!")
+						return
+					end
+				else
+					ent:Remove()
+				end
+			end
 			
 			if team.GetName(ply:Team()) == "Wastelander" or team.GetName(ply:Team()) == "Scavenger" then
 				scrap = math.Round(PNRP.Items[ItemID].Scrap * (0.5 + (ply:GetSkill("Salvaging") * 0.05)))
@@ -421,16 +439,6 @@ function PNRP.Salvage( ply, command, arg )
 			ply:IncResource("Scrap", scrap)
 			ply:IncResource("Small_Parts", smallparts)
 			ply:IncResource("Chemicals", chemicals)
-
-			if tostring(command) == "pnrp_dosalvage" then
-				PNRP.TakeFromInventoryBulk( ply, ItemID, count )
-			else
-				if tostring(command) == "pnrp_docarsalvage" then
-					PNRP.TakeFromCarInventoryBulk( ply, ItemID, count )
-				else
-					ent:Remove()
-				end
-			end
 			
 			ply:ChatPrint("You have salvaged: "..tostring(scrap).." Scrap, "..tostring(smallparts).." Small Parts and "..tostring(chemicals).." Chemicals")
 		end

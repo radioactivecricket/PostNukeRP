@@ -69,7 +69,7 @@ function GM.community_window( )
 		local community_TabSheet = vgui.Create( "DPropertySheet" )
 			community_TabSheet:SetParent( community_frame )
 			community_TabSheet:SetPos( 40, 70 )
-			community_TabSheet:SetSize( community_frame:GetWide() - 350, community_frame:GetTall() - 120 )
+			community_TabSheet:SetSize( community_frame:GetWide() - 340, community_frame:GetTall() - 120 )
 			community_TabSheet.Paint = function() -- Paint function
 				surface.SetDrawColor( 50, 50, 50, 0 )
 			end
@@ -82,7 +82,7 @@ function GM.community_window( )
 				end
 			local cMemberList = vgui.Create("DPanelList", cMemberPanel)
 				cMemberList:SetPos(0, 0)
-				cMemberList:SetSize(cMemberPanel:GetWide() - 5, cMemberPanel:GetTall() - 40)
+				cMemberList:SetSize(cMemberPanel:GetWide() - 15, cMemberPanel:GetTall() - 40)
 				cMemberList:EnableVerticalScrollbar(true) 
 				cMemberList:EnableHorizontal(false) 
 				cMemberList:SetSpacing(1)
@@ -144,7 +144,7 @@ function GM.community_window( )
 						MemberPanel.LastOn:SetContentAlignment( 5 )
 						
 						MemberPanel.TitleBtn = vgui.Create("DButton", MemberPanel )
-						MemberPanel.TitleBtn:SetPos(255, 5)
+						MemberPanel.TitleBtn:SetPos(240, 5)
 						MemberPanel.TitleBtn:SetSize(75,15)
 						MemberPanel.TitleBtn:SetText( "Set Title" )
 						MemberPanel.TitleBtn.DoClick = function() 
@@ -162,7 +162,7 @@ function GM.community_window( )
 						if !isLocalUser then
 							
 							MemberPanel.PromoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.PromoteBtn:SetPos(255, 20)
+							MemberPanel.PromoteBtn:SetPos(240, 20)
 							MemberPanel.PromoteBtn:SetSize(75,15)
 							MemberPanel.PromoteBtn:SetText( "Promote" )
 							MemberPanel.PromoteBtn.DoClick = function() 
@@ -177,7 +177,7 @@ function GM.community_window( )
 							end
 							
 							MemberPanel.DemoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.DemoteBtn:SetPos(255, 35)
+							MemberPanel.DemoteBtn:SetPos(240, 35)
 							MemberPanel.DemoteBtn:SetSize(75,15)
 							MemberPanel.DemoteBtn:SetText( "Demote" )
 							MemberPanel.DemoteBtn.DoClick = function() 
@@ -192,7 +192,7 @@ function GM.community_window( )
 							end
 							
 							MemberPanel.BootBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.BootBtn:SetPos(255, 50)
+							MemberPanel.BootBtn:SetPos(240, 50)
 							MemberPanel.BootBtn:SetSize(75,17)
 							MemberPanel.BootBtn:SetText( "Remove" )
 							MemberPanel.BootBtn.DoClick = function() 
@@ -489,30 +489,53 @@ function GM.community_window( )
 					
 					btnHPos = btnHPos + btnHeight --Blank Space
 					
-					if ply:IsAdmin() then
-						btnHPos = btnHPos + btnHeight
-						local comAdminBtn = vgui.Create("DImageButton", community_frame)
-							comAdminBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-							comAdminBtn:SetSize(30,30)
-							comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							comAdminBtn.DoClick = function() 
-								RunConsoleCommand( "pnrp_communityAdmin" ) 
-								community_frame:Close()
-							end	
-							comAdminBtn.Paint = function()
-								if comAdminBtn:IsDown() then 
-									comAdminBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
+					btnHPos = btnHPos + btnHeight
+					local comSearchBtn = vgui.Create("DImageButton", community_frame)
+						comSearchBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+						comSearchBtn:SetSize(30,30)
+						comSearchBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+						comSearchBtn.DoClick = function() 
+							RunConsoleCommand( "pnrp_communitysearch" ) 
+							community_frame:Close()
+						end	
+						comSearchBtn.Paint = function()
+							if comSearchBtn:IsDown() then 
+								comSearchBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+							else
+								comSearchBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 							end
-						local comAdminBtnLbl = vgui.Create("DLabel", community_frame)
-							comAdminBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-							comAdminBtnLbl:SetColor( lblColor )
-							comAdminBtnLbl:SetText( "Communities Admin" )
-							comAdminBtnLbl:SetFont("Trebuchet24")
-							comAdminBtnLbl:SizeToContents()
-					end
+						end
+					local comSearchBtnLbl = vgui.Create("DLabel", community_frame)
+						comSearchBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+						comSearchBtnLbl:SetColor( lblColor )
+						comSearchBtnLbl:SetText( "Search Communities" )
+						comSearchBtnLbl:SetFont("Trebuchet24")
+						comSearchBtnLbl:SizeToContents()
+						
+				--	if ply:IsAdmin() then
+				--		btnHPos = btnHPos + btnHeight
+				--		local comAdminBtn = vgui.Create("DImageButton", community_frame)
+				--			comAdminBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				--			comAdminBtn:SetSize(30,30)
+				--			comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				--			comAdminBtn.DoClick = function() 
+				--				RunConsoleCommand( "pnrp_communityAdmin" ) 
+				--				community_frame:Close()
+				--			end	
+				--			comAdminBtn.Paint = function()
+				--				if comAdminBtn:IsDown() then 
+				--					comAdminBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				--				else
+				--					comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				--				end
+				--			end
+				--		local comAdminBtnLbl = vgui.Create("DLabel", community_frame)
+				--			comAdminBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				--			comAdminBtnLbl:SetColor( lblColor )
+				--			comAdminBtnLbl:SetText( "Communities Admin" )
+				--			comAdminBtnLbl:SetFont("Trebuchet24")
+				--			comAdminBtnLbl:SizeToContents()
+				--	end
 					
 	function community_frame:Close()                  
 		comFrame = false                  
@@ -598,7 +621,7 @@ end
 
 function RecCInvite( )
 	local PlayerNIC = net:ReadString() 
---	local CommunityID = net:ReadString() 
+	local CommunityID = net:ReadString() 
 	local CommunityName = net:ReadString() 
 	local ply = LocalPlayer()
 	
@@ -698,5 +721,224 @@ function PNRP.OptionVerify(Command, Option, returnToMenu, frame)
 	
 end
 
+local commSearch_Frame
+local comSFrame = false
+local CommSearchBody_Frame
+local commSearchPanel
+function GM.commSearchWindow()
+	if comSFrame then return end
+	local ply = LocalPlayer()
+	comSFrame = true
+	
+	commSearch_Frame = vgui.Create( "DFrame" )
+		commSearch_Frame:SetSize( 575, 265 ) 
+		commSearch_Frame:SetPos(ScrW() / 2 - commSearch_Frame:GetWide() / 2, ScrH() / 2 - commSearch_Frame:GetTall() / 2)
+		commSearch_Frame:SetTitle( " " )
+		commSearch_Frame:SetVisible( true )
+		commSearch_Frame:SetDraggable( false )
+		commSearch_Frame:ShowCloseButton( true )
+		commSearch_Frame:MakePopup()
+		commSearch_Frame.Paint = function() 
+			surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+		
+		local screenBG = vgui.Create("DImage", commSearch_Frame)
+			screenBG:SetImage( "VGUI/gfx/pnrp_screen_6b.png" )
+			screenBG:SetSize(commSearch_Frame:GetWide(), commSearch_Frame:GetTall())	
+		
+		--Creates the body to keep it from beeing nil
+		CommSearchBody_Frame = vgui.Create( "DPanel", commSearch_Frame )
+			CommSearchBody_Frame:SetPos( 30, 33 ) -- Set the position of the panel
+			CommSearchBody_Frame:SetSize( commSearch_Frame:GetWide() - 250, commSearch_Frame:GetTall() - 40)
+			CommSearchBody_Frame.Paint = function() 
+			--	surface.SetDrawColor( 50, 50, 50, 0 )
+			end
+		
+		--Search Bar
+		commSearchPanel = vgui.Create( "DPanel", commSearch_Frame )
+			commSearchPanel:SetPos( 370, 35 ) -- Set the position of the panel
+			commSearchPanel:SetSize( 155, 100 )
+			commSearchPanel.Paint = function() 
+				surface.SetDrawColor( 50, 50, 50, 0 )
+			end
+		local DLabel = vgui.Create( "DLabel", commSearchPanel )
+			DLabel:SetPos( 5, 5 )
+			DLabel:SetText( "Community Search" )
+			DLabel:SizeToContents()
+		local sCommNameTxt = vgui.Create("DTextEntry", commSearchPanel)
+			sCommNameTxt:SetText("")
+			sCommNameTxt:SetPos(5,25)
+			sCommNameTxt:SetWide(150)
+			sCommNameTxt.OnEnter = function()
+				CommSearchBody_Frame:Remove()
+				net.Start("SND_CommSearch")
+					net.WriteEntity(ply)
+					net.WriteString(sCommNameTxt:GetValue())
+				net.SendToServer()
+			end
+		local DButton = vgui.Create( "DButton", commSearchPanel )
+			 DButton:SetPos( 5, 55 )
+			 DButton:SetText( "Search" )
+			 DButton:SetSize( 150, 20 )
+			 DButton.DoClick = function()
+				CommSearchBody_Frame:Remove()
+				net.Start("SND_CommSearch")
+					net.WriteEntity(ply)
+					net.WriteString(sCommNameTxt:GetValue())
+				net.SendToServer()
+			 end
+			
+	function commSearch_Frame:Close()                  
+		comSFrame = false                  
+		self:SetVisible( false )                  
+		self:Remove()          
+	end 
+end
+concommand.Add( "pnrp_communitysearch",  GM.commSearchWindow )
 
+function sCommDispResults()
+	local result = net.ReadTable()
+	local ply = LocalPlayer()
+	
+	CommSearchBody_Frame = vgui.Create( "DPanel", commSearch_Frame )
+		CommSearchBody_Frame:SetPos( 25, 40 ) -- Set the position of the panel
+		CommSearchBody_Frame:SetSize( commSearch_Frame:GetWide() - 260, commSearch_Frame:GetTall() - 40)
+		CommSearchBody_Frame.Paint = function() 
+		--	surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+	local cCommList = vgui.Create("DPanelList", CommSearchBody_Frame)
+		cCommList:SetPos(0, 0)
+		cCommList:SetSize(CommSearchBody_Frame:GetWide() - 5, CommSearchBody_Frame:GetTall() - 40)
+		cCommList:EnableVerticalScrollbar(true) 
+		cCommList:EnableHorizontal(false) 
+		cCommList:SetSpacing(1)
+		cCommList:SetPadding(10)
+		cCommList.Paint = function()
+		--	draw.RoundedBox( 8, 0, 0, cMemberList:GetWide(), cMemberList:GetTall(), Color( 50, 50, 50, 255 ) )
+		end
+		
+		for k, v in pairs(result) do
+			local CommPanel = vgui.Create("DPanel")
+				CommPanel:SetTall(25)
+				CommPanel.Paint = function()
+					draw.RoundedBox( 6, 0, 0, CommPanel:GetWide(), CommPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+				end
+				cCommList:AddItem(CommPanel)
+				
+				CommPanel.Title = vgui.Create("DLabel", CommPanel)
+				CommPanel.Title:SetPos(10, 5)
+				CommPanel.Title:SetText(tostring(v["cname"]))
+				CommPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+				CommPanel.Title:SizeToContents() 
+				CommPanel.Title:SetContentAlignment( 5 )
+				
+				if ply:IsAdmin() then
+					local ADMButton = vgui.Create( "DButton", CommPanel )
+						ADMButton:SetPos( 175, 3 )
+						ADMButton:SetText( "ADM Edit" )
+						ADMButton:SetSize( 50, 20 )
+						ADMButton.DoClick = function()
+							commSearch_Frame:Close()
+							RunConsoleCommand( "pnrp_AdmEditCom", v["cid"] )
+						end
+				end
+				
+				local DButton = vgui.Create( "DButton", CommPanel )
+					DButton:SetPos( 225 , 3 )
+					DButton:SetText( "Select" )
+					DButton:SetSize( 50, 20 )
+					DButton.DoClick = function()
+						CommSearchBody_Frame:Remove()
 
+						net.Start("SND_CommSelID")
+							net.WriteEntity(ply)
+							net.WriteString(v["cid"])
+						net.SendToServer()
+					end
+		end
+end
+net.Receive("C_SND_CommSearchResults", sCommDispResults)
+
+function sCommDispComm()
+	local result = net.ReadTable()
+
+	CommSearchBody_Frame = vgui.Create( "DPanel", commSearch_Frame )
+		CommSearchBody_Frame:SetPos( 25, 35 ) -- Set the position of the panel
+		CommSearchBody_Frame:SetSize( commSearch_Frame:GetWide() - 270, commSearch_Frame:GetTall() - 30)
+		CommSearchBody_Frame.Paint = function() 
+		--	surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+	
+		local CommRPanel = vgui.Create("DPanel", CommSearchBody_Frame)
+			CommRPanel:SetPos( 0, 0 )
+			CommRPanel:SetSize(CommSearchBody_Frame:GetWide() - 5, CommSearchBody_Frame:GetTall() - 40)
+			CommRPanel.Paint = function()
+			--	draw.RoundedBox( 6, 0, 0, CommRPanel:GetWide(), CommRPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+			end
+			
+			local CommName = vgui.Create("DLabel", CommRPanel)
+				CommName:SetPos(10, 5)
+				CommName:SetText("Community: "..tostring(result["name"]))
+				CommName:SetColor(Color( 0, 255, 0, 255 ))
+				CommName:SizeToContents() 
+				CommName:SetContentAlignment( 5 )
+			local CommCDate = vgui.Create("DLabel", CommRPanel)
+				CommCDate:SetPos(10, 20)
+				CommCDate:SetText("Founded: "..tostring(result["founded"]))
+				CommCDate:SetColor(Color( 0, 255, 0, 255 ))
+				CommCDate:SizeToContents() 
+				CommCDate:SetContentAlignment( 5 )
+			local CommMCount = vgui.Create("DLabel", CommRPanel)
+				CommMCount:SetPos(200, 20)
+				CommMCount:SetText("Members: "..tostring(table.Count(result["users"])))
+				CommMCount:SetColor(Color( 0, 255, 0, 255 ))
+				CommMCount:SizeToContents() 
+				CommMCount:SetContentAlignment( 5 )
+				
+			local cMemList = vgui.Create("DPanelList", CommRPanel)
+				cMemList:SetPos(5, 40)
+				cMemList:SetSize(CommRPanel:GetWide() - 5, CommRPanel:GetTall() - 40)
+				cMemList:EnableVerticalScrollbar(true) 
+				cMemList:EnableHorizontal(false) 
+				cMemList:SetSpacing(1)
+				cMemList:SetPadding(10)
+				cMemList.Paint = function()
+				--	draw.RoundedBox( 8, 0, 0, cMemList:GetWide(), cMemList:GetTall(), Color( 50, 50, 50, 255 ) )
+				end
+				for k, v in pairs(result["users"]) do
+					local memPanel = vgui.Create("DPanel")
+						memPanel:SetTall(40)
+						memPanel.Paint = function()
+							draw.RoundedBox( 6, 0, 0, memPanel:GetWide(), memPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+						end
+						cMemList:AddItem(memPanel)
+						
+						memPanel.Icon = vgui.Create("SpawnIcon", memPanel)
+						memPanel.Icon:SetSize( 38, 38 )
+						memPanel.Icon:SetModel(v["model"])
+						memPanel.Icon:SetPos(10, 1)
+						memPanel.Icon:SetToolTip( nil )
+						
+						memPanel.Rank = vgui.Create("DLabel", memPanel)
+						memPanel.Rank:SetPos(50, 5)
+						memPanel.Rank:SetText("Rank: "..tostring(v["rank"]))
+						memPanel.Rank:SetColor(Color( 0, 255, 0, 255 ))
+						memPanel.Rank:SizeToContents() 
+						memPanel.Rank:SetContentAlignment( 5 )
+						
+						memPanel.Name = vgui.Create("DLabel", memPanel)
+						memPanel.Name:SetPos(100, 5)
+						memPanel.Name:SetText("Name: "..tostring(v["name"]))
+						memPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+						memPanel.Name:SizeToContents() 
+						memPanel.Name:SetContentAlignment( 5 )
+						
+						memPanel.Title = vgui.Create("DLabel", memPanel)
+						memPanel.Title:SetPos(100, 20)
+						memPanel.Title:SetText("Title: "..tostring(v["title"]))
+						memPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+						memPanel.Title:SizeToContents() 
+						memPanel.Title:SetContentAlignment( 5 )
+				end		
+end
+net.Receive("C_SND_CommSelResult", sCommDispComm)

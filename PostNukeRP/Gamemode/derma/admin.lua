@@ -10,9 +10,11 @@ function GM.open_admin()
 	local SpawnSettings = net.ReadTable()
 	local mapList = net.ReadTable()
 	local importList = net.ReadTable()
+	local EventsTbl = net.ReadTable()
+	local EventsFunctions = net.ReadTable()
 	if ply:IsAdmin() then	
 		admin_frame = vgui.Create( "DFrame" )
-				admin_frame:SetSize( 400, 660 ) --Set the size
+				admin_frame:SetSize( 425, 660 ) --Set the size
 				admin_frame:SetPos(ScrW() / 2 - admin_frame:GetWide() / 2, ScrH() / 2 - admin_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 				admin_frame:SetTitle( "Admin Menu" ) --Set title
 				admin_frame:SetVisible( true )
@@ -521,6 +523,20 @@ function GM.open_admin()
 				SpawnerList:AddItem( RecSpawnerSettingsCats )
 		
 		AdminTabSheet:AddSheet( "Spawn Settings", SpawnerList, "gui/icons/bug_add.png", false, false, "Spawn Settings" )
+-- Event Settings EventsTbl
+		local EventsList = vgui.Create( "DPanelList", AdminTabSheet )
+				EventsList:SetPos( 10,10 )
+				EventsList:SetSize( admin_frame:GetWide() - 10, admin_frame:GetTall() - 10 )
+				EventsList:SetSpacing( 5 ) -- Spacing between items
+				EventsList:EnableHorizontal( false ) -- Only vertical items
+				EventsList:EnableVerticalScrollbar( true ) -- Allow scrollbar if you exceed the Y axis	
+
+		for event, var in pairs(EventsTbl) do
+			local EventsSettingsCats = buildEventList(event, var, EventsFunctions, EventsList)
+			EventsList:AddItem( EventsSettingsCats )
+		end
+		AdminTabSheet:AddSheet( "Events", EventsList, "gui/icons/cog.png", false, false, "Events" )
+		
 -- Mob Grid Settings		
 		local mobGridRange = 1000
 		
@@ -632,9 +648,9 @@ function GM.open_admin()
 						end
 						admin_frame:Close() 
 				    end
-				mobGridSetup:AddItem( mapImpBTN )
-		
+				mobGridSetup:AddItem( mapImpBTN )	
 		AdminTabSheet:AddSheet( "Mob Grid Settings", mobGridSetup, "gui/icons/bug_edit.png", false, false, "Mob Grid Settings" )
+
 				
 		local saveBtn = vgui.Create("DButton") -- Create the button
 			saveBtn:SetParent( admin_frame ) -- parent the button to the frame
@@ -694,6 +710,69 @@ function GM.open_admin()
 end
 --datastream.Hook( "pnrp_OpenAdminWindow", GM.open_admin )
 net.Receive( "pnrp_OpenAdminWindow", GM.open_admin )
+
+function buildEventList(event, var, funcs, parent)
+	local EventsSettingsCats = vgui.Create("DCollapsibleCategory", parent)
+			EventsSettingsCats:SetSize( parent:GetWide()-4, 50 ) -- Keep the second number at 50
+			EventsSettingsCats:SetExpanded( 0 ) -- Expanded when popped up
+			EventsSettingsCats:SetLabel( event )
+			 
+			EventsSettingsList = vgui.Create( "DPanelList" )
+			EventsSettingsList:SetAutoSize( true )
+			EventsSettingsList:SetSpacing( 5 )
+			EventsSettingsList:EnableHorizontal( false )
+			EventsSettingsList:EnableVerticalScrollbar( true )
+			EventsSettingsList.Paint = function()
+			--	draw.RoundedBox( 8, 0, 0, EventsSettingsList:GetWide(), EventsSettingsList:GetTall(), Color( 50, 50, 50, 255 ) )
+			end
+			
+			EventsSettingsCats:SetContents( EventsSettingsList )
+			
+			for name, value in pairs(var) do
+				local varPanel = vgui.Create( "DPanel", EventsSettingsList )
+					varPanel:SetPos( 0,0 ) -- Set the position of the panel
+					varPanel:SetSize( EventsSettingsCats:GetWide() - 20, 25 )
+				
+					local DLabel = vgui.Create( "DLabel", varPanel )
+						DLabel:SetPos( 5, 5 ) -- Set the position of the label
+						DLabel:SetText( name ) --  Set the text of the label
+						DLabel:SizeToContents() -- Size the label to fit the text in it
+						DLabel:SetDark( 1 )
+						
+					local valueNWang = vgui.Create( "DNumberWang", varPanel )
+						valueNWang:SetPos(varPanel:GetWide() - 135, 2 )
+						valueNWang:SetMin( 0 )
+						if name == "Active" then
+							valueNWang:SetMax( 1 )
+						else
+							valueNWang:SetMax( 10000 )
+						end
+						valueNWang:SetDecimals( 0 )
+						valueNWang:SetValue( value )
+						--event, varname, value, vartype )
+					local funcSetBTN = vgui.Create("DButton", varPanel )
+						funcSetBTN:SetPos(varPanel:GetWide() - 65, 2.5 )
+						funcSetBTN:SetText( "Set" )
+						funcSetBTN.DoClick = function()
+							local sValue = valueNWang:GetValue()
+							RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "number")
+							admin_frame:Close()
+						end
+						
+				EventsSettingsList:AddItem( varPanel )
+			end
+			
+			for _, fName in pairs(funcs[event]) do
+				local funcBTN = vgui.Create("DButton", EventsSettingsList )
+				    funcBTN:SetText( fName )
+				    funcBTN.DoClick = function()
+						RunConsoleCommand( "pnrp_ev_runfunc", event, fName)
+						admin_frame:Close()
+				    end
+				EventsSettingsList:AddItem( funcBTN )	
+			end
+	return EventsSettingsCats
+end
 
 function GM.initAdmin(ply)
 	if ply:IsAdmin() then	
@@ -1161,7 +1240,7 @@ function GM.communityEdit_window( )
 							MemberPanel.LastOn:SetContentAlignment( 5 )
 														
 							MemberPanel.PromoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.PromoteBtn:SetPos(255, 5)
+							MemberPanel.PromoteBtn:SetPos(245, 5)
 							MemberPanel.PromoteBtn:SetSize(75,17)
 							MemberPanel.PromoteBtn:SetText( "Promote" )
 							MemberPanel.PromoteBtn.DoClick = function() 
@@ -1176,7 +1255,7 @@ function GM.communityEdit_window( )
 							end
 							
 							MemberPanel.DemoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.DemoteBtn:SetPos(255, 25)
+							MemberPanel.DemoteBtn:SetPos(245, 25)
 							MemberPanel.DemoteBtn:SetSize(75,17)
 							MemberPanel.DemoteBtn:SetText( "Demote" )
 							MemberPanel.DemoteBtn.DoClick = function() 
@@ -1191,7 +1270,7 @@ function GM.communityEdit_window( )
 							end
 							
 							MemberPanel.BootBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.BootBtn:SetPos(255, 45)
+							MemberPanel.BootBtn:SetPos(245, 45)
 							MemberPanel.BootBtn:SetSize(75,17)
 							MemberPanel.BootBtn:SetText( "Remove" )
 							MemberPanel.BootBtn.DoClick = function() 
@@ -1295,7 +1374,7 @@ function GM.communityEdit_window( )
 						comAdminBtn:SetSize(30,30)
 						comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 						comAdminBtn.DoClick = function() 
-							RunConsoleCommand( "pnrp_communityAdmin" ) 
+							RunConsoleCommand( "pnrp_communitysearch" ) 
 							communityEdit_frame:Close()
 						end	
 						comAdminBtn.Paint = function()
@@ -1308,7 +1387,7 @@ function GM.communityEdit_window( )
 					local comAdminBtnLbl = vgui.Create("DLabel", communityEdit_frame)
 						comAdminBtnLbl:SetPos( communityEdit_frame:GetWide()-210,btnHPos+2 )
 						comAdminBtnLbl:SetColor( lblColor )
-						comAdminBtnLbl:SetText( "Communities Admin" )
+						comAdminBtnLbl:SetText( "Communities Search" )
 						comAdminBtnLbl:SetFont("Trebuchet24")
 						comAdminBtnLbl:SizeToContents()	
 						
