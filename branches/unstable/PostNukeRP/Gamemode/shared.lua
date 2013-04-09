@@ -258,7 +258,8 @@ end
 local RP_Default_Weapons = {}
 RP_Default_Weapons = { "weapon_pnrp_ak-comp", "weapon_pnrp_badlands", "weapon_pnrp_charge", "weapon_pnrp_knife", 
 		"weapon_pnrp_p228", "weapon_pnrp_precrifle", "weapon_pnrp_pumpshotgun", "weapon_pnrp_revolver", "weapon_pnrp_saw", 
-		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck", "weapon_pnrp_ump", "weapon_pnrp_m82", "weapon_pnrp_pulserifle" }
+		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck", "weapon_pnrp_ump", "weapon_pnrp_m82", "weapon_pnrp_pulserifle",
+		"weapon_pnrp_flaregun" }
 
 local function HoldTypeFix()
 	for k, v in pairs(player.GetAll()) do
