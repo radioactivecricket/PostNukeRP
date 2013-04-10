@@ -389,7 +389,7 @@ function VendorMenu()
 			local invTbl = {}
 			
 			local invLongStr = string.Explode( " ", vendorInventory )
-			print("ping"..table.Count(invLongStr)) 
+
 			if invLongStr then
 				for _, invStr in pairs( invLongStr ) do
 					local invSplit = string.Explode( ",", invStr )
@@ -416,7 +416,7 @@ function VendorMenu()
 						local chems = invBreakout[4]
 						local toolTip = item.Name.."\n".."Count: "..count.."\n".."Cost \n Scrap: "..scrap.."\n Small Parts: "..small_parts.."\n Chems: "..chems
 						local pnlLIPanel = vgui.Create("DPanel", pnlLIList)
-							pnlLIPanel:SetSize( 75, 125 )
+							pnlLIPanel:SetSize( 75, 140 )
 							pnlLIPanel.Paint = function()
 								draw.RoundedBox( 6, 0, 0, pnlLIPanel:GetWide(), pnlLIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
 							end
@@ -457,6 +457,19 @@ function VendorMenu()
 							pnlLIPanel.editBtn:SetSize(pnlLIPanel:GetWide() - 8,17)
 							pnlLIPanel.editBtn.DoClick = function()
 								setSellItem(vendorENT, item, 0, "edit")
+								vendmenu_frame:Close()
+							end
+							
+							pnlLIPanel.DispBtn = vgui.Create( "DButton", pnlLIPanel )
+							pnlLIPanel.DispBtn:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.editBtn:GetWide() / 2, 120 )
+							pnlLIPanel.DispBtn:SetText( "Display Item" )
+							pnlLIPanel.DispBtn:SetSize(pnlLIPanel:GetWide() - 8,17)
+							pnlLIPanel.DispBtn.DoClick = function()
+								net.Start("VendorCreateDisplayItem")
+									net.WriteEntity(ply)
+									net.WriteEntity(vendorENT)
+									net.WriteString(item.ID)
+								net.SendToServer()
 								vendmenu_frame:Close()
 							end
 					end
@@ -677,6 +690,32 @@ function VendorMenu()
 				chModelBtnLbl:SizeToContents()
 			
 			btnHPos = btnHPos + btnHeight			
+			local clsDispItemsBtn = vgui.Create("DImageButton", vendmenu_frame)
+				clsDispItemsBtn:SetPos( btnWPos,btnHPos )
+				clsDispItemsBtn:SetSize(30,30)
+				clsDispItemsBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				clsDispItemsBtn.DoClick = function() 
+					net.Start("clsDispItems")
+						net.WriteEntity(ply)
+						net.WriteEntity(vendorENT)
+					net.SendToServer()
+					vendmenu_frame:Close()
+				end
+				clsDispItemsBtn.Paint = function()
+					if clsDispItemsBtn:IsDown() then 
+						clsDispItemsBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+					else
+						clsDispItemsBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					end
+				end	
+			local clsDispItemsBtnLbl = vgui.Create("DLabel", vendmenu_frame)
+				clsDispItemsBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
+				clsDispItemsBtnLbl:SetColor( lblColor )
+				clsDispItemsBtnLbl:SetText( "Del Display Items" )
+				clsDispItemsBtnLbl:SetFont("Trebuchet24")
+				clsDispItemsBtnLbl:SizeToContents()
+			
+			btnHPos = btnHPos + btnHeight			
 			local unSetBtn = vgui.Create("DImageButton", vendmenu_frame)
 				unSetBtn:SetPos( btnWPos,btnHPos )
 				unSetBtn:SetSize(30,30)
@@ -889,15 +928,15 @@ function setSellItem(vendorENT, item, count, option)
 			buttonNewVendor:SetPos( 450, 30 )
 			buttonNewVendor:SetText( btnText )
 			buttonNewVendor.DoClick = function( )
-				local setScrap = scrapSlide:GetValue()
+				local setScrap = math.Round(scrapSlide:GetValue())
 				if setScrap < 0 then
 					setScrap = 0
 				end
-				local setSP = spSlide:GetValue()
+				local setSP = math.Round(spSlide:GetValue())
 				if setSP < 0 then
 					setSP = 0
 				end
-				local setChems = chemSlide:GetValue()
+				local setChems = math.Round(chemSlide:GetValue())
 				if setChems < 0 then
 					setChems = 0
 				end
