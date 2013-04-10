@@ -230,12 +230,13 @@ function VendorReset( )
 	local ply = net.ReadEntity()
 	local vendorENT = net.ReadEntity()
 	
+	cleanupDispItems(vendorENT.vendorID)
+	
 	vendorENT:SetNetworkedString("vendorid", nil)
 	vendorENT:SetNetworkedString("name", ply:Nick().."'s Vending Machine")
 	
 	vendorENT.vendorID = nil
 	vendorENT.name = ply:Nick().."'s Vending Machine"
-
 end
 net.Receive( "VendorReset", VendorReset )
 
@@ -343,6 +344,8 @@ function TakeFromVendor( )
 		if remVendorItem( vendorENT.vendorID, Item, Amount ) then
 			ply:AddToInventory( Item, Amount )
 			ply:EmitSound(Sound("items/ammo_pickup.wav"))
+			
+			checkRMDispItems(ply, Item, vendorENT.vendorID)
 		else
 			ply:ChatPrint("Unable to take item from Vendor")
 		end
@@ -359,6 +362,8 @@ function TakeFromVendor( )
 				
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
 				ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
+				
+				checkRMDispItems(ply, Item, vendorENT.vendorID)
 			else
 				ply:ChatPrint("Unable to take item from Vendor")
 			end
@@ -490,7 +495,7 @@ function setVendorSellItem( p, command, arg )
 		newInvString = string.Trim(newInvString)
 		query = "UPDATE vending_table SET inventory='"..newInvString.."' WHERE vendorid='"..tostring(vendorID).."'"
 		result = querySQL(query)
-		
+		updateDispItemCost(vendorID, itemID, costTable)
 		p:EmitSound(Sound("items/ammo_pickup.wav"))
 	else
 		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No Vendor match in vending_table! ["..tostring(vendorID).."] \n")
@@ -498,13 +503,31 @@ function setVendorSellItem( p, command, arg )
 end
 concommand.Add( "setVendorSellItem", setVendorSellItem )
 
-function BuyFromVendor( )
+function updateDispItemCost(vendorID, itemID, costTable)
+	vendorID = tonumber(vendorID)
+	local costString = costTable[1]..","..costTable[2]..","..costTable[3]..","..costTable[4]
+	local foundDispItems = ents.FindByClass("msc_display_item")
+	for _, v in pairs(foundDispItems) do
+		if v.vendorid == vendorID and v.item == itemID then
+			v.cost = costString
+			v:SetNWString("cost", costString)
+		end
+	end
+end
+
+function doBuyFromVendor( )
 	local ply = net.ReadEntity()
 	local vendorENT = net.ReadEntity()
 	local Amount = net.ReadDouble()
 	local Item = net.ReadString()
 	local Cost = net.ReadTable()
 	local vendorID = vendorENT.vendorID
+	
+	BuyFromVendor(ply, vendorID, Item, Cost, Amount, "vendor")
+end
+net.Receive( "BuyFromVendor", doBuyFromVendor )
+
+function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From )
 	
 	local enough = false
 	local soldItem = false
@@ -621,7 +644,143 @@ function BuyFromVendor( )
 
 		local resultRes = querySQL("UPDATE vending_table SET res='"..tostring(newRes).."' WHERE vendorid="..tostring(vendorID))
 		
+		if From == "vendor" then
+			checkRMDispItems(ply, Item, vendorID)
+		end
 	end
 	
+	return soldItem
 end
-net.Receive( "BuyFromVendor", BuyFromVendor )
+
+--Finds nearest display item and deletes it if needed
+function checkRMDispItems(ply, itemID, vendorID)
+	local Pos = ply:GetPos()
+	local itmCount = 0
+	local itemString = string.Explode( ",", getItemInfo(itemID, vendorID))
+	itmCount = itemString[1]
+	local foundDispItems = ents.FindByClass("msc_display_item")
+	local disItemTable = {}
+	local distTable = {}
+	local idCount = 0
+	for _, v in pairs(foundDispItems) do
+		if v.vendorid == vendorID and v.item == itemID then
+			if itmCount == 0 then
+				v:Remove()
+			else
+				local dist = v:GetPos():Distance(Pos)
+				disItemTable[dist] = v
+				table.insert(distTable, dist)
+				idCount = idCount + 1
+			end
+		end
+	end
+	
+	if idCount > (itmCount - 1) then
+		table.sort(distTable)
+		local numREM = idCount - itmCount
+		for i=1, numREM,1 do 
+			local remENT = disItemTable[distTable[i]]
+			if IsValid(remENT) then
+				remENT:Remove()
+			end
+		end
+	end
+end
+
+function clsDispItems()
+	local ply = net.ReadEntity()
+	local vendorENT = net.ReadEntity()
+	
+	cleanupDispItems(vendorENT.vendorID)
+end
+net.Receive( "clsDispItems", clsDispItems )
+util.AddNetworkString("clsDispItems")
+
+--Cleans up all Display Items
+function cleanupDispItems(vendorID)
+	local foundDispItems = ents.FindByClass("msc_display_item")
+	for _, v in pairs(foundDispItems) do
+		if v.vendorid == vendorID then
+			v:Remove()
+		end
+	end
+end
+
+--Gets the cost and count string
+function getItemInfo(itemID, vendorID)
+	local returnString = "0,0,0,0"
+	query = "SELECT inventory FROM vending_table WHERE vendorid='"..tostring(vendorID).."'"
+	result = querySQL(query)
+	if result then
+		local invTbl = {}
+		local getInvTable = result[1]["inventory"]
+		local invLongStr = string.Explode( " ", getInvTable )
+		for _, invStr in pairs( invLongStr ) do
+			local invSplit = string.Explode( ",", invStr )
+			
+			invTbl[invSplit[1]] = tostring(invSplit[2]..","..invSplit[3]..","..invSplit[4]..","..invSplit[5])
+		end
+		for k, v in pairs(invTbl) do
+			if k == itemID then
+				returnString = v
+			end
+		end
+		
+	end
+	
+	return returnString
+end
+
+function VendorCreateDisplayItem()
+	local ply = net.ReadEntity()
+	local vendorENT = net.ReadEntity()
+	local itemID = net.ReadString()
+	local vendorID = vendorENT.vendorID
+	local item = PNRP.Items[itemID]
+	local plUID = PNRP:GetUID( ply )
+	
+	local pos = ply:GetPos()
+	
+	local infoString = getItemInfo(itemID, vendorID)
+	local infoTable = string.Explode( ",", infoString )
+	local itmCount = infoTable[1]
+	
+	local idCount = 0
+	local foundDispItems = ents.FindByClass("msc_display_item")
+	for _, v in pairs(foundDispItems) do
+		if v.vendorid == vendorID and v.item == itemID then
+			if itmCount == 0 then
+				v:Remove()
+			else
+				idCount = idCount + 1
+			end
+		end
+	end
+	if idCount < tonumber(itmCount) then
+		local ent = ents.Create("msc_display_item")
+		ent:SetAngles( ply:GetAngles()-Angle(0,180,0) )
+		ent:SetPos(pos + Vector(0,0,20))
+		ent:SetModel("models/props_junk/cardboard_box003b.mdl")
+		ent:Spawn()
+		ent:Activate()
+		
+		ent:SetNWString("itemID", itemID)
+		ent:SetNWString("vendorid", vendorID)
+		ent:SetNWString("cost", infoString)
+		ent.vendorid = vendorID
+		ent.item = itemID
+		PNRP.SetOwner(ply, ent)
+	else
+		ply:ChatPrint("Not enough of this item in Vendor to create more Displays.")
+	end
+end
+net.Receive( "VendorCreateDisplayItem", VendorCreateDisplayItem )
+util.AddNetworkString("VendorCreateDisplayItem")
+
+function ENT:OnRemove()
+	cleanupDispItems(tonumber(self.vendorID))
+end
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end
