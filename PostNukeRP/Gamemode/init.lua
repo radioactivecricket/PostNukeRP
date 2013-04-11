@@ -626,7 +626,7 @@ function GM:ShowTeam( ply )
 		return
 	end
 		
-	if ent:GetClass() == "msc_itembox" then
+	if ent:GetClass() == "msc_itembox" or ent:GetClass() == "msc_display_item" then
 		ent:F2Use(ply)
 	end
 	
@@ -1081,4 +1081,6 @@ function PrintUmsgTable()
 end
 net.Receive( "printUmsgTable", PrintUmsgTable )
 
+
+--util.AddNetworkString("setCL_ColorFX")
 --EOF
