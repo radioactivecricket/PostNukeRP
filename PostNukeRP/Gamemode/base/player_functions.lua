@@ -1708,6 +1708,7 @@ function seatSetup(ply, cmd, args)
 				ent:Spawn()
 				ent:Activate()
 				ent.seat = 1
+				ent:SetNetworkedString( "hud" , false )
 				PNRP.SetOwner(ply, ent)
 				
 				constraint.Weld(car, ent, 0, 0, 0, true)
@@ -1766,4 +1767,61 @@ function plyAFK(ply, cmd, args)
 end
 concommand.Add( "pnrp_afk", plyAFK )
 PNRP.ChatConCmd( "/afk", "pnrp_afk" )
+
+function GasCar(ply, cmd, args)
+	local tr = ply:TraceFromEyes(200)
+	local ent = tr.Entity
+	
+	if IsValid(ent) then
+		if !ent:IsPlayer() then
+			if ent:IsPlayerHolding() and ent.ID == "fuel_gas" then
+				local pn_car
+				local npn_car
+				local car
+				for _, ents in pairs(ents.FindInSphere( ply:GetPos(), 100 )) do
+					if ents:IsVehicle() then
+						local ItemID = PNRP.FindItemID( ents:GetClass() )
+						if ItemID then
+							pn_car = ents
+						else
+							npn_car = ents
+						end
+					end
+				end
+				--To include non itembase car
+				if IsValid(pn_car) then
+					car = pn_car
+				else
+					car = npn_car
+				end
+				
+				if IsValid(car) then
+					if !car.gas then car.gas = 0 end
+					if !car.tank then car.tank = 8 end
+					
+					if car.gas < car.tank then
+						car.gas = car.gas + 1
+						if car.gas > car.tank then car.gas = car.tank end
+						ply:ChatPrint("You put gas in the vehicle.")
+						ent:Remove()
+					else
+						ply:ChatPrint("Tank is full.")
+					end
+				end
+			end
+		end
+	end
+end
+concommand.Add( "pnrp_gascar", GasCar )
+
+function pickupGas( ply, ent )
+	if ent.gas then
+		if ent.gas >= 1 then
+			local gas = math.floor(ent.gas)
+			PNRP.AddToInventory( ply, "fuel_gas", gas )
+			ply:ChatPrint("Spare gas placed in inventory")
+		end
+	end
+end
+
 --EOF

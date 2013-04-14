@@ -210,6 +210,8 @@ function PNRP:HUD_2()
 	showOwner((ScrW() / 2) - (tgoWidth / 2), vTimeY, CHeight, tgoWidth)
 	
 	PNRP_HUD:showRadio((ScrW() / 2) + (compWidth / 2) -75, vTimeY, CHeight, CWidth)
+	
+	PNRP_HUD:showGas((ScrW() / 2) - compWidth, HUD_var.marginY, 20, 125, HUD_var, HUD_col)
 end
 
 
