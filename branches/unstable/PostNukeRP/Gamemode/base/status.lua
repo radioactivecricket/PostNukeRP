@@ -32,7 +32,6 @@ function StatCheck()
 					v:GetTable().LastHealthUpdate = CurTime()
 				end
 				
-				
 				local runModifier = 0
 				
 				if v:KeyDown(IN_FORWARD) or v:KeyDown(IN_LEFT) or v:KeyDown(IN_RIGHT) or v:KeyDown(IN_BACK) then
@@ -40,6 +39,47 @@ function StatCheck()
 					if v:KeyDown(IN_SPEED) then
 						runModifier = runModifier + 3
 					end
+				end
+				
+				--Gas Updates
+				if !v:GetTable().GasUpdate then
+					v:GetTable().GasUpdate = CurTime()
+				end
+				if CurTime() - v:GetTable().GasUpdate > 2 then
+					v:GetTable().GasUpdate = CurTime()
+
+					if v:InVehicle() then
+						local car = v:GetVehicle()
+							
+						if !car.gas then car.gas = 0 end
+						if !car.tank then car.tank = 8 end
+						
+						if car.gas <= 0 then 
+							car.gas = 0 
+							car:Fire("turnoff", 1, 0)
+							--check Wire Adv Pod Controller 
+							for _,pod in pairs( ents.FindByClass( "gmod_wire_adv_pod" ) ) do
+								if (pod:HasPly() and pod:GetPly() == v) then
+									pod.Disable = true
+								end
+							end
+						end
+
+						if car.gas > 0 then
+							car.gas = car.gas - (runModifier / 60)
+							car:Fire("turnon", 1, 0)
+							--check Wire Adv Pod Controller 
+							for _,pod in pairs( ents.FindByClass( "gmod_wire_adv_pod" ) ) do
+								if (pod:HasPly() and pod:GetPly() == v) then
+									pod.Disable = false
+								end
+							end
+						end
+						
+						SendGas( v, car, car.gas, car.tank )
+						
+					end
+
 				end
 				
 				local EndUpdateTime 
@@ -386,3 +426,13 @@ function EndDebug( ply )
 	ply:ChatPrint("Your endurance is at "..tostring(ply:GetTable().Endurance)..".")
 end
 concommand.Add( "pnrp_enddebug", EndDebug )
+
+function SendGas( ply, car, gas, tank )
+	net.Start("sndCarGas")
+		net.WriteEntity(ply)
+		net.WriteEntity(car)
+		net.WriteDouble(gas)
+		net.WriteDouble(tank)
+	net.Send(ply)
+end
+util.AddNetworkString("sndCarGas")

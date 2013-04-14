@@ -690,6 +690,7 @@ function GM:ShowTeam( ply )
 				if weight <= weightCap then
 					PNRP.AddToInventory( ply, ItemID, 1 )
 					PNRP.TakeFromWorldCache( ply, ItemID )
+					pickupGas( ply, ent )
 					ent:Remove()
 				else
 					ply:ChatPrint("You're pack is too full and cannot carry this.")
@@ -706,11 +707,11 @@ function GM:ShowTeam( ply )
 						
 				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
 				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
-				
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 				PNRP.AddToInventory( ply, ItemID, 1 )
 				PNRP.TakeFromWorldCache( ply, ItemID )
 				ply:ChatPrint("You picked up your car")
+				pickupGas( ply, ent )
 				ent:Remove()
 								
 			end
@@ -887,6 +888,7 @@ function PNRP.GetAllCars( ply )
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 				PNRP.AddToInventory( ply, ItemID, 1 )
 				PNRP.TakeFromWorldCache( ply, ItemID )
+				pickupGas( ply, v )
 				v:Remove()
 				
 			end

@@ -262,6 +262,8 @@ function HUD_Default()
 	local compWidth = 360 + (HUD_var.text_spacing * 4)
 	local cxCompass = (ScrW() / 2) - (compWidth / 2)
 	PNRP_HUD:compass(cxCompass,  marginY + height + bar.padding + 2, compWidth, HUD_var, HUD_col)
+	
+	PNRP_HUD:showGas((ScrW() / 2) - compWidth, marginY + height + bar.padding + 2, 20, 125, HUD_var, HUD_col)
 end
 
 --Not sure what this does atm
@@ -605,6 +607,57 @@ function PNRP_HUD:compass(x,y,width,hudVar,colors)
 	if(math.sin((yaw-112.5)/180*math.pi) < 0) then --NNW
 		local sinYawNNW = 180*math.sin((yaw-22.5)/180*math.pi) + center
 		PNRP_HUD:PaintText( sinYawNNW, y + hudVar.text_spacing, "'", hudVar.font, colors.text )
+	end
+end
+
+function PNRP_HUD:showGas(x,y,h,w,hudVar,colors)
+	local ply = LocalPlayer()
+	if ply:InVehicle() then
+		local car = ply:GetVehicle()
+		local gas = car.gas
+		local tank = car.tank
+		
+		if !gas then gas = 0 end
+		if !tank then tank = 0 end
+		
+		local showHUD = car:GetNetworkedString( "hud" , true )
+		if showHUD then
+			local gasW = w - 24
+			local gX = x + 12
+			local percent = 1 - ((tank - gas) / tank)
+			local barPos = gasW * percent
+			
+			surface.SetDrawColor( colors.bg.background )
+			surface.DrawRect(x+1, y+1, w, h )
+			surface.SetDrawColor( colors.border )
+			surface.DrawOutlinedRect( x, y, w+1, h+1 )
+			
+			PNRP_HUD:PaintText( x+4, y+2, "E", hudVar.font, colors.text )
+			PNRP_HUD:PaintText( x+w-10, y+2, "F", hudVar.font, colors.text )
+			
+			surface.SetDrawColor( colors.text )
+			surface.DrawRect( gX, y+2, 1, h-12 )
+			surface.DrawRect( gX+ (gasW*0.25), y+2, 1, 5 )
+			surface.DrawRect( gX+ (gasW*0.5), y+2, 1, h-10 )
+			surface.DrawRect( gX+ (gasW*0.75), y+2, 1, 5 )
+			surface.DrawRect( gX+ gasW, y+2, 1, h-12 )
+			
+			local gBarColor = Color(0,250,0,200)
+			if percent < 0.1 then
+				gBarColor = Color(250,0,0,200)
+			end
+			surface.SetDrawColor( gBarColor )
+			surface.DrawRect( barPos+gX-1, y+4, 2, h-5 )
+			
+			if percent < 0.05 then
+				surface.SetDrawColor( Color(250,0,0,200) )
+				surface.DrawOutlinedRect( x-12, y+2, 10, 8 )
+				surface.DrawRect( x-12, y+11, 10, 9 )
+				surface.DrawRect( x-15, y+11, 3, 5 )
+				surface.DrawRect( x-15, y+6, 1, 5 )
+				surface.DrawRect( x-15, y+6, 4, 1 )
+			end
+		end
 	end
 end
 
