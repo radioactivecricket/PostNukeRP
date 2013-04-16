@@ -17,17 +17,11 @@ function ENT:Initialize()
 	-- -11 = Run Away
 	-- -12 = Hide
 	-- -13 = Cower
-	self.NPCType = 0
-	--NPC Types
-	-- 0 = Headcrab
-	-- 1 = Fast Headcrab
-	-- 2 = Poison Headcrab
-	
+
 	self.Pet = true
-	self:SetNWString("Pet", "yes")
+	self:SetNWString("pet", "yes")
 	
-	self.Model = "models/headcrabclassic.mdl"
-	self:SetModel( self.Model )
+	self:SetModel( "models/pigeon.mdl" )
 	self:SetHullType( HULL_TINY );
 	self:SetHullSizeNormal();
  
@@ -36,16 +30,21 @@ function ENT:Initialize()
  
 	self:CapabilitiesAdd( CAP_MOVE_GROUND )
 	self:CapabilitiesAdd( CAP_MOVE_JUMP )
+	self:CapabilitiesAdd( CAP_MOVE_FLY )
+	self:CapabilitiesAdd( CAP_SKIP_NAV_GROUND_CHECK )
+	self:CapabilitiesAdd( CAP_TURN_HEAD )
 	
 	self:SetMaxYawSpeed( 5000 )
  
 	self:SetHealth(100)
 	
-	self:SetNWString("name", "Wild Headcrab")
+	self:SetNWString("name", "Wild Bird")
 	
 	self:SelectSchedule( SCHED_IDLE_WANDER )
 
+	self:AddRelationship("npc_petbird D_HT 999")
 	self:AddRelationship("npc_hdvermin D_HT 999")
+	
 end
 
 function ENT:SelectSchedule( iNPCState )
@@ -68,8 +67,9 @@ function ENT:AcceptInput( name, activator, caller )
 					self.Option = 1
 					self.NPCMode = -2
 					self:SetTarget( ply )
-					self:SelectSchedule( SCHED_TARGET_CHASE )
+					self:SelectSchedule( SCHED_TARGET_FACE  )
 					ply:ChatPrint("You tell your pet to follow.")
+					ply:ChatPrint("Your bird looks at you in confusion.")
 				elseif self.Option == 1 then
 					self.Option = 2
 					self.NPCMode = -1
@@ -87,18 +87,17 @@ function ENT:AcceptInput( name, activator, caller )
 					ply:ChatPrint("You tell your pet to wander.")
 				end
 			else
-				ply:ChatPrint("This headcrab does not like you.")
+				ply:ChatPrint("This pet does not like you.")
 			end
 		end
 	end
 end
 
 function ENT:IdleSounds()
-	local soundNum = math.random(3)
+	local soundNum = math.random(6)
 	local SoundFile = nil
-	local hdType = "headcrab"
 	
-	SoundFile = "npc/"..hdType.."/idle"..tostring(soundNum)..".wav"
+	SoundFile = "ambient/levels/canals/swamp_bird"..tostring(soundNum)..".wav"
 	
 	local mysound = Sound(SoundFile)
 	self:EmitSound( mysound )
@@ -106,30 +105,36 @@ end
 
 function ENT:HDAlertSound()
 	local SoundFile = nil
-	local hdType = "headcrab"
 	
-	SoundFile = "npc/"..hdType.."/alert1.wav"
-
+	SoundFile = "ambient/levels/canals/swamp_bird1.wav"
+	
 	local mysound = Sound(SoundFile)
 	self:EmitSound( mysound )
 end
 
 function ENT:HDPainSounds()
-	local soundNum = math.random(3)
 	local SoundFile = nil
-	local hdType = "headcrab"
 	
-	SoundFile = "npc/"..hdType.."/pain"..tostring(soundNum)..".wav"
+	SoundFile = "ambient/levels/canals/swamp_bird4.wav"
 	
 	local mysound = Sound(SoundFile)
 	self:EmitSound( mysound )
 end
 
 function ENT:CommandSound()
-	local soundNum = math.random(3)
 	local SoundFile = nil
 	
-	SoundFile = "npc/headcrab_poison/ph_talk"..tostring(soundNum)..".wav"
+	SoundFile = "ambient/levels/coast/coastbird7.wav"
+	
+	local mysound = Sound(SoundFile)
+	self:EmitSound( mysound )
+end
+
+function ENT:DeathSound()
+	local soundNum = math.random(2)
+	local SoundFile = nil
+	
+	SoundFile = "npc/crow/die"..tostring(soundNum)..".wav"
 	
 	local mysound = Sound(SoundFile)
 	self:EmitSound( mysound )
@@ -148,12 +153,11 @@ function ENT:OnTakeDamage(dmg)
 	self:HDPainSounds()
 	
 	if self:Health() <= 0 then --run on death
-		local diesound = Sound("npc/headcrab/die1.wav")
-		self:EmitSound( diesound )
+		self:DeathSound()
 		self:SetNoDraw(true)
 		self:SetSolid(SOLID_NONE)
 		
-		local myID = "tool_petcrab"
+		local myID = "tool_petpigeon"
 		
 		local corpseGib = ents.Create("prop_ragdoll")
 		corpseGib:SetModel( self:GetModel() )
