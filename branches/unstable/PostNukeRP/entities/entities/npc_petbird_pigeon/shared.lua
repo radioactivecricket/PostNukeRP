@@ -1,7 +1,7 @@
 ENT.Base = "base_ai" 
 ENT.Type = "ai"
  
-ENT.PrintName		= "Headcrab Vermin"
+ENT.PrintName		= "Pet Pigion"
 ENT.Author			= "EldarStorm & LostInTheWired"
 ENT.Contact			= ""  --fill in these if you want it to be in the spawn menu
 ENT.Purpose			= ""

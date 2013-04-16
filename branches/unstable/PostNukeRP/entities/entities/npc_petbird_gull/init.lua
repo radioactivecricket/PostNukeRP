@@ -3,6 +3,10 @@ AddCSLuaFile( "shared.lua" )
  
 include('shared.lua')
 
+--local plyFollow = ai_schedule.New( "Player Follow" )
+--	plyFollow:EngTask( "TASK_SOUND_PAIN", 	0 )
+
+
 function ENT:Initialize()
 	self.Owner = nil
 --	self.iNPCState = SCHED_IDLE_WANDER
@@ -21,7 +25,7 @@ function ENT:Initialize()
 	self.Pet = true
 	self:SetNWString("pet", "yes")
 	
-	self:SetModel( "models/pigeon.mdl" )
+	self:SetModel( "models/seagull.mdl" )
 	self:SetHullType( HULL_TINY );
 	self:SetHullSizeNormal();
  
@@ -42,7 +46,8 @@ function ENT:Initialize()
 	
 	self:SelectSchedule( SCHED_IDLE_WANDER )
 
-	self:AddRelationship("npc_pigeon D_HT 999")
+	self:AddRelationship("npc_petbird D_HT 999")
+	self:AddRelationship("npc_hdvermin D_HT 999")
 	
 end
 
@@ -66,8 +71,9 @@ function ENT:AcceptInput( name, activator, caller )
 					self.Option = 1
 					self.NPCMode = -2
 					self:SetTarget( ply )
-					self:SelectSchedule( SCHED_TARGET_CHASE )
+					self:SelectSchedule( SCHED_TARGET_FACE  )
 					ply:ChatPrint("You tell your pet to follow.")
+					ply:ChatPrint("Your bird looks at you in confusion.")
 				elseif self.Option == 1 then
 					self.Option = 2
 					self.NPCMode = -1
@@ -92,132 +98,71 @@ function ENT:AcceptInput( name, activator, caller )
 end
 
 function ENT:IdleSounds()
-
+	local soundNum = math.random(6)
+	local SoundFile = nil
+	
+	SoundFile = "ambient/levels/coast/coastbird"..tostring(soundNum)..".wav"
+	
+	local mysound = Sound(SoundFile)
+	self:EmitSound( mysound )
 end
 
 function ENT:HDAlertSound()
-
+	local SoundFile = nil
+	
+	SoundFile = "ambient/levels/canals/swamp_bird1.wav"
+	
+	local mysound = Sound(SoundFile)
+	self:EmitSound( mysound )
 end
 
 function ENT:HDPainSounds()
-
+	local SoundFile = nil
+	
+	SoundFile = "ambient/levels/canals/swamp_bird4.wav"
+	
+	local mysound = Sound(SoundFile)
+	self:EmitSound( mysound )
 end
 
 function ENT:CommandSound()
-
+	local SoundFile = nil
+	
+	SoundFile = "ambient/levels/coast/coastbird7.wav"
+	
+	local mysound = Sound(SoundFile)
+	self:EmitSound( mysound )
 end
 
-function changeActivity(ENT)
-	if ENT.Waiting == false then
---		print(tostring(ENT).." State: "..ENT:GetNPCState( ))
-		local target = ENT:GetTarget()
-		if IsValid(target) then
---			print(tostring(ENT).." Target: "..tostring(target))
-		end
-		
-		if ENT.NPCMode ~= -1 then
-			if timer.Exists("hdIdleSound_"..tostring(transENT)) then
-				timer.Destroy("hdIdleSound_"..tostring(transENT))
-			end
-		end
-		
-		--Stay or Wander
-		if ENT.NPCMode >= 0 and ENT:GetNPCState( ) ~= NPC_STATE_COMBAT then -- Wait and Wonder
-			ENT.Option = 0
-			ENT:SetNPCState(NPC_STATE_IDLE)
-			local schedNum = math.random(10)
-			if schedNum > 0 then
---				print(tostring(ENT).." Wander")
-				ENT.Waiting = true
-				ENT.NPCMode = 1
-				timer.Simple( math.random(5), function()
-					ENT.Waiting = false
-				end)
-				ENT:SelectSchedule( SCHED_IDLE_WANDER )
-			else
---				print(tostring(ENT).." Wait")
-				ENT.Waiting = true
-				ENT.NPCMode = 0
-				timer.Simple( math.random(5), function()
-					ENT.Waiting = false
-				end)
-				ENT:SelectSchedule( SCHED_IDLE_STAND )
-				ENT:IdleSounds()
-			end		
-		end
-		
-		--Start Hide
-		if ENT:GetNPCState( ) == NPC_STATE_COMBAT then --Evasive Action
---			print(tostring(ENT).." Hide")
-			ENT.Option = 0
-			ENT.Waiting = true
-			ENT.NPCMode = -12
-			ENT:FoundEnemySound( )
-			timer.Simple( math.random(5), function()
-				if IsValid(ENT) then
-					if !IsValid(ENT:GetEnemy( )) then
-						ENT.NPCMode = 0
-					end
-					ENT.Waiting = false
-				end
-			end)
-			ENT:SelectSchedule( SCHED_TAKE_COVER_FROM_ENEMY )
-			ENT:HDAlertSound()
-		end
-		
-		--Star Cower
-		if ENT:GetNPCState( ) == NPC_STATE_ALERT then
---			print(tostring(ENT).." Cower")
-			ENT.Option = 0
-			ENT.Waiting = true
-			ENT.NPCMode = -13
-			ENT:FoundEnemySound( )
-			timer.Simple( math.random(5), function()
-				if IsValid(ENT) then
-					if ENT.NPCMode < -10 then	
-						if IsValid(ENT:GetEnemy( )) then
-							print(tostring(ENT:GetEnemy( )))
-							ENT.NPCMode = 0
-							ENT.Waiting = false
-						end
-					end
-				end
-			end)
-			ENT:FoundEnemySound( )
-			ENT:SelectSchedule( SCHED_COWER )
-			ENT:HDAlertSound()
-		end
-		
-		--Fix NPC State
-		if ENT:GetNPCState( ) == NPC_STATE_IDLE and ENT.NPCMode < -10 then
---			print(tostring(ENT).." NPC Fix")
-			ENT.Option = 0
-			ENT.NPCMode = 0
-		end
-	end
-end 
+function ENT:DeathSound()
+	local soundNum = math.random(2)
+	local SoundFile = nil
+	
+	SoundFile = "npc/crow/die"..tostring(soundNum)..".wav"
+	
+	local mysound = Sound(SoundFile)
+	self:EmitSound( mysound )
+end
 
 function ENT:ScheduleFinished()
-	changeActivity(self)
+	changePetActivity(self)
 end
  
 function ENT:OnTakeDamage(dmg)
---	self:SetHealth(self:Health() - dmg:GetDamage())
+	self:SetHealth(self:Health() - dmg:GetDamage())
 	
---	print(tostring(self).." Run Away")
-	self:SelectSchedule( SCHED_MOVE_AWAY_FROM_ENEMY )
+	self:SelectSchedule( SCHED_RUN_FROM_ENEMY )
 	self.NPCMode = -11
 	self.Option = 0
 	self:HDPainSounds()
 	
 	if self:Health() <= 0 then --run on death
---		print(tostring(self).." Died")
---		local diesound = Sound("npc/headcrab/die1.wav")
---		self:EmitSound( diesound )
-		--self:Remove()
+		self:DeathSound()
 		self:SetNoDraw(true)
 		self:SetSolid(SOLID_NONE)
-			
+		
+		local myID = "tool_petgull"
+		
 		local corpseGib = ents.Create("prop_ragdoll")
 		corpseGib:SetModel( self:GetModel() )
 		corpseGib:SetPos(self:GetPos())
@@ -226,7 +171,25 @@ function ENT:OnTakeDamage(dmg)
 		corpseGib:SetSolid(SOLID_VPHYSICS)
 		corpseGib:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 		corpseGib:Activate()
-			
+		
+		--Remove From World Cache		
+		local MyPlayer = nil
+	
+		if self:GetNetworkedString("Owner", "none") ~= "World" and self:GetNetworkedString("Owner", "none") ~= "none" then
+			for k, v in pairs(player.GetAll()) do
+				if v:Nick() == self:GetNetworkedString("Owner", "none") then
+					MyPlayer = v
+					break
+				end
+			end
+		end
+		if MyPlayer ~= nil then
+			ItemID = PNRP.Items[myID].ID
+			if ItemID then
+				PNRP.TakeFromWorldCache( MyPlayer, ItemID )
+			end
+		end
+		
 		timer.Simple(10, function ()
 			if IsValid(self) then
 				self:Remove()

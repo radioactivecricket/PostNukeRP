@@ -135,105 +135,15 @@ function ENT:CommandSound()
 	self:EmitSound( mysound )
 end
 
-function changeActivity(ENT)
-	if ENT.Waiting == false then
---		print(tostring(ENT).." State: "..ENT:GetNPCState( ))
-		local target = ENT:GetTarget()
-		if IsValid(target) then
---			print(tostring(ENT).." Target: "..tostring(target))
-		end
-		
-		if ENT.NPCMode ~= -1 then
-			if timer.Exists("hdIdleSound_"..tostring(transENT)) then
-				timer.Destroy("hdIdleSound_"..tostring(transENT))
-			end
-		end
-		
-		--Stay or Wander
-		if ENT.NPCMode >= 0 and ENT:GetNPCState( ) ~= NPC_STATE_COMBAT then -- Wait and Wonder
-			ENT.Option = 0
-			ENT:SetNPCState(NPC_STATE_IDLE)
-			local schedNum = math.random(10)
-			if schedNum > 0 then
---				print(tostring(ENT).." Wander")
-				ENT.Waiting = true
-				ENT.NPCMode = 1
-				timer.Simple( math.random(5), function()
-					ENT.Waiting = false
-				end)
-				ENT:SelectSchedule( SCHED_IDLE_WANDER )
-			else
---				print(tostring(ENT).." Wait")
-				ENT.Waiting = true
-				ENT.NPCMode = 0
-				timer.Simple( math.random(5), function()
-					ENT.Waiting = false
-				end)
-				ENT:SelectSchedule( SCHED_IDLE_STAND )
-				ENT:IdleSounds()
-			end		
-		end
-		
-		--Start Hide
-		if ENT:GetNPCState( ) == NPC_STATE_COMBAT then --Evasive Action
---			print(tostring(ENT).." Hide")
-			ENT.Option = 0
-			ENT.Waiting = true
-			ENT.NPCMode = -12
-			ENT:FoundEnemySound( )
-			timer.Simple( math.random(5), function()
-				if IsValid(ENT) then
-					if !IsValid(ENT:GetEnemy( )) then
-						ENT.NPCMode = 0
-					end
-					ENT.Waiting = false
-				end
-			end)
-			ENT:SelectSchedule( SCHED_TAKE_COVER_FROM_ENEMY )
-			ENT:HDAlertSound()
-		end
-		
-		--Star Cower
-		if ENT:GetNPCState( ) == NPC_STATE_ALERT then
---			print(tostring(ENT).." Cower")
-			ENT.Option = 0
-			ENT.Waiting = true
-			ENT.NPCMode = -13
-			ENT:FoundEnemySound( )
-			timer.Simple( math.random(5), function()
-				if IsValid(ENT) then
-					if ENT.NPCMode < -10 then	
-						if IsValid(ENT:GetEnemy( )) then
-							print(tostring(ENT:GetEnemy( )))
-							ENT.NPCMode = 0
-							ENT.Waiting = false
-						end
-					end
-				end
-			end)
-			ENT:FoundEnemySound( )
-			ENT:SelectSchedule( SCHED_COWER )
-			ENT:HDAlertSound()
-		end
-		
-		--Fix NPC State
-		if ENT:GetNPCState( ) == NPC_STATE_IDLE and ENT.NPCMode < -10 then
---			print(tostring(ENT).." NPC Fix")
-			ENT.Option = 0
-			ENT.NPCMode = 0
-		end
-	end
-end 
-
 function ENT:ScheduleFinished()
-	changeActivity(self)
+	changePetActivity(self)
 end
  
 function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
 	
 --	print(tostring(self).." Run Away")
-	self:SelectSchedule( SCHED_MOVE_AWAY_FROM_ENEMY )
+	self:SelectSchedule( SCHED_RUN_FROM_ENEM )
 	self.NPCMode = -11
 	self.Option = 0
 	self:HDPainSounds()

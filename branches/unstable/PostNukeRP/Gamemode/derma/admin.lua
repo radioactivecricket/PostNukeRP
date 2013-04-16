@@ -738,26 +738,53 @@ function buildEventList(event, var, funcs, parent)
 						DLabel:SetText( name ) --  Set the text of the label
 						DLabel:SizeToContents() -- Size the label to fit the text in it
 						DLabel:SetDark( 1 )
-						
-					local valueNWang = vgui.Create( "DNumberWang", varPanel )
-						valueNWang:SetPos(varPanel:GetWide() - 135, 2 )
-						valueNWang:SetMin( 0 )
-						if name == "Active" then
-							valueNWang:SetMax( 1 )
-						else
+					
+					if string.Trim(tostring(value)) == "true" or string.Trim(tostring(value)) == "false" then
+						local valueCheckBox = vgui.Create( "DCheckBoxLabel", varPanel )
+							valueCheckBox:SetText( "" ) 
+							valueCheckBox:SetPos(varPanel:GetWide() - 90, 5 )
+							if string.Trim(tostring(value)) == "true" then
+								value = 1
+							else
+								value = 0
+							end
+							valueCheckBox:SetValue( value )
+						local DLabel = vgui.Create( "DLabel", varPanel )
+							DLabel:SetPos( varPanel:GetWide() - 130, 5 ) -- Set the position of the label
+							DLabel:SetText( "Enable" ) --  Set the text of the label
+							DLabel:SizeToContents() -- Size the label to fit the text in it
+							DLabel:SetDark( 1 )
+							
+						local funcSetBTN = vgui.Create("DButton", varPanel )
+							funcSetBTN:SetPos(varPanel:GetWide() - 65, 2.5 )
+							funcSetBTN:SetText( "Set" )
+							funcSetBTN.DoClick = function()
+								local sValue = valueCheckBox:GetValue()
+								if sValue == 1 then sValue = "true"
+								else sValue = "false" end	
+								RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "bool")
+							--	admin_frame:Close()
+							end
+					else
+						local valueNWang = vgui.Create( "DNumberWang", varPanel )
+							valueNWang:SetMin( 0 )
 							valueNWang:SetMax( 10000 )
-						end
-						valueNWang:SetDecimals( 0 )
-						valueNWang:SetValue( value )
-						--event, varname, value, vartype )
-					local funcSetBTN = vgui.Create("DButton", varPanel )
-						funcSetBTN:SetPos(varPanel:GetWide() - 65, 2.5 )
-						funcSetBTN:SetText( "Set" )
-						funcSetBTN.DoClick = function()
-							local sValue = valueNWang:GetValue()
-							RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "number")
-							admin_frame:Close()
-						end
+							valueNWang:SetDecimals( 0 )
+							valueNWang:SetPos(varPanel:GetWide() - 135, 2 )
+							valueNWang:SetValue( value )
+						
+						local funcSetBTN = vgui.Create("DButton", varPanel )
+							funcSetBTN:SetPos(varPanel:GetWide() - 65, 2.5 )
+							funcSetBTN:SetText( "Set" )
+							funcSetBTN.DoClick = function()
+								local sValue = valueNWang:GetValue()
+								RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "number")
+							--	admin_frame:Close()
+							end
+					end
+						
+						
+					
 						
 				EventsSettingsList:AddItem( varPanel )
 			end

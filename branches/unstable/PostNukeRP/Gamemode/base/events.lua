@@ -1008,3 +1008,221 @@ function ClampWorldVector(vec)
 	vec.z = math.Clamp( vec.z , -16380, 16380 )
 	return vec
 end
+
+local EVENT = {}
+EVENT.name = "Pet Bird"
+
+EVENT.vars = {}
+EVENT.vars["Active"] = true
+EVENT.vars["Chance"] = 20
+EVENT.vars["CheckTime"] = 1000
+EVENT.vars["Amount"] = 5
+
+EVENT.funcs = {}
+function pnrp_ev_PetBird_OnLoad()
+	local LoadInfo = PNRP.Events["Pet Bird"].funcs["LoadInfo"]
+	LoadInfo()
+	
+	timer.Simple( 10, function()
+		
+		timer.Create( "pnrp_ev_petbird_check", PNRP.Events["Pet Bird"].vars["CheckTime"], 0, function ()
+			if not PNRP.Events["Pet Bird"].vars["Active"] then return end
+			local rand = math.random(100)
+			if rand <= PNRP.Events["Pet Bird"].vars["Chance"] then
+				local SpawnPets = PNRP.Events["Pet Bird"].funcs["SpawnPets"]
+				SpawnPets()
+			end
+		end)
+	end)
+end
+hook.Add( "InitPostEntity", "pnrp_ev_PetBird_OnLoad", pnrp_ev_PetBird_OnLoad )
+
+function pnrp_ev_PetBird_Spawn()
+	local GM = GAMEMODE
+	local spawnTbl = GM.spawnTbl
+	
+	local info = {}
+	
+	local birds = {}
+	for _, bird in pairs(ents.FindByClass( "npc_petbird" )) do
+		if bird:GetNetworkedString("Owner", "World") == "World" then
+			table.insert(birds, bird)
+			bird:EmitSound("npc/turret_floor/ping.wav", 100, 100)
+		end
+	end
+	if #birds > 0 then return end
+	
+	for k, v in pairs(player.GetAll()) do
+	--	v:ChatPrint("Birds")
+	end
+	
+	--  Make our temp-table with all possible nodes for this creature type.
+	local posNodes = {}
+	for _, node in pairs(spawnTbl) do
+		local isActive = true
+		-- if not util.tobool( node["infIndoor"]) then
+			-- isActive = true
+		-- end
+		
+		local doorEnt =  node["infLinked"]
+		if IsValid(doorEnt) then
+			if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+				isActive = false
+			end
+		end
+		
+		-- Checking the spawnbounds for props.  If there's a few down, we assume it's been claimed by a player.
+		if isActive then
+			local spawnBounds1 = ClampWorldVector(Vector(node["x"]-node["distance"], node["y"]-node["distance"], node["z"]-node["distance"]))
+			local spawnBounds2 = ClampWorldVector(Vector(node["x"]+node["distance"], node["y"]+node["distance"], node["z"]+node["distance"]))
+			
+			local entsInBounds = ents.FindInBox(spawnBounds1, spawnBounds2)
+			
+			local propCount = 0
+			if entsInBounds then
+				for _, foundEnt in pairs(entsInBounds) do
+					if foundEnt then
+						if foundEnt:GetClass() == "prop_physics" then
+							propCount = propCount + 1
+							
+							if propCount >= 3 then
+								isActive = false
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+		
+		if isActive then 
+			table.insert(posNodes, node)
+		end
+	end
+	
+	--  Make sure we have entries in the nodelist.  Might not be any nodes on this map for this type.
+	if #posNodes > 0 then
+		--  Now, let's make us some NPCs! 
+		for i = 1, PNRP.Events["Pet Bird"].vars["Amount"] do
+			
+			local spawned = false
+			local mainRetries = 50
+			while mainRetries > 0 and (not spawned) do
+				local currentNode = posNodes[math.random(1, #posNodes)]
+				local point = Vector(currentNode["x"] + math.random(currentNode["distance"]*-1,currentNode["distance"]),
+				  currentNode["y"] + math.random(currentNode["distance"]*-1,currentNode["distance"]),
+				  currentNode["z"])
+				
+				
+				local spawnInfo = {}
+				
+				local retries = 50
+				local validSpawn = false
+				while (util.IsInWorld(point) == false or validSpawn == false) and retries > 0 do
+					validSpawn = true
+					local trace = {}
+					trace.start = point
+					trace.endpos = trace.start + Vector(0,0,-100000)
+					trace.mask = MASK_SOLID_BRUSHONLY
+
+					local groundtrace = util.TraceLine(trace)
+					
+					trace = {}
+					trace.start = point
+					trace.endpos = trace.start + Vector(0,0,100000)
+					--trace.mask = MASK_SOLID_BRUSHONLY
+
+					local rooftrace = util.TraceLine(trace)
+					
+					--Find water?
+					trace = {}
+					trace.start = groundtrace.HitPos
+					trace.endpos = trace.start + Vector(0,0,1)
+					trace.mask = MASK_WATER
+
+					local watertrace = util.TraceLine(trace)
+					
+					if watertrace.Hit then
+						validSpawn = false
+					end
+					
+					local height = groundtrace.HitPos:Distance(rooftrace.HitPos)
+					-- if height < 149 then
+						-- validSpawn = false
+					-- end
+					
+					local nearby = ents.FindInSphere(groundtrace.HitPos,100)
+					for k,v in pairs(nearby) do
+						if v:GetClass() == "prop_physics" then
+							validSpawn = false
+							break
+						end
+					end
+					
+					if (not validSpawn) or (not util.IsInWorld(point)) then
+						point = Vector(currentNode["x"] + math.random(currentNode["distance"]*-1,currentNode["distance"]),
+						  currentNode["y"] + math.random(currentNode["distance"]*-1,currentNode["distance"]),
+						  currentNode["z"])
+					else
+						point = groundtrace.HitPos + Vector(0,0,5)
+					end
+					retries = retries - 1
+				end
+				
+				if validSpawn then
+					local setBirdType = nil
+					local rand = math.random(1, 3)
+					if rand == 1 then
+						setBirdType = "npc_petbird_pigeon"
+					elseif rand == 2 then
+						setBirdType = "npc_petbird_crow"
+					else
+						setBirdType = "npc_petbird_gull"
+					end
+					
+					local ent = ents.Create(setBirdType)
+					ent:SetPos(point)
+					
+					ent:Spawn()
+					ent:SetNetworkedString("Owner", "World")
+					
+					ent.Pet = true
+					ent:SetNWString("Pet", true)
+					
+					spawned = true
+				end
+				
+				mainRetries = mainRetries - 1
+			end
+		end
+	end
+end
+EVENT.funcs["SpawnPets"] = pnrp_ev_PetBird_Spawn
+
+function pnrp_ev_PetBird_SaveInfo()
+	if !file.IsDir("PostNukeRP", "DATA") then file.CreateDir("PostNukeRP") end
+	if !file.IsDir("PostNukeRP/events", "DATA") then file.CreateDir("PostNukeRP/events") end
+	
+	local saveTable = {}
+	for k, v in pairs(PNRP.Events["Pet Bird"].vars) do
+		saveTable[k] = v
+	end
+	
+	file.Write("PostNukeRP/events/petbirds.txt",util.TableToJSON(saveTable))
+end
+EVENT.funcs["SaveInfo"] = pnrp_ev_PetBird_SaveInfo
+
+function pnrp_ev_PetBird_LoadInfo()
+	if file.Exists("PostNukeRP/events/petbirds.txt", "DATA") then
+		tbl = util.JSONToTable(file.Read("PostNukeRP/events/petbirds.txt", "DATA"))
+		
+		for k, v in pairs(tbl) do
+			PNRP.Events["Pet Bird"].vars[k] = v
+		end
+	else
+		
+	end
+end
+EVENT.funcs["LoadInfo"] = pnrp_ev_PetBird_LoadInfo
+
+PNRP.RegisterEvent(EVENT)
