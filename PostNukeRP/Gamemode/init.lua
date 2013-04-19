@@ -787,7 +787,7 @@ function GM:ShowTeam( ply )
 				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
 				local weightCap
 				
-				if myType == "tool" then
+				if myType == "tool" or myType == "misc" then
 					if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) ~= PNRP:GetUID(ply) then
 						ply:ChatPrint("You do not own this!")
 						return
@@ -856,7 +856,7 @@ function PNRP.GetAllTools( ply )
 		local ItemID = PNRP.FindItemID( myClass )
 		if ItemID != nil then		
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "tool" then
+			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "tool" or myType == "misc" then
 				if not PNRP.Items[ItemID].Persistent then
 					Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 					PNRP.AddToInventory( ply, ItemID, 1 )

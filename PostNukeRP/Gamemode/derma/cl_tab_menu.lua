@@ -160,15 +160,15 @@ function PNRP.buildMenu(parent_frame)
 			equipmentmenu:SetSize( ButtonWidth, 20 ) -- set the button size
 			equipmentmenu.DoClick = function() RunConsoleCommand( "pnrp_eqipment" ) SCFrame=false parent_frame:Close() end		
 		
-		btnSpacing = btnSpacing + ButtonWidth
-		if ply:IsAdmin() then	
-			local adminmenu = vgui.Create("DButton") -- Create the button
-				adminmenu:SetParent( parent_frame ) -- parent the button to the frame
-				adminmenu:SetText( "Admin Menu >" ) -- set the button text
-				adminmenu:SetPos(btnSpacing + 5, MarginTop) -- set the button position in the frame
-				adminmenu:SetSize( ButtonWidth, 20 ) -- set the button size
-				adminmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_window" ) SCFrame=false parent_frame:Close() end
-		end		
+--		btnSpacing = btnSpacing + ButtonWidth
+--		if ply:IsAdmin() then	
+--			local adminmenu = vgui.Create("DButton") -- Create the button
+--				adminmenu:SetParent( parent_frame ) -- parent the button to the frame
+--				adminmenu:SetText( "Admin Menu >" ) -- set the button text
+--				adminmenu:SetPos(btnSpacing + 5, MarginTop) -- set the button position in the frame
+--				adminmenu:SetSize( ButtonWidth, 20 ) -- set the button size
+--				adminmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_window" ) SCFrame=false parent_frame:Close() end
+--		end		
 		
 		local menu2_frame = vgui.Create( "DFrame" )
 			menu2_frame:SetParent( parent_frame )
@@ -208,11 +208,13 @@ function PNRP.buildMenu(parent_frame)
 			
 			local menu2List = vgui.Create( "DPanelList", menu2_frame )
 					menu2List:SetPos( 0,0 )
-					menu2List:SetSize( menu2_frame:GetWide(), menu2_frame:GetTall() )
+				--	menu2List:SetSize( menu2_frame:GetWide(), menu2_frame:GetTall() )
+					menu2List:SetWide( menu2_frame:GetWide())
 					menu2List:SetSpacing( 5 )
 					menu2List:SetPadding( 5 )
 					menu2List:EnableHorizontal( false ) 
 					menu2List:EnableVerticalScrollbar( true ) 
+					menu2List:SetAutoSize(true)	
 					menu2List.Paint = function()
 						draw.RoundedBox( 8, 0, 0, menu2List:GetWide(), menu2List:GetTall(), Color( 50, 50, 50, 255 ) )
 					end
@@ -228,6 +230,19 @@ function PNRP.buildMenu(parent_frame)
 						PCostLabel:SizeToContents()
 						menu2List:AddItem( PCostLabel )					
 					
+					if ply:IsAdmin() then
+						local devide1menu2adm = vgui.Create("DShape") 
+							devide1menu2adm:SetParent( menu2List ) 
+							devide1menu2adm:SetType("Rect")
+							devide1menu2adm:SetSize( 100, 2 ) 	
+							menu2List:AddItem( devide1menu2adm )
+						local adminmenu = vgui.Create("DButton") 
+							adminmenu:SetParent( menu2List ) 
+							adminmenu:SetText( "Admin Menu >" ) 
+							adminmenu:SetSize( 100, 20 ) 
+							adminmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_window" ) SCFrame=false parent_frame:Close() end
+							menu2List:AddItem( adminmenu )
+					end
 					local devide1menu2a = vgui.Create("DShape") 
 						devide1menu2a:SetParent( menu2List ) 
 						devide1menu2a:SetType("Rect")

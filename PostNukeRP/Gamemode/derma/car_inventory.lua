@@ -48,7 +48,7 @@ function GM.car_inventory_window( )
 			local foodPanel = PNRP.build_car_inv_List(ply, "food", inventory_frame, PropertySheet, MyCarInventory)
 			local toolsPanel = PNRP.build_car_inv_List(ply, "tool", inventory_frame, PropertySheet, MyCarInventory)
 			local partsPanel = PNRP.build_car_inv_List(ply, "part", inventory_frame, PropertySheet, MyCarInventory)
-			
+			local miscPanel = PNRP.build_car_inv_List(ply, "misc", inventory_frame, PropertySheet, MyCarInventory)
 			local allPanel = PNRP.build_car_inv_List(ply, "all", inventory_frame, PropertySheet, MyCarInventory)
 						
 			PropertySheet:AddSheet( "Weapons", weaponPanel, "gui/icons/bomb.png", false, false, "Build Weapons" )
@@ -57,11 +57,11 @@ function GM.car_inventory_window( )
 			PropertySheet:AddSheet( "Food and Drink", foodPanel, "gui/icons/cup_add.png", false, false, "Food and Drink Items" )
 			PropertySheet:AddSheet( "Tools", toolsPanel, "gui/icons/wrench.png", false, false, "Make Tools - Still in Development" )
 			PropertySheet:AddSheet( "Parts", partsPanel, "gui/icons/cog.png", false, false, "Got to find them all." )
-			
+			PropertySheet:AddSheet( "Misc", miscPanel, "gui/icons/bug.png", false, false, "Birds, paper, etc..." )
 			PropertySheet:AddSheet( "All", allPanel, "gui/icons/add.png", false, false, "Everything including the kitchen sink." )
 			
 	local InvWeight = vgui.Create("DLabel", inventory_frame)		
-			InvWeight:SetPos(555, 60 )
+			InvWeight:SetPos(550, 33 )
 			local maxCarWeight	
 			maxCarWeight = tostring(CurCarMaxWeight)
 			local whColor
@@ -70,7 +70,15 @@ function GM.car_inventory_window( )
 			else
 				whColor = Color( 0, 255, 0, 255 )
 			end
-			InvWeight:SetText("Weight: "..tostring(CurCarInvWeight).."/"..tostring(maxCarWeight))
+			local invWeightText = "Car Weight: "..tostring(CurCarInvWeight).."/"..tostring(maxCarWeight).."\n"
+			local maxWeight
+			if ply:Team() == TEAM_SCAVENGER then
+				maxWeight = GetConVar("pnrp_packCapScav"):GetInt() + (GetSkill("Backpacking")*10)
+			else
+				maxWeight = GetConVar("pnrp_packCap"):GetInt() + (GetSkill("Backpacking")*10)
+			end
+			invWeightText = invWeightText.."Your Weight: "..tostring(PlayerInvWeight).."/"..tostring(maxWeight)
+			InvWeight:SetText(invWeightText)
 			InvWeight:SetColor(whColor)
 			InvWeight:SizeToContents() 
 			
