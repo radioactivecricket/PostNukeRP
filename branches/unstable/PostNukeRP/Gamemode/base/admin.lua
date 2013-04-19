@@ -217,12 +217,13 @@ function PNRP.ImportMapGrid()
 	if file.Exists("PostNukeRP/export_import/"..fileName, "DATA") then
 		tbl = util.JSONToTable(file.Read("PostNukeRP/export_import/"..fileName, "DATA"))
 		local mapName = tbl[1]["map"]
+		if fileName != mapName then mapName = fileName end --Fix to allow easy duplication of map grids
 		if querySQL("SELECT * FROM spawn_grids WHERE map='"..mapName.."'") then
 			query = "DELETE FROM spawn_grids WHERE map='"..mapName.."'"
 			result = querySQL(query)
 		end
 		for k, v in pairs(tbl) do
-			query = "INSERT INTO spawn_grids VALUES ( '"..v["map"].."'"
+			query = "INSERT INTO spawn_grids VALUES ( '"..mapName.."'"
 			query = query..", '"..v["pos"].."'"
 			query = query..", '"..v["range"].."'"
 			query = query..", '"..v["spawn_res"].."'"
