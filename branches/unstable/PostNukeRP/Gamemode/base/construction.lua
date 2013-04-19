@@ -42,7 +42,7 @@ function PNRP.SpawnBulkCrate( )
 				end
 				if enough == true then
 					--Block these from Bulk Build
-					if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" then
+					if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" or item.Type == "misc" then
 						ply:ChatPrint("You can not create bulk of this type.")
 						return
 					end

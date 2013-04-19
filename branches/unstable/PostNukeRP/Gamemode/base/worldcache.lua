@@ -12,7 +12,7 @@ function PNRP.GetWorldCache( p )
 end	
 --Adds item to WorldCache
 function PNRP.AddWorldCache( p, theitem )
-	if PNRP.Items[theitem].Type == "tool" or PNRP.Items[theitem].Type == "vehicle" then
+	if PNRP.Items[theitem].Type == "tool" or PNRP.Items[theitem].Type == "misc" or PNRP.Items[theitem].Type == "vehicle" then
 		if PNRP.Items[theitem] != nil then
 			local query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
 			local result = querySQL(query)
@@ -73,7 +73,7 @@ function PNRP.CleanWorldAfterReturn( ply )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
 			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
-				if myType == "vehicle" or myType == "tool" then
+				if myType == "vehicle" or myType == "tool" or myType == "misc" then
 					v:Remove()
 				end
 			end

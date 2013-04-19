@@ -50,7 +50,7 @@ function GM.inventory_window( len )
 			local vehiclePanel = PNRP.build_inv_List(ply, "vehicle", inventory_frame, PropertySheet, MyInventory)
 			local toolsPanel = PNRP.build_inv_List(ply, "tool", inventory_frame, PropertySheet, MyInventory)
 			local partsPanel = PNRP.build_inv_List(ply, "part", inventory_frame, PropertySheet, MyInventory)
-			
+			local miscPanel = PNRP.build_inv_List(ply, "misc", inventory_frame, PropertySheet, MyInventory)
 			local allPanel = PNRP.build_inv_List(ply, "all", inventory_frame, PropertySheet, MyInventory)
 						
 			PropertySheet:AddSheet( "Weapons", weaponPanel, "gui/icons/bomb.png", false, false, "Build Weapons" )
@@ -60,11 +60,12 @@ function GM.inventory_window( len )
 			PropertySheet:AddSheet( "Vehicles", vehiclePanel, "gui/icons/car.png", false, false, "Create Vehicles" )
 			PropertySheet:AddSheet( "Tools", toolsPanel, "gui/icons/wrench.png", false, false, "Make Tools - Still in Development" )
 			PropertySheet:AddSheet( "Parts", partsPanel, "gui/icons/cog.png", false, false, "Got to find them all." )
+			PropertySheet:AddSheet( "Misc", miscPanel, "gui/icons/bug.png", false, false, "Pets, paper, etc..." )
 			
 			PropertySheet:AddSheet( "All", allPanel, "gui/icons/add.png", false, false, "Everything including the kitchen sink." )
 			
 	local InvWeight = vgui.Create("DLabel", inventory_frame)		
-			InvWeight:SetPos(582, 62 )
+			InvWeight:SetPos(555, 38 )
 			local maxWeight
 			if ply:Team() == TEAM_SCAVENGER then
 				maxWeight = GetConVar("pnrp_packCapScav"):GetInt() + (GetSkill("Backpacking")*10)
@@ -194,7 +195,7 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 						pnlPanel.bulkSlider.Label:SizeToContents()
 						
 				 		if itemtype != "vehicle" then							
-							if item.Type == "tool" or item.Type == "junk" then
+							if item.Type == "tool" or item.Type == "junk" or item.Type == "misc" then
 								--Since GMod does not like Not or's
 							else								
 								pnlPanel.BulkBtn = vgui.Create("DButton", pnlPanel )

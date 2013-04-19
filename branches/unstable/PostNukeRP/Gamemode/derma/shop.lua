@@ -46,16 +46,18 @@ function buy_shop()
 			local vehiclePanel = PNRP.build_List("vehicle", shop_frame, PropertySheet)
 			local toolsPanel = PNRP.build_List("tool", shop_frame, PropertySheet)
 			local partsPanel = PNRP.build_List("part", shop_frame, PropertySheet)
+			local miscPanel = PNRP.build_List("misc", shop_frame, PropertySheet)
 						
 			PropertySheet:AddSheet( "Weapons", weaponPanel, "gui/icons/bomb.png", false, false, "Build Weapons" )
 			PropertySheet:AddSheet( "Ammo", ammoPanel, "gui/icons/box.png", false, false, "Create Ammo" )
 			PropertySheet:AddSheet( "Medical", medicalPanel, "gui/icons/heart.png", false, false, "Medical Items" )
 			PropertySheet:AddSheet( "Food and Drink", foodPanel, "gui/icons/cup_add.png", false, false, "Food and Drink Items" )
 --			PropertySheet:AddSheet( "Build Items", builtitemsPanel, "gui/icons/palette", false, false, "Building Materials" )
-			PropertySheet:AddSheet( "Build Junk Items", junkPanel, "gui/icons/anchor.png", false, false, "More Building Materials" )
+			PropertySheet:AddSheet( "Junk", junkPanel, "gui/icons/anchor.png", false, false, "More Building Materials" )
 			PropertySheet:AddSheet( "Vehicles", vehiclePanel, "gui/icons/car.png", false, false, "Create Vehicles" )
 			PropertySheet:AddSheet( "Tools", toolsPanel, "gui/icons/wrench.png", false, false, "Make Tools - Still in Development" )
 			PropertySheet:AddSheet( "Parts", partsPanel, "gui/icons/cog.png", false, false, "Got to find them all." )
+			PropertySheet:AddSheet( "Misc", miscPanel, "gui/icons/bug.png", false, false, "Pets, paper, etc..." )
 			
 	function shop_frame:Close()                  
 		shopFrameCK = false                  
@@ -177,7 +179,7 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 					pnlPanel.ItemWeight:SizeToContents() 
 					pnlPanel.ItemWeight:SetContentAlignment( 5 )	
 					
-					if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" then
+					if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" or item.Type == "misc" then
 						--Since GMod does not like Not or's	
 					else
 						pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
