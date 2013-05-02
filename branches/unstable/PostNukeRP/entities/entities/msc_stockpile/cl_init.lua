@@ -39,7 +39,7 @@ hook.Add( "HUDPaint", "StockViewCheck", StockViewCheck )
 
 function StockpileMenu( )
 	local ply = LocalPlayer()
-	
+	PNRP.RMDerma()
 	local stockpile = net:ReadEntity()
 	local Scrap = math.Round(net:ReadDouble())
 	local Small = math.Round(net:ReadDouble())
@@ -66,6 +66,7 @@ function StockpileMenu( )
 		stockmenu_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		PNRP.AddMenu(stockmenu_frame)
 		
 		local screenBG = vgui.Create("DImage", stockmenu_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_5b.png" )

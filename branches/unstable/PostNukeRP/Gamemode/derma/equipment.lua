@@ -44,7 +44,8 @@ function GM.EquipmentWindow( )
 	local CarWeightCap
 	eqFrameOpen = true
 	local maxAmmo = 0	
-
+	PNRP.RMDerma()
+	
 	for n,c in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
 		CarItemID = PNRP.FindItemID( c:GetClass() )
 		if CarItemID != nil then
@@ -70,6 +71,7 @@ function GM.EquipmentWindow( )
 		eq_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		PNRP.AddMenu(eq_frame)
 		
 		local screenBG = vgui.Create("DImage", eq_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_6b.png" )
@@ -396,6 +398,7 @@ function GM.BackpackWindow()
 	data.items = {}
 	data.ammo = {}
 	
+	PNRP.RMDerma()
 	local pack_frame = vgui.Create( "DFrame" )
 		pack_frame:SetSize( 585, 289 ) --Set the size
 		pack_frame:SetPos(ScrW() / 2 - pack_frame:GetWide() / 2, ScrH() / 2 - pack_frame:GetTall() / 2) 
@@ -407,6 +410,7 @@ function GM.BackpackWindow()
 		pack_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		PNRP.AddMenu(menu)
 		
 		local screenBG = vgui.Create("DImage", pack_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_6b.png" )
@@ -704,7 +708,7 @@ function GM.TShopInterface()
 	local ply = net.ReadEntity() 
 	local ToolEnt = net.ReadEntity()
 	local ItemTable = net.ReadTable()
-	
+	PNRP.RMDerma()
 	local textColor = Color(200,200,200,255)
 	
 	tShopIntFrame = vgui.Create( "DFrame" )
@@ -718,6 +722,7 @@ function GM.TShopInterface()
 		tShopIntFrame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		PNRP.AddMenu(tShopIntFrame)
 		
 		local screenBG = vgui.Create("DImage", tShopIntFrame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_2b.png" )

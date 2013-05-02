@@ -7,6 +7,7 @@ function GM.car_inventory_window( )
 	--Stops the multi window exploit
 	if carFrameCK then return end 
 	carFrameCK = true
+	PNRP.RMDerma()
 	
 	local MyCarInventory = net.ReadTable()
 	local PlayerInvWeight = net.ReadString()
@@ -24,6 +25,7 @@ function GM.car_inventory_window( )
 		inventory_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		PNRP.AddMenu(inventory_frame)
 		
 		local screenBG = vgui.Create("DImage", inventory_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_1b.png" )

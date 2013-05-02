@@ -8,7 +8,7 @@ function GM.inventory_window( len )
 	--Stops the multi window exploit
 	if inventoryFrameCK then return end 
 	inventoryFrameCK = true
-	
+	PNRP.RMDerma()
 	local MyInventory = net.ReadTable()		
 	local CurWeight = net.ReadString()	
 	CurCarInvWeight = net.ReadString()
@@ -25,6 +25,8 @@ function GM.inventory_window( len )
 		inventory_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		
+		PNRP.AddMenu(inventory_frame)
 		
 		local screenBG = vgui.Create("DImage", inventory_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_1b.png" )

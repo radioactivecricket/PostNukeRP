@@ -25,7 +25,7 @@ function GM:ScoreboardShow()
 		
 		local PlayerCount = table.getn( player.GetAll() )
 		local PlayerCountTxt = vgui.Create("DLabel", ScoreFrame)		
-			PlayerCountTxt:SetPos(550, 53)
+			PlayerCountTxt:SetPos(550, 37)
 			PlayerCountTxt:SetText("Players Online: "..tostring(PlayerCount))
 			PlayerCountTxt:SetColor(Color( 0, 255, 0, 255 ))
 			PlayerCountTxt:SizeToContents() 
@@ -170,9 +170,15 @@ function PNRP.buildMenu(parent_frame)
 --				adminmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_window" ) SCFrame=false parent_frame:Close() end
 --		end		
 		
+		local menuH = 260
+		--Add space needed for Admin Button
+		if ply:IsAdmin() then
+			menuH = 285
+		end
+		
 		local menu2_frame = vgui.Create( "DFrame" )
 			menu2_frame:SetParent( parent_frame )
-			menu2_frame:SetSize( 125, 260 ) 
+			menu2_frame:SetSize( 125, menuH ) 
 			menu2_frame:SetPos( ScrW() / 2 + parent_frame:GetWide() / 2 + 5, ScrH() / 2 - parent_frame:GetTall() / 2 )
 			menu2_frame:SetTitle( " " )
 			menu2_frame:SetVisible( true )
