@@ -8,6 +8,7 @@ function buy_shop()
 	if shopFrameCK then return end 
 	shopFrameCK = true
 	
+	PNRP.RMDerma()
 	shop_frame = vgui.Create( "DFrame" )
 		shop_frame:SetSize( 710, 720 ) --Set the size Extra 40 must be from the top bar
 		--Set the window in the middle of the players screen/game window
@@ -20,7 +21,7 @@ function buy_shop()
 		shop_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
-		
+		PNRP.AddMenu(menu)
 		
 		local screenBG = vgui.Create("DImage", shop_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_1b.png" )

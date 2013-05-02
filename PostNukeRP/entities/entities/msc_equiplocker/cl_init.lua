@@ -44,6 +44,7 @@ function LockerMenu( )
 	local itemTble = net.ReadTable()
 	local inventoryTble = net.ReadTable()
 	
+	PNRP.RMDerma()
 	local locker_frame = vgui.Create( "DFrame" )
 		locker_frame:SetSize( 810, 520 ) --Set the size
 		locker_frame:SetPos(ScrW() / 2 - locker_frame:GetWide() / 2, ScrH() / 2 - locker_frame:GetTall() / 2) 
@@ -55,6 +56,7 @@ function LockerMenu( )
 		locker_frame.Paint = function() -- Paint function
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		PNRP.AddMenu(locker_frame)
 		
 		local screenBG = vgui.Create("DImage", locker_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_5b.png" )

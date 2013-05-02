@@ -99,6 +99,7 @@ util.AddNetworkString("grubSelect")
 
 util.AddNetworkString("printUmsgTable")
 util.AddNetworkString("sendUmsgTable")
+util.AddNetworkString("sndComDipl")
 
 function querySQL(query)
 
@@ -136,10 +137,17 @@ function SQLiteTableCheck ()
 	end
 	
 	if not sql.TableExists("community_table") then
-		query = "CREATE TABLE community_table ( cid INTEGER PRIMARY KEY AUTOINCREMENT, cname varchar(255), res varchar(255), inv varchar(255), founded varchar(255) )"
+		query = "CREATE TABLE community_table ( cid INTEGER PRIMARY KEY AUTOINCREMENT, cname varchar(255), res varchar(255), inv varchar(255), founded varchar(255), diplomacy TEXT )"
 		result = querySQL(query)
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  community_table\n")
+		
+		query = "SELECT diplomacy FROM community_table"
+		result = sql.Query(query)
+		if sql.LastError( result ) != nil and result == false then
+			query = "ALTER TABLE community_table ADD COLUMN diplomacy TEXT"
+			querySQL(query)
+		end
 	end
 	
 	if not sql.TableExists("community_members") then
@@ -147,6 +155,13 @@ function SQLiteTableCheck ()
 		result = querySQL(query)
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  community_members\n")
+	end
+	
+	if not sql.TableExists("community_pending") then
+		query = "CREATE TABLE community_pending ( cid int, msg TEXT, data TEXT, time TEXT )"
+		result = querySQL(query)
+	else
+		Msg(tostring(os.date()).." SQL TABLE EXISTS:  community_pending\n")
 	end
 	
 	if not sql.TableExists("player_inv") then
@@ -840,7 +855,6 @@ function GM:ShowSpare1( ply )
 	else
 	--If not looking at the car, open normal inventory.
 		ply:ConCommand("pnrp_inv")
-	
 	end
 end
 concommand.Add( "pnrp_ShowSpare1", GM.ShowSpare1 )

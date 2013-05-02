@@ -66,6 +66,7 @@ function ENT:Use( activator, caller )
 			else
 				print(tostring(self.Community))
 				-- Just a placeholder for breaking into these things.
+				activator:ActOfWar( self.Community )
 				net.Start("locker_breakin")
 					net.WriteEntity(self)
 					net.WriteDouble(self.BreakInTimer)

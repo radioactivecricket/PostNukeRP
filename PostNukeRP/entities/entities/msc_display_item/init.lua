@@ -53,9 +53,9 @@ function ENT:Use( activator, caller )
 					render["color"] = Color( 200, 200, 255, 100 )
 					render["fx"] = 16			
 					
-					self:SetColor( render["color"] )
-					self:SetRenderMode( render["mode"] ) 
-					self:SetRenderFX( render["fx"] ) 
+				--	self:SetColor( render["color"] )
+				--	self:SetRenderMode( render["mode"] ) 
+				--	self:SetRenderFX( render["fx"] ) 
 					
 					self.cost = itemString
 					self:SetNWString("cost", itemString)
@@ -141,9 +141,9 @@ function ENT:boxRespawn( ply, model )
 		render["color"] = Color( 255, 255, 255, 255 )
 		render["fx"] = 0			
 		
-		self:SetColor( render["color"] )
-		self:SetRenderMode( render["mode"] ) 
-		self:SetRenderFX( render["fx"] )
+	--	self:SetColor( render["color"] )
+	--	self:SetRenderMode( render["mode"] ) 
+	--	self:SetRenderFX( render["fx"] )
 	end
 end
 

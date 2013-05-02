@@ -27,3 +27,10 @@ function ReceiveGas( )
 --	ply:ChatPrint(tostring(gas))
 end
 net.Receive("sndCarGas", ReceiveGas)
+
+function ReceiveComDipl( )
+	local diplTbl = net:ReadTable()
+	
+	LocalPlayer().ComDiplomacy = diplTbl
+end
+net.Receive("sndComDipl", ReceiveComDipl)

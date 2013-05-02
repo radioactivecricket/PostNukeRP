@@ -33,6 +33,8 @@ local dynaset = {}
 dynaset.prevyaw = 0
 dynaset.newroll = 0
 
+pnDerma = {}
+
 timer.Create( "autosave", 300, 0, function()
 	RunConsoleCommand("pnrp_save")
 	LocalPlayer():ChatPrint("Heeeyyy!  Autosaved.")
@@ -307,3 +309,18 @@ function SendUmsgTable()
 end
 net.Receive( "sendUmsgTable", SendUmsgTable)
 
+function PNRP.AddMenu(menu)
+    table.insert( pnDerma, menu )
+end
+
+function PNRP.RMDerma()
+--	ply = LocalPlayer()
+	if pnDerma then
+		for _, menu in pairs( pnDerma ) do
+			if IsValid(menu) then
+				menu:Remove()
+			end
+		end
+	end
+	pnDerma = {}
+end

@@ -1168,7 +1168,11 @@ local comEditFrame = false
 function GM.communityEdit_window( )
 	if comEditFrame then return end 
 	local communityTable = net.ReadTable()
+	local communityPending = net.ReadTable()
 	local cid = net.ReadString()
+	local wars = net.ReadTable()
+	local allies = net.ReadTable()
+	
 	local communityName = communityTable["name"]
 
 	local communityUsers = communityTable["users"]
@@ -1178,7 +1182,7 @@ function GM.communityEdit_window( )
 	communityCount = "none"
 
 	if communityName then
-		communityCount = table.getn(communityUsers) + 1
+		communityCount = 0
 		communityName = " Editing Community: "..communityName
 	else
 		communityName = "Error Pulling Community Data"
@@ -1207,21 +1211,35 @@ function GM.communityEdit_window( )
 					UCommunityNameLabel:SetColor( Color( 255, 255, 255, 255 ) )
 					UCommunityNameLabel:SetText( communityName )
 					UCommunityNameLabel:SizeToContents()
-					
-			local UCommunityCountLabel = vgui.Create("DLabel", communityEdit_frame)
-					UCommunityCountLabel:SetPos(275,55)
-					UCommunityCountLabel:SetColor( Color( 255, 255, 255, 255 ) )
-					UCommunityCountLabel:SetText( "Member Count: "..communityCount )
-					UCommunityCountLabel:SizeToContents()
+			
+			local UCommunityIDLabel = vgui.Create("DLabel", communityEdit_frame)
+					UCommunityIDLabel:SetPos(54,54)
+					UCommunityIDLabel:SetColor( Color( 255, 255, 255, 255 ) )
+					UCommunityIDLabel:SetText( "Community ID [CID]: "..tostring(cid) )
+					UCommunityIDLabel:SizeToContents()
 			
 			if CommuntityError then
 			
 			
 			else
+				local communityEdit_TabSheet = vgui.Create( "DPropertySheet" )
+					communityEdit_TabSheet:SetParent( communityEdit_frame )
+					communityEdit_TabSheet:SetPos( 40, 70 )
+					communityEdit_TabSheet:SetSize( communityEdit_frame:GetWide() - 340, communityEdit_frame:GetTall() - 120 )
+					communityEdit_TabSheet.Paint = function() -- Paint function
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
 				--//List of Current Members	
-				local cMemberList = vgui.Create("DPanelList", communityEdit_frame)
-					cMemberList:SetPos(40, 70)
-					cMemberList:SetSize(communityEdit_frame:GetWide() - 350, communityEdit_frame:GetTall() - 120)
+				local cMemberPanel = vgui.Create( "DPanel", communityEdit_TabSheet )
+					cMemberPanel:SetPos( 5, 5 )
+					cMemberPanel:SetSize( communityEdit_TabSheet:GetWide(), communityEdit_TabSheet:GetTall() )
+					cMemberPanel.Paint = function() -- Paint function
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+				local cMemberList = vgui.Create("DPanelList", cMemberPanel)
+					cMemberList:SetPos(0, 0)
+					cMemberList:SetSize(cMemberPanel:GetWide() - 15, cMemberPanel:GetTall() - 40)
 					cMemberList:EnableVerticalScrollbar(true) 
 					cMemberList:EnableHorizontal(false) 
 					cMemberList:SetSpacing(1)
@@ -1304,9 +1322,216 @@ function GM.communityEdit_window( )
 								RunConsoleCommand( "pnrp_remcomm", v["name"] )
 								communityEdit_frame:Close() 
 								RunConsoleCommand( "pnrp_OpenCommunity" )
-							end					
+							end	
+							
+							communityCount = communityCount + 1
 						end
 					end
+				
+				local UCommunityCountLabel = vgui.Create("DLabel", communityEdit_frame)
+					UCommunityCountLabel:SetPos(275,55)
+					UCommunityCountLabel:SetColor( Color( 255, 255, 255, 255 ) )
+					UCommunityCountLabel:SetText( "Member Count: "..communityCount )
+					UCommunityCountLabel:SizeToContents()
+				
+				communityEdit_TabSheet:AddSheet( "Members", cMemberPanel, "gui/icons/group.png", false, false, "Community Member List" )
+				-- Wars
+				local cWarPanel = vgui.Create( "DPanel", communityEdit_TabSheet )
+					cWarPanel:SetPos( 5, 5 )
+					cWarPanel:SetSize( communityEdit_TabSheet:GetWide(), communityEdit_TabSheet:GetTall() )
+					cWarPanel.Paint = function() 
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+					local cWarsList = vgui.Create("DPanelList", cWarPanel)
+					cWarsList:SetPos(-5, 5)
+					cWarsList:SetSize(cWarPanel:GetWide() - 10, cWarPanel:GetTall() - 40)
+					cWarsList:EnableVerticalScrollbar(true) 
+					cWarsList:EnableHorizontal(false) 
+					cWarsList:SetSpacing(1)
+					cWarsList:SetPadding(10)
+					
+					for wOCID, wOName in pairs(wars) do
+						local warsPanel = vgui.Create("DPanel")
+							warsPanel:SetTall(25)
+							warsPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, warsPanel:GetWide(), warsPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cWarsList:AddItem(warsPanel)
+							
+							warsPanel.Name = vgui.Create("DLabel", warsPanel)
+							warsPanel.Name:SetPos(10, 5)
+							warsPanel.Name:SetText(tostring(wOName))
+							warsPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+							warsPanel.Name:SizeToContents() 
+							warsPanel.Name:SetContentAlignment( 5 )
+							
+							local warCancelButton = vgui.Create( "DButton", warsPanel )
+								warCancelButton:SetPos( 240 , 3 )
+								warCancelButton:SetText( "Cancel War" )
+								warCancelButton:SetSize( 75, 20 )
+								warCancelButton.DoClick = function()
+									net.Start("SND_AdmDelComDep")
+										net.WriteEntity(ply)
+										net.WriteString(tostring(cid))
+										net.WriteString(tostring(wOCID))
+									net.SendToServer()
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end	
+					end
+				communityEdit_TabSheet:AddSheet( "Wars", cWarPanel, "gui/icons/flag_red.png", false, false, "Communities at war with" )	
+				--Allys
+				local cAllyPanel = vgui.Create( "DPanel", communityEdit_TabSheet )
+					cAllyPanel:SetPos( 5, 5 )
+					cAllyPanel:SetSize( communityEdit_TabSheet:GetWide(), communityEdit_TabSheet:GetTall() )
+					cAllyPanel.Paint = function() 
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+					local cAlliesList = vgui.Create("DPanelList", cAllyPanel)
+					cAlliesList:SetPos(-5, 5)
+					cAlliesList:SetSize(cAllyPanel:GetWide() - 10, cAllyPanel:GetTall() - 40)
+					cAlliesList:EnableVerticalScrollbar(true) 
+					cAlliesList:EnableHorizontal(false) 
+					cAlliesList:SetSpacing(1)
+					cAlliesList:SetPadding(10)
+					
+					for aOCID, aOName in pairs(allies) do
+						local alliesPanel = vgui.Create("DPanel")
+							alliesPanel:SetTall(25)
+							alliesPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, alliesPanel:GetWide(), alliesPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cAlliesList:AddItem(alliesPanel)
+							
+							alliesPanel.Name = vgui.Create("DLabel", alliesPanel)
+							alliesPanel.Name:SetPos(10, 5)
+							alliesPanel.Name:SetText(tostring(aOName))
+							alliesPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+							alliesPanel.Name:SizeToContents() 
+							alliesPanel.Name:SetContentAlignment( 5 )
+							
+							local allyCancelButton = vgui.Create( "DButton", alliesPanel )
+								allyCancelButton:SetPos( 240 , 3 )
+								allyCancelButton:SetText( "Cancel Ally" )
+								allyCancelButton:SetSize( 75, 20 )
+								allyCancelButton.DoClick = function()
+									net.Start("SND_AdmDelComDep")
+										net.WriteEntity(ply)
+										net.WriteString(tostring(cid))
+										net.WriteString(tostring(aOCID))
+									net.SendToServer()
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end	
+					end
+					
+				communityEdit_TabSheet:AddSheet( "Allies", cAllyPanel, "gui/icons/flag_blue.png", false, false, "Communities allied with" )	
+				--Pending
+				local cPendingPanel = vgui.Create( "DPanel", communityEdit_TabSheet )
+					cPendingPanel:SetPos( 5, 5 )
+					cPendingPanel:SetSize( communityEdit_TabSheet:GetWide(), communityEdit_TabSheet:GetTall() )
+					cPendingPanel.Paint = function() 
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+				local cPendingList = vgui.Create("DPanelList", cPendingPanel)
+					cPendingList:SetPos(-5, 5)
+					cPendingList:SetSize(cPendingPanel:GetWide() - 10, cPendingPanel:GetTall() - 40)
+					cPendingList:EnableVerticalScrollbar(true) 
+					cPendingList:EnableHorizontal(false) 
+					cPendingList:SetSpacing(1)
+					cPendingList:SetPadding(10)
+					
+					for _, pItem in pairs(communityPending) do
+						local admPendingPanel = vgui.Create("DPanel")
+							admPendingPanel:SetTall(75)
+							admPendingPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, admPendingPanel:GetWide(), admPendingPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cPendingList:AddItem(admPendingPanel)
+							
+							local dataTbl = {}
+							local dataSplit = string.Explode(" ", pItem["data"])
+							
+							for _, item in pairs(dataSplit) do
+								local splitData = string.Explode(",", item)
+								dataTbl[splitData[1]] = splitData[2]
+							end
+							
+							local msgTxt = tostring(dataTbl["info"])
+							if msgTxt == "msg" then msgTxt = "Message" end
+							
+							local txtMStatus = tostring(dataTbl["status"])
+							if txtMStatus == "nil" then
+								txtMStatus = ""
+							end
+							
+							admPendingPanel.Status = vgui.Create("DLabel", admPendingPanel)
+							admPendingPanel.Status:SetPos(10, 5)
+							admPendingPanel.Status:SetText("Pending Action: "..msgTxt.." "..txtMStatus)
+							admPendingPanel.Status:SetColor(Color( 0, 255, 0, 255 ))
+							admPendingPanel.Status:SizeToContents() 
+							admPendingPanel.Status:SetContentAlignment( 5 )
+							
+							local timeBreak = string.Explode(" ", pItem["time"])
+							local timeString = timeBreak[1].." "..timeBreak[2]
+							
+							admPendingPanel.Time = vgui.Create("DLabel", admPendingPanel)
+							admPendingPanel.Time:SetPos(190, 5)
+							admPendingPanel.Time:SetText("Time: "..timeString)
+							admPendingPanel.Time:SetColor(Color( 0, 255, 0, 255 ))
+							admPendingPanel.Time:SizeToContents()
+							admPendingPanel.Time:SetContentAlignment( 5 )
+							
+							admPendingPanel.MSG = vgui.Create("DLabel", admPendingPanel)
+							admPendingPanel.MSG:SetPos(10, 24)
+							admPendingPanel.MSG:SetText(pItem["msg"])
+							admPendingPanel.MSG:SetColor(Color( 0, 255, 0, 255 ))
+							admPendingPanel.MSG:SizeToContents() 
+							admPendingPanel.MSG:SetWrap(true)
+							admPendingPanel.MSG:SetWide(cPendingList:GetWide()-40)
+							admPendingPanel.MSG:SetAutoStretchVertical( true )
+							admPendingPanel.MSG:SetContentAlignment( 5 )
+							
+							admPendingPanel.okButton = vgui.Create( "DButton", admPendingPanel )
+								admPendingPanel.okButton:SetPos( 10 , 55 )
+								admPendingPanel.okButton:SetText( "Delete" )
+								admPendingPanel.okButton:SetSize( 100, 15 )
+								admPendingPanel.okButton.DoClick = function()
+									net.Start("SND_DelPending")
+										net.WriteEntity(ply)
+										net.WriteString(pItem["cid"])
+										net.WriteString(tostring(pItem["time"]))
+										net.WriteString(tostring(pItem["time"]))
+									net.SendToServer()
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end	
+								
+						if msgTxt ~= "Message" then
+							admPendingPanel.fYesBtn = vgui.Create( "DButton", admPendingPanel )
+								admPendingPanel.fYesBtn:SetPos( 110, 55 )
+								admPendingPanel.fYesBtn:SetText( "Force Acept" )
+								admPendingPanel.fYesBtn:SetSize( 75, 15 )
+								admPendingPanel.fYesBtn.DoClick = function()
+									RunConsoleCommand( "pnrp_acptpending", dataTbl["cid"], dataTbl["info"], "force", cid) 
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end				
+							admPendingPanel.fNoBtn = vgui.Create( "DButton", admPendingPanel )
+								admPendingPanel.fNoBtn:SetPos( 185 , 55 )
+								admPendingPanel.fNoBtn:SetText( "Force Cancel" )
+								admPendingPanel.fNoBtn:SetSize( 75, 15 )
+								admPendingPanel.fNoBtn.DoClick = function()
+									RunConsoleCommand( "pnrp_dclnpending", dataTbl["cid"], dataTbl["info"], "force", cid ) 
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end	
+						end	
+					end	
+				communityEdit_TabSheet:AddSheet( "Pending", cPendingPanel, "gui/icons/information.png", false, false, "Pending Actions" )
 			end
 		--//Community Main Menu
 								

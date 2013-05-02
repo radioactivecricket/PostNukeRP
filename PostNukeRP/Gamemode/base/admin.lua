@@ -217,7 +217,7 @@ function PNRP.ImportMapGrid()
 	if file.Exists("PostNukeRP/export_import/"..fileName, "DATA") then
 		tbl = util.JSONToTable(file.Read("PostNukeRP/export_import/"..fileName, "DATA"))
 		local mapName = tbl[1]["map"]
-		if fileName != mapName then mapName = fileName end --Fix to allow easy duplication of map grids
+		if fileName != mapName then mapName = string.gsub(fileName, ".txt", "") end --Fix to allow easy duplication of map grids
 		if querySQL("SELECT * FROM spawn_grids WHERE map='"..mapName.."'") then
 			query = "DELETE FROM spawn_grids WHERE map='"..mapName.."'"
 			result = querySQL(query)
