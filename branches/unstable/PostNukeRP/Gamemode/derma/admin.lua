@@ -1545,7 +1545,7 @@ function GM.communityEdit_window( )
 						disbandBtn:SetSize(30,30)
 						disbandBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 						disbandBtn.DoClick = function() 
-							PNRP.OptionVerify( "pnrp_AdminDelCom", cid, "pnrp_communityAdmin", communityEdit_frame ) 
+							PNRP.OptionVerify( "pnrp_AdminDelCom", cid, "pnrp_communitysearch", communityEdit_frame ) 
 						end	
 						disbandBtn.Paint = function()
 							if disbandBtn:IsDown() then 
