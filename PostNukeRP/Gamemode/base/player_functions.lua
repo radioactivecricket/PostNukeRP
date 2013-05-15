@@ -337,13 +337,14 @@ function LoadCommunityInfo( ply, pid )
 		ply:SendDipl()
 		ply:SetNWString("community", result2[1]["cname"])
 	else
-		ply.Community = nil
-		ply:SetNWInt( "cid", nil )
-		ply.CommunityRank = nil
-		ply.ComDiplomacy = {}
-		ply:SendDipl()
-		ply:SetNWString("ctitle", "")
-		ply:SetNWString("community", "N/A")
+	--	ply.Community = nil
+	--	ply:SetNWInt( "cid", nil )
+	--	ply.CommunityRank = nil
+	--	ply.ComDiplomacy = {}
+	--	ply:SendDipl()
+	--	ply:SetNWString("ctitle", "")
+	--	ply:SetNWString("community", "N/A")
+		PNRP.PlyDelComInfo(ply)
 	end
 end
 
@@ -497,13 +498,14 @@ function RemCommunityInfo( cid, pid )
 	result = querySQL(query)
 
 	for _, myUser in pairs(player.GetAll()) do
-		if myUser.pid == pid then
-			myUser:GetTable().Community = nil
-			myUser:SetNWInt( "cid", nil )
-			myUser:SetNWString("community", nil)
-			myUser:GetTable().CommunityRank = nil
-			myUser:SetNWString("ctitle", nil)
-			myUser:ConCommand("pnrp_save")
+		if tonumber(myUser.pid) == tonumber(pid) then
+			PNRP.PlyDelComInfo(myUser)
+		--	myUser:GetTable().Community = nil
+		--	myUser:SetNWInt( "cid", nil )
+		--	myUser:SetNWString("community", nil)
+		--	myUser:GetTable().CommunityRank = nil
+		--	myUser:SetNWString("ctitle", nil)
+		--	myUser:ConCommand("pnrp_save")
 			myUser:ChatPrint("You've been removed from your community.")
 		end
 	end
@@ -558,20 +560,41 @@ function DelCommunity( cid )
 	local query
 	local result
 
-	query = "DELETE FROM community_members WHERE cid="..tostring(cid)
-	result = querySQL(query)
+	local query = "DELETE FROM community_members WHERE cid="..tostring(cid)
+	local result = querySQL(query)
 
-	query = "DELETE FROM community_table WHERE cid="..tostring(cid)
-	result = querySQL(query)
-
+	local query = "DELETE FROM community_table WHERE cid="..tostring(cid)
+	local result = querySQL(query)
+	
+	local queryDip = "SELECT * FROM community_table WHERE diplomacy LIKE '%"..tostring(cid).."%'"
+	local resultDip = querySQL(queryDip)
+	
+	--Removed diplomacy entries
+	if resultDip then
+		for _, com in pairs(resultDip) do
+			print(com["diplomacy"])
+			local diplomacySplit = string.Explode(" ", com["diplomacy"])
+			local dipTbl = {}
+			for _, ocid in pairs(diplomacySplit) do
+				local splitDip = string.Explode(",", ocid)
+				if tonumber(splitDip[1]) ~= tonumber(cid) then
+					dipTbl[splitDip[1]] = splitDip[2]
+				end
+			end
+			local dipStr = ""
+			for ncid, stat in pairs(dipTbl) do
+				dipStr = dipStr..ncid..","..stat.." "
+			end
+			dipStr = string.TrimRight(dipStr)
+			
+			local queryCom = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(com["cid"])
+			querySQL(queryCom)
+		end
+	end
+	
 	for _, myUser in pairs(player.GetAll()) do
-		if myUser.Community == cid then
-			myUser:GetTable().Community = nil
-			myUser:SetNWInt( "cid", nil )
-			myUser:SetNWString("community", nil)
-			myUser:GetTable().CommunityRank = nil
-			myUser:SetNWString("ctitle", nil)
-			myUser:ConCommand("pnrp_save")
+		if tonumber(myUser.Community) == tonumber(cid) then
+			PNRP.PlyDelComInfo(myUser)
 			myUser:ChatPrint("You've been removed from your community, because it's been deleted.")
 		end
 	end
@@ -848,13 +871,19 @@ function PNRP.OpenMainCommunity(ply)
 		for ocid, cStatus in pairs(tbl["diplomacy"]) do
 			queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
 			resultOcid = querySQL(queryOcid)
-			local oCtblInfo = resultOcid[1]
-			local ocName = oCtblInfo["cname"]
-			if cStatus == "war" then
-				wars[ocid] = tostring(ocName)
-			elseif cStatus == "ally" then
-				allies[ocid] = tostring(ocName)
+			local cName
+			if resultOcid then
+				local oCtblInfo = resultOcid[1]
+				cName = oCtblInfo["cname"]
+			else
+				cName = "[Unknown CID: "..ocid.."] | Click Cancel -->"
 			end
+			if cStatus == "war" then
+				wars[ocid] = tostring(cName)
+			elseif cStatus == "ally" then
+				allies[ocid] = tostring(cName)
+			end
+			
 		end
 	end
 	
@@ -899,12 +928,13 @@ function AdmDelCom(ply, cmd, args)
 
 		for _, v in pairs(player.GetAll()) do
 			if tostring(v:GetTable().Community) == tostring(cid) then
-				v:ChatPrint( "Your community, "..ply:GetNWString("community")..", has been deleted by an Admin!" )
-
-				v:GetTable().Community = nil
-				v:SetNWInt( "cid", nil )
-				v:GetTable().CommunityRank = nil
-				v:SetNWString("community", "N/A")
+				v:ChatPrint( "Your community, "..v:GetNWString("community")..", has been deleted by an Admin!" )
+				
+				PNRP.PlyDelComInfo(v)
+			--	v:GetTable().Community = nil
+			--	v:SetNWInt( "cid", nil )
+			--	v:GetTable().CommunityRank = nil
+			--	v:SetNWString("community", "N/A")
 			end
 		end
 	end
@@ -922,16 +952,23 @@ function AdmEditCom(ply, cmd, args)
 		
 		local wars = {}
 		local allies = {}
-	
-		for ocid, cStatus in pairs(tbl["diplomacy"]) do
-			queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
-			resultOcid = querySQL(queryOcid)
-			local oCtblInfo = resultOcid[1]
-			local ocName = oCtblInfo["cname"]
-			if cStatus == "war" then
-				wars[ocid] = tostring(ocName)
-			elseif cStatus == "ally" then
-				allies[ocid] = tostring(ocName)
+		
+		if tbl["diplomacy"] then
+			for ocid, cStatus in pairs(tbl["diplomacy"]) do
+				queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
+				resultOcid = querySQL(queryOcid)
+				local cName
+				if resultOcid then
+					local oCtblInfo = resultOcid[1]
+					cName = oCtblInfo["cname"]
+				else
+					cName = "[Unknown CID: "..ocid.."] | Click Cancel -->"
+				end
+				if cStatus == "war" then
+					wars[ocid] = tostring(cName)
+				elseif cStatus == "ally" then
+					allies[ocid] = tostring(cName)
+				end
 			end
 		end
 		
@@ -957,18 +994,21 @@ function PlyDelComm(ply, cmd, args)
 
 		for _, v in pairs(player.GetAll()) do
 			if v:GetTable().Community == ply:GetTable().Community and v ~= ply then
-				v:GetTable().Community = nil
-				v:SetNWInt( "cid", nil )
-				v:GetTable().CommunityRank = nil
-				v:SetNWString("community", "N/A")
-
+			--	v:GetTable().Community = nil
+			--	v:SetNWInt( "cid", nil )
+			--	v:GetTable().CommunityRank = nil
+			--	v:SetNWString("community", "N/A")
+				PNRP.PlyDelComInfo(v)
+				
 				v:ChatPrint( "Your community, "..ply:GetNWString("community")..", has been deleted by an owner!" )
 			end
 		end
-		ply:GetTable().Community = nil
-		ply:SetNWInt( "cid", nil )
-		ply:GetTable().CommunityRank = nil
-		ply:SetNWString("community", "N/A")
+		
+		PNRP.PlyDelComInfo(ply)
+	--	ply:GetTable().Community = nil
+	--	ply:SetNWInt( "cid", nil )
+	--	ply:GetTable().CommunityRank = nil
+	--	ply:SetNWString("community", "N/A")
 		ply:ChatPrint( "The community has been successfully deleted." )
 	else
 		ply:ChatPrint( "Unable to delete.  Either you do not have the rank to do this, or you are not part of a community." )
@@ -1517,6 +1557,10 @@ function PlyAddDiplomacy(ply, cmd, args)
 	local ocid = tonumber(args[1])
 	local status = tostring(args[2])
 	
+	if cid == ocid and (status == "war" or status == "ally") then
+		return
+	end
+	
 	if ply:GetTable().Community then
 		if ply:GetTable().CommunityRank > 1 then
 			local query = "SELECT * FROM community_pending WHERE cid="..tostring(ocid)
@@ -1880,10 +1924,10 @@ function PlyDclnPending(ply, cmd, args)
 						
 					end
 					
-					ply:ChatPrint("PendingType:  "..pendingType)
-					ply:ChatPrint("dataTbl[\"info\" or none:  "..tostring(((dataTbl["info"] or "none") == pendingType )))
-					ply:ChatPrint( tostring(dataTbl["cid"]).." == "..tostring(ocid).." is "..tostring( (dataTbl["cid"] == tostring(ocid)) ) )
-					ply:ChatPrint("ply.Community:  "..tostring(cid))
+				--	ply:ChatPrint("PendingType:  "..pendingType)
+				--	ply:ChatPrint("dataTbl[\"info\" or none:  "..tostring(((dataTbl["info"] or "none") == pendingType )))
+				--	ply:ChatPrint( tostring(dataTbl["cid"]).." == "..tostring(ocid).." is "..tostring( (dataTbl["cid"] == tostring(ocid)) ) )
+				--	ply:ChatPrint("ply.Community:  "..tostring(cid))
 					if dataTbl["cid"] == tostring(ocid) and (dataTbl["info"] or "none") == pendingType then
 						ply:ChatPrint("Inside If Statement.")
 						if pendingType == "diplomacy" then
@@ -1956,8 +2000,13 @@ concommand.Add( "pnrp_dclnpending", PlyDclnPending )
 
 function meta:ActOfWar( ocid )
 	if self.Community then
-		self:ChatPrint( "You have committed an act of war!" )
 		local cid = self.Community
+		
+		if cid == ocid then
+			return
+		end
+		
+		self:ChatPrint( "You have committed an act of war!" )
 		
 		local query = "SELECT * FROM community_pending WHERE cid="..tostring(ocid)
 		local ocidPending = querySQL(query)

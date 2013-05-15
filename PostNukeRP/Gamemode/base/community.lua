@@ -17,8 +17,13 @@ function PNRP.SND_reopenComTab()
 	for ocid, cStatus in pairs(tbl["diplomacy"]) do
 		queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
 		resultOcid = querySQL(queryOcid)
-		local oCtblInfo = resultOcid[1]
-		local ocName = oCtblInfo["cname"]
+		local ocName
+		if resultOcid then
+			local oCtblInfo = resultOcid[1]
+			ocName = oCtblInfo["cname"]
+		else
+			ocName = "[Unknown CID: "..ocid.."] | Click Cancel -->"
+		end
 		if cStatus == "war" then
 			wars[ocid] = tostring(ocName)
 		elseif cStatus == "ally" then
@@ -73,8 +78,13 @@ function PNRP.CommSelID()
 	for ocid, cStatus in pairs(tbl["diplomacy"]) do
 		queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
 		resultOcid = querySQL(queryOcid)
-		local oCtblInfo = resultOcid[1]
-		local ocName = oCtblInfo["cname"]
+		local ocName
+		if resultOcid then
+			local oCtblInfo = resultOcid[1]
+			ocName = oCtblInfo["cname"]
+		else
+			ocName = "[Unknown CID: "..ocid.."]"
+		end
 		if cStatus == "war" then
 			wars[ocid] = tostring(ocName)
 		elseif cStatus == "ally" then
@@ -152,3 +162,19 @@ function PNRP.SND_AdmDelComDep()
 end
 util.AddNetworkString("SND_AdmDelComDep")
 net.Receive( "SND_AdmDelComDep", PNRP.SND_AdmDelComDep )
+
+--Resets Players Community Info
+function PNRP.PlyDelComInfo(ply)
+	
+	ply.Community = nil
+	ply:GetTable().Community = nil
+	ply:SetNWInt( "cid", nil )
+	ply:SetNWString("community", "N/A")
+	ply:GetTable().CommunityRank = nil
+	ply:SetNWString("ctitle", "")
+	ply.ComDiplomacy = {}
+	ply:SendDipl()
+	ply:ConCommand("pnrp_save")
+
+end
+
