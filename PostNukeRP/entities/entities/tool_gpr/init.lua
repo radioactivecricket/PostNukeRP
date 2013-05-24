@@ -49,3 +49,7 @@ function ENT:Think()
 --	self.Entity:NextThink(CurTime() + 10)
 --	return true
 end
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end

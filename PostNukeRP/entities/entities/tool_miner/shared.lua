@@ -45,8 +45,6 @@ function ENT:IsOutside()
 
 end
 
-
-
 function ENT:SetAutomaticFrameAdvance( bUsingAnim )
  
 	self.AutomaticFrameAdvance = bUsingAnim
