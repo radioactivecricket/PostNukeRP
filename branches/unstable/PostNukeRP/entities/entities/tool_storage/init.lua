@@ -612,3 +612,7 @@ function PlyRemStorage(ply, cmd, args)
 	end
 end
 concommand.Add( "pnrp_remstorage", PlyRemStorage )
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end

@@ -450,7 +450,7 @@ function GM:PlayerDisconnected(ply)
 end
 
 function GM:PlayerLoadout( ply ) --Weapon/ammo/item function
-	
+
     if ply:Team() == TEAM_WASTELANDER then --If player team equals 1
 
         giveDefWep(ply)

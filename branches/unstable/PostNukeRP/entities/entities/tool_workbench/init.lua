@@ -56,3 +56,7 @@ end
 -- end
 -- --datastream.Hook( "smelt_stream", DoSmelt )
 -- net.Receive( "smelt_stream", DoSmelt )
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end
