@@ -268,7 +268,7 @@ function PNRP.AddToInvFromCar( p, command, arg )
 		PNRP.AddToInventory( p, theitem, 1 )
 		PNRP.TakeFromCarInventory( p, theitem )
 	else
-		p:ChatPrint("You're pack is too full and cannot carry this.")
+		p:ChatPrint("Your pack is too full and cannot carry this.")
 		return
 	end
 	
@@ -286,7 +286,7 @@ function PNRP.AddToInvFromEQ( p, command, arg )
 	if command == "pnrp_addtoinvfromceq-ammo" then
 		local ammoCount = p:GetAmmoCount(string.sub(theitem, 6))
 		if ammoCount < PNRP.Items[theitem].Energy then
-			p:ChatPrint("You do not have enough to place in your pack..")
+			p:ChatPrint("You do not have enough to place in your pack.")
 			return
 		end
 	end
@@ -383,7 +383,7 @@ function PNRP.AddToCarInentory( )
 			PNRP.TakeFromInventory( ply, theitem )
 		end
 		Msg("["..tostring(theitem).."] added to "..ply:Nick().."'s car inventory.  \n")
-		ply:ChatPrint(tostring(amt).." "..PNRP.Items[theitem].Name.." stored to your Car's Trunk")
+		ply:ChatPrint("You have stored "..tostring(amt).." "..PNRP.Items[theitem].Name.." in your vehicle's trunk.")
 	end
 	if command == "FromEQ" then
 		local ammoAmt = PNRP.Items[theitem].Energy

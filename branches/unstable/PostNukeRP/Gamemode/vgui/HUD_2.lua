@@ -187,7 +187,7 @@ function PNRP:HUD_2()
 	PNRP_HUD:PaintRoundedPanel( 0, xOffset, blY + txtYOffset, infPW, infPH, HUD_col.bg )
 	surface.SetDrawColor( HUD_col.border );
 	surface.DrawOutlinedRect( xOffset, blY + txtYOffset, infPW, infPH );
-	PNRP_HUD:PaintText( xOffset + HUD_var.padding + 5, blY + txtYOffset + HUD_var.padding, "Experiance:", HUD_var.font, HUD_col.text )
+	PNRP_HUD:PaintText( xOffset + HUD_var.padding + 5, blY + txtYOffset + HUD_var.padding, "Experience:", HUD_var.font, HUD_col.text )
 	PNRP_HUD:PaintText( xOffset + HUD_var.padding + 90, blY + txtYOffset + HUD_var.padding, GetXP(), HUD_var.font, HUD_col.text )
 	
 	local compWidth = 360 + (HUD_var.text_spacing * 4)

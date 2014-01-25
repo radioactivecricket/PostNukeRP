@@ -2,7 +2,7 @@ GM.Name 	= "PostNukeRP" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://postnukerp.com" --Set the author website
-GM.Version  = "1.1.1"
+GM.Version  = "1.1.2"
 
 DeriveGamemode("sandbox") 
 
@@ -45,18 +45,18 @@ PNRP.Skills["Farming"] 			= {name = "Farming", desc ="Take care of those plants 
 PNRP.Skills["Salvaging"] 		= {name = "Salvaging", desc ="Lose less when taking stuff apart!", basecost = 100, maxlvl = 5, class = nil}
 
 PNRP.ScavItems = {}
-PNRP.ScavItems["fuel_h2pod"]		=	80
-PNRP.ScavItems["fuel_uranrods"]		=	80
-PNRP.ScavItems["intm_sensorpod"]	=	300
-PNRP.ScavItems["intm_seeds"]		=	150
-PNRP.ScavItems["intm_pulsecore"]	=	150
-PNRP.ScavItems["intm_servo"]		=	200
-PNRP.ScavItems["intm_diamsaw"]		=	300
-PNRP.ScavItems["intm_waterjet"]		=	100
-PNRP.ScavItems["intm_solarthinfilm"]=	40
-PNRP.ScavItems["intm_fusioncore"]	=	1
-PNRP.ScavItems["intm_nukecore"]		=	20
-PNRP.ScavItems["food_beans"]		=	2500
+PNRP.ScavItems["fuel_h2pod"]		=	100
+PNRP.ScavItems["fuel_uranrods"]		=	150
+PNRP.ScavItems["intm_sensorpod"]	=	350
+PNRP.ScavItems["intm_seeds"]		=	500
+PNRP.ScavItems["intm_pulsecore"]	=	275
+PNRP.ScavItems["intm_servo"]		=	350
+PNRP.ScavItems["intm_diamsaw"]		=	150
+PNRP.ScavItems["intm_waterjet"]		=	60
+PNRP.ScavItems["intm_solarthinfilm"]=	80
+PNRP.ScavItems["intm_fusioncore"]	=	20
+PNRP.ScavItems["intm_nukecore"]		=	50
+PNRP.ScavItems["food_beans"]		=	1500
 
 local PlayerMeta = FindMetaTable("Player")
 
@@ -137,7 +137,7 @@ function pmeta:IsOutside()
 
 	local trace = {}
 	trace.start = self:GetPos()
-	trace.endpos = trace.start + Vector( 0, 0, 300 )
+	trace.endpos = trace.start + Vector( 0, 0, 350 )
 	trace.filter = self
 	local tr = util.TraceLine( trace )
 

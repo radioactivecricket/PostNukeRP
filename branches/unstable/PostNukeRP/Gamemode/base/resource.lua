@@ -83,7 +83,7 @@ function PNRP.tradeResToPlayer()
 	local ply_chems = ply:GetResource("Chemicals")
 	
 	if not IsValid(target) then 
-		ply:ChatPrint("Unable to find player")
+		ply:ChatPrint("Unable to find player.")
 		return 
 	end
 	
@@ -188,7 +188,7 @@ function GM.AdminGiveResource(ply,command,args)
 		if target:IsPlayer() then 
 		
 			if int <= 0 and target:GetResource(resource) <= 0 then
-				ply:ChatPrint("Player allready has 0 Resources")
+				ply:ChatPrint("Player already has 0 resources.")
 				return
 			end
 			
@@ -475,7 +475,7 @@ function GM.RemoveRes(ply,command,args)
 		end
 --		self.ReproduceRes()
 	else
-		ply:ChatPrint("This is an admin only command!")
+		ply:ChatPrint("This is an admin-only command!")
 	end
 end
 

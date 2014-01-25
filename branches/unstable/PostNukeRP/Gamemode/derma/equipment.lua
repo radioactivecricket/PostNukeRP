@@ -223,7 +223,7 @@ function GM.EquipmentWindow( )
 									RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID,v:GetClass())
 									RunConsoleCommand("pnrp_stripWep",v:GetClass())
 								else
-									ply:ChatPrint("You're pack is full.")
+									ply:ChatPrint("Your pack is full.")
 								end
 								eq_frame:Close()
 								
@@ -252,7 +252,7 @@ function GM.EquipmentWindow( )
 										eq_frame:Close()
 									else
 										eq_frame:Close()
-										ply:ChatPrint("You're car trunk is full.")
+										ply:ChatPrint("Your car trunk is full.")
 									end	
 								end
 							end
@@ -360,7 +360,7 @@ function GM.EquipmentWindow( )
 							eq_frame:Close()
 						else
 							eq_frame:Close()
-							ply:ChatPrint("You're car trunk is full.")
+							ply:ChatPrint("Your car trunk is full.")
 						end	
 					end
 				end
@@ -523,7 +523,7 @@ function GM.BackpackWindow()
 								remFromPack( ply, data, "singleinv", bkEnt )
 								pack_frame:Close() 
 							else
-								ply:ChatPrint("You're pack is full.")
+								ply:ChatPrint("Your pack is full.")
 							end
 							pack_frame:Close()
 							
