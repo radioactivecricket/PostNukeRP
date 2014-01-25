@@ -77,6 +77,13 @@ PNRP.DefWeps = {"weapon_physcannon",
 				"gmod_camera",
 				"gmod_tool"}
 
+PNRP.friendlies = { "npc_floor_turret",
+					"npc_hdvermin", 
+					"npc_hdvermin_fast", 
+					"npc_hdvermin_poison", 
+					"npc_petbird_crow", 
+					"npc_petbird_gull", 
+					"npc_petbird_pigeon" }
 														
 CreateConVar("pnrp_SpawnMobs","1",FCVAR_REPLICATED + FCVAR_NOTIFY)
 CreateConVar("pnrp_MaxZombies","30",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)

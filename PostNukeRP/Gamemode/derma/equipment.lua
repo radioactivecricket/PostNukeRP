@@ -220,7 +220,12 @@ function GM.EquipmentWindow( )
 								local weight = MyWeight + myItem.Weight
 								
 								if weight <= MyWeightCap then
-									RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID,v:GetClass())
+								--	RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID,v:GetClass())
+									net.Start( "pnrp_addtoinvfromeq" )
+										net.WriteEntity(ply)
+										net.WriteString("pnrp_addtoinvfromeq")
+										net.WriteString(myItem.ID)
+									net.SendToServer()
 									RunConsoleCommand("pnrp_stripWep",v:GetClass())
 								else
 									ply:ChatPrint("Your pack is full.")
@@ -240,8 +245,6 @@ function GM.EquipmentWindow( )
 									local weight = CarWeight + myItem.Weight
 									
 									if weight <= CarWeightCap then
-										--RunConsoleCommand("pnrp_addtocarinentoryFromEQ",myItem.ID)
-										--datastream.StreamToServer( "pnrp_addtocarinentory", { "FromEQ", myItem.ID, 1  } )
 										net.Start( "pnrp_addtocarinentory" )
 											net.WriteEntity(ply)
 											net.WriteString("FromEQ")
@@ -318,7 +321,12 @@ function GM.EquipmentWindow( )
 			invAmmoBtn.DoClick = function() 
 				if AmmoListView:GetSelectedLine() then
 					local ammoID = "ammo_"..AmmoListView:GetLine(AmmoListView:GetSelectedLine()):GetValue(1)
-					RunConsoleCommand("pnrp_addtoinvfromceq-ammo",ammoID)
+				--	RunConsoleCommand("pnrp_addtoinvfromceq-ammo",ammoID)
+					net.Start( "pnrp_addtoinvfromeq" )
+						net.WriteEntity(ply)
+						net.WriteString("pnrp_addtoinvfromceq-ammo")
+						net.WriteString(ammoID)
+					net.SendToServer()
 					eq_frame:Close()
 				end
 			end
@@ -344,24 +352,26 @@ function GM.EquipmentWindow( )
 				ammoToCarBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 				ammoToCarBtn.DoClick = function() 
 					if AmmoListView:GetSelectedLine() then
-						local ammoID = "ammo_"..AmmoListView:GetLine(AmmoListView:GetSelectedLine()):GetValue(1)
+						local ammoTypeSel = AmmoListView:GetLine(AmmoListView:GetSelectedLine()):GetValue(1)
+						local ammoID = "ammo_"..ammoTypeSel
 						local weight = CarWeight + PNRP.Items[ammoID].Weight
-						
-						if weight <= CarWeightCap then
-							
-							--datastream.StreamToServer( "pnrp_addtocarinentory", { "FromEQ", ammoID, 1  } )
-							net.Start( "pnrp_addtocarinentory" )
-								net.WriteEntity(ply)
-								net.WriteString("FromEQ")
-								net.WriteString(ammoID)
-								net.WriteDouble(1)
-							net.SendToServer()
-							RunConsoleCommand("pnrp_stripAmmo",ammoID)
-							eq_frame:Close()
+						if ply:GetAmmoCount(ammoTypeSel) < PNRP.Items[ammoID].Energy then
+							ply:ChatPrint("Can only put full clips in inventory.")
 						else
-							eq_frame:Close()
-							ply:ChatPrint("Your car trunk is full.")
-						end	
+							if weight <= CarWeightCap then
+								net.Start( "pnrp_addtocarinentory" )
+									net.WriteEntity(ply)
+									net.WriteString("FromEQ")
+									net.WriteString(ammoID)
+									net.WriteDouble(1)
+								net.SendToServer()
+								RunConsoleCommand("pnrp_stripAmmo",ammoID)
+								eq_frame:Close()
+							else
+								eq_frame:Close()
+								ply:ChatPrint("Your car trunk is full.")
+							end								
+						end
 					end
 				end
 				ammoToCarBtn.Paint = function()
@@ -515,6 +525,7 @@ function GM.BackpackWindow()
 						pnlPanel.sendToInv:SetText( ">>Inv" )
 						pnlPanel.sendToInv.DoClick = function()
 							local getCount = pnlPanel.NumberWang:GetValue()
+							if getCount < 0 then getCount = 0 end
 							if getCount > v then getCount = v end
 							local weight = MyWeight + (item.Weight * getCount)
 							

@@ -42,8 +42,21 @@ function ENT:Initialize()
 	
 	self:SelectSchedule( SCHED_IDLE_WANDER )
 
-	self:AddRelationship("npc_petbird D_HT 999")
-	self:AddRelationship("npc_hdvermin D_HT 999")
+	self:AddRelationship("npc_floor_turret D_LI 99")
+	self:AddRelationship("npc_chemgrub D_LI 99")
+	self:AddRelationship("player D_LI 99")
+	self:AddRelationship("npc_hdvermin D_LI 99")
+	self:AddRelationship("npc_hdvermin_fast D_LI 99")
+	self:AddRelationship("npc_hdvermin_poison D_LI 99")
+	self:AddRelationship("npc_petbird_crow D_LI 99")
+	self:AddRelationship("npc_petbird_gull D_LI 99")
+	self:AddRelationship("npc_petbird_pigeon D_LI 99")
+	
+	for _, class in pairs(PNRP.friendlies) do
+		for k, v in pairs(ents.FindByClass(class)) do
+			self:AddEntityRelationship(v, D_LI, 99 )
+		end
+	end
 	
 end
 
@@ -190,13 +203,13 @@ function ENT:OnTakeDamage(dmg)
 		end
 		
 		timer.Simple(10, function ()
-			if IsValid(self) then
-				self:Remove()
-			end
 			if IsValid(corpseGib) then
 				corpseGib:Remove()
 			end
 		end )
+		if IsValid(self) then
+			self:Remove()
+		end
 	end
 end 
 

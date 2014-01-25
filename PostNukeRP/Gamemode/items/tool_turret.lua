@@ -32,11 +32,16 @@ function ITEM.Create( ply, class, pos )
 	ent:Activate()
 	--ent:SetNetworkedString("Owner", ply:Nick())
 	PNRP.SetOwner(ply, ent)
+	
 	ent:AddRelationship("npc_floor_turret D_LI 99")
 	ent:AddRelationship("npc_chemgrub D_LI 99")
 	ent:AddRelationship("player D_LI 99")
 	ent:AddRelationship("npc_hdvermin D_LI 99")
-	ent:AddRelationship("npc_birdpet D_LI 99")
+	ent:AddRelationship("npc_hdvermin_fast D_LI 99")
+	ent:AddRelationship("npc_hdvermin_poison D_LI 99")
+	ent:AddRelationship("npc_petbird_crow D_LI 99")
+	ent:AddRelationship("npc_petbird_gull D_LI 99")
+	ent:AddRelationship("npc_petbird_pigeon D_LI 99")
 	
 	-- Turned off, so friendly with all.
 	ent:AddRelationship("npc_zombie D_LI 99")
@@ -50,6 +55,12 @@ function ITEM.Create( ply, class, pos )
 	
 	for k, v in pairs(ents.FindByClass("npc_chemgrub")) do
 		ent:AddEntityRelationship(v, D_LI, 99 )
+	end
+	
+	for _, class in pairs(PNRP.friendlies) do
+		for k, v in pairs(ents.FindByClass(class)) do
+			ent:AddEntityRelationship(v, D_LI, 99 )
+		end
 	end
 	
 	-- Important power vars!

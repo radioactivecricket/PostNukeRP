@@ -129,18 +129,21 @@ function RemoveFromBackpack()
 				end
 				return
 			end
-			
-			PNRP.AddToInventory( ply, myClass, boxes )
-			backEnt.contents.ammo[removalTbl.ammo[1]] = ammoLeft
-			
-			if backEnt.contents.ammo[removalTbl.ammo[1]] <= 0 then
-				backEnt.contents.ammo[removalTbl.ammo[1]] = nil
-			end
-			
-			if boxes > 1 then
-				ply:ChatPrint("You put "..tostring(boxes).." boxes of "..PNRP.Items[myClass].Name.." into  your inventory.")
+			if boxes > 0 then
+				PNRP.AddToInventory( ply, myClass, boxes )
+				backEnt.contents.ammo[removalTbl.ammo[1]] = ammoLeft
+				
+				if backEnt.contents.ammo[removalTbl.ammo[1]] <= 0 then
+					backEnt.contents.ammo[removalTbl.ammo[1]] = nil
+				end
+				
+				if boxes > 1 then
+					ply:ChatPrint("You put "..tostring(boxes).." boxes of "..PNRP.Items[myClass].Name.." into  your inventory.")
+				else
+					ply:ChatPrint("You put a box of "..PNRP.Items[myClass].Name.." into  your inventory.")
+				end
 			else
-				ply:ChatPrint("You put a box of "..PNRP.Items[myClass].Name.." into  your inventory.")
+				ply:ChatPrint("There's not enough ammo here to box.")
 			end
 		else
 			local totalWeight = weight * amount
@@ -292,7 +295,9 @@ function RemoveFromBackpack()
 			local ciWeight = math.floor(v/PNRP.Items["ammo_"..k].Energy)
 			
 			if weightCap > currentCarry + ciWeight then
-				PNRP.AddToInventory( ply, "ammo_"..k, math.floor(v/PNRP.Items["ammo_"..k].Energy) )
+				if v/PNRP.Items["ammo_"..k].Energy > 0 then
+					PNRP.AddToInventory( ply, "ammo_"..k, math.floor(v/PNRP.Items["ammo_"..k].Energy) )
+				end
 				
 				ply:GiveAmmo(v%PNRP.Items["ammo_"..k].Energy, k)
 				backEnt.contents.ammo[k] = nil
@@ -301,7 +306,9 @@ function RemoveFromBackpack()
 				local weightLeft = weightCap - currentCarry
 				local canHave = math.floor( weightLeft / sngWeight )
 				
-				PNRP.AddToInventory( ply, "ammo_"..k, canHave )
+				if v/PNRP.Items["ammo_"..k].Energy > 0 then
+					PNRP.AddToInventory( ply, "ammo_"..k, canHave )
+				end
 				ply:GiveAmmo(v - (canHave * PNRP.Items["ammo_"..k].Energy), k)
 				backEnt.contents.ammo[k] = nil
 				currentCarry = currentCarry + (sngWeight * canHave)
