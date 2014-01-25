@@ -142,7 +142,7 @@ function ENT:Use( activator, caller )
 --		end
 		if activator:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
 			if activator:Team() ~= TEAM_SCAVENGER then
-				activator:ChatPrint("Admin overide.")
+				activator:ChatPrint("Admin override.")
 			end
 		else
 			if activator:Team() ~= TEAM_SCAVENGER then
@@ -193,7 +193,7 @@ function DoOffline( )
 	local ent = net.ReadEntity()
 	--local ent = decoded[1]
 
-	ply:ChatPrint("Shutting Down Automated Sonic Miner...")
+	ply:ChatPrint("Deactivating Automated Sonic Miner...")
 	
 	ent.Entity:ThumperDisable()
 	
@@ -208,7 +208,7 @@ function DoRepair( )
 	local amount = 200 - ent:Health()
 	
 	ply:Freeze(true)
-	ply:ChatPrint("Fixing Unit...")
+	ply:ChatPrint("Repairing Unit...")
 	
 	timer.Simple( amount/10, function ()
 		ply:Freeze(false)
@@ -217,7 +217,7 @@ function DoRepair( )
 		
 		if ent:Health() > 200 then ent:SetHealth( 200 ) end
 		
-		ply:ChatPrint("Repair compleate!")
+		ply:ChatPrint("Repair complete!")
 		
 	end )
 end

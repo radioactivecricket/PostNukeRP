@@ -63,7 +63,7 @@ function SetRPName(ply, cmd, args, fullstr)
 		ply.rpname = ply:SteamName()
 	else
 		if string.len(fullstr) > 40 then
-			ply:ChatPrint("RP name is too long.  Must be under 40 characters.")
+			ply:ChatPrint("Name too long! Must be under 40 characters.")
 			return
 		end
 
@@ -162,7 +162,7 @@ function GM.SaveCharacter(ply,cmd,args)
 	query = query..", res='"..ply.Resources["Scrap"]..","..ply.Resources["Small_Parts"]..","..ply.Resources["Chemicals"].."', weapons='"..weaponList.."', ammo='"..ammoList.."' WHERE pid="..tostring(ply.pid)
 	result = querySQL(query)
 	print("Player data saved: "..ply:Nick())
-	ply:ChatPrint("Player Saved.")
+	ply:ChatPrint("Player saved.")
 end
 
 function GM.CreateCharacter( ply, plyModel, plyClass )
@@ -458,7 +458,7 @@ function NewCommunityInfo( ply, community )
 		if result then
 			newcid = result[1]['cid']
 		else
-			ply:ChatPrint("An error has occured creating this community.")
+			ply:ChatPrint("An error has occured while creating this community.")
 			return
 		end
 
@@ -1000,7 +1000,7 @@ function PlyDelComm(ply, cmd, args)
 			--	v:SetNWString("community", "N/A")
 				PNRP.PlyDelComInfo(v)
 				
-				v:ChatPrint( "Your community, "..ply:GetNWString("community")..", has been deleted by an owner!" )
+				v:ChatPrint( "Your community, "..ply:GetNWString("community")..", has been deleted by an Owner!" )
 			end
 		end
 		
@@ -1224,7 +1224,7 @@ function PlyPlaceStockpile(ply, cmd, args)
 			end
 			local communityTbl = GetCommunityTbl( ply:GetTable().Community )
 
-			if table.Count(communityTbl["users"]) < 1 then
+			if table.Count(communityTbl["users"]) < 3 then
 				ply:ChatPrint( "You can only use this when you have at least 3 members!" )
 				return
 			end
@@ -1270,7 +1270,7 @@ function PlyPlaceLocker(ply, cmd, args)
 			end
 			local communityTbl = GetCommunityTbl( ply:GetTable().Community )
 
-			if table.Count(communityTbl["users"]) < 1 then
+			if table.Count(communityTbl["users"]) < 3 then
 				ply:ChatPrint( "You can only use this when you have at least 3 members!" )
 				return
 			end
@@ -2479,7 +2479,7 @@ function PNRP.StowWeapon (ply, command, args)
 					ply:StripWeapon(myWep:GetClass())
 				end
 			else
-				ply:ChatPrint("You're pack is too full and cannot carry this.")
+				ply:ChatPrint("Your pack is too full and cannot carry this.")
 			end
 
 		end
@@ -2651,7 +2651,7 @@ PNRP.ChatConCmd( "/carseat", "pnrp_seatSetup" )
 
 function plyAFK(ply, cmd, args)
 	if ply:GetTable().IsAsleep then
-		ply:ChatPrint("You can not go afk while asleep.")
+		ply:ChatPrint("You cannot go AFK while asleep.")
 		return
 	end
 	if ply.AFK then
@@ -2662,12 +2662,12 @@ function plyAFK(ply, cmd, args)
 		net.Start("sleepeffects")
 			net.WriteBit(false)
 		net.Send(ply)
-		ply:ChatPrint("You are no longer AFK")
+		ply:ChatPrint("You are no longer AFK.")
 		
 		timer.Create( "AFK_"..tostring(ply), 900, 1, function() 
 			if IsValid(ply) then
 				ply.CantAFK = false
-				ply:ChatPrint("AFK Available again.")
+				ply:ChatPrint("You may now use /AFK again.")
 			end
 		end)
 		
@@ -2685,12 +2685,12 @@ function plyAFK(ply, cmd, args)
 			net.Start("sleepeffects")
 				net.WriteBit(true)
 			net.Send(ply)
-			ply:ChatPrint("You are now AFK")
-			ply:ChatPrint("You can still be hurt while AFK")
+			ply:ChatPrint("You are now AFK.")
+			ply:ChatPrint("You can still be hurt while AFK.")
 			ply.CantAFK = true
 		end	
 	else
-		ply:ChatPrint("You can only go AFK every 15 minuts.")
+		ply:ChatPrint("You can only go AFK every 15 minutes.")
 	end
 end
 concommand.Add( "pnrp_afk", plyAFK )
@@ -2747,7 +2747,7 @@ function pickupGas( ply, ent )
 		if ent.gas >= 1 then
 			local gas = math.floor(ent.gas)
 			PNRP.AddToInventory( ply, "fuel_gas", gas )
-			ply:ChatPrint("Spare gas placed in inventory")
+			ply:ChatPrint("Spare gas placed in inventory.")
 		end
 	end
 end

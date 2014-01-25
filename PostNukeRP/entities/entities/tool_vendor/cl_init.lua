@@ -518,7 +518,11 @@ function VendorMenu()
 								local sellCount = pnlUserIPanel.NumberWang:GetValue()
 								if sellCount > v then
 									sellCount = v
-								end
+								end                               
+								if pnlUserIPanel.NumberWang:GetValue() < 1 then
+                                    LocalPlayer():ChatPrint("Not enough to store")
+                                    return
+                                end
 								local foundItem = false
 								local itmInfo = nil
 								if invTbl[k] then

@@ -206,7 +206,7 @@ function pnrp_ev_RadStorm_CreateStorm()
 			elseif myrand == 2 then
 				v:ChatPrint("The roar of past memories quiets. For now...")
 			elseif myrand == 3 then
-				v:ChatPrint("You hear only the sounds of the mutants in the distance. It's never really safe is it?")
+				v:ChatPrint("You hear only the sounds of the mutants in the distance. It's never really safe, is it?")
 			else
 				v:ChatPrint("The winds have calmed. So have your trembling hands.")
 			end
@@ -795,7 +795,7 @@ function pnrp_ev_PreWar_DropPod( pos )
 			ent:SetKeyValue( "spawnflags", tostring(bit.bor(8192, 256, 4)) );
 			ent:SetModel( "models/combine_soldier.mdl" )
 
-			ent:SetPos(point+Vector(0,0,50))
+			ent:SetPos(point+Vector(0,0,305)) -- Changed from 0,0,50 to stop underground combine spawning
 			ent:Spawn()
 			ent:Activate()
 			
@@ -929,7 +929,7 @@ function pnrp_ev_PreWar_DropPod( pos )
 				ent:SetKeyValue( "spawnflags", tostring(bit.bor(8192)) );
 				ent:SetModel( "models/combine_soldier.mdl" )
 
-				ent:SetPos(point+Vector(0,0,50))
+				ent:SetPos(point+Vector(0,0,300)) -- Changed from 0,0,50 to stop the combine soldiers from spawning in the floor. There's almost no visual difference when they spawn.
 				ent:Spawn()
 				ent:Activate()
 				

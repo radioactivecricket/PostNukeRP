@@ -78,7 +78,7 @@ function SuperMinerMenu( )
 		
 			if minerSuperState == "off" then
 				if minerEnt:IsOutside() then
-					if minerHP > 0 then
+					if minerHP > 299 then
 						local minerButtonOn = vgui.Create( "DButton" )
 						minerButtonOn:SetParent( miner_frame )
 						minerButtonOn:SetText( "Set Miner Online" )

@@ -264,11 +264,11 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 														parent_frame:Close()
 													else
 														parent_frame:Close()
-														ply:ChatPrint("You're car trunk is full.")
+														ply:ChatPrint("Your car trunk is full.")
 													end
 												else
 													parent_frame:Close()
-													ply:ChatPrint("You're car trunk is full.")
+													ply:ChatPrint("Your car trunk is full.")
 												end
 											end										
 										end

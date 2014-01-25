@@ -370,7 +370,7 @@ function GM:PlayerSpawn( ply )
 	ply:IncResource("Chemicals",0)
 	
 	if !ply:GetTable().SleepGodCheck then
-		ply:ChatPrint("Temp God Enabled.")
+		ply:ChatPrint("Temporary Godmode Enabled.")
 		ply:GodEnable()
 	
 		local timerID = tostring(math.random(1,9999999))
@@ -378,7 +378,7 @@ function GM:PlayerSpawn( ply )
 			if IsValid(ply) then
 				if not ply.DevMode then
 					ply:GodDisable()
-					ply:ChatPrint("Temp God Dissabled.")
+					ply:ChatPrint("Temporary Godmode Disabled.")
 					ply:IncResource("Scrap",0)
 					ply:IncResource("Small_Parts",0)
 					ply:IncResource("Chemicals",0)
@@ -632,12 +632,12 @@ function GM:ShowTeam( ply )
 	if tostring(ent) == "[NULL Entity]" or ent == nil then return end
 	
 	if ent.BlockF2 then
-		ply:ChatPrint("You cant pick this up.")
+		ply:ChatPrint("You can't pick this up.")
 		return
 	end
 	
 	if tostring(ply:GetVehicle( )) != "[NULL Entity]" then
-		ply:ChatPrint("Can not do this while in a vehicle.")
+		ply:ChatPrint("Cannot do this while in a vehicle.")
 		return
 	end
 		
@@ -708,7 +708,7 @@ function GM:ShowTeam( ply )
 					pickupGas( ply, ent )
 					ent:Remove()
 				else
-					ply:ChatPrint("You're pack is too full and cannot carry this.")
+					ply:ChatPrint("Your pack is too full and cannot carry this.")
 				end
 				
 			else
@@ -725,7 +725,7 @@ function GM:ShowTeam( ply )
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 				PNRP.AddToInventory( ply, ItemID, 1 )
 				PNRP.TakeFromWorldCache( ply, ItemID )
-				ply:ChatPrint("You picked up your car")
+				ply:ChatPrint("You picked up your car.")
 				pickupGas( ply, ent )
 				ent:Remove()
 								
@@ -749,7 +749,7 @@ function GM:ShowTeam( ply )
 					
 					ent:Remove()
 				else
-					ply:ChatPrint("You're pack is too full and cannot carry this.")
+					ply:ChatPrint("Your pack is too full and cannot carry this.")
 				end
 			elseif myType == "ammo" then
 				local boxes = math.floor( tonumber(ent:GetNWString("Ammo")) / tonumber(ent:GetNWString("NormalAmmo")) )
@@ -772,7 +772,7 @@ function GM:ShowTeam( ply )
 							PNRP.AddToInventory( ply, ItemID, 1 )
 							ammoLeft = ammoLeft - tonumber(ent:GetNWString("NormalAmmo"))
 						else
-							ply:ChatPrint("You're pack is too full and cannot carry all of this.")
+							ply:ChatPrint("Your pack is too full and cannot carry all of this.")
 							overweight = true
 							break
 						end
@@ -822,7 +822,7 @@ function GM:ShowTeam( ply )
 					end
 					ent:Remove()
 				else
-					ply:ChatPrint("You're pack is too full and cannot carry this.")
+					ply:ChatPrint("Your pack is too full and cannot carry this.")
 				end
 
 			end

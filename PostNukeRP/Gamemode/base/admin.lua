@@ -149,9 +149,9 @@ function PNRP.UpdateFromAdminMenu( )
 		RunConsoleCommand("pnrp_ReproduceRes", tostring(SpawnSettings.ReproduceRes))
 		RunConsoleCommand("pnrp_MaxReproducedRes", tostring(SpawnSettings.MaxReproducedRes))
 		
-		ErrorNoHalt( "[INFO] "..ply:Name().." Changed Admin settings ".."\n")
+		ErrorNoHalt( "[INFO] "..ply:Name().." changed admin settings ".."\n")
 		
-		ply:ChatPrint("Settings Confirmed!")
+		ply:ChatPrint("Settings confirmed!")
 	else
 		ply:ChatPrint("You are not an admin on this server!")
 	end
@@ -273,7 +273,7 @@ function PlyDevMode(ply, cmd, args)
 			end
 		end
 		if not FoundPly then
-			ply:ChatPrint("Cound not find the player")
+			ply:ChatPrint("Player could not be found.")
 			return
 		end
 	end
@@ -282,14 +282,14 @@ function PlyDevMode(ply, cmd, args)
 		setPlayer.DevMode = false
 		setPlayer:SetMoveType( MOVETYPE_WALK )
 		ply:ChatPrint("You removed Dev Mode from "..setPlayer:Nick().." ("..setPlayer:SteamName()..")")
-		setPlayer:ChatPrint("Dev Mode Removed")
+		setPlayer:ChatPrint("Dev Mode removed.")
 		ErrorNoHalt(ply:SteamName().." Removed Dev Mode from "..setPlayer:SteamName().."\n")
 	else
 		setPlayer:GodEnable()
 		setPlayer.DevMode = true
-		ply:ChatPrint("You gave Dev Mode to "..setPlayer:Nick().." ("..setPlayer:SteamName()..")")
-		setPlayer:ChatPrint("You have been placed in Dev Mode")
-		ErrorNoHalt(ply:SteamName().." Gave Dev Mode to "..setPlayer:SteamName().."\n")
+		ply:ChatPrint("You applied Dev Mode to "..setPlayer:Nick().." ("..setPlayer:SteamName()..")")
+		setPlayer:ChatPrint("Dev Mode applied.")
+		ErrorNoHalt(ply:SteamName().." Applied Dev Mode to "..setPlayer:SteamName().."\n")
 	end
 end
 concommand.Add( "pnrp_plydevmode", PlyDevMode )

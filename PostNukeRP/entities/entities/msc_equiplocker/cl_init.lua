@@ -153,6 +153,10 @@ function LockerMenu( )
 							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
 							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
 							pnlUserIPanel.Icon.DoClick = function() 
+									if pnlUserIPanel.NumberWang:GetValue() < 1 then
+                                    LocalPlayer():ChatPrint("Not enough to store")
+                                    return
+                                end
 								net.Start("locker_put")
 									net.WriteEntity(ply)
 									net.WriteEntity(locker)

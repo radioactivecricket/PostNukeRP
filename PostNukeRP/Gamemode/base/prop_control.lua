@@ -804,12 +804,12 @@ function ToolCheck( ply, tr, toolmode )
 	end
 	
 	if string.find(toolmode, "turret") then
-		ply:ChatPrint("Turrets blocked")
+		ply:ChatPrint("Turrets blocked.")
 		return false
 	end
 	
 	if string.find(toolmode, "igniter") then
-		ply:ChatPrint("Igniter blocked")
+		ply:ChatPrint("Igniter blocked.")
 		return false
 	end
 	
@@ -830,7 +830,7 @@ function ToolCheck( ply, tr, toolmode )
 	if string.find(toolmode, "dup") then
 		if PNRP.FindItemID( myClass ) and myClass != "prop_physics" then
 			print(tostring(PNRP.FindItemID( myClass )))
-			ply:ChatPrint("Duplication blocked")
+			ply:ChatPrint("Duplication blocked.")
 			return false
 		end
 	end

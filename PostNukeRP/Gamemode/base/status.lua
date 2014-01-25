@@ -163,7 +163,7 @@ function EnterSleep ( ply )
 	local curEndurance = ply:GetTable().Endurance
 	
 	if ply.AFK then
-		ply:ChatPrint("You can not sleep while AFK.")
+		ply:ChatPrint("You cannot sleep while AFK.")
 		return
 	end
 	
