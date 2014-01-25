@@ -174,6 +174,7 @@ function EntityMeta:PowerUnLink()
 		end
 	end
 	
+	self.NetworkContainer:UpdatePower()
 	-- -- ErrorNoHalt("self.NetworkContainer = ("..tostring(self.NetworkContainer).."\n")
 	
 	if self.NetworkContainer == self then
@@ -215,6 +216,23 @@ function EntityMeta:PowerUnLink()
 									table.insert(node.LinkedItems, connectNode)
 									connectNode.NetworkContainer = node
 									table.insert(linkedNodes, connectNode)
+									
+									local checkDupes = {}
+										local dupes = {}
+										for k, v in pairs(node.NetworkContainer.LinkedItems) do
+											if checkDupes[tostring(v)] then
+												checkDupes[tostring(v)] = checkDupes[tostring(v)] + 1
+												table.insert(dupes, k)
+											else
+												checkDupes[tostring(v)] = 1
+											end
+										end
+										local deleted = 0
+										for _, v in pairs(dupes) do
+											table.remove(node.NetworkContainer.LinkedItems, v-deleted)
+											deleted = deleted + 1
+										end
+									
 									node.NetworkContainer:UpdatePower()
 								end
 							end
@@ -232,6 +250,23 @@ function EntityMeta:PowerUnLink()
 										table.insert(generator.LinkedItems, connectNode)
 										connectNode.NetworkContainer = generator
 										table.insert(linkedNodes, connectNode)
+										
+										local checkDupes = {}
+										local dupes = {}
+										for k, v in pairs(node.NetworkContainer.LinkedItems) do
+											if checkDupes[tostring(v)] then
+												checkDupes[tostring(v)] = checkDupes[tostring(v)] + 1
+												table.insert(dupes, k)
+											else
+												checkDupes[tostring(v)] = 1
+											end
+										end
+										local deleted = 0
+										for _, v in pairs(dupes) do
+											table.remove(node.NetworkContainer.LinkedItems, v-deleted)
+											deleted = deleted + 1
+										end
+										
 										node.NetworkContainer:UpdatePower()
 									end
 								end
@@ -246,6 +281,23 @@ function EntityMeta:PowerUnLink()
 										table.insert(node.LinkedItems, connectNode)
 										connectNode.NetworkContainer = node
 										table.insert(linkedNodes, connectNode)
+										
+										local checkDupes = {}
+										local dupes = {}
+										for k, v in pairs(node.NetworkContainer.LinkedItems) do
+											if checkDupes[tostring(v)] then
+												checkDupes[tostring(v)] = checkDupes[tostring(v)] + 1
+												table.insert(dupes, k)
+											else
+												checkDupes[tostring(v)] = 1
+											end
+										end
+										local deleted = 0
+										for _, v in pairs(dupes) do
+											table.remove(node.NetworkContainer.LinkedItems, v-deleted)
+											deleted = deleted + 1
+										end
+										
 										node.NetworkContainer:UpdatePower()
 									end
 								end
@@ -275,6 +327,8 @@ function EntityMeta:PowerUnLink()
 				end
 			end
 		end
+		
+		self.NetworkContainer:UpdatePower()
 		
 		local linkedNodes = {}
 		for k, node in pairs(unlinkedNodes) do
@@ -311,6 +365,23 @@ function EntityMeta:PowerUnLink()
 									table.insert(node.LinkedItems, connectNode)
 									connectNode.NetworkContainer = node
 									table.insert(linkedNodes, connectNode)
+									
+									local checkDupes = {}
+									local dupes = {}
+									for k, v in pairs(node.NetworkContainer.LinkedItems) do
+										if checkDupes[tostring(v)] then
+											checkDupes[tostring(v)] = checkDupes[tostring(v)] + 1
+											table.insert(dupes, k)
+										else
+											checkDupes[tostring(v)] = 1
+										end
+									end
+									local deleted = 0
+									for _, v in pairs(dupes) do
+										table.remove(node.NetworkContainer.LinkedItems, v-deleted)
+										deleted = deleted + 1
+									end
+									
 									node.NetworkContainer:UpdatePower()
 								end
 							end
@@ -327,6 +398,23 @@ function EntityMeta:PowerUnLink()
 										table.insert(generator.LinkedItems, connectNode)
 										connectNode.NetworkContainer = generator
 										table.insert(linkedNodes, connectNode)
+										
+										local checkDupes = {}
+										local dupes = {}
+										for k, v in pairs(node.NetworkContainer.LinkedItems) do
+											if checkDupes[tostring(v)] then
+												checkDupes[tostring(v)] = checkDupes[tostring(v)] + 1
+												table.insert(dupes, k)
+											else
+												checkDupes[tostring(v)] = 1
+											end
+										end
+										local deleted = 0
+										for _, v in pairs(dupes) do
+											table.remove(node.NetworkContainer.LinkedItems, v-deleted)
+											deleted = deleted + 1
+										end
+										
 										node.NetworkContainer:UpdatePower()
 									end
 								end
@@ -340,6 +428,23 @@ function EntityMeta:PowerUnLink()
 										table.insert(node.LinkedItems, connectNode)
 										connectNode.NetworkContainer = node
 										table.insert(linkedNodes, connectNode)
+										
+																				local checkDupes = {}
+										local dupes = {}
+										for k, v in pairs(node.NetworkContainer.LinkedItems) do
+											if checkDupes[tostring(v)] then
+												checkDupes[tostring(v)] = checkDupes[tostring(v)] + 1
+												table.insert(dupes, k)
+											else
+												checkDupes[tostring(v)] = 1
+											end
+										end
+										local deleted = 0
+										for _, v in pairs(dupes) do
+											table.remove(node.NetworkContainer.LinkedItems, v-deleted)
+											deleted = deleted + 1
+										end
+										
 										node.NetworkContainer:UpdatePower()
 									end
 								end

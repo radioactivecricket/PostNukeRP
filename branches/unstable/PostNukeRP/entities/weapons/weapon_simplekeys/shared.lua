@@ -3,7 +3,7 @@ SWEP.Contact		= "lostinthewired@gmail.com"
 SWEP.Purpose		= "Keys for SimpleKeys"
 SWEP.Instructions	= "Left click to unlock.\nRight click to lock.\nR to enter door management or ownership."
 
-SWEP.ViewModel		= ""
+SWEP.ViewModel		= "models/weapons/v_hands.mdl"
 SWEP.WorldModel		= ""
 
 SWEP.Spawnable      = false

@@ -165,7 +165,8 @@ function PNRP.InventoryWeight( p )
 end
 
 
-function PNRP.OpenMainCarInventory(ply)
+function PNRP.OpenMainCarInventory()
+	local ply = net.ReadEntity()
 	local tbl = PNRP.CarInventory( ply )
 	
 	if not tbl then
@@ -179,7 +180,9 @@ function PNRP.OpenMainCarInventory(ply)
 		net.WriteString(tostring(PNRP.CarInventoryWeight( ply )))
 	net.Send(ply)
 end
-concommand.Add("pnrp_OpenCarInventory", PNRP.OpenMainCarInventory)
+--concommand.Add("pnrp_OpenCarInventory", PNRP.OpenMainCarInventory)
+net.Receive("pnrp_OpenCarInventory", PNRP.OpenMainCarInventory);
+util.AddNetworkString( "pnrp_OpenCarInventory" )
 util.AddNetworkString( "pnrp_OpenCarInvWindow" )
 
 function PNRP.CarInventoryWeight( p )
@@ -252,8 +255,9 @@ function PNRP.AddToInventory( p, theitem, amount )
 	end
 end
 
-function PNRP.AddToInvFromCar( p, command, arg )
-	local theitem = arg[1]
+function PNRP.AddToInvFromCar( )
+	local p = net.ReadEntity()
+	local theitem = net.ReadString()
 	
 	local weight = PNRP.InventoryWeight( p ) + PNRP.Items[theitem].Weight
 	local weightCap
@@ -274,10 +278,14 @@ function PNRP.AddToInvFromCar( p, command, arg )
 	
 	p:ConCommand("pnrp_carinv")	
 end
-concommand.Add( "pnrp_addtoinvfromcar", PNRP.AddToInvFromCar )
+--concommand.Add( "pnrp_addtoinvfromcar", PNRP.AddToInvFromCar )
+net.Receive("pnrp_addtoinvfromcar", PNRP.AddToInvFromCar );
+util.AddNetworkString( "pnrp_addtoinvfromcar" )
 
-function PNRP.AddToInvFromEQ( p, command, arg )
-	local theitem = arg[1]
+function PNRP.AddToInvFromEQ( )
+	local p = net.ReadEntity()
+	local command = net.ReadString()
+	local theitem = net.ReadString()
 	
 	local weight = PNRP.InventoryWeight( p ) + PNRP.Items[theitem].Weight
 	local weightCap
@@ -326,8 +334,8 @@ function PNRP.AddToInvFromEQ( p, command, arg )
 	end
 	
 end
-concommand.Add( "pnrp_addtoinvfromeq", PNRP.AddToInvFromEQ )
-concommand.Add( "pnrp_addtoinvfromceq-ammo", PNRP.AddToInvFromEQ )
+net.Receive( "pnrp_addtoinvfromeq", PNRP.AddToInvFromEQ )
+util.AddNetworkString( "pnrp_addtoinvfromeq" )
 
 function PNRP.AddToCarInentory( )
 	local query
@@ -396,6 +404,20 @@ function PNRP.AddToCarInentory( )
 	end
 end
 net.Receive( "pnrp_addtocarinentory", PNRP.AddToCarInentory )
+
+function PNRP.AdmDelItm( )
+	
+	local ply = net.ReadEntity()
+	local theitem = net.ReadString()
+	local amt = net.ReadDouble()
+	
+	for i = 1, amt do
+		PNRP.TakeFromInventory( ply, theitem )
+	end
+	
+end
+net.Receive( "pnrp_adm_delItm", PNRP.AdmDelItm )
+util.AddNetworkString( "pnrp_adm_delItm" )
 
 function PNRP.TakeFromInventory( p, theitem )
 	local query

@@ -270,6 +270,7 @@ function GM:PlayerSpawnProp(ply, model)
 	
 	--Normal Allowed system
 		model = string.gsub(model, "\\", "/")
+		if string.find(model,  "%../") then return false end
 		if string.find(model,  "//") then return false end
 		-- Banned props take precedence over allowed props
 		if GetConVarNumber("pnrp_propBanning") == 1 then
