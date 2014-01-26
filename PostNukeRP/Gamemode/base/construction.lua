@@ -160,6 +160,20 @@ function PNRP.DropBulkCrate( )
 end
 net.Receive( "DropBulkCrate", PNRP.DropBulkCrate )
 
+function PNRP.DropCrate( ItemID, Count, pos )
+	for itemname, item in pairs(PNRP.Items) do
+		if tostring( ItemID ) == itemname then
+			local ent = ents.Create("msc_itembox")
+			--Spawns the entity
+			ent:SetPos(pos)
+			ent:SetNWString("itemtype", item.ID)
+			ent:SetNWInt("amount", Count)
+			ent:Spawn()
+			ply:EmitSound(Sound("items/ammo_pickup.wav"))
+		end
+	end
+end
+
 function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
 	local ply = net.ReadEntity()
 	local ItemID = net.ReadString()
