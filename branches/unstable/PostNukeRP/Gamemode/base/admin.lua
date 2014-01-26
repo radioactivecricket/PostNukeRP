@@ -258,15 +258,16 @@ function PlyDevMode(ply, cmd, args)
 		ply:ChatPrint("You do not have access to this command!")
 		return
 	end
-	local setPlayer = args[1]
+	local setPlayer =args[1]
 	if not setPlayer then 
 		setPlayer = ply
 	else
+		setPlayer = string.lower(tostring(setPlayer))
 		local playerList = player.GetAll()
 		local FoundPly = false
 		for k, v in pairs(playerList) do
 			if IsValid(v) then
-				if string.find(string.lower(v:Nick()), string.lower(setPlayer)) then
+				if string.find(string.lower(tostring(v:Nick())), tostring(setPlayer)) then
 					FoundPly = true
 					setPlayer = v
 				end

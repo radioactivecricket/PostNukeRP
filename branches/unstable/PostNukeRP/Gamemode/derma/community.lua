@@ -724,7 +724,7 @@ function communityTabWindow(communityName, fullComTable, tab)
 						else
 							local ReadButton = vgui.Create( "DButton", pendingPanel )
 								ReadButton:SetPos( 10, 55 )
-								ReadButton:SetText( "Acept" )
+								ReadButton:SetText( "Accept" )
 								ReadButton:SetSize( 50, 15 )
 								ReadButton.DoClick = function()
 									RunConsoleCommand( "pnrp_acptpending", dataTbl["cid"], dataTbl["info"]) 
@@ -1072,6 +1072,7 @@ function GM.commSearchWindow()
 			allyBtnLbl:SizeToContents()
 		
 		war_ally_BTN_ENDS(false)
+		
 		
 	function commSearch_Frame:Close()                  
 		comSFrame = false                  

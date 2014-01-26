@@ -328,6 +328,19 @@ function EntityMeta:PowerUnLink()
 			end
 		end
 		
+		--SPECIAL CONSIDERATIONS
+		-- The turret causing problems again.
+		if self:GetClass() == "npc_turret_floor" then
+			self:AddRelationship("npc_zombie D_LI 99")
+			self:AddRelationship("npc_fastzombie D_LI 99")
+			self:AddRelationship("npc_poisonzombie D_LI 99")
+			self:AddRelationship("npc_antlion D_LI 99")
+			self:AddRelationship("npc_antlionguard D_LI 99")
+			self:AddRelationship("npc_headcrab_poison D_LI 99")
+			self:AddRelationship("npc_headcrab_fast D_LI 99")
+			self:AddRelationship("npc_headcrab D_LI 99")
+		end
+		
 		self.NetworkContainer:UpdatePower()
 		
 		local linkedNodes = {}
