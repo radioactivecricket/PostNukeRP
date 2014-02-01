@@ -44,8 +44,8 @@ function ENT:Explosion()
 
 	local doorent = self.Entity:GetNWEntity("door", nil)
 	if doorent:IsValid() and (doorent:GetClass() == "prop_door_rotating" or doorent:GetClass() == "func_door_rotating" or doorent:GetClass() == "func_door") then
-		doorent:Fire("open", "", 0.1)
 		doorent:Fire("unlock", "", 0.1)
+		doorent:Fire("open", "", 0.1)
 
 		local pos = doorent:GetPos()
 		local ang = doorent:GetAngles()
