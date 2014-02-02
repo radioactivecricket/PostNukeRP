@@ -123,7 +123,7 @@ function WastelandRadioMenu()
 			SLButton:SetSize( 100, 15 )
 			SLButton.DoClick = function ()
 				local SL = SLNumberWang:GetValue()
-				if SL < 0 or SL > 70 then
+				if SL < 0 or SL > 100 then
 					SL = 60
 				end
 				net.Start("setRadioSL")
