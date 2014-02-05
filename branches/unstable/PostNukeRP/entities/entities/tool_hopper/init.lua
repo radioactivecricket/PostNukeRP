@@ -89,6 +89,7 @@ end
 		if Item then
 			if val > 0 then
 				PNRP.DropCrate( itemID, val, pos )
+				ent:EmitSound(Sound("items/ammo_pickup.wav"))
 				ent.inv[itemID] = ent.inv[itemID] - val
 			end
 		end

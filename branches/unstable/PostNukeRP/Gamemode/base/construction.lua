@@ -169,7 +169,6 @@ function PNRP.DropCrate( ItemID, Count, pos )
 			ent:SetNWString("itemtype", item.ID)
 			ent:SetNWInt("amount", Count)
 			ent:Spawn()
-			ply:EmitSound(Sound("items/ammo_pickup.wav"))
 		end
 	end
 end
