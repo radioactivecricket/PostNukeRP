@@ -19,3 +19,7 @@ end
 function ENT:Think()
 	
 end
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end

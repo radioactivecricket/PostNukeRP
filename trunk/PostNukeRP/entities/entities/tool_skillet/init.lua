@@ -15,3 +15,7 @@ end
 function ENT:Use( activator, caller )
  
 end
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end

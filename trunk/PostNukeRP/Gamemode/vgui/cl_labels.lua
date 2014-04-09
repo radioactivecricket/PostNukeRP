@@ -103,9 +103,41 @@ function GM:HUDDrawTargetID()
 					surface.SetDrawColor( teamColor.r, teamColor.g, teamColor.b, alpha )
 					surface.DrawOutlinedRect( drawPos.x, drawPos.y, w, h )
 					
+					local plyCid = tonumber(ply:GetNWInt("cid", -1))
+					local oCid = tonumber(ent:GetNWInt("cid", -1))
+					
 					local text
 					
-					text = ent:Nick() 
+					text = ent:Nick()
+										
+					local cMaterial = nil
+					local cStatus = "none"
+					if plyCid >= 0 and oCid >= 0 then
+						if plyCid == oCid then
+							cMaterial = "gui/icons/flag_green.png"
+						else
+							
+							if ply.ComDiplomacy then
+								cStatus = ply.ComDiplomacy[tonumber(oCid)]
+							--	text = text.." "..table.ToString(ply.ComDiplomacy).." "..oCid
+							end
+							
+							if cStatus == "ally" then
+								cMaterial = "gui/icons/flag_blue.png"
+							elseif cStatus == "war" then 
+								cMaterial = "gui/icons/flag_red.png"
+							else	
+								cMaterial = nil
+							end
+							
+						end
+						if cMaterial ~= nil then
+							surface.SetDrawColor( 255, 255, 255, alpha )
+							surface.SetMaterial( Material( cMaterial ) )
+							surface.DrawTexturedRect( textXPos.x -((w/2)+16), drawPos.y +15, 15, 15 ) 
+						end
+					end
+					
 					
 					draw.DrawText( text, font, textXPos.x, drawPos.y + 5, Color(255,255,255,alpha), TEXT_ALIGN_CENTER )
 					draw.DrawText( community, font2, textXPos.x, drawPos.y + 20, Color(255,255,255,alpha), TEXT_ALIGN_CENTER )

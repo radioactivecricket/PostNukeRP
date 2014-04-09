@@ -74,6 +74,9 @@ function ITEM.Create( ply, class, pos )
 		PNRP.SetOwner(ply, ent)
 		PNRP.AddWorldCache( ply,ITEM.ID )
 	end
+	
+	ent.gas = 0
+	ent.tank = 5
 end
 
 PNRP.AddItem(ITEM)

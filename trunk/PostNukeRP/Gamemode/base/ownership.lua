@@ -196,8 +196,11 @@ function PNRP.OpenBuddyWindow(ply)
 			end
 		end
 	end 
+
 	net.Start("pnrp_OpenBuddyWindow")
 		net.WriteTable(tbl)
+		net.WriteString(ply.CommunityBuddy or "false")
+		net.WriteString(ply.AllyBuddy or "false")
 	net.Send(ply)
 end
 concommand.Add("pnrp_OpenBuddy", PNRP.OpenBuddyWindow)
@@ -205,27 +208,43 @@ util.AddNetworkString( "pnrp_OpenBuddyWindow" )
 
 function PNRP.AddBuddy( ply, cmd, args )
 	local UID = table.concat(args, "")
+
 	ply.PropBuddyList = ply.PropBuddyList or {}
 	ply.PropBuddyList[ UID ] = true
 	ply:ChatPrint("Buddy Added.")
 end
 concommand.Add("PNRP_AddBuddy", PNRP.AddBuddy)
 
-function PNRP.AddCommBuddy( ply, cmd, args )
-	ply.PropBuddyList = ply.PropBuddyList or {}
-	
-	local cid = ply:GetTable().Community
-	local query = "SELECT * FROM community_members WHERE cid="..tostring(cid)
-	
-	local result = querySQL(query)
-	
-	if result then
-	
+function PNRP.ToggleCommBuddy( ply, cmd, args )
+	if ply.CommunityBuddy == "true" then
+		ply.CommunityBuddy = "false"
+		ply:ChatPrint("Community Buddy System Disabled")
+		
+		if ply.AllyBuddy == "true" then
+			ply:ChatPrint("Ally Buddy System Disabled")
+			ply.AllyBuddy = "false"
+		end
+	else
+		ply.CommunityBuddy = "true"
+		ply:ChatPrint("Community Buddy System Enabled")
 	end
-	
-	ply:ChatPrint("Buddy Added.")
 end
-concommand.Add("PNRP_AddCommBuddy", PNRP.AddCommBuddy)
+concommand.Add("PNRP_ToggleCommBuddy", PNRP.ToggleCommBuddy)
+
+function PNRP.ToggleAllyBuddy( ply, cmd, args )
+	if ply.CommunityBuddy ~= "true" then
+		ply:ChatPrint("Enable Community Buddy System first.")
+		return
+	end
+	if ply.AllyBuddy == "true" then
+		ply.AllyBuddy = "false"
+		ply:ChatPrint("Ally Buddy System Disabled")
+	else
+		ply.AllyBuddy = "true"
+		ply:ChatPrint("Ally Buddy System Enabled")
+	end
+end
+concommand.Add("PNRP_ToggleAllyBuddy", PNRP.ToggleAllyBuddy)
 
 function PNRP.RemoveBuddy(  ply, cmd, args )
 	local UID = table.concat(args, "")
@@ -234,4 +253,10 @@ function PNRP.RemoveBuddy(  ply, cmd, args )
 	ply:ChatPrint("Buddy Removed.")
 end
 concommand.Add("PNRP_RemBuddy", PNRP.RemoveBuddy)
+
+function PNRP.ClearBuddyList(  ply, cmd, args )
+	ply.PropBuddyList = {}
+	ply:ChatPrint("Buddy list cleared.")
+end
+concommand.Add("PNRP_ClearBuddyList", PNRP.ClearBuddyList)
 --EOF

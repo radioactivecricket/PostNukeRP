@@ -131,13 +131,14 @@ function NucGenMenu( )
 			UnloadButton.DoClick = function ()
 				local unFuel = fuel2NumberWang:GetValue()
 				fuel = tonumber(fuel)
-				if unFuel < 0 then unFuel = 0 end
-				if unFuel > fuel then unFuel = fuel end
-				net.Start("unloadnucgen_stream")
-					net.WriteDouble(unFuel)
-					net.WriteEntity(ply)
-					net.WriteEntity(genEnt)
-				net.SendToServer()
+				if unFuel > 0 then 
+					if unFuel > fuel then unFuel = fuel end
+					net.Start("unloadnucgen_stream")
+						net.WriteDouble(unFuel)
+						net.WriteEntity(ply)
+						net.WriteEntity(genEnt)
+					net.SendToServer()
+				end
 				gen_frame:Close()
 			end
 	

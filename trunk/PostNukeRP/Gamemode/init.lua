@@ -99,6 +99,7 @@ util.AddNetworkString("grubSelect")
 
 util.AddNetworkString("printUmsgTable")
 util.AddNetworkString("sendUmsgTable")
+util.AddNetworkString("sndComDipl")
 
 function querySQL(query)
 
@@ -136,10 +137,17 @@ function SQLiteTableCheck ()
 	end
 	
 	if not sql.TableExists("community_table") then
-		query = "CREATE TABLE community_table ( cid INTEGER PRIMARY KEY AUTOINCREMENT, cname varchar(255), res varchar(255), inv varchar(255), founded varchar(255) )"
+		query = "CREATE TABLE community_table ( cid INTEGER PRIMARY KEY AUTOINCREMENT, cname varchar(255), res varchar(255), inv varchar(255), founded varchar(255), diplomacy TEXT )"
 		result = querySQL(query)
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  community_table\n")
+		
+		query = "SELECT diplomacy FROM community_table"
+		result = sql.Query(query)
+		if sql.LastError( result ) != nil and result == false then
+			query = "ALTER TABLE community_table ADD COLUMN diplomacy TEXT"
+			querySQL(query)
+		end
 	end
 	
 	if not sql.TableExists("community_members") then
@@ -147,6 +155,13 @@ function SQLiteTableCheck ()
 		result = querySQL(query)
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  community_members\n")
+	end
+	
+	if not sql.TableExists("community_pending") then
+		query = "CREATE TABLE community_pending ( cid int, msg TEXT, data TEXT, time TEXT )"
+		result = querySQL(query)
+	else
+		Msg(tostring(os.date()).." SQL TABLE EXISTS:  community_pending\n")
 	end
 	
 	if not sql.TableExists("player_inv") then
@@ -355,7 +370,7 @@ function GM:PlayerSpawn( ply )
 	ply:IncResource("Chemicals",0)
 	
 	if !ply:GetTable().SleepGodCheck then
-		ply:ChatPrint("Temp God Enabled.")
+		ply:ChatPrint("Temporary Godmode Enabled.")
 		ply:GodEnable()
 	
 		local timerID = tostring(math.random(1,9999999))
@@ -363,7 +378,7 @@ function GM:PlayerSpawn( ply )
 			if IsValid(ply) then
 				if not ply.DevMode then
 					ply:GodDisable()
-					ply:ChatPrint("Temp God Dissabled.")
+					ply:ChatPrint("Temporary Godmode Disabled.")
 					ply:IncResource("Scrap",0)
 					ply:IncResource("Small_Parts",0)
 					ply:IncResource("Chemicals",0)
@@ -435,7 +450,7 @@ function GM:PlayerDisconnected(ply)
 end
 
 function GM:PlayerLoadout( ply ) --Weapon/ammo/item function
-	
+
     if ply:Team() == TEAM_WASTELANDER then --If player team equals 1
 
         giveDefWep(ply)
@@ -617,16 +632,16 @@ function GM:ShowTeam( ply )
 	if tostring(ent) == "[NULL Entity]" or ent == nil then return end
 	
 	if ent.BlockF2 then
-		ply:ChatPrint("You cant pick this up.")
+		ply:ChatPrint("You can't pick this up.")
 		return
 	end
 	
 	if tostring(ply:GetVehicle( )) != "[NULL Entity]" then
-		ply:ChatPrint("Can not do this while in a vehicle.")
+		ply:ChatPrint("Cannot do this while in a vehicle.")
 		return
 	end
 		
-	if ent:GetClass() == "msc_itembox" then
+	if ent:GetClass() == "msc_itembox" or ent:GetClass() == "msc_display_item" then
 		ent:F2Use(ply)
 	end
 	
@@ -690,9 +705,10 @@ function GM:ShowTeam( ply )
 				if weight <= weightCap then
 					PNRP.AddToInventory( ply, ItemID, 1 )
 					PNRP.TakeFromWorldCache( ply, ItemID )
+					pickupGas( ply, ent )
 					ent:Remove()
 				else
-					ply:ChatPrint("You're pack is too full and cannot carry this.")
+					ply:ChatPrint("Your pack is too full and cannot carry this.")
 				end
 				
 			else
@@ -706,11 +722,11 @@ function GM:ShowTeam( ply )
 						
 				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
 				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
-				
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 				PNRP.AddToInventory( ply, ItemID, 1 )
 				PNRP.TakeFromWorldCache( ply, ItemID )
-				ply:ChatPrint("You picked up your car")
+				ply:ChatPrint("You picked up your car.")
+				pickupGas( ply, ent )
 				ent:Remove()
 								
 			end
@@ -733,7 +749,7 @@ function GM:ShowTeam( ply )
 					
 					ent:Remove()
 				else
-					ply:ChatPrint("You're pack is too full and cannot carry this.")
+					ply:ChatPrint("Your pack is too full and cannot carry this.")
 				end
 			elseif myType == "ammo" then
 				local boxes = math.floor( tonumber(ent:GetNWString("Ammo")) / tonumber(ent:GetNWString("NormalAmmo")) )
@@ -756,7 +772,7 @@ function GM:ShowTeam( ply )
 							PNRP.AddToInventory( ply, ItemID, 1 )
 							ammoLeft = ammoLeft - tonumber(ent:GetNWString("NormalAmmo"))
 						else
-							ply:ChatPrint("You're pack is too full and cannot carry all of this.")
+							ply:ChatPrint("Your pack is too full and cannot carry all of this.")
 							overweight = true
 							break
 						end
@@ -786,7 +802,7 @@ function GM:ShowTeam( ply )
 				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
 				local weightCap
 				
-				if myType == "tool" then
+				if myType == "tool" or myType == "misc" then
 					if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) ~= PNRP:GetUID(ply) then
 						ply:ChatPrint("You do not own this!")
 						return
@@ -806,7 +822,7 @@ function GM:ShowTeam( ply )
 					end
 					ent:Remove()
 				else
-					ply:ChatPrint("You're pack is too full and cannot carry this.")
+					ply:ChatPrint("Your pack is too full and cannot carry this.")
 				end
 
 			end
@@ -839,7 +855,6 @@ function GM:ShowSpare1( ply )
 	else
 	--If not looking at the car, open normal inventory.
 		ply:ConCommand("pnrp_inv")
-	
 	end
 end
 concommand.Add( "pnrp_ShowSpare1", GM.ShowSpare1 )
@@ -855,7 +870,7 @@ function PNRP.GetAllTools( ply )
 		local ItemID = PNRP.FindItemID( myClass )
 		if ItemID != nil then		
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "tool" then
+			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && (myType == "tool" or myType == "misc") then
 				if not PNRP.Items[ItemID].Persistent then
 					Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 					PNRP.AddToInventory( ply, ItemID, 1 )
@@ -887,6 +902,7 @@ function PNRP.GetAllCars( ply )
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 				PNRP.AddToInventory( ply, ItemID, 1 )
 				PNRP.TakeFromWorldCache( ply, ItemID )
+				pickupGas( ply, v )
 				v:Remove()
 				
 			end
@@ -1081,4 +1097,6 @@ function PrintUmsgTable()
 end
 net.Receive( "printUmsgTable", PrintUmsgTable )
 
+
+--util.AddNetworkString("setCL_ColorFX")
 --EOF

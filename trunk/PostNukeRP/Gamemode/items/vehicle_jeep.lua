@@ -59,7 +59,7 @@ function ITEM.Create( ply, class, pos )
 				duplicator.StoreEntityModifier( ent, "VehicleMemDupe", vehicle.Members );
 			end
 			
-			PNRP.SetOwner(ply, ent)
+			PNRP.SetOwner(ply, ent)		
 		end
 	else
 	
@@ -74,7 +74,12 @@ function ITEM.Create( ply, class, pos )
 		ent:Activate()
 		PNRP.SetOwner(ply, ent)
 		PNRP.AddWorldCache( ply,ITEM.ID )
+		
 	end
+	
+	ent.IsGasSystem = true
+	ent.gas = 0
+	ent.tank = 8
 end
 
 PNRP.AddItem(ITEM)

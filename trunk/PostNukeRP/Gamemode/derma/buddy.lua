@@ -3,7 +3,8 @@ local buddy_frame
 function GM.BuddyWindow( )
 
 	local buddyTable = net.ReadTable()
-	--local buddyTable = decoded["buddyTable"]		
+	local comBuddy = net.ReadString()
+	local allyBuddy = net.ReadString()
 	local ply = LocalPlayer()
 	
 	local plUID = PNRP:GetUID( ply )
@@ -96,17 +97,46 @@ function GM.BuddyWindow( )
 						buddy_frame:Close()
 					end
 				end	
-			
-	--		local AddCommBTN = vgui.Create("DButton", buddy_frame )
-	--			AddCommBTN:SetText( "Add Community >>" )
-	--			AddCommBTN:SetPos( 140, 75 )
-	--			AddCommBTN:SetSize( 100, 20 ) 
-	--			AddCommBTN.DoClick = function()
+				
+			local clearBTN = vgui.Create("DButton", buddy_frame )
+				clearBTN:SetText( "<< Clear List" )
+				clearBTN:SetPos( 140, 100 )
+				clearBTN:SetSize( 100, 20 ) 
+				clearBTN.DoClick = function()
 					
-	--				RunConsoleCommand( "PNRP_AddCommBuddy" )
+					RunConsoleCommand( "PNRP_ClearBuddyList" )
 
-	--				buddy_frame:Close()
-	--			end	
+					buddy_frame:Close()
+				end	
+			local ComBtnText = "Enable Com Buddy"
+			if tostring(comBuddy) == "true" then
+				ComBtnText = "Disable Com Buddy"
+			end
+			local ToggleCommBTN = vgui.Create("DButton", buddy_frame )
+				ToggleCommBTN:SetText( ComBtnText )
+				ToggleCommBTN:SetPos( 140, 150 )
+				ToggleCommBTN:SetSize( 100, 20 ) 
+				ToggleCommBTN.DoClick = function()
+					
+					RunConsoleCommand( "PNRP_ToggleCommBuddy" )
+
+					buddy_frame:Close()
+				end	
+				
+			local AlyBtnText = "Enable Ally Buddy"
+			if tostring(allyBuddy) == "true" then
+				AlyBtnText = "Disable Ally Buddy"
+			end
+			local ToggleAlyBTN = vgui.Create("DButton", buddy_frame )
+				ToggleAlyBTN:SetText( AlyBtnText )
+				ToggleAlyBTN:SetPos( 140, 175 )
+				ToggleAlyBTN:SetSize( 100, 20 ) 
+				ToggleAlyBTN.DoClick = function()
+					
+					RunConsoleCommand( "PNRP_ToggleAllyBuddy" )
+
+					buddy_frame:Close()
+				end	
 end
 --concommand.Add( "pnrp_buddy_window", open_buddy )
 --datastream.Hook( "pnrp_OpenBuddyWindow", GM.BuddyWindow )

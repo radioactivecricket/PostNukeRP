@@ -68,6 +68,7 @@ function ENT:Use( activator, caller )
 				net.Send(activator)
 			else
 				-- Just a placeholder for breaking into these things.
+				activator:ActOfWar( self.Community )
 				net.Start("stockpile_breakin")
 					net.WriteEntity(self)
 					net.WriteDouble(self.BreakInTimer)

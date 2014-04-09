@@ -176,8 +176,8 @@ function SK_Srv.AddCoowner( )
 	
 	if ply:SKIsOwner( doorEnt ) then
 		if doorEnt:SKSetCoowner( newCoowner ) then
-			ply:ChatPrint( newCoowner:GetName().." is now a co-owner." )
-			newCoowner:ChatPrint( ply:GetName().." has set you as a co-owner." )
+			ply:ChatPrint( newCoowner:GetName().." is now a co-owner of this item." )
+			newCoowner:ChatPrint( ply:GetName().." has set you as a co-owner to one of their items." )
 		else
 			ply:ChatPrint( "ERROR: Can't find player. (Are they still on the server?)" )
 		end
@@ -196,8 +196,8 @@ function SK_Srv.RemCoowner( )
 	
 	if ply:SKIsOwner( doorEnt ) then
 		if doorEnt:SKRemoveCoowner( coowner ) then
-			ply:ChatPrint( coowner:GetName().." is no longer a co-owner." )
-			coowner:ChatPrint( ply:GetName().." has removed you as a co-owner." )
+			ply:ChatPrint( coowner:GetName().." is no longer a co-owner of this item." )
+			coowner:ChatPrint( ply:GetName().." has removed you as a co-owner of one of their items." )
 		else
 			ply:ChatPrint( "ERROR: Can't find player. (Are they still on the server?)" )
 		end
@@ -215,7 +215,7 @@ function SK_Srv.RemAllCoowner( )
 	if ply:SKIsOwner( doorEnt ) then
 		for k, v in pairs(doorEnt.Coowners) do
 			if IsValid(v) and v:IsPlayer() then
-				v:ChatPrint( ply:GetName().." has removed you as a co-owner." )
+				v:ChatPrint( ply:GetName().." has removed you as a co-owner of one of their items." )
 			end
 		end
 		doorEnt:SKRemoveCoowners()

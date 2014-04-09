@@ -21,6 +21,7 @@ function PNRP.chtTest( ply, cmd, text )
 end
 PNRP.ChatCmd( "/test", PNRP.chtTest )
 
+PNRP.ChatConCmd( "/motd", "motd" )
 PNRP.ChatConCmd( "/classmenu", "pnrp_classmenu" )
 PNRP.ChatConCmd( "/shop", "pnrp_buy_shop" )
 PNRP.ChatConCmd( "/inv", "pnrp_inv" )
@@ -63,7 +64,7 @@ function SetRPName(ply, cmd, args, fullstr)
 		ply.rpname = ply:SteamName()
 	else
 		if string.len(fullstr) > 40 then
-			ply:ChatPrint("RP name is too long.  Must be under 40 characters.")
+			ply:ChatPrint("Name too long! Must be under 40 characters.")
 			return
 		end
 
@@ -162,7 +163,7 @@ function GM.SaveCharacter(ply,cmd,args)
 	query = query..", res='"..ply.Resources["Scrap"]..","..ply.Resources["Small_Parts"]..","..ply.Resources["Chemicals"].."', weapons='"..weaponList.."', ammo='"..ammoList.."' WHERE pid="..tostring(ply.pid)
 	result = querySQL(query)
 	print("Player data saved: "..ply:Nick())
-	ply:ChatPrint("Player Saved.")
+	ply:ChatPrint("Player saved.")
 end
 
 function GM.CreateCharacter( ply, plyModel, plyClass )
@@ -313,17 +314,38 @@ function LoadCommunityInfo( ply, pid )
 		local result2
 
 		ply.Community = tonumber(result[1]["cid"])
+		ply:SetNWInt( "cid", ply.Community )
 		ply.CommunityRank = tonumber(result[1]["rank"])
+				
 		ply:SetNWString("ctitle", result[1]["title"])
 
-		query2 = "SELECT cname FROM community_table WHERE cid="..tostring(result[1]["cid"])
+		query2 = "SELECT * FROM community_table WHERE cid="..tostring(result[1]["cid"])
 		result2 = querySQL(query2)
+		ply.ComDiplomacy = {}
+		
+		if result2[1]["diplomacy"] then
+			local diplomacySplit = string.Explode(" ", result2[1]["diplomacy"])
+		
+			for _, ocid in pairs(diplomacySplit) do
+				local splitDip = string.Explode(",", ocid)
+				if tonumber(splitDip[1]) then
+				--	ErrorNoHalt("set: "..tostring(ply).." "..tostring(splitDip[1]).." = "..tostring(splitDip[2]).."\n")
+					ply.ComDiplomacy[tonumber(splitDip[1])] = splitDip[2]
+				end
+			end
+		end
+		
+		ply:SendDipl()
 		ply:SetNWString("community", result2[1]["cname"])
 	else
-		ply.Community = nil
-		ply.CommunityRank = nil
-		ply:SetNWString("ctitle", "")
-		ply:SetNWString("community", "N/A")
+	--	ply.Community = nil
+	--	ply:SetNWInt( "cid", nil )
+	--	ply.CommunityRank = nil
+	--	ply.ComDiplomacy = {}
+	--	ply:SendDipl()
+	--	ply:SetNWString("ctitle", "")
+	--	ply:SetNWString("community", "N/A")
+		PNRP.PlyDelComInfo(ply)
 	end
 end
 
@@ -420,12 +442,13 @@ function NewCommunityInfo( ply, community )
 		result = querySQL(query)
 
 		ply:GetTable().Community = mycid
+		ply:SetNWInt( "cid", mycid )
 		ply:SetNWString("community", community)
 		ply:GetTable().CommunityRank = 1
 		ply:SetNWString("ctitle", "Recruit")
 		ply:ConCommand("pnrp_save")
 	else
-		query = "INSERT INTO community_table VALUES ( NULL, "..SQLStr(tostring(community))..", '0,0,0', ' ', "..SQLStr(tostring(os.date())).." )"
+		query = "INSERT INTO community_table VALUES ( NULL, "..SQLStr(tostring(community))..", '0,0,0', ' ', "..SQLStr(tostring(os.date()))..", '' )"
 		result = querySQL(query)
 
 		query = "SELECT cid FROM community_table WHERE cname="..SQLStr(tostring(community))
@@ -436,7 +459,7 @@ function NewCommunityInfo( ply, community )
 		if result then
 			newcid = result[1]['cid']
 		else
-			ply:ChatPrint("An error has occured creating this community.")
+			ply:ChatPrint("An error has occured while creating this community.")
 			return
 		end
 
@@ -449,6 +472,7 @@ function NewCommunityInfo( ply, community )
 		result = querySQL(query)
 
 		ply:GetTable().Community = newcid
+		ply:SetNWInt( "cid", newcid )
 		ply:SetNWString("community", community)
 		ply:GetTable().CommunityRank = 3
 		ply:SetNWString("ctitle", "Founder")
@@ -475,12 +499,14 @@ function RemCommunityInfo( cid, pid )
 	result = querySQL(query)
 
 	for _, myUser in pairs(player.GetAll()) do
-		if myUser.pid == pid then
-			myUser:GetTable().Community = nil
-			myUser:SetNWString("community", nil)
-			myUser:GetTable().CommunityRank = nil
-			myUser:SetNWString("ctitle", nil)
-			myUser:ConCommand("pnrp_save")
+		if tonumber(myUser.pid) == tonumber(pid) then
+			PNRP.PlyDelComInfo(myUser)
+		--	myUser:GetTable().Community = nil
+		--	myUser:SetNWInt( "cid", nil )
+		--	myUser:SetNWString("community", nil)
+		--	myUser:GetTable().CommunityRank = nil
+		--	myUser:SetNWString("ctitle", nil)
+		--	myUser:ConCommand("pnrp_save")
 			myUser:ChatPrint("You've been removed from your community.")
 		end
 	end
@@ -535,19 +561,41 @@ function DelCommunity( cid )
 	local query
 	local result
 
-	query = "DELETE FROM community_members WHERE cid="..tostring(cid)
-	result = querySQL(query)
+	local query = "DELETE FROM community_members WHERE cid="..tostring(cid)
+	local result = querySQL(query)
 
-	query = "DELETE FROM community_table WHERE cid="..tostring(cid)
-	result = querySQL(query)
-
+	local query = "DELETE FROM community_table WHERE cid="..tostring(cid)
+	local result = querySQL(query)
+	
+	local queryDip = "SELECT * FROM community_table WHERE diplomacy LIKE '%"..tostring(cid).."%'"
+	local resultDip = querySQL(queryDip)
+	
+	--Removed diplomacy entries
+	if resultDip then
+		for _, com in pairs(resultDip) do
+			print(com["diplomacy"])
+			local diplomacySplit = string.Explode(" ", com["diplomacy"])
+			local dipTbl = {}
+			for _, ocid in pairs(diplomacySplit) do
+				local splitDip = string.Explode(",", ocid)
+				if tonumber(splitDip[1]) ~= tonumber(cid) then
+					dipTbl[splitDip[1]] = splitDip[2]
+				end
+			end
+			local dipStr = ""
+			for ncid, stat in pairs(dipTbl) do
+				dipStr = dipStr..ncid..","..stat.." "
+			end
+			dipStr = string.TrimRight(dipStr)
+			
+			local queryCom = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(com["cid"])
+			querySQL(queryCom)
+		end
+	end
+	
 	for _, myUser in pairs(player.GetAll()) do
-		if myUser.Community == cid then
-			myUser:GetTable().Community = nil
-			myUser:SetNWString("community", nil)
-			myUser:GetTable().CommunityRank = nil
-			myUser:SetNWString("ctitle", nil)
-			myUser:ConCommand("pnrp_save")
+		if tonumber(myUser.Community) == tonumber(cid) then
+			PNRP.PlyDelComInfo(myUser)
 			myUser:ChatPrint("You've been removed from your community, because it's been deleted.")
 		end
 	end
@@ -761,7 +809,22 @@ function GetCommunityTbl( cid )
 	end
 	communityTbl["inv"] = invTable
 	communityTbl["founded"] = ctblInfo["founded"]
-
+	
+	communityTbl["diplomacy"] = {}
+	local dipTbl = {}
+	
+	if ctblInfo["diplomacy"] then
+		local diplomacySplit = string.Explode(" ", ctblInfo["diplomacy"])
+		
+		for _, ocid in pairs(diplomacySplit) do
+			local splitDip = string.Explode(",", ocid)
+			
+			dipTbl[splitDip[1]] = splitDip[2]
+		end
+		
+		communityTbl["diplomacy"] = dipTbl
+	end
+	
 	--"CREATE TABLE profiles ( pid INTEGER PRIMARY KEY AUTOINCREMENT, steamid varchar(255), model varchar(255), nick varchar(255), lastlog varchar(255), xp int, skills varchar(255), health int, armor int, endurance int, hunger int, res varchar(255), weapons varchar(255), ammo varchar(255) )"
 	communityTbl["users"] = {}
 	for _, user in pairs(cMemInfo) do
@@ -798,17 +861,44 @@ function PNRP.OpenMainCommunity(ply)
 	if PlayerCommunityName == nil then
 		PlayerCommunityName = "none"
 	else
---		query = "SELECT * FROM community_members WHERE pid="..tostring(ply.pid)
---		result = sql.Query(query)
---		local cid = result[1]["cid"]
 		tbl = GetCommunityTbl( PlayerCommunityName )
 		PlayerCommunityName = ply:GetNWString("community")
 	end
-
+	
+	local wars = {}
+	local allies = {}
+	
+	if PlayerCommunityName != "none" then
+		for ocid, cStatus in pairs(tbl["diplomacy"]) do
+			queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
+			resultOcid = querySQL(queryOcid)
+			local cName
+			if resultOcid then
+				local oCtblInfo = resultOcid[1]
+				cName = oCtblInfo["cname"]
+			else
+				cName = "[Unknown CID: "..ocid.."] | Click Cancel -->"
+			end
+			if cStatus == "war" then
+				wars[ocid] = tostring(cName)
+			elseif cStatus == "ally" then
+				allies[ocid] = tostring(cName)
+			end
+			
+		end
+	end
+	
+	queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(ply:GetTable().Community)
+	resultPending = querySQL(queryPending)
+	if not resultPending then resultPending = {} end
+	
 	net.Start("pnrp_OpenCommunityWindow")
 		net.WriteString(PlayerCommunityName)
 		net.WriteTable(tbl)
-		net.WriteString(tostring(ply.pid))
+		net.WriteTable(resultPending)
+		net.WriteString(ply.pid)
+		net.WriteTable(wars)
+		net.WriteTable(allies)
 	net.Send(ply)
 end
 concommand.Add("pnrp_OpenCommunity", PNRP.OpenMainCommunity)
@@ -839,11 +929,13 @@ function AdmDelCom(ply, cmd, args)
 
 		for _, v in pairs(player.GetAll()) do
 			if tostring(v:GetTable().Community) == tostring(cid) then
-				v:ChatPrint( "Your community, "..ply:GetNWString("community")..", has been deleted by an Admin!" )
-
-				v:GetTable().Community = nil
-				v:GetTable().CommunityRank = nil
-				v:SetNWString("community", "N/A")
+				v:ChatPrint( "Your community, "..v:GetNWString("community")..", has been deleted by an Admin!" )
+				
+				PNRP.PlyDelComInfo(v)
+			--	v:GetTable().Community = nil
+			--	v:SetNWInt( "cid", nil )
+			--	v:GetTable().CommunityRank = nil
+			--	v:SetNWString("community", "N/A")
 			end
 		end
 	end
@@ -858,9 +950,39 @@ function AdmEditCom(ply, cmd, args)
 		if GetComtbl then
 			tbl = GetComtbl
 		end
+		
+		local wars = {}
+		local allies = {}
+		
+		if tbl["diplomacy"] then
+			for ocid, cStatus in pairs(tbl["diplomacy"]) do
+				queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
+				resultOcid = querySQL(queryOcid)
+				local cName
+				if resultOcid then
+					local oCtblInfo = resultOcid[1]
+					cName = oCtblInfo["cname"]
+				else
+					cName = "[Unknown CID: "..ocid.."] | Click Cancel -->"
+				end
+				if cStatus == "war" then
+					wars[ocid] = tostring(cName)
+				elseif cStatus == "ally" then
+					allies[ocid] = tostring(cName)
+				end
+			end
+		end
+		
+		queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+		resultPending = querySQL(queryPending)
+		if not resultPending then resultPending = {} end
+		
 		net.Start("pnrp_OpenEditCommunityWindow")
 			net.WriteTable(tbl)
+			net.WriteTable(resultPending)
 			net.WriteString(cid)
+			net.WriteTable(wars)
+			net.WriteTable(allies)
 		net.Send(ply)
 	end
 end
@@ -873,16 +995,21 @@ function PlyDelComm(ply, cmd, args)
 
 		for _, v in pairs(player.GetAll()) do
 			if v:GetTable().Community == ply:GetTable().Community and v ~= ply then
-				v:GetTable().Community = nil
-				v:GetTable().CommunityRank = nil
-				v:SetNWString("community", "N/A")
-
-				v:ChatPrint( "Your community, "..ply:GetNWString("community")..", has been deleted by an owner!" )
+			--	v:GetTable().Community = nil
+			--	v:SetNWInt( "cid", nil )
+			--	v:GetTable().CommunityRank = nil
+			--	v:SetNWString("community", "N/A")
+				PNRP.PlyDelComInfo(v)
+				
+				v:ChatPrint( "Your community, "..ply:GetNWString("community")..", has been deleted by an Owner!" )
 			end
 		end
-		ply:GetTable().Community = nil
-		ply:GetTable().CommunityRank = nil
-		ply:SetNWString("community", "N/A")
+		
+		PNRP.PlyDelComInfo(ply)
+	--	ply:GetTable().Community = nil
+	--	ply:SetNWInt( "cid", nil )
+	--	ply:GetTable().CommunityRank = nil
+	--	ply:SetNWString("community", "N/A")
 		ply:ChatPrint( "The community has been successfully deleted." )
 	else
 		ply:ChatPrint( "Unable to delete.  Either you do not have the rank to do this, or you are not part of a community." )
@@ -1098,7 +1225,7 @@ function PlyPlaceStockpile(ply, cmd, args)
 			end
 			local communityTbl = GetCommunityTbl( ply:GetTable().Community )
 
-			if table.Count(communityTbl["users"]) < 1 then
+			if table.Count(communityTbl["users"]) < 3 then
 				ply:ChatPrint( "You can only use this when you have at least 3 members!" )
 				return
 			end
@@ -1144,7 +1271,7 @@ function PlyPlaceLocker(ply, cmd, args)
 			end
 			local communityTbl = GetCommunityTbl( ply:GetTable().Community )
 
-			if table.Count(communityTbl["users"]) < 1 then
+			if table.Count(communityTbl["users"]) < 3 then
 				ply:ChatPrint( "You can only use this when you have at least 3 members!" )
 				return
 			end
@@ -1233,6 +1360,736 @@ end
 concommand.Add( "pnrp_remlocker", PlyRemLocker )
 PNRP.ChatConCmd( "/remlocker", "pnrp_remlocker" )
 
+function pnrp_testdip(ply, cmd, arg)
+	local cid = arg[1]
+	local ocid = arg[2]
+	local status = arg[3]
+	if ply:IsAdmin() then
+		ply:ChatPrint("Status Set: "..tostring(cid).." -> "..tostring(ocid).." Status: "..tostring(status))
+		AddDiplomacy( cid, ocid, status )
+	end
+end
+concommand.Add( "pnrp_testdip", pnrp_testdip )
+
+ -- Community War/Ally Functions -- 
+function AddDiplomacy( cid, ocid, status )
+	local query = "SELECT diplomacy FROM community_table WHERE cid="..tostring(cid)
+	local result = querySQL(query)
+	
+	if result[1]["diplomacy"] then
+		local dipTbl = {}
+		local diplomacySplit = string.Explode(" ", result[1]["diplomacy"])
+		
+		for _, ncid in pairs(diplomacySplit) do
+			local splitDip = string.Explode(",", ncid)
+			
+			dipTbl[splitDip[1]] = splitDip[2]
+		end
+		
+		dipTbl[ocid] = status
+		
+		local dipStr = ""
+		for ncid, stat in pairs(dipTbl) do
+			dipStr = dipStr..ncid..","..stat.." "
+		end
+		dipStr = string.TrimRight(dipStr)
+		
+		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(cid)
+		result = querySQL(query)
+	else
+		query = "UPDATE community_table SET diplomacy='"..tostring(ocid)..","..tostring(status).."' WHERE cid="..tostring(cid)
+		result = querySQL(query)
+	end
+	
+	for _, member in pairs(player.GetAll()) do
+		if member.Community == cid then
+			member:SetDipl(ocid, status)
+		end
+	end
+		
+	query = "SELECT diplomacy FROM community_table WHERE cid="..tostring(ocid)
+	result = querySQL(query)
+	
+	if result[1]["diplomacy"] then
+		local dipTbl = {}
+		local diplomacySplit = string.Explode(" ", result[1]["diplomacy"])
+		
+		for _, ncid in pairs(diplomacySplit) do
+			local splitDip = string.Explode(",", ncid)
+			
+			dipTbl[splitDip[1]] = splitDip[2]
+		end
+		
+		dipTbl[cid] = status
+		
+		local dipStr = ""
+		for ncid, stat in pairs(dipTbl) do
+			dipStr = dipStr..ncid..","..stat.." "
+		end
+		dipStr = string.TrimRight(dipStr)
+		
+		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(ocid)
+		result = querySQL(query)
+	else
+		query = "UPDATE community_table SET diplomacy='"..tostring(cid)..","..tostring(status).."' WHERE cid="..tostring(ocid)
+		result = querySQL(query)
+	end
+	
+	for _, member in pairs(player.GetAll()) do
+		if member.Community == ocid then
+			member:SetDipl(cid, status)
+		end
+	end
+	
+	if status == "war" then
+		warDipCrawler(cid, ocid)
+		warDipCrawler(ocid, cid)
+	end
+end
+
+function warDipCrawler(cid, ocid)
+	local comTbl = GetCommunityTbl(cid)
+	local ocomTbl = GetCommunityTbl(ocid)
+	
+	if comTbl["diplomacy"] then
+		for dcid, dstatus in pairs(comTbl["diplomacy"]) do
+			if dstatus == "ally" and dcid ~= cid then
+				local dcomTbl = GetCommunityTbl(tonumber(dcid))
+				if dcomTbl["diplomacy"] then
+					if not ( (dcomTbl["diplomacy"][tostring(ocid)] or "none") == "war" or (dcomTbl["diplomacy"][tostring(ocid)] or "none") == "ally" ) then
+						local newDataTbl = {}
+						newDataTbl["cid"] = ocid
+						newDataTbl["info"] = "diplomacy"
+						newDataTbl["status"] = "war"
+						
+						local dataStr = ""
+						for key, val in pairs(newDataTbl) do
+							dataStr = dataStr..key..","..tostring(val).." "
+						end
+						dataStr = string.TrimRight(dataStr)
+						
+						local msgString = "The community, "..ocomTbl.name..", has declared war against your ally, "..comTbl.name..".  Do you wish to join your ally?"
+						
+						query = "INSERT INTO community_pending VALUES ( "..tostring(dcid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+						querySQL(query)
+					end
+				end
+			end
+		end
+	end
+end
+
+function RemDiplomacy( cid, ocid )
+	local query = "SELECT diplomacy FROM community_table WHERE cid="..tostring(cid)
+	local result = querySQL(query)
+	
+	if result[1]["diplomacy"] then
+		ErrorNoHalt("result[1]['diplomacy'] = "..tostring(result[1]["diplomacy"]).."\n")
+		local dipTbl = {}
+		local diplomacySplit = string.Explode(" ", result[1]["diplomacy"])
+		
+		for _, ncid in pairs(diplomacySplit) do
+			local splitDip = string.Explode(",", ncid)
+			
+			ErrorNoHalt("splitDip[1] = "..tostring(splitDip[1]).." splitDip[2] = "..tostring(splitDip[2]).."\n")
+			dipTbl[splitDip[1]] = splitDip[2]
+		end
+		
+		dipTbl[tostring(ocid)] = nil
+		
+		local dipStr = ""
+		for ncid, stat in pairs(dipTbl) do
+			dipStr = dipStr..ncid..","..stat.." "
+		end
+		dipStr = string.TrimRight(dipStr)
+		
+		ErrorNoHalt("dipStr = "..tostring(dipStr).."\n")
+		
+		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(cid)
+		result = querySQL(query)
+		
+		for _, member in pairs(player.GetAll()) do
+			if member.Community == cid then
+				member:SetDipl(ocid, nil)
+			end
+		end
+	else
+		
+	end
+	
+	query = "SELECT diplomacy FROM community_table WHERE cid="..tostring(ocid)
+	result = querySQL(query)
+	
+	if result[1]["diplomacy"] then
+		local dipTbl = {}
+		local diplomacySplit = string.Explode(" ", result[1]["diplomacy"])
+		
+		for _, ncid in pairs(diplomacySplit) do
+			local splitDip = string.Explode(",", ncid)
+			
+			dipTbl[splitDip[1]] = splitDip[2]
+		end
+		
+		dipTbl[tostring(cid)] = nil
+		
+		local dipStr = ""
+		for ncid, stat in pairs(dipTbl) do
+			dipStr = dipStr..ncid..","..stat.." "
+		end
+		dipStr = string.TrimRight(dipStr)
+		
+		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(ocid)
+		result = querySQL(query)
+		
+		for _, member in pairs(player.GetAll()) do
+			if member.Community == ocid then
+				member:SetDipl(cid, nil)
+			end
+		end
+		
+		
+	else
+		
+	end
+end
+
+function PlyAddDiplomacy(ply, cmd, args)
+	local cid = ply:GetTable().Community
+	local ocid = tonumber(args[1])
+	local status = tostring(args[2])
+	
+	if cid == ocid and (status == "war" or status == "ally") then
+		return
+	end
+	
+	if ply:GetTable().Community then
+		if ply:GetTable().CommunityRank > 1 then
+			local query = "SELECT * FROM community_pending WHERE cid="..tostring(ocid)
+			local ocidPending = querySQL(query)
+			
+			local query2 = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+			local cidPending = querySQL(query)
+			
+			if ocidPending then
+				for _, entry in pairs(ocidPending) do
+					local dataTbl = {}
+					local dataSplit = string.Explode(" ", entry["data"])
+		
+					for _, item in pairs(dataSplit) do
+						local splitData = string.Explode(",", item)
+						
+						dataTbl[splitData[1]] = splitData[2]
+						
+						if dataTbl["cid"] == tostring(cid) and (dataTbl["info"] or "none") == "diplomacy" then
+							ply:ChatPrint("You have already sent this community a diplomacy request!")
+							return
+						end
+					end
+				end
+				
+				local newDataTbl = {}
+				newDataTbl["cid"] = cid
+				newDataTbl["info"] = "diplomacy"
+				newDataTbl["status"] = status
+				
+				local dataStr = ""
+				for key, val in pairs(newDataTbl) do
+					dataStr = dataStr..key..","..tostring(val).." "
+				end
+				dataStr = string.TrimRight(dataStr)
+				
+				local comTbl = GetCommunityTbl(cid)
+				
+				local msgString = "The community, "..comTbl.name..", wishes to "
+				if status == "ally" then
+					msgString = msgString.."ally with you."
+				else
+					msgString = msgString.."declare war against you."
+				end
+				
+				query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+				querySQL(query)
+			else
+				local newDataTbl = {}
+				newDataTbl["cid"] = cid
+				newDataTbl["info"] = "diplomacy"
+				newDataTbl["status"] = status
+				
+				local dataStr = ""
+				for key, val in pairs(newDataTbl) do
+					dataStr = dataStr..key..","..tostring(val).." "
+				end
+				dataStr = string.TrimRight(dataStr)
+				
+				local comTbl = GetCommunityTbl(cid)
+				
+				local msgString = "The community, "..comTbl.name..", wishes to "
+				if status == "ally" then
+					msgString = msgString.."ally with you."
+				else
+					msgString = msgString.."declare war against you."
+				end
+				
+				query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+				querySQL(query)
+			end
+		else
+			ply:ChatPrint( "You do not have the community permissions to do this!" )
+		end
+	else
+		ply:ChatPrint( "You are not in a community!" )
+	end
+end
+concommand.Add( "pnrp_adddiplomacy", PlyAddDiplomacy )
+
+function PlyRemDiplomacy(ply, cmd, args)
+	local cid = ply:GetTable().Community
+	local ocid = tonumber(args[1])
+	
+	if ply:GetTable().Community then
+		if ply:GetTable().CommunityRank > 1 then
+			local query = "SELECT * FROM community_pending WHERE cid="..tostring(ocid)
+			local ocidPending = querySQL(query)
+			
+			local query2 = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+			local cidPending = querySQL(query)
+			
+			if ocidPending then
+				for _, entry in pairs(ocidPending) do
+					local dataTbl = {}
+					local dataSplit = string.Explode(" ", entry["data"])
+		
+					for _, item in pairs(dataSplit) do
+						local splitData = string.Explode(",", item)
+						
+						dataTbl[splitData[1]] = splitData[2]
+						
+					end
+					
+					if dataTbl["cid"] == tostring(cid) and (dataTbl["info"] or "none") == "diplomacy" then
+						ply:ChatPrint("You have already sent this community a diplomacy request!")
+						return
+					end
+				end
+				
+				if ply.ComDiplomacy[ocid] == "ally" then
+					RemDiplomacy( cid, ocid )
+								
+					local comTbl = GetCommunityTbl(cid)
+					
+					local newDataTbl = {}
+					newDataTbl["cid"] = cid
+					newDataTbl["info"] = "msg"
+					
+					local dataStr = ""
+					for key, val in pairs(newDataTbl) do
+						dataStr = dataStr..key..","..tostring(val).." "
+					end
+					dataStr = string.TrimRight(dataStr)
+					
+					local msgString = "The community, "..comTbl.name..", has broken your alliance."
+					
+					query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+					querySQL(query)
+				else
+					local newDataTbl = {}
+					newDataTbl["cid"] = cid
+					newDataTbl["info"] = "diplomacy"
+					newDataTbl["status"] = ""
+					
+					local dataStr = ""
+					for key, val in pairs(newDataTbl) do
+						dataStr = dataStr..key..","..tostring(val).." "
+					end
+					dataStr = string.TrimRight(dataStr)
+					
+					local comTbl = GetCommunityTbl(cid)
+					
+					local msgString = "The community, "..comTbl.name..", wishes to return to a neutral status with you."
+					
+					query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+					querySQL(query)
+				end
+			else
+				if ply.ComDiplomacy[ocid] == "ally" then
+					RemDiplomacy( cid, ocid )
+								
+					local comTbl = GetCommunityTbl(cid)
+					
+					local newDataTbl = {}
+					newDataTbl["cid"] = cid
+					newDataTbl["info"] = "msg"
+					
+					local dataStr = ""
+					for key, val in pairs(newDataTbl) do
+						dataStr = dataStr..key..","..tostring(val).." "
+					end
+					dataStr = string.TrimRight(dataStr)
+					
+					local msgString = "The community, "..comTbl.name..", has broken your alliance."
+					
+					query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+					querySQL(query)
+				else
+					local newDataTbl = {}
+					newDataTbl["cid"] = cid
+					newDataTbl["info"] = "diplomacy"
+					newDataTbl["status"] = ""
+					
+					local dataStr = ""
+					for key, val in pairs(newDataTbl) do
+						dataStr = dataStr..key..","..tostring(val).." "
+					end
+					dataStr = string.TrimRight(dataStr)
+					
+					local comTbl = GetCommunityTbl(cid)
+					
+					local msgString = "The community, "..comTbl.name..", wishes to return to a neutral status with you."
+					
+					query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+					querySQL(query)
+				end
+			end
+		else
+			ply:ChatPrint( "You do not have the community permissions to do this!" )
+		end
+	else
+		ply:ChatPrint( "You are not in a community!" )
+	end
+end
+concommand.Add( "pnrp_remdiplomacy", PlyRemDiplomacy )
+
+function PlyCancelDiplomacy(ply, cmd, args)
+	local cid = ply:GetTable().Community
+	local ocid = tonumber(args[1])
+	
+	if ply:GetTable().Community then
+		if ply:GetTable().CommunityRank > 1 then
+			local query = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+			local cidPending = querySQL(query)
+			
+			if cidPending then
+				for _, entry in pairs(cidPending) do
+					local dataTbl = {}
+					local dataSplit = string.Explode(" ", entry["data"])
+		
+					for _, item in pairs(dataSplit) do
+						local splitData = string.Explode(",", item)
+						
+						dataTbl[splitData[1]] = splitData[2]
+					end
+					
+					if dataTbl["cid"] == tostring(cid) and (dataTbl["info"] or "none") == "diplomacy" then
+						query = "DELETE FROM community_pending WHERE cid="..tostring(cid).." AND time='"..entry["time"].."'"
+						querySQL(query)
+						return
+					end
+				end
+				
+				ply:ChatPrint( "No pending diplomacy event with this data!" )
+			else
+				ply:ChatPrint( "No pending for this community at all." )
+			end
+		else
+			ply:ChatPrint( "You do not have the community permissions to do this!" )
+		end
+	else
+		ply:ChatPrint( "You are not in a community!" )
+	end
+end
+concommand.Add( "pnrp_canceldiplomacy", PlyCancelDiplomacy )
+
+function PlyAcptPending(ply, cmd, args)
+	local cid = ply:GetTable().Community
+	local ocid = tonumber(args[1])
+	local pendingType = args[2]
+	
+	local overide = args[3]
+	if overide == "force" and ply:IsAdmin() then
+		cid = args[4]
+	end
+	
+	if ply:GetTable().Community or overide == "force" then
+		if ply:GetTable().CommunityRank > 1 or overide == "force" then
+			local query = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+			local cidPending = querySQL(query)
+			
+			if cidPending then
+				for _, entry in pairs(cidPending) do
+					local dataTbl = {}
+					local dataSplit = string.Explode(" ", entry["data"])
+		
+					for _, item in pairs(dataSplit) do
+						local splitData = string.Explode(",", item)
+						
+						dataTbl[splitData[1]] = splitData[2]
+						
+					end
+					
+					if dataTbl["cid"] == tostring(ocid) and (dataTbl["info"] or "none") == pendingType then
+						if pendingType == "diplomacy" then
+							query = "DELETE FROM community_pending WHERE cid="..tostring(cid).." AND time='"..entry["time"].."'"
+							querySQL(query)
+							
+							if dataTbl["status"] == "ally" or dataTbl["status"] == "war" then
+								AddDiplomacy( cid, ocid, dataTbl["status"] )
+								
+								local comTbl = GetCommunityTbl(cid)
+								
+								local newDataTbl = {}
+								newDataTbl["cid"] = cid
+								newDataTbl["info"] = "msg"
+								
+								local dataStr = ""
+								for key, val in pairs(newDataTbl) do
+									dataStr = dataStr..key..","..tostring(val).." "
+								end
+								dataStr = string.TrimRight(dataStr)
+								
+								local msgString = "The community, "..comTbl.name..", has accepted "
+								if dataTbl["status"] == "ally" then
+									msgString = msgString.."your offer of alliance."
+								else
+									msgString = msgString.."your declaration of war."
+								end
+								
+								query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+								querySQL(query)
+							else
+								RemDiplomacy( cid, ocid )
+								
+								local comTbl = GetCommunityTbl(cid)
+								
+								local newDataTbl = {}
+								newDataTbl["cid"] = cid
+								newDataTbl["info"] = "msg"
+								
+								local dataStr = ""
+								for key, val in pairs(newDataTbl) do
+									dataStr = dataStr..key..","..tostring(val).." "
+								end
+								dataStr = string.TrimRight(dataStr)
+								
+								local msgString = "The community, "..comTbl.name..", has agreed to return to a neutral status."
+								
+								query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+								querySQL(query)
+							end
+						elseif pendingType == "msg" then
+							query = "DELETE FROM community_pending WHERE cid="..tostring(cid).." AND time='"..entry["time"].."'"
+							querySQL(query)
+						else
+							ErrorNoHalt( "PlyAcptPending:  No proper pending type provided!" )
+						end
+						return
+					end
+				end
+				
+				ply:ChatPrint( "No pending diplomacy event with this data!" )
+			else
+				ply:ChatPrint( "No pending for this community at all." )
+			end
+		else
+			ply:ChatPrint( "You do not have the community permissions to do this!" )
+		end
+	else
+		ply:ChatPrint( "You are not in a community!" )
+	end
+end
+concommand.Add( "pnrp_acptpending", PlyAcptPending )
+
+function PlyDclnPending(ply, cmd, args)
+	local cid = ply:GetTable().Community
+	local ocid = tonumber(args[1])
+	local pendingType = args[2]
+	
+	local overide = args[3]
+	if overide == "force" and ply:IsAdmin() then
+		cid = args[4]
+	end
+	
+	if ply:GetTable().Community or overide == "force" then
+		if ply:GetTable().CommunityRank > 1 or overide == "force" then
+			local query = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+			local cidPending = querySQL(query)
+			
+			if cidPending then
+				for _, entry in pairs(cidPending) do
+					local dataTbl = {}
+					local dataSplit = string.Explode(" ", entry["data"])
+		
+					for _, item in pairs(dataSplit) do
+						local splitData = string.Explode(",", item)
+						
+						dataTbl[splitData[1]] = splitData[2]
+						
+					end
+					
+				--	ply:ChatPrint("PendingType:  "..pendingType)
+				--	ply:ChatPrint("dataTbl[\"info\" or none:  "..tostring(((dataTbl["info"] or "none") == pendingType )))
+				--	ply:ChatPrint( tostring(dataTbl["cid"]).." == "..tostring(ocid).." is "..tostring( (dataTbl["cid"] == tostring(ocid)) ) )
+				--	ply:ChatPrint("ply.Community:  "..tostring(cid))
+					if dataTbl["cid"] == tostring(ocid) and (dataTbl["info"] or "none") == pendingType then
+						ply:ChatPrint("Inside If Statement.")
+						if pendingType == "diplomacy" then
+							query = "DELETE FROM community_pending WHERE cid="..tostring(cid).." AND time='"..entry["time"].."'"
+							querySQL(query)
+							
+							if dataTbl["status"] == "ally" or dataTbl["status"] == "war" then
+								local comTbl = GetCommunityTbl(cid)
+								
+								local newDataTbl = {}
+								newDataTbl["cid"] = cid
+								newDataTbl["info"] = "msg"
+								
+								local dataStr = ""
+								for key, val in pairs(newDataTbl) do
+									dataStr = dataStr..key..","..tostring(val).." "
+								end
+								dataStr = string.TrimRight(dataStr)
+								
+								local msgString = "The community, "..comTbl.name..", has declined "
+								if dataTbl["status"] == "ally" then
+									msgString = msgString.."your offer of alliance."
+								else
+									msgString = msgString.."your declaration of war."
+								end
+								
+								query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+								querySQL(query)
+							else
+								local comTbl = GetCommunityTbl(cid)
+								
+								local newDataTbl = {}
+								newDataTbl["cid"] = cid
+								newDataTbl["info"] = "msg"
+								
+								local dataStr = ""
+								for key, val in pairs(newDataTbl) do
+									dataStr = dataStr..key..","..tostring(val).." "
+								end
+								dataStr = string.TrimRight(dataStr)
+								
+								local msgString = "The community, "..comTbl.name..", has declined to return to a neutral status."
+								
+								query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+								querySQL(query)
+							end
+						elseif pendingType == "msg" then
+							query = "DELETE FROM community_pending WHERE cid="..tostring(cid).." AND time='"..entry["time"].."'"
+							querySQL(query)
+						else
+							ErrorNoHalt( "PlyAcptPending:  No proper pending type provided!" )
+						end
+						return
+					end
+				end
+				
+				ply:ChatPrint( "No pending diplomacy event with this data!" )
+			else
+				ply:ChatPrint( "No pending for this community at all." )
+			end
+		else
+			ply:ChatPrint( "You do not have the community permissions to do this!" )
+		end
+	else
+		ply:ChatPrint( "You are not in a community!" )
+	end
+end
+concommand.Add( "pnrp_dclnpending", PlyDclnPending )
+
+
+function meta:ActOfWar( ocid )
+	if self.Community then
+		local cid = self.Community
+		
+		if cid == ocid then
+			return
+		end
+		
+		self:ChatPrint( "You have committed an act of war!" )
+		
+		local query = "SELECT * FROM community_pending WHERE cid="..tostring(ocid)
+		local ocidPending = querySQL(query)
+		
+		if ocidPending then
+			for _, entry in pairs(ocidPending) do
+				local dataTbl = {}
+				local dataSplit = string.Explode(" ", entry["data"])
+
+				for _, item in pairs(dataSplit) do
+					local splitData = string.Explode(",", item)
+					
+					dataTbl[splitData[1]] = splitData[2]
+					
+				end
+				if dataTbl["cid"] == tostring(cid) and (dataTbl["info"] or "none") == "diplomacy" and (dataTbl["status"] or "none") == "war" then
+					return
+				end
+			end
+			
+			local newDataTbl = {}
+			newDataTbl["cid"] = cid
+			newDataTbl["info"] = "diplomacy"
+			newDataTbl["status"] = "war"
+			
+			local dataStr = ""
+			for key, val in pairs(newDataTbl) do
+				dataStr = dataStr..key..","..tostring(val).." "
+			end
+			dataStr = string.TrimRight(dataStr)
+			
+			local comTbl = GetCommunityTbl(cid)
+			
+			local msgString = "The community, "..comTbl.name..", has committed an act of war against you!  Do you wish to declare war?"
+			
+			query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+			querySQL(query)
+		else
+			local newDataTbl = {}
+			newDataTbl["cid"] = cid
+			newDataTbl["info"] = "diplomacy"
+			newDataTbl["status"] = "war"
+			
+			local dataStr = ""
+			for key, val in pairs(newDataTbl) do
+				dataStr = dataStr..key..","..tostring(val).." "
+			end
+			dataStr = string.TrimRight(dataStr)
+			
+			local comTbl = GetCommunityTbl(cid)
+			
+			local msgString = "The community, "..comTbl.name..", has committed an act of war against you!  Do you wish to declare war?"
+			
+			query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+			querySQL(query)
+		end
+	end
+end
+
+function meta:SetDipl( ocid, status )
+	local ocomTbl = GetCommunityTbl(ocid)
+	if (status or "none") == "war" or (status or "none") == "ally" then
+		if status == "war" then
+			self:ChatPrint( "You are now at war with "..ocomTbl.name.."!")
+		else
+			self:ChatPrint( "You are now allied with "..ocomTbl.name.."!")
+		end
+		self.ComDiplomacy[ocid] = status
+		self:SendDipl()
+	else
+		self:ChatPrint( "You are now neutral with "..ocomTbl.name.."!")
+		self.ComDiplomacy[ocid] = nil
+		self:SendDipl()
+	end
+end
+
+function meta:SendDipl()
+	net.Start("sndComDipl")
+		net.WriteTable(self.ComDiplomacy)
+	net.Send(self)
+end
+
 /*-------------------------------------------------------*/
 
 function GM:DoPlayerDeath( ply, attacker, dmginfo )
@@ -1248,7 +2105,9 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	PNRP.DeathPay(ply, "Scrap")
 	PNRP.DeathPay(ply, "Small_Parts")
 	PNRP.DeathPay(ply, "Chemicals")
-
+	
+	local IsWarKill = false
+	
 	if ( attacker:IsValid() && attacker:IsPlayer() ) then
 
 		if ( attacker == ply ) then
@@ -1256,7 +2115,19 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 		else
 			attacker:AddFrags( 1 )
 		end
-
+		
+		if attacker.ComDiplomacy and ply.ComDiplomacy then
+			if ply.Community and attacker.Community then
+				if tostring(attacker.ComDiplomacy[ply.Community]) == "war" then
+					IsWarKill = true
+				elseif tostring(attacker.ComDiplomacy[ply.Community]) == "ally" then
+					attacker:ChatPrint("You have killed an ally!")
+				else
+					attacker:ActOfWar(ply.Community)
+				end
+			end
+		end
+		
 	end
 	
 	local contents = {}
@@ -1264,7 +2135,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	
 	local getRec
 	local int
-	local cost = GetConVarNumber("pnrp_deathCost") / 100
+	local cost = (GetConVarNumber("pnrp_deathCost") / 100)
 
 	contents.name = ply:Nick()
 	
@@ -1293,6 +2164,64 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 		contents.res.chems = int
 	else
 		contents.res.chems = 0
+	end
+	
+	if IsWarKill then
+		local comTbl = GetCommunityTbl(ply.Community)
+		
+		if contents.res.scrap * 2 < 25 then
+			if comTbl["res"]["Scrap"] >= (25 - contents.res.scrap) then
+				SubCommunityRes( ply.Community, "Scrap", 25 - contents.res.scrap )
+				contents.res.scrap = 25
+			else
+				SubCommunityRes( ply.Community, "Scrap", comTbl["res"]["Scrap"] )
+				contents.res.scrap = contents.res.scrap + comTbl["res"]["Scrap"]
+			end
+		else
+			if comTbl["res"]["Scrap"] < contents.res.scrap then
+				SubCommunityRes( ply.Community, "Scrap", comTbl["res"]["Scrap"])
+				contents.res.scrap = contents.res.scrap + comTbl["res"]["Scrap"]
+			else
+				SubCommunityRes( ply.Community, "Scrap", contents.res.scrap)
+				contents.res.scrap = contents.res.scrap * 2
+			end
+		end
+		
+		if contents.res.small * 2 < 25 then
+			if comTbl["res"]["Small_Parts"] >= (25 - contents.res.small) then
+				SubCommunityRes( ply.Community, "Small_Parts", 25 - contents.res.small )
+				contents.res.small = 25
+			else
+				SubCommunityRes( ply.Community, "Small_Parts", comTbl["res"]["Small_Parts"] )
+				contents.res.small = contents.res.small + comTbl["res"]["Small_Parts"]
+			end
+		else
+			if comTbl["res"]["Small_Parts"] < contents.res.small then
+				SubCommunityRes( ply.Community, "Small_Parts", comTbl["res"]["Small_Parts"])
+				contents.res.small = contents.res.small + comTbl["res"]["Small_Parts"]
+			else
+				SubCommunityRes( ply.Community, "Small_Parts", contents.res.small)
+				contents.res.small = contents.res.small * 2
+			end
+		end
+		
+		if contents.res.chems * 2 < 25 then
+			if comTbl["res"]["Chemicals"] >= (25 - contents.res.chems) then
+				SubCommunityRes( ply.Community, "Chemicals", 25 - contents.res.chems )
+				contents.res.chems = 25
+			else
+				SubCommunityRes( ply.Community, "Chemicals", comTbl["res"]["Chemicals"] )
+				contents.res.chems = contents.res.chems + comTbl["res"]["Chemicals"]
+			end
+		else
+			if comTbl["res"]["Chemicals"] < contents.res.chems then
+				SubCommunityRes( ply.Community, "Chemicals", comTbl["res"]["Chemicals"])
+				contents.res.chems = contents.res.chems + comTbl["res"]["Chemicals"]
+			else
+				SubCommunityRes( ply.Community, "Chemicals", contents.res.chems)
+				contents.res.chems = contents.res.chems * 2
+			end
+		end
 	end
 	
 	contents.inv = {}
@@ -1551,7 +2480,7 @@ function PNRP.StowWeapon (ply, command, args)
 					ply:StripWeapon(myWep:GetClass())
 				end
 			else
-				ply:ChatPrint("You're pack is too full and cannot carry this.")
+				ply:ChatPrint("Your pack is too full and cannot carry this.")
 			end
 
 		end
@@ -1708,6 +2637,7 @@ function seatSetup(ply, cmd, args)
 				ent:Spawn()
 				ent:Activate()
 				ent.seat = 1
+				ent:SetNetworkedString( "hud" , false )
 				PNRP.SetOwner(ply, ent)
 				
 				constraint.Weld(car, ent, 0, 0, 0, true)
@@ -1722,7 +2652,7 @@ PNRP.ChatConCmd( "/carseat", "pnrp_seatSetup" )
 
 function plyAFK(ply, cmd, args)
 	if ply:GetTable().IsAsleep then
-		ply:ChatPrint("You can not go afk while asleep.")
+		ply:ChatPrint("You cannot go AFK while asleep.")
 		return
 	end
 	if ply.AFK then
@@ -1733,12 +2663,12 @@ function plyAFK(ply, cmd, args)
 		net.Start("sleepeffects")
 			net.WriteBit(false)
 		net.Send(ply)
-		ply:ChatPrint("You are no longer AFK")
+		ply:ChatPrint("You are no longer AFK.")
 		
 		timer.Create( "AFK_"..tostring(ply), 900, 1, function() 
 			if IsValid(ply) then
 				ply.CantAFK = false
-				ply:ChatPrint("AFK Available again.")
+				ply:ChatPrint("You may now use /AFK again.")
 			end
 		end)
 		
@@ -1756,14 +2686,71 @@ function plyAFK(ply, cmd, args)
 			net.Start("sleepeffects")
 				net.WriteBit(true)
 			net.Send(ply)
-			ply:ChatPrint("You are now AFK")
-			ply:ChatPrint("You can still be hurt while AFK")
+			ply:ChatPrint("You are now AFK.")
+			ply:ChatPrint("You can still be hurt while AFK.")
 			ply.CantAFK = true
 		end	
 	else
-		ply:ChatPrint("You can only go AFK every 15 minuts.")
+		ply:ChatPrint("You can only go AFK every 15 minutes.")
 	end
 end
 concommand.Add( "pnrp_afk", plyAFK )
 PNRP.ChatConCmd( "/afk", "pnrp_afk" )
+
+function GasCar(ply, cmd, args)
+	local tr = ply:TraceFromEyes(200)
+	local ent = tr.Entity
+	
+	if IsValid(ent) then
+		if !ent:IsPlayer() then
+			if ent:IsPlayerHolding() and ent.ID == "fuel_gas" then
+				local pn_car
+				local npn_car
+				local car
+				for _, ents in pairs(ents.FindInSphere( ply:GetPos(), 100 )) do
+					if ents:IsVehicle() then
+						local ItemID = PNRP.FindItemID( ents:GetClass() )
+						if ItemID then
+							pn_car = ents
+						else
+							npn_car = ents
+						end
+					end
+				end
+				--To include non itembase car
+				if IsValid(pn_car) then
+					car = pn_car
+				else
+					car = npn_car
+				end
+				
+				if IsValid(car) then
+					if !car.gas then car.gas = 0 end
+					if !car.tank then car.tank = 8 end
+					
+					if car.gas < car.tank then
+						car.gas = car.gas + 1
+						if car.gas > car.tank then car.gas = car.tank end
+						ply:ChatPrint("You put gas in the vehicle.")
+						ent:Remove()
+					else
+						ply:ChatPrint("Tank is full.")
+					end
+				end
+			end
+		end
+	end
+end
+concommand.Add( "pnrp_gascar", GasCar )
+
+function pickupGas( ply, ent )
+	if ent.gas then
+		if ent.gas >= 1 then
+			local gas = math.floor(ent.gas)
+			PNRP.AddToInventory( ply, "fuel_gas", gas )
+			ply:ChatPrint("Spare gas placed in inventory.")
+		end
+	end
+end
+
 --EOF
