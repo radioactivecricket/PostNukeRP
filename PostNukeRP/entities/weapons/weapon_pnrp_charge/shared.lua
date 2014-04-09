@@ -114,7 +114,7 @@ function SWEP:PrimaryAttack()
 	
 	if trace.Entity and trace.Entity:IsValid() and (trace.Entity:GetClass() == "prop_door_rotating" or trace.Entity:GetClass() == "func_door_rotating" or trace.Entity:GetClass() == "func_door") then
 		if not trace.Entity:IsNPC() and not trace.Entity:IsPlayer() and trace.Entity:GetPhysicsObject():IsValid() then
-			constraint.Weld(Charge, trace.Entity)
+			constraint.Weld(Charge, trace.Entity, 0, trace.PhysicsBone, 0, collision == 0, true )
 		end
 	else
 		Charge:SetMoveType(MOVETYPE_NONE)

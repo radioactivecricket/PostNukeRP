@@ -16,7 +16,8 @@ function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
 		if activator:KeyPressed( IN_USE ) then
 			if activator:Team() == TEAM_ENGINEER then
-				local itemList = {"wep_scrapmp", "wep_smg", "wep_ump", "wep_badlands", "wep_ak-comp", "intm_multitool", "intm_engine"}
+				local itemList = {"wep_scrapmp", "wep_smg", "wep_ump", "wep_badlands", "wep_ak-comp", "wep_flaregun", 
+					"intm_multitool", "intm_engine"}
 				 
 				net.Start("pnrp_OpenTShopInterface")
 					net.WriteEntity(activator)
@@ -55,3 +56,7 @@ end
 -- end
 -- --datastream.Hook( "smelt_stream", DoSmelt )
 -- net.Receive( "smelt_stream", DoSmelt )
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end

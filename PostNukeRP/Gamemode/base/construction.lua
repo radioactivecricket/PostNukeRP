@@ -42,8 +42,8 @@ function PNRP.SpawnBulkCrate( )
 				end
 				if enough == true then
 					--Block these from Bulk Build
-					if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" then
-						ply:ChatPrint("You can not create bulk of this type.")
+					if item.Type == "vehicle" or item.Type == "tool" or item.Type == "junk" or item.Type == "misc" then
+						ply:ChatPrint("You cannot create bulk of this type.")
 						return
 					end
 					
@@ -89,7 +89,7 @@ function PNRP.SpawnBulkCrate( )
 					net.Send(ply)
 					
 					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
-						ply:ChatPrint("Admin No Cost")
+						ply:ChatPrint("You have spawned this using admin no-cost...")
 					else
 						ply:DecResource("Scrap", totalScrap)
 						ply:DecResource("Small_Parts", totalSmall)
@@ -119,7 +119,7 @@ function PNRP.SpawnBulkCrate( )
 				end
 				
 			else
-				ply:ChatPrint("Incorrect Class! "..item.ClassSpawn.." class Item.")
+				ply:ChatPrint("Incorrect Class! "..item.ClassSpawn.." class item.")
 			end
 		end
 	end
@@ -159,6 +159,19 @@ function PNRP.DropBulkCrate( )
 	
 end
 net.Receive( "DropBulkCrate", PNRP.DropBulkCrate )
+
+function PNRP.DropCrate( ItemID, Count, pos )
+	for itemname, item in pairs(PNRP.Items) do
+		if tostring( ItemID ) == itemname then
+			local ent = ents.Create("msc_itembox")
+			--Spawns the entity
+			ent:SetPos(pos)
+			ent:SetNWString("itemtype", item.ID)
+			ent:SetNWInt("amount", Count)
+			ent:Spawn()
+		end
+	end
+end
 
 function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
 	local ply = net.ReadEntity()
@@ -299,7 +312,7 @@ function GM.BuildItem( ply, command, arg )
 					ply:ChatPrint("Insufficient Materials!")
 				end
 			else
-				ply:ChatPrint("Incorrect Class! "..item.ClassSpawn.." class Item.")
+				ply:ChatPrint("Incorrect Class! "..item.ClassSpawn.." class item.")
 			end
 		else
 
@@ -388,7 +401,7 @@ function PNRP.Salvage( ply, command, arg )
 		ItemID = PNRP.FindItemID( myClass )
 
 		if string.find(tostring(ItemID), "ammo_") then
-			ply:ChatPrint("Can not salvage dropped ammo.")
+			ply:ChatPrint("Cannot salvage dropped ammo.")
 			return
 		end
 	end

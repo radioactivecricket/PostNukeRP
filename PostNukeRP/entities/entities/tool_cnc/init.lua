@@ -30,6 +30,10 @@ function ENT:Use( activator, caller )
 	end
 end
 
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end
+
 -- function DoSmelt( )
 	-- local pl = net.ReadEntity()
 	-- local smallparts = net.ReadLong()

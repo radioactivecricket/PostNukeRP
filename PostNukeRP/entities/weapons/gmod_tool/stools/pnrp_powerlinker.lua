@@ -39,6 +39,12 @@ function TOOL:LeftClick( trace )
 		local LPos1, LPos2 = self:GetLocalPos(1),self:GetLocalPos(2)
 		local length = ( WPos1 - WPos2):Length()
 		
+		if Ent1 == Ent2 then
+			self:ClearObjects()
+			ply:ChatPrint("You can't link an object to itself!")
+			return 
+		end
+		
 		if WPos1:Distance(WPos2) > 500 then
 			self:ClearObjects()
 			ply:ChatPrint("Cable too long!")

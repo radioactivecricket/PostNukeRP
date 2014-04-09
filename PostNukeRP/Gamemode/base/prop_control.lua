@@ -270,6 +270,7 @@ function GM:PlayerSpawnProp(ply, model)
 	
 	--Normal Allowed system
 		model = string.gsub(model, "\\", "/")
+		if string.find(model,  "%../") then return false end
 		if string.find(model,  "//") then return false end
 		-- Banned props take precedence over allowed props
 		if GetConVarNumber("pnrp_propBanning") == 1 then
@@ -540,6 +541,17 @@ function PickupCheck( ply, ent)
 		if ownerEnt.PropBuddyList then
 			if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
 				return true
+			elseif tostring(ownerEnt.CommunityBuddy) == "true" then
+				local entCID = tonumber(ownerEnt:GetNWInt("cid", -1))
+				local plyCID = tonumber(ply:GetNWInt("cid", -1))
+				
+				if plyCID >= 0 and entCID == plyCID then
+					return true
+				elseif tostring(ownerEnt.AllyBuddy) == "true" and (ply.ComDiplomacy[tonumber(entCID)] or "none") == "ally" then
+					return true
+				else
+					return false
+				end
 			else
 				return false
 			end
@@ -712,6 +724,17 @@ function ToolCheck( ply, tr, toolmode )
 			if ownerEnt.PropBuddyList and ownerEnt != ply then
 				if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
 					IsBuddy = true
+				elseif tostring(ownerEnt.CommunityBuddy) == "true" then
+					local entCID = tonumber(ownerEnt:GetNWInt("cid", -1))
+					local plyCID = tonumber(ply:GetNWInt("cid", -1))
+					
+					if plyCID >= 0 and entCID == plyCID then
+						IsBuddy = true
+					elseif tostring(ownerEnt.AllyBuddy) == "true" and (ply.ComDiplomacy[tonumber(entCID)] or "none") == "ally" then
+						IsBuddy = true
+					else
+						IsBuddy = false
+					end
 				else 
 					IsBuddy = false
 				end
@@ -782,12 +805,12 @@ function ToolCheck( ply, tr, toolmode )
 	end
 	
 	if string.find(toolmode, "turret") then
-		ply:ChatPrint("Turrets blocked")
+		ply:ChatPrint("Turrets blocked.")
 		return false
 	end
 	
 	if string.find(toolmode, "igniter") then
-		ply:ChatPrint("Igniter blocked")
+		ply:ChatPrint("Igniter blocked.")
 		return false
 	end
 	
@@ -808,7 +831,7 @@ function ToolCheck( ply, tr, toolmode )
 	if string.find(toolmode, "dup") then
 		if PNRP.FindItemID( myClass ) and myClass != "prop_physics" then
 			print(tostring(PNRP.FindItemID( myClass )))
-			ply:ChatPrint("Duplication blocked")
+			ply:ChatPrint("Duplication blocked.")
 			return false
 		end
 	end

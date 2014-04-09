@@ -2,7 +2,7 @@
 local trade_frame
 
 function open_trade(ply)
-	
+	PNRP.RMDerma()
 	trade_frame = vgui.Create( "DFrame" )
 		trade_frame:SetSize( 710, 510 ) --Set the size
 		trade_frame:SetPos(ScrW() / 2 - trade_frame:GetWide() / 2, ScrH() / 2 - trade_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
@@ -14,6 +14,7 @@ function open_trade(ply)
 		trade_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		PNRP.AddMenu(trade_frame)
 		
 		local screenBG = vgui.Create("DImage", trade_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_2b.png" )
@@ -112,6 +113,7 @@ function open_trade(ply)
 end
 
 function openTradeToMenu(ply, targetPly, option)
+	PNRP.RMDerma()
 	local scrap = GetResource("Scrap")
 	local smallparts = GetResource("Small_Parts")
 	local chems = GetResource("Chemicals")
@@ -135,6 +137,7 @@ function openTradeToMenu(ply, targetPly, option)
 		tradeTo_frame.Paint = function() 
 			surface.SetDrawColor( 50, 50, 50, 0 )
 		end
+		PNRP.AddMenu(tradeTo_frame)
 		
 		local screenBG = vgui.Create("DImage", tradeTo_frame)
 			screenBG:SetImage( "VGUI/gfx/pnrp_screen_6b.png" )

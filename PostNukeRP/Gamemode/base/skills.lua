@@ -130,7 +130,7 @@ local function AddXPPoints(ply, cmd, args)
 		local amount = tonumber(args[1])
 		
 		ply:IncXP(amount)
-		ply:ChatPrint("Added "..tostring(amount).." xp to you!")
+		ply:ChatPrint("Added "..tostring(amount).." XP to you!")
 	end
 end
 concommand.Add( "pnrp_addxp", AddXPPoints )

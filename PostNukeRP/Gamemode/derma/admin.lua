@@ -91,7 +91,7 @@ function GM.open_admin()
 				GModeSettingsList:AddItem( E2RestrictSlider )				
 				
 				local ToolRestrictLabel= vgui.Create("DLabel", GModeSettingsList)
-					ToolRestrictLabel:SetText("Tool Restriction:  (Def: 2)" )
+					ToolRestrictLabel:SetText("Tool Restriction:  (Default 4)" )
 					ToolRestrictLabel:SetColor(textColor)
 					ToolRestrictLabel:SizeToContents()
 				GModeSettingsList:AddItem( ToolRestrictLabel )
@@ -122,56 +122,56 @@ function GM.open_admin()
 				GModeSettingsList:AddItem( adminTouchAllTgl )
 				
 				local adminNoCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					adminNoCostTgl:SetText( "Admin No Cost." )
+					adminNoCostTgl:SetText( "Admin No-Cost." )
 					adminNoCostTgl:SetTextColor(textColor)
 					adminNoCostTgl:SetValue( GMSettings.AdminNoCost )
 					adminNoCostTgl:SizeToContents() 
 				GModeSettingsList:AddItem( adminNoCostTgl )
 				
 				local propBanningTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					propBanningTgl:SetText( "Prop Banning." )
+					propBanningTgl:SetText( "Use Prop Blacklist." )
 					propBanningTgl:SetTextColor(textColor)
 					propBanningTgl:SetValue( GMSettings.PropBanning )
 					propBanningTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propBanningTgl )
 				
 				local propAllowingTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					propAllowingTgl:SetText( "Prop Allowing." )
+					propAllowingTgl:SetText( "Use Prop Whitelist." )
 					propAllowingTgl:SetTextColor(textColor)
 					propAllowingTgl:SetValue( GMSettings.PropAllowing )
 					propAllowingTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propAllowingTgl )
 				
 				local propSpawnProtectTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					propSpawnProtectTgl:SetText( "Player Spawn Protection." )
+					propSpawnProtectTgl:SetText( "Use Player Spawn Protection." )
 					propSpawnProtectTgl:SetTextColor(textColor)
 					propSpawnProtectTgl:SetValue( GMSettings.PropSpawnProtection )
 					propSpawnProtectTgl:SizeToContents() 
 				GModeSettingsList:AddItem( propSpawnProtectTgl )
 				
 				local plyDeathZombieTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					plyDeathZombieTgl:SetText( "Player Death Zombie Spawn." )
+					plyDeathZombieTgl:SetText( "Enable Player Death Zombies." )
 					plyDeathZombieTgl:SetTextColor(textColor)
 					plyDeathZombieTgl:SetValue( GMSettings.PlyDeathZombie )
 					plyDeathZombieTgl:SizeToContents() 
 				GModeSettingsList:AddItem( plyDeathZombieTgl )
 				
 				local PropExpTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					PropExpTgl:SetText( "Player Exp from Prop Kills." )
+					PropExpTgl:SetText( "Player Gains XP From Prop Kills." )
 					PropExpTgl:SetTextColor(textColor)
 					PropExpTgl:SetValue( GMSettings.PropExp )
 					PropExpTgl:SizeToContents() 
 				GModeSettingsList:AddItem( PropExpTgl )
 				
 				local PropPuntTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					PropPuntTgl:SetText( "Allow Prop  Punting." )
+					PropPuntTgl:SetText( "Allow Gravity Gun Usage." )
 					PropPuntTgl:SetTextColor(textColor)
 					PropPuntTgl:SetValue( GMSettings.PropPunt )
 					PropPuntTgl:SizeToContents() 
 				GModeSettingsList:AddItem( PropPuntTgl )
 				
 				local propPayTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					propPayTgl:SetText( "Pay for Props from Q Menu.." )
+					propPayTgl:SetText( "Pay for Props from Q Menu (affects duplcations).." )
 					propPayTgl:SetTextColor(textColor)
 					propPayTgl:SetValue( GMSettings.PropPay )
 					propPayTgl:SizeToContents() 
@@ -179,7 +179,7 @@ function GM.open_admin()
 				
 				local propCostSlider = vgui.Create( "DNumSlider", GModeSettingsList )
 				    propCostSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    propCostSlider:SetText( "Q Menu Prop Cost (Def 10) [Affects Adv Dupe]" )
+				    propCostSlider:SetText( "Q Menu Prop Cost (Default 10)" )
 					propCostSlider.Label:SetColor(textColor)
 				    propCostSlider:SetMin( 0 )
 				    propCostSlider:SetMax( 100 )
@@ -189,7 +189,7 @@ function GM.open_admin()
 				GModeSettingsList:AddItem( propCostSlider )
 				
 				local voiceLimitTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					voiceLimitTgl:SetText( "Voice Range Limiter" )
+					voiceLimitTgl:SetText( "Use Voice Range Limiter." )
 					voiceLimitTgl:SetTextColor(textColor)
 					voiceLimitTgl:SetValue( GMSettings.VoiceLimiter )
 					voiceLimitTgl:SizeToContents() 
@@ -197,7 +197,7 @@ function GM.open_admin()
 				
 				local voiceLimitSlider = vgui.Create( "DNumSlider", GModeSettingsList )
 				    voiceLimitSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    voiceLimitSlider:SetText( "Voice Limit Range (Def 750)" )
+				    voiceLimitSlider:SetText( "Voice Limit Range (Default 750)" )
 					voiceLimitSlider.Label:SetColor(textColor)
 				    voiceLimitSlider:SetMin( 0 )
 				    voiceLimitSlider:SetMax( 2000 )
@@ -207,7 +207,7 @@ function GM.open_admin()
 				GModeSettingsList:AddItem( voiceLimitSlider )
 				
 				local classCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					classCostTgl:SetText( "Charg for Class Change" )
+					classCostTgl:SetText( "Players lose resources on Class Change." )
 					classCostTgl:SetTextColor(textColor)
 					classCostTgl:SetValue( GMSettings.ClassChangePay )
 					classCostTgl:SizeToContents() 
@@ -216,7 +216,7 @@ function GM.open_admin()
 				
 				local classCostSlider = vgui.Create( "DNumSlider", GModeSettingsList )
 				    classCostSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    classCostSlider:SetText( "Class Change Cost (Def 10)" )
+				    classCostSlider:SetText( "Class Change Cost (Default 10%)" )
 					classCostSlider.Label:SetColor(textColor)
 				    classCostSlider:SetMin( 0 )
 				    classCostSlider:SetMax( 100 )
@@ -226,7 +226,7 @@ function GM.open_admin()
 				GModeSettingsList:AddItem( classCostSlider )
 				
 				local deathCostTgl = vgui.Create( "DCheckBoxLabel", GModeSettingsList )
-					deathCostTgl:SetText( "Charg for Death Penalty" )
+					deathCostTgl:SetText( "Enable Death Penalty." )
 					deathCostTgl:SetTextColor(textColor)
 					deathCostTgl:SetValue( GMSettings.DeathPay )
 					deathCostTgl:SizeToContents() 
@@ -235,7 +235,7 @@ function GM.open_admin()
 				
 				local deathCostSlider = vgui.Create( "DNumSlider", GModeSettingsList )
 				    deathCostSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    deathCostSlider:SetText( "Death Penalty Cost (Def 10)" )
+				    deathCostSlider:SetText( "Death Penalty Cost (Default 10%)" )
 					deathCostSlider.Label:SetColor(textColor)
 				    deathCostSlider:SetMin( 0 )
 				    deathCostSlider:SetMax( 100 )
@@ -246,7 +246,7 @@ function GM.open_admin()
 				
 				local ownDoorsSlider = vgui.Create( "DNumSlider", GModeSettingsList )
 				    ownDoorsSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    ownDoorsSlider:SetText( "Number of doors that can be owned (Def 3)" )
+				    ownDoorsSlider:SetText( "Number of doors that can be owned (Default 3)" )
 					ownDoorsSlider.Label:SetColor(textColor)
 				    ownDoorsSlider:SetMin( 0 )
 				    ownDoorsSlider:SetMax( 10 )
@@ -347,7 +347,7 @@ function GM.open_admin()
 				
 				local maxAntGuardSlider = vgui.Create( "DNumSlider", MobCategoryList )
 				    maxAntGuardSlider:SetSize( MobSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    maxAntGuardSlider:SetText( "Max Ant Guard (Default 1)" )
+				    maxAntGuardSlider:SetText( "Max Antlion Guards (Default 1)" )
 					maxAntGuardSlider.Label:SetColor(textColor)
 				    maxAntGuardSlider:SetMin( 0 )
 				    maxAntGuardSlider:SetMax( 100 )
@@ -384,7 +384,7 @@ function GM.open_admin()
 				
 				local maxMounds = vgui.Create( "DNumSlider", MoundCategoryList )
 				    maxMounds:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    maxMounds:SetText( "Max Ant Lion Mounds (Default 1)" )
+				    maxMounds:SetText( "Max Antlion Mounds (Default 1)" )
 					maxMounds.Label:SetColor(textColor)
 				    maxMounds:SetMin( 0 )
 				    maxMounds:SetMax( 100 )
@@ -395,7 +395,7 @@ function GM.open_admin()
 				
 				local moundSpawnRate = vgui.Create( "DNumSlider", MoundCategoryList )
 				    moundSpawnRate:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    moundSpawnRate:SetText( "Mound Spawn Rate (Default 5min)" )
+				    moundSpawnRate:SetText( "Mound Spawn Rate (Default 5 minutes)" )
 					moundSpawnRate.Label:SetColor(textColor)
 				    moundSpawnRate:SetMin( 0 )
 				    moundSpawnRate:SetMax( 100 )
@@ -417,7 +417,7 @@ function GM.open_admin()
 				
 				local moundMaxAntlions = vgui.Create( "DNumSlider", MoundCategoryList )
 				    moundMaxAntlions:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    moundMaxAntlions:SetText( "Mound Max Antlions (Default 10)" )
+				    moundMaxAntlions:SetText( "Max Mound Antlions (Default 10)" )
 					moundMaxAntlions.Label:SetColor(textColor)
 				    moundMaxAntlions:SetMin( 0 )
 				    moundMaxAntlions:SetMax( 100 )
@@ -439,7 +439,7 @@ function GM.open_admin()
 				
 				local moundMaxAntlionGuards = vgui.Create( "DNumSlider", MoundCategoryList )
 				    moundMaxAntlionGuards:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    moundMaxAntlionGuards:SetText( "Mound Max Antlion Guards (Default 1)" )
+				    moundMaxAntlionGuards:SetText( "Max Mound Antlion Guards (Default 1)" )
 					moundMaxAntlionGuards.Label:SetColor(textColor)
 				    moundMaxAntlionGuards:SetMin( 0 )
 				    moundMaxAntlionGuards:SetMax( 100 )
@@ -450,7 +450,7 @@ function GM.open_admin()
 				
 				local moundMobRate = vgui.Create( "DNumSlider", MoundCategoryList )
 				    moundMobRate:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    moundMobRate:SetText( "Mound NPC Spawn Rate (Default 5min)" )
+				    moundMobRate:SetText( "Mound NPC Spawn Rate (Default 5 minutes)" )
 					moundMobRate.Label:SetColor(textColor)
 				    moundMobRate:SetMin( 0 )
 				    moundMobRate:SetMax( 100 )
@@ -461,7 +461,7 @@ function GM.open_admin()
 				
 				local moundGuardChance = vgui.Create( "DNumSlider", MoundCategoryList )
 				    moundGuardChance:SetSize( MoundSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    moundGuardChance:SetText( "Mound Guard Spawn Chance (Default 10%)" )
+				    moundGuardChance:SetText( "Mound Antlion Guard Spawn Chance (Default 10%)" )
 					moundGuardChance.Label:SetColor(textColor)
 				    moundGuardChance:SetMin( 0 )
 				    moundGuardChance:SetMax( 100 )
@@ -476,7 +476,7 @@ function GM.open_admin()
 				local RecSpawnerSettingsCats = vgui.Create("DCollapsibleCategory", SpawnerList)
 					RecSpawnerSettingsCats:SetSize( SpawnerList:GetWide()-4, 50 ) -- Keep the second number at 50
 					RecSpawnerSettingsCats:SetExpanded( 0 ) -- Expanded when popped up
-					RecSpawnerSettingsCats:SetLabel( "Recource Spawner Settings" )
+					RecSpawnerSettingsCats:SetLabel( "Resource Spawner Settings" )
 					 
 					RecCategoryList = vgui.Create( "DPanelList" )
 					RecCategoryList:SetAutoSize( true )
@@ -490,28 +490,28 @@ function GM.open_admin()
 					RecSpawnerSettingsCats:SetContents( RecCategoryList )
 				
 				local countRecsBTN = vgui.Create("DButton", RecCategoryList )
-				    countRecsBTN:SetText( "Count Recources" )
+				    countRecsBTN:SetText( "Count Resources" )
 				    countRecsBTN.DoClick = function()
 				        RunConsoleCommand( "pnrp_countres" )
 				    end
 				RecCategoryList:AddItem( countRecsBTN )
 				
 				local clearRecsBTN = vgui.Create("DButton", RecCategoryList )
-				    clearRecsBTN:SetText( "Clear Recources" )
+				    clearRecsBTN:SetText( "Clear Resources" )
 				    clearRecsBTN.DoClick = function()
 				        RunConsoleCommand( "pnrp_clearres" )
 				    end
 				RecCategoryList:AddItem( clearRecsBTN )
 				
 				local recSpawnerTgl = vgui.Create( "DCheckBoxLabel", RecCategoryList )
-					recSpawnerTgl:SetText( "Recource Spawner" )
+					recSpawnerTgl:SetText( "Resource Spawner" )
 					recSpawnerTgl:SetValue( SpawnSettings.ReproduceRes )
 					recSpawnerTgl:SizeToContents() 
 				RecCategoryList:AddItem( recSpawnerTgl )
 				
 				local maxReproducedRes = vgui.Create( "DNumSlider", RecCategoryList )
 				    maxReproducedRes:SetSize( MobSpawnerSettingsCats:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    maxReproducedRes:SetText( "Max Recources (Default 20)" )
+				    maxReproducedRes:SetText( "Max Resource Piles (Default 20)" )
 					maxReproducedRes.Label:SetColor(textColor)
 				    maxReproducedRes:SetMin( 0 )
 				    maxReproducedRes:SetMax( 100 )
@@ -621,7 +621,7 @@ function GM.open_admin()
 			
 			local mgIELabel = vgui.Create("DLabel", mobGridSetup)
 				--	mgIELabel:SetPos(10, 25)
-					mgIELabel:SetText("Map Grid Import/Export List")
+					mgIELabel:SetText("Map Grid Import / Export List")
 					mgIELabel:SizeToContents() 
 				mobGridSetup:AddItem( mgIELabel )
 				
@@ -738,26 +738,53 @@ function buildEventList(event, var, funcs, parent)
 						DLabel:SetText( name ) --  Set the text of the label
 						DLabel:SizeToContents() -- Size the label to fit the text in it
 						DLabel:SetDark( 1 )
-						
-					local valueNWang = vgui.Create( "DNumberWang", varPanel )
-						valueNWang:SetPos(varPanel:GetWide() - 135, 2 )
-						valueNWang:SetMin( 0 )
-						if name == "Active" then
-							valueNWang:SetMax( 1 )
-						else
+					
+					if string.Trim(tostring(value)) == "true" or string.Trim(tostring(value)) == "false" then
+						local valueCheckBox = vgui.Create( "DCheckBoxLabel", varPanel )
+							valueCheckBox:SetText( "" ) 
+							valueCheckBox:SetPos(varPanel:GetWide() - 90, 5 )
+							if string.Trim(tostring(value)) == "true" then
+								value = 1
+							else
+								value = 0
+							end
+							valueCheckBox:SetValue( value )
+						local DLabel = vgui.Create( "DLabel", varPanel )
+							DLabel:SetPos( varPanel:GetWide() - 130, 5 ) -- Set the position of the label
+							DLabel:SetText( "Enable" ) --  Set the text of the label
+							DLabel:SizeToContents() -- Size the label to fit the text in it
+							DLabel:SetDark( 1 )
+							
+						local funcSetBTN = vgui.Create("DButton", varPanel )
+							funcSetBTN:SetPos(varPanel:GetWide() - 65, 2.5 )
+							funcSetBTN:SetText( "Set" )
+							funcSetBTN.DoClick = function()
+								local sValue = valueCheckBox:GetValue()
+								if sValue == 1 then sValue = "true"
+								else sValue = "false" end	
+								RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "bool")
+							--	admin_frame:Close()
+							end
+					else
+						local valueNWang = vgui.Create( "DNumberWang", varPanel )
+							valueNWang:SetMin( 0 )
 							valueNWang:SetMax( 10000 )
-						end
-						valueNWang:SetDecimals( 0 )
-						valueNWang:SetValue( value )
-						--event, varname, value, vartype )
-					local funcSetBTN = vgui.Create("DButton", varPanel )
-						funcSetBTN:SetPos(varPanel:GetWide() - 65, 2.5 )
-						funcSetBTN:SetText( "Set" )
-						funcSetBTN.DoClick = function()
-							local sValue = valueNWang:GetValue()
-							RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "number")
-							admin_frame:Close()
-						end
+							valueNWang:SetDecimals( 0 )
+							valueNWang:SetPos(varPanel:GetWide() - 135, 2 )
+							valueNWang:SetValue( value )
+						
+						local funcSetBTN = vgui.Create("DButton", varPanel )
+							funcSetBTN:SetPos(varPanel:GetWide() - 65, 2.5 )
+							funcSetBTN:SetText( "Set" )
+							funcSetBTN.DoClick = function()
+								local sValue = valueNWang:GetValue()
+								RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "number")
+							--	admin_frame:Close()
+							end
+					end
+						
+						
+					
 						
 				EventsSettingsList:AddItem( varPanel )
 			end
@@ -1141,7 +1168,11 @@ local comEditFrame = false
 function GM.communityEdit_window( )
 	if comEditFrame then return end 
 	local communityTable = net.ReadTable()
+	local communityPending = net.ReadTable()
 	local cid = net.ReadString()
+	local wars = net.ReadTable()
+	local allies = net.ReadTable()
+	
 	local communityName = communityTable["name"]
 
 	local communityUsers = communityTable["users"]
@@ -1151,7 +1182,7 @@ function GM.communityEdit_window( )
 	communityCount = "none"
 
 	if communityName then
-		communityCount = table.getn(communityUsers) + 1
+		communityCount = 0
 		communityName = " Editing Community: "..communityName
 	else
 		communityName = "Error Pulling Community Data"
@@ -1180,21 +1211,35 @@ function GM.communityEdit_window( )
 					UCommunityNameLabel:SetColor( Color( 255, 255, 255, 255 ) )
 					UCommunityNameLabel:SetText( communityName )
 					UCommunityNameLabel:SizeToContents()
-					
-			local UCommunityCountLabel = vgui.Create("DLabel", communityEdit_frame)
-					UCommunityCountLabel:SetPos(275,55)
-					UCommunityCountLabel:SetColor( Color( 255, 255, 255, 255 ) )
-					UCommunityCountLabel:SetText( "Member Count: "..communityCount )
-					UCommunityCountLabel:SizeToContents()
+			
+			local UCommunityIDLabel = vgui.Create("DLabel", communityEdit_frame)
+					UCommunityIDLabel:SetPos(54,54)
+					UCommunityIDLabel:SetColor( Color( 255, 255, 255, 255 ) )
+					UCommunityIDLabel:SetText( "Community ID [CID]: "..tostring(cid) )
+					UCommunityIDLabel:SizeToContents()
 			
 			if CommuntityError then
 			
 			
 			else
+				local communityEdit_TabSheet = vgui.Create( "DPropertySheet" )
+					communityEdit_TabSheet:SetParent( communityEdit_frame )
+					communityEdit_TabSheet:SetPos( 40, 70 )
+					communityEdit_TabSheet:SetSize( communityEdit_frame:GetWide() - 340, communityEdit_frame:GetTall() - 120 )
+					communityEdit_TabSheet.Paint = function() -- Paint function
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
 				--//List of Current Members	
-				local cMemberList = vgui.Create("DPanelList", communityEdit_frame)
-					cMemberList:SetPos(40, 70)
-					cMemberList:SetSize(communityEdit_frame:GetWide() - 350, communityEdit_frame:GetTall() - 120)
+				local cMemberPanel = vgui.Create( "DPanel", communityEdit_TabSheet )
+					cMemberPanel:SetPos( 5, 5 )
+					cMemberPanel:SetSize( communityEdit_TabSheet:GetWide(), communityEdit_TabSheet:GetTall() )
+					cMemberPanel.Paint = function() -- Paint function
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+				local cMemberList = vgui.Create("DPanelList", cMemberPanel)
+					cMemberList:SetPos(0, 0)
+					cMemberList:SetSize(cMemberPanel:GetWide() - 15, cMemberPanel:GetTall() - 40)
 					cMemberList:EnableVerticalScrollbar(true) 
 					cMemberList:EnableHorizontal(false) 
 					cMemberList:SetSpacing(1)
@@ -1277,9 +1322,216 @@ function GM.communityEdit_window( )
 								RunConsoleCommand( "pnrp_remcomm", v["name"] )
 								communityEdit_frame:Close() 
 								RunConsoleCommand( "pnrp_OpenCommunity" )
-							end					
+							end	
+							
+							communityCount = communityCount + 1
 						end
 					end
+				
+				local UCommunityCountLabel = vgui.Create("DLabel", communityEdit_frame)
+					UCommunityCountLabel:SetPos(275,55)
+					UCommunityCountLabel:SetColor( Color( 255, 255, 255, 255 ) )
+					UCommunityCountLabel:SetText( "Member Count: "..communityCount )
+					UCommunityCountLabel:SizeToContents()
+				
+				communityEdit_TabSheet:AddSheet( "Members", cMemberPanel, "gui/icons/group.png", false, false, "Community Member List" )
+				-- Wars
+				local cWarPanel = vgui.Create( "DPanel", communityEdit_TabSheet )
+					cWarPanel:SetPos( 5, 5 )
+					cWarPanel:SetSize( communityEdit_TabSheet:GetWide(), communityEdit_TabSheet:GetTall() )
+					cWarPanel.Paint = function() 
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+					local cWarsList = vgui.Create("DPanelList", cWarPanel)
+					cWarsList:SetPos(-5, 5)
+					cWarsList:SetSize(cWarPanel:GetWide() - 10, cWarPanel:GetTall() - 40)
+					cWarsList:EnableVerticalScrollbar(true) 
+					cWarsList:EnableHorizontal(false) 
+					cWarsList:SetSpacing(1)
+					cWarsList:SetPadding(10)
+					
+					for wOCID, wOName in pairs(wars) do
+						local warsPanel = vgui.Create("DPanel")
+							warsPanel:SetTall(25)
+							warsPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, warsPanel:GetWide(), warsPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cWarsList:AddItem(warsPanel)
+							
+							warsPanel.Name = vgui.Create("DLabel", warsPanel)
+							warsPanel.Name:SetPos(10, 5)
+							warsPanel.Name:SetText(tostring(wOName))
+							warsPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+							warsPanel.Name:SizeToContents() 
+							warsPanel.Name:SetContentAlignment( 5 )
+							
+							local warCancelButton = vgui.Create( "DButton", warsPanel )
+								warCancelButton:SetPos( 240 , 3 )
+								warCancelButton:SetText( "Cancel War" )
+								warCancelButton:SetSize( 75, 20 )
+								warCancelButton.DoClick = function()
+									net.Start("SND_AdmDelComDep")
+										net.WriteEntity(ply)
+										net.WriteString(tostring(cid))
+										net.WriteString(tostring(wOCID))
+									net.SendToServer()
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end	
+					end
+				communityEdit_TabSheet:AddSheet( "Wars", cWarPanel, "gui/icons/flag_red.png", false, false, "Communities at war with" )	
+				--Allys
+				local cAllyPanel = vgui.Create( "DPanel", communityEdit_TabSheet )
+					cAllyPanel:SetPos( 5, 5 )
+					cAllyPanel:SetSize( communityEdit_TabSheet:GetWide(), communityEdit_TabSheet:GetTall() )
+					cAllyPanel.Paint = function() 
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+					local cAlliesList = vgui.Create("DPanelList", cAllyPanel)
+					cAlliesList:SetPos(-5, 5)
+					cAlliesList:SetSize(cAllyPanel:GetWide() - 10, cAllyPanel:GetTall() - 40)
+					cAlliesList:EnableVerticalScrollbar(true) 
+					cAlliesList:EnableHorizontal(false) 
+					cAlliesList:SetSpacing(1)
+					cAlliesList:SetPadding(10)
+					
+					for aOCID, aOName in pairs(allies) do
+						local alliesPanel = vgui.Create("DPanel")
+							alliesPanel:SetTall(25)
+							alliesPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, alliesPanel:GetWide(), alliesPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cAlliesList:AddItem(alliesPanel)
+							
+							alliesPanel.Name = vgui.Create("DLabel", alliesPanel)
+							alliesPanel.Name:SetPos(10, 5)
+							alliesPanel.Name:SetText(tostring(aOName))
+							alliesPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+							alliesPanel.Name:SizeToContents() 
+							alliesPanel.Name:SetContentAlignment( 5 )
+							
+							local allyCancelButton = vgui.Create( "DButton", alliesPanel )
+								allyCancelButton:SetPos( 240 , 3 )
+								allyCancelButton:SetText( "Cancel Ally" )
+								allyCancelButton:SetSize( 75, 20 )
+								allyCancelButton.DoClick = function()
+									net.Start("SND_AdmDelComDep")
+										net.WriteEntity(ply)
+										net.WriteString(tostring(cid))
+										net.WriteString(tostring(aOCID))
+									net.SendToServer()
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end	
+					end
+					
+				communityEdit_TabSheet:AddSheet( "Allies", cAllyPanel, "gui/icons/flag_blue.png", false, false, "Communities allied with" )	
+				--Pending
+				local cPendingPanel = vgui.Create( "DPanel", communityEdit_TabSheet )
+					cPendingPanel:SetPos( 5, 5 )
+					cPendingPanel:SetSize( communityEdit_TabSheet:GetWide(), communityEdit_TabSheet:GetTall() )
+					cPendingPanel.Paint = function() 
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+				local cPendingList = vgui.Create("DPanelList", cPendingPanel)
+					cPendingList:SetPos(-5, 5)
+					cPendingList:SetSize(cPendingPanel:GetWide() - 10, cPendingPanel:GetTall() - 40)
+					cPendingList:EnableVerticalScrollbar(true) 
+					cPendingList:EnableHorizontal(false) 
+					cPendingList:SetSpacing(1)
+					cPendingList:SetPadding(10)
+					
+					for _, pItem in pairs(communityPending) do
+						local admPendingPanel = vgui.Create("DPanel")
+							admPendingPanel:SetTall(75)
+							admPendingPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, admPendingPanel:GetWide(), admPendingPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cPendingList:AddItem(admPendingPanel)
+							
+							local dataTbl = {}
+							local dataSplit = string.Explode(" ", pItem["data"])
+							
+							for _, item in pairs(dataSplit) do
+								local splitData = string.Explode(",", item)
+								dataTbl[splitData[1]] = splitData[2]
+							end
+							
+							local msgTxt = tostring(dataTbl["info"])
+							if msgTxt == "msg" then msgTxt = "Message" end
+							
+							local txtMStatus = tostring(dataTbl["status"])
+							if txtMStatus == "nil" then
+								txtMStatus = ""
+							end
+							
+							admPendingPanel.Status = vgui.Create("DLabel", admPendingPanel)
+							admPendingPanel.Status:SetPos(10, 5)
+							admPendingPanel.Status:SetText("Pending Action: "..msgTxt.." "..txtMStatus)
+							admPendingPanel.Status:SetColor(Color( 0, 255, 0, 255 ))
+							admPendingPanel.Status:SizeToContents() 
+							admPendingPanel.Status:SetContentAlignment( 5 )
+							
+							local timeBreak = string.Explode(" ", pItem["time"])
+							local timeString = timeBreak[1].." "..timeBreak[2]
+							
+							admPendingPanel.Time = vgui.Create("DLabel", admPendingPanel)
+							admPendingPanel.Time:SetPos(190, 5)
+							admPendingPanel.Time:SetText("Time: "..timeString)
+							admPendingPanel.Time:SetColor(Color( 0, 255, 0, 255 ))
+							admPendingPanel.Time:SizeToContents()
+							admPendingPanel.Time:SetContentAlignment( 5 )
+							
+							admPendingPanel.MSG = vgui.Create("DLabel", admPendingPanel)
+							admPendingPanel.MSG:SetPos(10, 24)
+							admPendingPanel.MSG:SetText(pItem["msg"])
+							admPendingPanel.MSG:SetColor(Color( 0, 255, 0, 255 ))
+							admPendingPanel.MSG:SizeToContents() 
+							admPendingPanel.MSG:SetWrap(true)
+							admPendingPanel.MSG:SetWide(cPendingList:GetWide()-40)
+							admPendingPanel.MSG:SetAutoStretchVertical( true )
+							admPendingPanel.MSG:SetContentAlignment( 5 )
+							
+							admPendingPanel.okButton = vgui.Create( "DButton", admPendingPanel )
+								admPendingPanel.okButton:SetPos( 10 , 55 )
+								admPendingPanel.okButton:SetText( "Delete" )
+								admPendingPanel.okButton:SetSize( 100, 15 )
+								admPendingPanel.okButton.DoClick = function()
+									net.Start("SND_DelPending")
+										net.WriteEntity(ply)
+										net.WriteString(pItem["cid"])
+										net.WriteString(tostring(pItem["time"]))
+										net.WriteString(tostring(pItem["time"]))
+									net.SendToServer()
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end	
+								
+						if msgTxt ~= "Message" then
+							admPendingPanel.fYesBtn = vgui.Create( "DButton", admPendingPanel )
+								admPendingPanel.fYesBtn:SetPos( 110, 55 )
+								admPendingPanel.fYesBtn:SetText( "Force Acept" )
+								admPendingPanel.fYesBtn:SetSize( 75, 15 )
+								admPendingPanel.fYesBtn.DoClick = function()
+									RunConsoleCommand( "pnrp_acptpending", dataTbl["cid"], dataTbl["info"], "force", cid) 
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end				
+							admPendingPanel.fNoBtn = vgui.Create( "DButton", admPendingPanel )
+								admPendingPanel.fNoBtn:SetPos( 185 , 55 )
+								admPendingPanel.fNoBtn:SetText( "Force Cancel" )
+								admPendingPanel.fNoBtn:SetSize( 75, 15 )
+								admPendingPanel.fNoBtn.DoClick = function()
+									RunConsoleCommand( "pnrp_dclnpending", dataTbl["cid"], dataTbl["info"], "force", cid ) 
+									communityEdit_frame:Close()
+									RunConsoleCommand( "pnrp_AdmEditCom", cid )
+								end	
+						end	
+					end	
+				communityEdit_TabSheet:AddSheet( "Pending", cPendingPanel, "gui/icons/information.png", false, false, "Pending Actions" )
 			end
 		--//Community Main Menu
 								
@@ -1293,7 +1545,7 @@ function GM.communityEdit_window( )
 						disbandBtn:SetSize(30,30)
 						disbandBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 						disbandBtn.DoClick = function() 
-							PNRP.OptionVerify( "pnrp_AdminDelCom", cid, "pnrp_communityAdmin", communityEdit_frame ) 
+							PNRP.OptionVerify( "pnrp_AdminDelCom", cid, "pnrp_communitysearch", communityEdit_frame ) 
 						end	
 						disbandBtn.Paint = function()
 							if disbandBtn:IsDown() then 

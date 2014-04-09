@@ -476,6 +476,10 @@ function StorageMenu()
 								if sendCount > v then
 									sendCount = v
 								end
+								if pnlUserIPanel.NumberWang:GetValue() < 1 then
+                                    LocalPlayer():ChatPrint("Not enough to store.")
+                                    return
+                                end
 								net.Start("storage_give")
 									net.WriteEntity(ply)
 									net.WriteEntity(storageENT)

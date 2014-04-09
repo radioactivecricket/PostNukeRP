@@ -2,20 +2,26 @@
 
 local community_frame
 local comFrame = false
+local community_TabSheet
+local plyPID
+local communityRank
 --Main Community Menu
 function GM.community_window( )
 	if comFrame then return end 
 	local communityName = net.ReadString()
 	local communityTable = net.ReadTable()
-	local plyPID = net.ReadString()
+	local communityPending = net.ReadTable()
+	plyPID = net.ReadString()
+	local wars = net.ReadTable()
+	local allies = net.ReadTable()
 	local ply = LocalPlayer()
-	local communityRank = -1
+	communityRank = -1
 	local communityUsers = communityTable["users"]
 	local communityCount
 	local isLocalUser
 	comFrame = true
 	communityCount = "none"
-	
+		
 	if communityName != "none" then
 		communityCount = 0
 		for i, u in pairs(communityUsers) do
@@ -64,213 +70,13 @@ function GM.community_window( )
 					UCommunityCountLabel:SetText( "Member Count: "..communityCount )
 					UCommunityCountLabel:SizeToContents()
 
-					
+			local fullComTable = {}
+			fullComTable["communityTable"] = communityTable
+			fullComTable["communityPending"] = communityPending
+			fullComTable["wars"] = wars
+			fullComTable["allies"] = allies
+			communityTabWindow(communityName, fullComTable)
 		
-		local community_TabSheet = vgui.Create( "DPropertySheet" )
-			community_TabSheet:SetParent( community_frame )
-			community_TabSheet:SetPos( 40, 70 )
-			community_TabSheet:SetSize( community_frame:GetWide() - 340, community_frame:GetTall() - 120 )
-			community_TabSheet.Paint = function() -- Paint function
-				surface.SetDrawColor( 50, 50, 50, 0 )
-			end
-		--//List of Current Members	
-			local cMemberPanel = vgui.Create( "DPanel", community_TabSheet )
-				cMemberPanel:SetPos( 5, 5 )
-				cMemberPanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
-				cMemberPanel.Paint = function() -- Paint function
-					surface.SetDrawColor( 50, 50, 50, 0 )
-				end
-			local cMemberList = vgui.Create("DPanelList", cMemberPanel)
-				cMemberList:SetPos(0, 0)
-				cMemberList:SetSize(cMemberPanel:GetWide() - 15, cMemberPanel:GetTall() - 40)
-				cMemberList:EnableVerticalScrollbar(true) 
-				cMemberList:EnableHorizontal(false) 
-				cMemberList:SetSpacing(1)
-				cMemberList:SetPadding(10)
-				cMemberList.Paint = function()
-				--	draw.RoundedBox( 8, 0, 0, cMemberList:GetWide(), cMemberList:GetTall(), Color( 50, 50, 50, 255 ) )
-				end
-				if communityName != "none" then
-					communityCount = table.Count( communityUsers )
-					--table.sort(communityUsers, function(a["rank"],b["rank"]) return a["rank"]>b["rank"] end)
-					for k, v in pairs( communityUsers ) do		
-					
-						if plyPID == k then
-							isLocalUser = true
-						else 
-							isLocalUser = false
-						end
-						
-						local MemberPanel = vgui.Create("DPanel")
-						MemberPanel:SetTall(75)
-						MemberPanel.Paint = function()
-						
-							draw.RoundedBox( 6, 0, 0, MemberPanel:GetWide(), MemberPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
-					
-						end
-						cMemberList:AddItem(MemberPanel)
-						
-						MemberPanel.Icon = vgui.Create("SpawnIcon", MemberPanel)
-						MemberPanel.Icon:SetModel(v["model"])
-						MemberPanel.Icon:SetPos(3, 3)
-						MemberPanel.Icon:SetToolTip( nil )
-						
-						MemberPanel.Title = vgui.Create("DLabel", MemberPanel)
-						MemberPanel.Title:SetPos(90, 5)
-						MemberPanel.Title:SetText(v["name"])
-						MemberPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
-						MemberPanel.Title:SizeToContents() 
-						MemberPanel.Title:SetContentAlignment( 5 )
-						
-						MemberPanel.Rank = vgui.Create("DLabel", MemberPanel)
-						MemberPanel.Rank:SetPos(90, 25)
-						MemberPanel.Rank:SetText("Rank: Level "..v["rank"])
-						MemberPanel.Rank:SetColor(Color( 0, 0, 0, 255 ))
-						MemberPanel.Rank:SizeToContents() 
-						MemberPanel.Rank:SetContentAlignment( 5 )
-						
-						MemberPanel.Title = vgui.Create("DLabel", MemberPanel)
-						MemberPanel.Title:SetPos(90, 40)
-						MemberPanel.Title:SetText(v["title"])
-						MemberPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
-						MemberPanel.Title:SizeToContents() 
-						MemberPanel.Title:SetContentAlignment( 5 )
-						
-						MemberPanel.LastOn = vgui.Create("DLabel", MemberPanel)
-						MemberPanel.LastOn:SetPos(90, 55)
-						MemberPanel.LastOn:SetText("Last On: "..v["lastlog"])
-						MemberPanel.LastOn:SetColor(Color( 0, 0, 0, 255 ))
-						MemberPanel.LastOn:SizeToContents() 
-						MemberPanel.LastOn:SetContentAlignment( 5 )
-						
-						MemberPanel.TitleBtn = vgui.Create("DButton", MemberPanel )
-						MemberPanel.TitleBtn:SetPos(240, 5)
-						MemberPanel.TitleBtn:SetSize(75,15)
-						MemberPanel.TitleBtn:SetText( "Set Title" )
-						MemberPanel.TitleBtn.DoClick = function() 
-							SetTitle(v)
-						--	RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] + 1 )
-						--	community_frame:Close() 
-						--	RunConsoleCommand( "pnrp_OpenCommunity" )
-						end
-						if tonumber(communityRank) == 3 then 
-							MemberPanel.TitleBtn:SetDisabled( false )
-						else
-							MemberPanel.TitleBtn:SetDisabled( true )
-						end
-							
-						if !isLocalUser then
-							
-							MemberPanel.PromoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.PromoteBtn:SetPos(240, 20)
-							MemberPanel.PromoteBtn:SetSize(75,15)
-							MemberPanel.PromoteBtn:SetText( "Promote" )
-							MemberPanel.PromoteBtn.DoClick = function() 
-								RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] + 1 )
-								community_frame:Close() 
-								RunConsoleCommand( "pnrp_OpenCommunity" )
-							end
-							if tonumber(v["rank"]) == 3 then 
-								MemberPanel.PromoteBtn:SetDisabled( true )
-							else
-								MemberPanel.PromoteBtn:SetDisabled( false )
-							end
-							
-							MemberPanel.DemoteBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.DemoteBtn:SetPos(240, 35)
-							MemberPanel.DemoteBtn:SetSize(75,15)
-							MemberPanel.DemoteBtn:SetText( "Demote" )
-							MemberPanel.DemoteBtn.DoClick = function() 
-								RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] - 1 )
-								community_frame:Close() 
-								RunConsoleCommand( "pnrp_OpenCommunity" )
-							end
-							if tonumber(v["rank"]) == 1 then 
-								MemberPanel.DemoteBtn:SetDisabled( true )
-							else
-								MemberPanel.DemoteBtn:SetDisabled( false )
-							end
-							
-							MemberPanel.BootBtn = vgui.Create("DButton", MemberPanel )
-							MemberPanel.BootBtn:SetPos(240, 50)
-							MemberPanel.BootBtn:SetSize(75,17)
-							MemberPanel.BootBtn:SetText( "Remove" )
-							MemberPanel.BootBtn.DoClick = function() 
-								RunConsoleCommand( "pnrp_remcomm", v["pid"] )
-								community_frame:Close() 
-								RunConsoleCommand( "pnrp_OpenCommunity" )
-							end
-							--If the User has the correct Rank (Owner = 3)
-							if tonumber(communityRank) == 3 then 
-								MemberPanel.PromoteBtn:SetDisabled( false )
-								MemberPanel.DemoteBtn:SetDisabled( false )		
-								MemberPanel.BootBtn:SetDisabled( false )
-							else
-								MemberPanel.PromoteBtn:SetDisabled( true )
-								MemberPanel.DemoteBtn:SetDisabled( true )
-								MemberPanel.BootBtn:SetDisabled( true )
-							end
-						end
-					end
-				end
-			community_TabSheet:AddSheet( "Community Member List", cMemberPanel, "gui/icons/group.png", false, false, "Community Member List" )
-			if communityName != "none" and tonumber(communityRank) >= 3 then
-				--//Invite Panel
-				local cInvitePanel = vgui.Create( "DPanel", community_TabSheet )
-					cInvitePanel:SetPos( 5, 5 )
-					cInvitePanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
-					cInvitePanel.Paint = function() 
-						surface.SetDrawColor( 50, 50, 50, 0 )
-					end
-				
-				local cInviteList = vgui.Create("DPanelList", cInvitePanel)
-					cInviteList:SetPos(5, 5)
-					cInviteList:SetSize(cInvitePanel:GetWide() - 10, cInvitePanel:GetTall() - 40)
-					cInviteList:EnableVerticalScrollbar(true) 
-					cInviteList:EnableHorizontal(false) 
-					cInviteList:SetSpacing(1)
-					cInviteList:SetPadding(10)
-					
-					for _, iplayer in pairs(player.GetAll()) do
-						local getCommunity
-						getCommunity = iplayer:GetNWString("community", "N/A")
-						if getCommunity == "N/A" then
-							local iPlayerPanel = vgui.Create("DPanel")
-							iPlayerPanel:SetTall(75)
-							iPlayerPanel.Paint = function()
-							
-								draw.RoundedBox( 6, 0, 0, iPlayerPanel:GetWide(), iPlayerPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
-						
-							end
-							cInviteList:AddItem(iPlayerPanel)
-							
-							iPlayerPanel.Icon = vgui.Create("SpawnIcon", iPlayerPanel)
-							iPlayerPanel.Icon:SetModel(iplayer:GetModel())
-							iPlayerPanel.Icon:SetPos(3, 3)
-							iPlayerPanel.Icon:SetToolTip( nil )
-							
-							iPlayerPanel.Title = vgui.Create("DLabel", iPlayerPanel)
-							iPlayerPanel.Title:SetPos(90, 5)
-							iPlayerPanel.Title:SetText(iplayer:Nick())
-							iPlayerPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
-							iPlayerPanel.Title:SizeToContents() 
-							iPlayerPanel.Title:SetContentAlignment( 5 )
-							
-							iPlayerPanel.InviteBtn = vgui.Create("DButton", iPlayerPanel )
-							iPlayerPanel.InviteBtn:SetPos(255, 5)
-							iPlayerPanel.InviteBtn:SetSize(75,17)
-							iPlayerPanel.InviteBtn:SetText( "Invite" )
-							iPlayerPanel.InviteBtn.DoClick = function() 
-								RunConsoleCommand( "pnrp_invcomm", iplayer:Nick() )
-								community_frame:Close() 
-							--	RunConsoleCommand( "pnrp_OpenCommunity" )
-							end
-							
-						end
-					end
-			
-				community_TabSheet:AddSheet( "Invite Members", cInvitePanel, "gui/icons/add.png", false, false, "Invite Members" )	
-			end
 		
 		--//Community Main Menu
 								
@@ -511,31 +317,6 @@ function GM.community_window( )
 						comSearchBtnLbl:SetText( "Search Communities" )
 						comSearchBtnLbl:SetFont("Trebuchet24")
 						comSearchBtnLbl:SizeToContents()
-						
-				--	if ply:IsAdmin() then
-				--		btnHPos = btnHPos + btnHeight
-				--		local comAdminBtn = vgui.Create("DImageButton", community_frame)
-				--			comAdminBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-				--			comAdminBtn:SetSize(30,30)
-				--			comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-				--			comAdminBtn.DoClick = function() 
-				--				RunConsoleCommand( "pnrp_communityAdmin" ) 
-				--				community_frame:Close()
-				--			end	
-				--			comAdminBtn.Paint = function()
-				--				if comAdminBtn:IsDown() then 
-				--					comAdminBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-				--				else
-				--					comAdminBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-				--				end
-				--			end
-				--		local comAdminBtnLbl = vgui.Create("DLabel", community_frame)
-				--			comAdminBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-				--			comAdminBtnLbl:SetColor( lblColor )
-				--			comAdminBtnLbl:SetText( "Communities Admin" )
-				--			comAdminBtnLbl:SetFont("Trebuchet24")
-				--			comAdminBtnLbl:SizeToContents()
-				--	end
 					
 	function community_frame:Close()                  
 		comFrame = false                  
@@ -545,6 +326,455 @@ function GM.community_window( )
 end
 --datastream.Hook( "pnrp_OpenCommunityWindow", GM.community_window )
 net.Receive( "pnrp_OpenCommunityWindow", GM.community_window )
+
+local memberSheet
+local inviteSheet
+local warsSheet
+local alliesSheet
+local pendingSheet
+function communityTabWindow(communityName, fullComTable, tab)
+	local ply = LocalPlayer()
+	local communityTable = fullComTable["communityTable"]
+	local communityPending = fullComTable["communityPending"]
+	local wars = fullComTable["wars"]
+	local allies = fullComTable["allies"]
+	local communityUsers = communityTable["users"]
+--	local communityRank = -1
+	
+	if not communityRank then communityRank = -1 end
+	
+--	if communityName != "none" then
+--		for i, u in pairs(communityUsers) do
+--			if plyPID == i then
+--				communityRank = u["rank"]
+--			end
+--		end
+--	end
+
+	community_TabSheet = vgui.Create( "DPropertySheet" )
+		community_TabSheet:SetParent( community_frame )
+		community_TabSheet:SetPos( 40, 70 )
+		community_TabSheet:SetSize( community_frame:GetWide() - 340, community_frame:GetTall() - 120 )
+		community_TabSheet.Paint = function() -- Paint function
+			surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+	--//List of Current Members	
+		local cMemberPanel = vgui.Create( "DPanel", community_TabSheet )
+			cMemberPanel:SetPos( 5, 5 )
+			cMemberPanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
+			cMemberPanel.Paint = function() -- Paint function
+				surface.SetDrawColor( 50, 50, 50, 0 )
+			end
+		local cMemberList = vgui.Create("DPanelList", cMemberPanel)
+			cMemberList:SetPos(0, 0)
+			cMemberList:SetSize(cMemberPanel:GetWide() - 15, cMemberPanel:GetTall() - 40)
+			cMemberList:EnableVerticalScrollbar(true) 
+			cMemberList:EnableHorizontal(false) 
+			cMemberList:SetSpacing(1)
+			cMemberList:SetPadding(10)
+			cMemberList.Paint = function()
+			--	draw.RoundedBox( 8, 0, 0, cMemberList:GetWide(), cMemberList:GetTall(), Color( 50, 50, 50, 255 ) )
+			end
+			if communityName != "none" then
+			--	communityCount = table.Count( communityUsers )
+				--table.sort(communityUsers, function(a["rank"],b["rank"]) return a["rank"]>b["rank"] end)
+				for k, v in pairs( communityUsers ) do		
+				
+					if plyPID == k then
+						isLocalUser = true
+					else 
+						isLocalUser = false
+					end
+					
+					local MemberPanel = vgui.Create("DPanel")
+					MemberPanel:SetTall(75)
+					MemberPanel.Paint = function()
+					
+						draw.RoundedBox( 6, 0, 0, MemberPanel:GetWide(), MemberPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+				
+					end
+					cMemberList:AddItem(MemberPanel)
+					
+					MemberPanel.Icon = vgui.Create("SpawnIcon", MemberPanel)
+					MemberPanel.Icon:SetModel(v["model"])
+					MemberPanel.Icon:SetPos(3, 3)
+					MemberPanel.Icon:SetToolTip( nil )
+					
+					MemberPanel.Title = vgui.Create("DLabel", MemberPanel)
+					MemberPanel.Title:SetPos(90, 5)
+					MemberPanel.Title:SetText(v["name"])
+					MemberPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
+					MemberPanel.Title:SizeToContents() 
+					MemberPanel.Title:SetContentAlignment( 5 )
+					
+					MemberPanel.Rank = vgui.Create("DLabel", MemberPanel)
+					MemberPanel.Rank:SetPos(90, 25)
+					MemberPanel.Rank:SetText("Rank: Level "..v["rank"])
+					MemberPanel.Rank:SetColor(Color( 0, 0, 0, 255 ))
+					MemberPanel.Rank:SizeToContents() 
+					MemberPanel.Rank:SetContentAlignment( 5 )
+					
+					MemberPanel.Title = vgui.Create("DLabel", MemberPanel)
+					MemberPanel.Title:SetPos(90, 40)
+					MemberPanel.Title:SetText(v["title"])
+					MemberPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
+					MemberPanel.Title:SizeToContents() 
+					MemberPanel.Title:SetContentAlignment( 5 )
+					
+					MemberPanel.LastOn = vgui.Create("DLabel", MemberPanel)
+					MemberPanel.LastOn:SetPos(90, 55)
+					MemberPanel.LastOn:SetText("Last On: "..v["lastlog"])
+					MemberPanel.LastOn:SetColor(Color( 0, 0, 0, 255 ))
+					MemberPanel.LastOn:SizeToContents() 
+					MemberPanel.LastOn:SetContentAlignment( 5 )
+					
+					MemberPanel.TitleBtn = vgui.Create("DButton", MemberPanel )
+					MemberPanel.TitleBtn:SetPos(240, 5)
+					MemberPanel.TitleBtn:SetSize(75,15)
+					MemberPanel.TitleBtn:SetText( "Set Title" )
+					MemberPanel.TitleBtn.DoClick = function() 
+						SetTitle(v)
+					--	RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] + 1 )
+					--	community_frame:Close() 
+					--	RunConsoleCommand( "pnrp_OpenCommunity" )
+					end
+					if tonumber(communityRank) == 3 then 
+						MemberPanel.TitleBtn:SetDisabled( false )
+					else
+						MemberPanel.TitleBtn:SetDisabled( true )
+					end
+						
+					if !isLocalUser then
+						
+						MemberPanel.PromoteBtn = vgui.Create("DButton", MemberPanel )
+						MemberPanel.PromoteBtn:SetPos(240, 20)
+						MemberPanel.PromoteBtn:SetSize(75,15)
+						MemberPanel.PromoteBtn:SetText( "Promote" )
+						MemberPanel.PromoteBtn.DoClick = function() 
+							RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] + 1 )
+							reopenComTab(communityTable["cid"])
+						end
+						if tonumber(v["rank"]) == 3 then 
+							MemberPanel.PromoteBtn:SetDisabled( true )
+						else
+							MemberPanel.PromoteBtn:SetDisabled( false )
+						end
+						
+						MemberPanel.DemoteBtn = vgui.Create("DButton", MemberPanel )
+						MemberPanel.DemoteBtn:SetPos(240, 35)
+						MemberPanel.DemoteBtn:SetSize(75,15)
+						MemberPanel.DemoteBtn:SetText( "Demote" )
+						MemberPanel.DemoteBtn.DoClick = function() 
+							RunConsoleCommand( "pnrp_rankcomm", v["name"], v["rank"] - 1 )
+							reopenComTab(communityTable["cid"])
+						end
+						if tonumber(v["rank"]) == 1 then 
+							MemberPanel.DemoteBtn:SetDisabled( true )
+						else
+							MemberPanel.DemoteBtn:SetDisabled( false )
+						end
+						
+						MemberPanel.BootBtn = vgui.Create("DButton", MemberPanel )
+						MemberPanel.BootBtn:SetPos(240, 50)
+						MemberPanel.BootBtn:SetSize(75,17)
+						MemberPanel.BootBtn:SetText( "Remove" )
+						MemberPanel.BootBtn.DoClick = function() 
+							RunConsoleCommand( "pnrp_remcomm", v["pid"] )
+							reopenComTab(communityTable["cid"])
+						end
+						--If the User has the correct Rank (Owner = 3)
+						if tonumber(communityRank) == 3 then 
+							MemberPanel.PromoteBtn:SetDisabled( false )
+							MemberPanel.DemoteBtn:SetDisabled( false )		
+							MemberPanel.BootBtn:SetDisabled( false )
+						else
+							MemberPanel.PromoteBtn:SetDisabled( true )
+							MemberPanel.DemoteBtn:SetDisabled( true )
+							MemberPanel.BootBtn:SetDisabled( true )
+						end
+					end
+				end
+			end
+	memberSheet = community_TabSheet:AddSheet( "Members", cMemberPanel, "gui/icons/group.png", false, false, "Community Member List" )
+		if communityName != "none" and tonumber(communityRank) >= 3 then
+			--//Invite Panel
+			local cInvitePanel = vgui.Create( "DPanel", community_TabSheet )
+				cInvitePanel:SetPos( -10, 5 )
+				cInvitePanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
+				cInvitePanel.Paint = function() 
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+			
+			local cInviteList = vgui.Create("DPanelList", cInvitePanel)
+				cInviteList:SetPos(0, 0)
+				cInviteList:SetSize(cInvitePanel:GetWide() - 10, cInvitePanel:GetTall() - 40)
+				cInviteList:EnableVerticalScrollbar(true) 
+				cInviteList:EnableHorizontal(false) 
+				cInviteList:SetSpacing(1)
+				cInviteList:SetPadding(10)
+				
+				for _, iplayer in pairs(player.GetAll()) do
+					local getCommunity
+					getCommunity = iplayer:GetNWString("community", "N/A")
+					if getCommunity == "N/A" then
+						local iPlayerPanel = vgui.Create("DPanel")
+						iPlayerPanel:SetTall(50)
+						iPlayerPanel.Paint = function()
+						
+							draw.RoundedBox( 6, 0, 0, iPlayerPanel:GetWide(), iPlayerPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+					
+						end
+						cInviteList:AddItem(iPlayerPanel)
+						
+						iPlayerPanel.Icon = vgui.Create("SpawnIcon", iPlayerPanel)
+						iPlayerPanel.Icon:SetModel(iplayer:GetModel())
+						iPlayerPanel.Icon:SetPos(3, 3)
+						iPlayerPanel.Icon:SetSize(45, 45)
+						iPlayerPanel.Icon:SetToolTip( nil )
+						
+						iPlayerPanel.Title = vgui.Create("DLabel", iPlayerPanel)
+						iPlayerPanel.Title:SetPos(90, 5)
+						iPlayerPanel.Title:SetText(iplayer:Nick())
+						iPlayerPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
+						iPlayerPanel.Title:SizeToContents() 
+						iPlayerPanel.Title:SetContentAlignment( 5 )
+						
+						iPlayerPanel.Class = vgui.Create("DLabel", iPlayerPanel)
+						iPlayerPanel.Class:SetPos(90, 20)
+						iPlayerPanel.Class:SetText(team.GetName(iplayer:Team()))
+						iPlayerPanel.Class:SetColor(team.GetColor(iplayer:Team()))
+						iPlayerPanel.Class:SizeToContents() 
+						iPlayerPanel.Class:SetContentAlignment( 5 )
+						
+						iPlayerPanel.InviteBtn = vgui.Create("DButton", iPlayerPanel )
+						iPlayerPanel.InviteBtn:SetPos(250, 5)
+						iPlayerPanel.InviteBtn:SetSize(75,17)
+						iPlayerPanel.InviteBtn:SetText( "Invite" )
+						iPlayerPanel.InviteBtn.DoClick = function() 
+							RunConsoleCommand( "pnrp_invcomm", iplayer:Nick() )
+							reopenComTab(communityTable["cid"], "invite")
+						end
+						
+					end
+				end
+		
+	inviteSheet = community_TabSheet:AddSheet( "Invite Members", cInvitePanel, "gui/icons/add.png", false, false, "Invite Members" )	
+		end
+		if communityName != "none" then				
+	--// Community Wars		
+			local cWarPanel = vgui.Create( "DPanel", community_TabSheet )
+				cWarPanel:SetPos( 5, 5 )
+				cWarPanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
+				cWarPanel.Paint = function() 
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+				
+				local cWarsList = vgui.Create("DPanelList", cWarPanel)
+				cWarsList:SetPos(-5, 5)
+				cWarsList:SetSize(cWarPanel:GetWide() - 10, cWarPanel:GetTall() - 40)
+				cWarsList:EnableVerticalScrollbar(true) 
+				cWarsList:EnableHorizontal(false) 
+				cWarsList:SetSpacing(1)
+				cWarsList:SetPadding(10)
+				
+				for wOCID, wOName in pairs(wars) do
+					local warsPanel = vgui.Create("DPanel")
+						warsPanel:SetTall(25)
+						warsPanel.Paint = function()
+							draw.RoundedBox( 6, 0, 0, warsPanel:GetWide(), warsPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+						end
+						cWarsList:AddItem(warsPanel)
+						
+						warsPanel.Name = vgui.Create("DLabel", warsPanel)
+						warsPanel.Name:SetPos(10, 5)
+						warsPanel.Name:SetText(tostring(wOName))
+						warsPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+						warsPanel.Name:SizeToContents() 
+						warsPanel.Name:SetContentAlignment( 5 )
+						
+						local warCancelButton = vgui.Create( "DButton", warsPanel )
+							warCancelButton:SetPos( 240 , 3 )
+							warCancelButton:SetText( "Cancel War" )
+							warCancelButton:SetSize( 75, 20 )
+							warCancelButton.DoClick = function()
+								RunConsoleCommand( "pnrp_remdiplomacy", tostring(wOCID) ) 
+								reopenComTab(communityTable["cid"], "war")
+							end	
+				end
+				
+	warsSheet = community_TabSheet:AddSheet( "Wars", cWarPanel, "gui/icons/flag_red.png", false, false, "Communities at war with" )	
+	--// Community Allies			
+			local cAllyPanel = vgui.Create( "DPanel", community_TabSheet )
+				cAllyPanel:SetPos( 5, 5 )
+				cAllyPanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
+				cAllyPanel.Paint = function() 
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+				
+				local cAlliesList = vgui.Create("DPanelList", cAllyPanel)
+				cAlliesList:SetPos(-5, 5)
+				cAlliesList:SetSize(cAllyPanel:GetWide() - 10, cAllyPanel:GetTall() - 40)
+				cAlliesList:EnableVerticalScrollbar(true) 
+				cAlliesList:EnableHorizontal(false) 
+				cAlliesList:SetSpacing(1)
+				cAlliesList:SetPadding(10)
+				
+				for aOCID, aOName in pairs(allies) do
+					local alliesPanel = vgui.Create("DPanel")
+						alliesPanel:SetTall(25)
+						alliesPanel.Paint = function()
+							draw.RoundedBox( 6, 0, 0, alliesPanel:GetWide(), alliesPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+						end
+						cAlliesList:AddItem(alliesPanel)
+						
+						alliesPanel.Name = vgui.Create("DLabel", alliesPanel)
+						alliesPanel.Name:SetPos(10, 5)
+						alliesPanel.Name:SetText(tostring(aOName))
+						alliesPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+						alliesPanel.Name:SizeToContents() 
+						alliesPanel.Name:SetContentAlignment( 5 )
+						
+						local allyCancelButton = vgui.Create( "DButton", alliesPanel )
+							allyCancelButton:SetPos( 240 , 3 )
+							allyCancelButton:SetText( "Cancel Ally" )
+							allyCancelButton:SetSize( 75, 20 )
+							allyCancelButton.DoClick = function()
+								RunConsoleCommand( "pnrp_remdiplomacy", tostring(aOCID) ) 
+								reopenComTab(communityTable["cid"], "ally")
+							end	
+				end
+				
+	alliesSheet = community_TabSheet:AddSheet( "Allies", cAllyPanel, "gui/icons/flag_blue.png", false, false, "Communities allied with" )	
+	--// Community Pending			
+			local cPendingPanel = vgui.Create( "DPanel", community_TabSheet )
+				cPendingPanel:SetPos( 5, 5 )
+				cPendingPanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
+				cPendingPanel.Paint = function() 
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+				
+				local cPendingList = vgui.Create("DPanelList", cPendingPanel)
+				cPendingList:SetPos(-5, 5)
+				cPendingList:SetSize(cPendingPanel:GetWide() - 10, cPendingPanel:GetTall() - 40)
+				cPendingList:EnableVerticalScrollbar(true) 
+				cPendingList:EnableHorizontal(false) 
+				cPendingList:SetSpacing(1)
+				cPendingList:SetPadding(10)
+				
+				for _, pItem in pairs(communityPending) do
+					local pendingPanel = vgui.Create("DPanel")
+						pendingPanel:SetTall(75)
+						pendingPanel.Paint = function()
+							draw.RoundedBox( 6, 0, 0, pendingPanel:GetWide(), pendingPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+						end
+						cPendingList:AddItem(pendingPanel)
+						
+						local dataTbl = {}
+						local dataSplit = string.Explode(" ", pItem["data"])
+						
+						for _, item in pairs(dataSplit) do
+							local splitData = string.Explode(",", item)
+							dataTbl[splitData[1]] = splitData[2]
+						end
+						
+						local msgTxt = tostring(dataTbl["info"])
+						if msgTxt == "msg" then msgTxt = "Message" end
+						
+						local txtMStatus = tostring(dataTbl["status"])
+						if txtMStatus == "nil" then
+							txtMStatus = ""
+						end
+						
+						pendingPanel.Status = vgui.Create("DLabel", pendingPanel)
+						pendingPanel.Status:SetPos(10, 5)
+						pendingPanel.Status:SetText("Pending Action: "..msgTxt.." "..txtMStatus)
+						pendingPanel.Status:SetColor(Color( 0, 255, 0, 255 ))
+						pendingPanel.Status:SizeToContents() 
+						pendingPanel.Status:SetContentAlignment( 5 )
+						
+						local timeBreak = string.Explode(" ", pItem["time"])
+						local timeString = timeBreak[1].." "..timeBreak[2]
+						
+						pendingPanel.Time = vgui.Create("DLabel", pendingPanel)
+						pendingPanel.Time:SetPos(190, 5)
+						pendingPanel.Time:SetText("Time: "..timeString)
+						pendingPanel.Time:SetColor(Color( 0, 255, 0, 255 ))
+						pendingPanel.Time:SizeToContents()
+						pendingPanel.Time:SetContentAlignment( 5 )
+						
+						pendingPanel.MSG = vgui.Create("DLabel", pendingPanel)
+						pendingPanel.MSG:SetPos(10, 24)
+						pendingPanel.MSG:SetText(pItem["msg"])
+						pendingPanel.MSG:SetColor(Color( 0, 255, 0, 255 ))
+						pendingPanel.MSG:SizeToContents() 
+						pendingPanel.MSG:SetWrap(true)
+						pendingPanel.MSG:SetWide(cPendingList:GetWide()-40)
+						pendingPanel.MSG:SetAutoStretchVertical( true )
+						pendingPanel.MSG:SetContentAlignment( 5 )
+						
+						if msgTxt == "Message" then
+							local okButton = vgui.Create( "DButton", pendingPanel )
+								okButton:SetPos( 10 , 55 )
+								okButton:SetText( "Acknowledge" )
+								okButton:SetSize( 100, 15 )
+								okButton.DoClick = function()
+									RunConsoleCommand( "pnrp_dclnpending", dataTbl["cid"], dataTbl["info"] ) 
+									reopenComTab(communityTable["cid"], "pending")
+								end	
+						else
+							local ReadButton = vgui.Create( "DButton", pendingPanel )
+								ReadButton:SetPos( 10, 55 )
+								ReadButton:SetText( "Accept" )
+								ReadButton:SetSize( 50, 15 )
+								ReadButton.DoClick = function()
+									RunConsoleCommand( "pnrp_acptpending", dataTbl["cid"], dataTbl["info"]) 
+									reopenComTab(communityTable["cid"], "pending")
+								end				
+							local DButton = vgui.Create( "DButton", pendingPanel )
+								DButton:SetPos( 60 , 55 )
+								DButton:SetText( "Cancel" )
+								DButton:SetSize( 50, 15 )
+								DButton.DoClick = function()
+									RunConsoleCommand( "pnrp_dclnpending", dataTbl["cid"], dataTbl["info"] ) 
+									reopenComTab(communityTable["cid"], "pending")
+								end		
+						end
+				end
+	pendingSheet = community_TabSheet:AddSheet( "Pending", cPendingPanel, "gui/icons/information.png", false, false, "Pending Actions" )	
+		end
+
+	if tab then
+		if tab == "invite" then
+			community_TabSheet:SetActiveTab( inviteSheet.Tab )
+		elseif tab == "war" then
+			community_TabSheet:SetActiveTab( warsSheet.Tab )
+		elseif tab == "ally" then
+			community_TabSheet:SetActiveTab( alliesSheet.Tab )
+		elseif tab == "pending" then
+			community_TabSheet:SetActiveTab( pendingSheet.Tab )
+		end
+	end
+end
+
+function reopenComTab(cid, tab)
+	community_TabSheet:Remove()
+	timer.Simple(0.5, function ()
+		net.Start("SND_reopenComTab")
+			net.WriteEntity(ply)
+			net.WriteString(tostring(cid))
+			net.WriteString(tostring(tab))
+		net.SendToServer()
+	end)
+end
+
+function C_SND_reopenComTab()
+	local communityName = net:ReadString()
+	local fullComTable = net:ReadTable() 
+	local tab = net:ReadString()
+	
+	communityTabWindow(communityName, fullComTable, tab)
+end
+net.Receive("C_SND_reopenComTab", C_SND_reopenComTab)
 
 function GM.initCommunity(ply)
 --	if community_frame != nil then 
@@ -725,6 +955,9 @@ local commSearch_Frame
 local comSFrame = false
 local CommSearchBody_Frame
 local commSearchPanel
+local commBTN_Panel
+local warBtn
+local allyBtn
 function GM.commSearchWindow()
 	if comSFrame then return end
 	local ply = LocalPlayer()
@@ -753,6 +986,13 @@ function GM.commSearchWindow()
 			CommSearchBody_Frame.Paint = function() 
 			--	surface.SetDrawColor( 50, 50, 50, 0 )
 			end
+		commBTN_Panel = vgui.Create( "DPanel", commSearch_Frame )
+			commBTN_Panel:SetPos( commSearch_Frame:GetWide() - 215, commSearch_Frame:GetTall() - 100 )
+			commBTN_Panel:SetSize( 250, 100 )
+			commBTN_Panel.Paint = function() 
+			--	surface.SetDrawColor( 50, 50, 50, 0 )
+			end
+		
 		
 		--Search Bar
 		commSearchPanel = vgui.Create( "DPanel", commSearch_Frame )
@@ -771,6 +1011,7 @@ function GM.commSearchWindow()
 			sCommNameTxt:SetWide(150)
 			sCommNameTxt.OnEnter = function()
 				CommSearchBody_Frame:Remove()
+				war_ally_BTN_ENDS(false)
 				net.Start("SND_CommSearch")
 					net.WriteEntity(ply)
 					net.WriteString(sCommNameTxt:GetValue())
@@ -782,16 +1023,61 @@ function GM.commSearchWindow()
 			 DButton:SetSize( 150, 20 )
 			 DButton.DoClick = function()
 				CommSearchBody_Frame:Remove()
+				war_ally_BTN_ENDS(false)
 				net.Start("SND_CommSearch")
 					net.WriteEntity(ply)
 					net.WriteString(sCommNameTxt:GetValue())
 				net.SendToServer()
 			 end
+		
+		if ply:IsAdmin() then
+			local PButton = vgui.Create( "DButton", commSearchPanel )
+				 PButton:SetPos( 5, 75 )
+				 PButton:SetText( "View Pending List" )
+				 PButton:SetSize( 150, 20 )
+				 PButton.DoClick = function()
+					CommSearchBody_Frame:Remove()
+					war_ally_BTN_ENDS(false)
+					net.Start("SND_CommViewPending")
+						net.WriteEntity(ply)
+					net.SendToServer()
+				 end
+		end
+				
+		local btnHPos = 0
+		local btnHeight = 40
+		local lblColor = Color( 245, 218, 210, 180 )
+				
+		warBtn = vgui.Create("DImageButton", commBTN_Panel)
+			warBtn:SetPos( 0,btnHPos )
+			warBtn:SetSize(30,30)
 			
+		local warBtnLbl = vgui.Create("DLabel", commBTN_Panel)
+			warBtnLbl:SetPos( 50,btnHPos+2 )
+			warBtnLbl:SetColor( lblColor )
+			warBtnLbl:SetText( "Declare War" )
+			warBtnLbl:SetFont("Trebuchet24")
+			warBtnLbl:SizeToContents()
+		
+		btnHPos = btnHPos + btnHeight
+		allyBtn = vgui.Create("DImageButton", commBTN_Panel)
+			allyBtn:SetPos( 0,btnHPos )
+			allyBtn:SetSize(30,30)
+			
+		local allyBtnLbl = vgui.Create("DLabel", commBTN_Panel)
+			allyBtnLbl:SetPos( 50,btnHPos+2 )
+			allyBtnLbl:SetColor( lblColor )
+			allyBtnLbl:SetText( "Offer Alliance" )
+			allyBtnLbl:SetFont("Trebuchet24")
+			allyBtnLbl:SizeToContents()
+		
+		war_ally_BTN_ENDS(false)
+		
+		
 	function commSearch_Frame:Close()                  
 		comSFrame = false                  
 		self:SetVisible( false )                  
-		self:Remove()          
+		self:Remove()       
 	end 
 end
 concommand.Add( "pnrp_communitysearch",  GM.commSearchWindow )
@@ -824,13 +1110,8 @@ function sCommDispResults()
 					draw.RoundedBox( 6, 0, 0, CommPanel:GetWide(), CommPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
 				end
 				cCommList:AddItem(CommPanel)
-				
-				CommPanel.Title = vgui.Create("DLabel", CommPanel)
-				CommPanel.Title:SetPos(10, 5)
-				CommPanel.Title:SetText(tostring(v["cname"]))
-				CommPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
-				CommPanel.Title:SizeToContents() 
-				CommPanel.Title:SetContentAlignment( 5 )
+					
+				local textCom = tostring(v["cname"])
 				
 				if ply:IsAdmin() then
 					local ADMButton = vgui.Create( "DButton", CommPanel )
@@ -842,6 +1123,13 @@ function sCommDispResults()
 							RunConsoleCommand( "pnrp_AdmEditCom", v["cid"] )
 						end
 				end
+				
+				CommPanel.Title = vgui.Create("DLabel", CommPanel)
+				CommPanel.Title:SetPos(5, 5)
+				CommPanel.Title:SetText(textCom)
+				CommPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+				CommPanel.Title:SizeToContents() 
+				CommPanel.Title:SetContentAlignment( 5 )
 				
 				local DButton = vgui.Create( "DButton", CommPanel )
 					DButton:SetPos( 225 , 3 )
@@ -859,9 +1147,103 @@ function sCommDispResults()
 end
 net.Receive("C_SND_CommSearchResults", sCommDispResults)
 
+function sCommDispPending()
+	local result = net.ReadTable()
+	local comTbl = net.ReadTable()
+	local ply = LocalPlayer()
+	
+	CommSearchBody_Frame = vgui.Create( "DPanel", commSearch_Frame )
+		CommSearchBody_Frame:SetPos( 25, 40 ) -- Set the position of the panel
+		CommSearchBody_Frame:SetSize( commSearch_Frame:GetWide() - 260, commSearch_Frame:GetTall() - 40)
+		CommSearchBody_Frame.Paint = function() 
+		--	surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+	local cCommList = vgui.Create("DPanelList", CommSearchBody_Frame)
+		cCommList:SetPos(0, 0)
+		cCommList:SetSize(CommSearchBody_Frame:GetWide() - 5, CommSearchBody_Frame:GetTall() - 40)
+		cCommList:EnableVerticalScrollbar(true) 
+		cCommList:EnableHorizontal(false) 
+		cCommList:SetSpacing(1)
+		cCommList:SetPadding(10)
+		cCommList.Paint = function()
+		--	draw.RoundedBox( 8, 0, 0, cMemberList:GetWide(), cMemberList:GetTall(), Color( 50, 50, 50, 255 ) )
+		end
+		
+		for k, v in pairs(result) do
+			local CommPanel = vgui.Create("DPanel")
+				CommPanel:SetTall(52)
+				CommPanel.Paint = function()
+					draw.RoundedBox( 6, 0, 0, CommPanel:GetWide(), CommPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+				end
+				cCommList:AddItem(CommPanel)
+				
+				local dataTbl = {}
+				local dataSplit = string.Explode(" ", v["data"])
+				
+				for _, item in pairs(dataSplit) do
+					local splitData = string.Explode(",", item)
+					dataTbl[splitData[1]] = splitData[2]
+				end
+				
+				cidTo = dataTbl["cid"]
+				local cidToName = cidTo
+				for _,ctbl in pairs(comTbl) do
+					if ctbl["cid"] == cidTo then
+						cidToName = ctbl["cname"]
+					end
+				end
+								
+				text = tostring(v["cname"]).." -> "..tostring(cidToName)
+				
+				CommPanel.Title = vgui.Create("DLabel", CommPanel)
+				CommPanel.Title:SetPos(10, 1)
+				CommPanel.Title:SetText(text)
+				CommPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+				CommPanel.Title:SizeToContents() 
+				CommPanel.Title:SetContentAlignment( 5 )
+				
+				local infoTxt = "Info: "..tostring(dataTbl["info"]).." Type: "..tostring(dataTbl["status"])
+				CommPanel.Info = vgui.Create("DLabel", CommPanel)
+				CommPanel.Info:SetPos(10, 12)
+				CommPanel.Info:SetText(infoTxt)
+				CommPanel.Info:SetColor(Color( 0, 255, 0, 255 ))
+				CommPanel.Info:SizeToContents() 
+				CommPanel.Info:SetContentAlignment( 5 )
+				
+				CommPanel.Msg = vgui.Create("DLabel", CommPanel)
+				CommPanel.Msg:SetPos(10, 23)
+				CommPanel.Msg:SetText(tostring(v["msg"]))
+				CommPanel.Msg:SetColor(Color( 0, 255, 0, 255 ))
+				CommPanel.Msg:SizeToContents() 
+				CommPanel.Msg:SetWrap(true)
+				CommPanel.Msg:SetWide(cCommList:GetWide()-40)
+				CommPanel.Msg:SetAutoStretchVertical( true )
+				CommPanel.Msg:SetContentAlignment( 5 )
+						
+				local DButton = vgui.Create( "DButton", CommPanel )
+					DButton:SetPos( 225 , 3 )
+					DButton:SetText( "Delete" )
+					DButton:SetSize( 50, 20 )
+					DButton.DoClick = function()
+						CommSearchBody_Frame:Remove()
+						net.Start("SND_DelPending")
+							net.WriteEntity(ply)
+							net.WriteString(v["cid"])
+							net.WriteString(tostring(v["time"]))
+							net.WriteString("pending")
+						net.SendToServer()
+					end
+		end
+end
+net.Receive("SND_CommViewPending", sCommDispPending)
+
 function sCommDispComm()
 	local result = net.ReadTable()
+	local wars = net.ReadTable()
+	local allies = net.ReadTable()
 
+	war_ally_BTN_ENDS(true, result["cid"])
+	
 	CommSearchBody_Frame = vgui.Create( "DPanel", commSearch_Frame )
 		CommSearchBody_Frame:SetPos( 25, 35 ) -- Set the position of the panel
 		CommSearchBody_Frame:SetSize( commSearch_Frame:GetWide() - 270, commSearch_Frame:GetTall() - 30)
@@ -894,51 +1276,179 @@ function sCommDispComm()
 				CommMCount:SetColor(Color( 0, 255, 0, 255 ))
 				CommMCount:SizeToContents() 
 				CommMCount:SetContentAlignment( 5 )
-				
-			local cMemList = vgui.Create("DPanelList", CommRPanel)
-				cMemList:SetPos(5, 40)
-				cMemList:SetSize(CommRPanel:GetWide() - 5, CommRPanel:GetTall() - 40)
-				cMemList:EnableVerticalScrollbar(true) 
-				cMemList:EnableHorizontal(false) 
-				cMemList:SetSpacing(1)
-				cMemList:SetPadding(10)
-				cMemList.Paint = function()
-				--	draw.RoundedBox( 8, 0, 0, cMemList:GetWide(), cMemList:GetTall(), Color( 50, 50, 50, 255 ) )
-				end
-				for k, v in pairs(result["users"]) do
-					local memPanel = vgui.Create("DPanel")
-						memPanel:SetTall(40)
-						memPanel.Paint = function()
-							draw.RoundedBox( 6, 0, 0, memPanel:GetWide(), memPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
-						end
-						cMemList:AddItem(memPanel)
-						
-						memPanel.Icon = vgui.Create("SpawnIcon", memPanel)
-						memPanel.Icon:SetSize( 38, 38 )
-						memPanel.Icon:SetModel(v["model"])
-						memPanel.Icon:SetPos(10, 1)
-						memPanel.Icon:SetToolTip( nil )
-						
-						memPanel.Rank = vgui.Create("DLabel", memPanel)
-						memPanel.Rank:SetPos(50, 5)
-						memPanel.Rank:SetText("Rank: "..tostring(v["rank"]))
-						memPanel.Rank:SetColor(Color( 0, 255, 0, 255 ))
-						memPanel.Rank:SizeToContents() 
-						memPanel.Rank:SetContentAlignment( 5 )
-						
-						memPanel.Name = vgui.Create("DLabel", memPanel)
-						memPanel.Name:SetPos(100, 5)
-						memPanel.Name:SetText("Name: "..tostring(v["name"]))
-						memPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
-						memPanel.Name:SizeToContents() 
-						memPanel.Name:SetContentAlignment( 5 )
-						
-						memPanel.Title = vgui.Create("DLabel", memPanel)
-						memPanel.Title:SetPos(100, 20)
-						memPanel.Title:SetText("Title: "..tostring(v["title"]))
-						memPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
-						memPanel.Title:SizeToContents() 
-						memPanel.Title:SetContentAlignment( 5 )
-				end		
+			
+			local community_TabSheet = vgui.Create( "DPropertySheet" )
+					community_TabSheet:SetParent( CommRPanel )
+					community_TabSheet:SetPos( 5, 40 )
+					community_TabSheet:SetSize( CommRPanel:GetWide(), CommRPanel:GetTall() )
+					community_TabSheet.Paint = function() -- Paint function
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+		--//List of Current Members	
+				local cMemberPanel = vgui.Create( "DPanel", community_TabSheet )
+					cMemberPanel:SetPos( 0, 5 )
+					cMemberPanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
+					cMemberPanel.Paint = function() -- Paint function
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+				local cMemList = vgui.Create("DPanelList", cMemberPanel)
+					cMemList:SetPos(-10, 0)
+					cMemList:SetSize(cMemberPanel:GetWide()-5, cMemberPanel:GetTall() - 70)
+					cMemList:EnableVerticalScrollbar(true) 
+					cMemList:EnableHorizontal(false) 
+					cMemList:SetSpacing(1)
+					cMemList:SetPadding(10)
+					cMemList.Paint = function()
+					--	draw.RoundedBox( 8, 0, 0, cMemList:GetWide(), cMemList:GetTall(), Color( 50, 50, 50, 255 ) )
+					end
+					for k, v in pairs(result["users"]) do
+						local memPanel = vgui.Create("DPanel")
+							memPanel:SetTall(40)
+							memPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, memPanel:GetWide(), memPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cMemList:AddItem(memPanel)
+							
+							memPanel.Icon = vgui.Create("SpawnIcon", memPanel)
+							memPanel.Icon:SetSize( 38, 38 )
+							memPanel.Icon:SetModel(v["model"])
+							memPanel.Icon:SetPos(10, 1)
+							memPanel.Icon:SetToolTip( nil )
+							
+							memPanel.Rank = vgui.Create("DLabel", memPanel)
+							memPanel.Rank:SetPos(50, 5)
+							memPanel.Rank:SetText("Rank: "..tostring(v["rank"]))
+							memPanel.Rank:SetColor(Color( 0, 255, 0, 255 ))
+							memPanel.Rank:SizeToContents() 
+							memPanel.Rank:SetContentAlignment( 5 )
+							
+							memPanel.Name = vgui.Create("DLabel", memPanel)
+							memPanel.Name:SetPos(100, 5)
+							memPanel.Name:SetText("Name: "..tostring(v["name"]))
+							memPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+							memPanel.Name:SizeToContents() 
+							memPanel.Name:SetContentAlignment( 5 )
+							
+							memPanel.Title = vgui.Create("DLabel", memPanel)
+							memPanel.Title:SetPos(100, 20)
+							memPanel.Title:SetText("Title: "..tostring(v["title"]))
+							memPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+							memPanel.Title:SizeToContents() 
+							memPanel.Title:SetContentAlignment( 5 )
+					end		
+					
+			community_TabSheet:AddSheet( "Members", cMemberPanel, "gui/icons/group.png", false, false, "Community Member List" )
+			-- Wars
+				local cWarPanel = vgui.Create( "DPanel", community_TabSheet )
+					cWarPanel:SetPos( 5, 5 )
+					cWarPanel:SetSize( CommSearchBody_Frame:GetWide(), CommSearchBody_Frame:GetTall() )
+					cWarPanel.Paint = function() 
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+					local cWarsList = vgui.Create("DPanelList", cWarPanel)
+					cWarsList:SetPos(-10, 5)
+					cWarsList:SetSize(cWarPanel:GetWide() - 10, cWarPanel:GetTall() - 75)
+					cWarsList:EnableVerticalScrollbar(true) 
+					cWarsList:EnableHorizontal(false) 
+					cWarsList:SetSpacing(1)
+					cWarsList:SetPadding(10)
+					
+					for wOCID, wOName in pairs(wars) do
+						local warsPanel = vgui.Create("DPanel")
+							warsPanel:SetTall(25)
+							warsPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, warsPanel:GetWide(), warsPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cWarsList:AddItem(warsPanel)
+							
+							warsPanel.Name = vgui.Create("DLabel", warsPanel)
+							warsPanel.Name:SetPos(10, 5)
+							warsPanel.Name:SetText(tostring(wOName))
+							warsPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+							warsPanel.Name:SizeToContents() 
+							warsPanel.Name:SetContentAlignment( 5 )
+					end
+			community_TabSheet:AddSheet( "Wars", cWarPanel, "gui/icons/flag_red.png", false, false, "Communities at war with" )	
+			--Allys
+				local cAllyPanel = vgui.Create( "DPanel", community_TabSheet )
+					cAllyPanel:SetPos( 5, 5 )
+					cAllyPanel:SetSize( community_TabSheet:GetWide(), community_TabSheet:GetTall() )
+					cAllyPanel.Paint = function() 
+						surface.SetDrawColor( 50, 50, 50, 0 )
+					end
+					
+					local cAlliesList = vgui.Create("DPanelList", cAllyPanel)
+					cAlliesList:SetPos(-10, 5)
+					cAlliesList:SetSize(cAllyPanel:GetWide() - 10, cAllyPanel:GetTall() - 75)
+					cAlliesList:EnableVerticalScrollbar(true) 
+					cAlliesList:EnableHorizontal(false) 
+					cAlliesList:SetSpacing(1)
+					cAlliesList:SetPadding(10)
+					
+					for aOCID, aOName in pairs(allies) do
+						local alliesPanel = vgui.Create("DPanel")
+							alliesPanel:SetTall(25)
+							alliesPanel.Paint = function()
+								draw.RoundedBox( 6, 0, 0, alliesPanel:GetWide(), alliesPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							end
+							cAlliesList:AddItem(alliesPanel)
+							
+							alliesPanel.Name = vgui.Create("DLabel", alliesPanel)
+							alliesPanel.Name:SetPos(10, 5)
+							alliesPanel.Name:SetText(tostring(aOName))
+							alliesPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+							alliesPanel.Name:SizeToContents() 
+							alliesPanel.Name:SetContentAlignment( 5 )
+					end
+			community_TabSheet:AddSheet( "Allies", cAllyPanel, "gui/icons/flag_blue.png", false, false, "Communities allied with" )
+
 end
 net.Receive("C_SND_CommSelResult", sCommDispComm)
+
+function war_ally_BTN_ENDS(enable, ocid)
+	local ply = LocalPlayer()
+	local cid = tonumber(ply:GetNWInt("cid", -1))
+
+	if cid < 0 and tonumber(ocid) < 0 then enable = false end
+	
+	if tostring(cid) == tostring(ocid) then enable = false end
+	
+	if enable == true then 
+		warBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+		warBtn.DoClick = function() 
+			RunConsoleCommand( "pnrp_adddiplomacy", ocid, "war" )
+			commSearch_Frame:Close()
+		end
+		warBtn.Paint = function()
+			if warBtn:IsDown() then 
+				warBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+			else
+				warBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			end
+		end
+	else
+		warBtn.Paint = function()
+			warBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+		end
+	end	
+	if enable == true then 
+		allyBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+		allyBtn.DoClick = function() 
+			RunConsoleCommand( "pnrp_adddiplomacy", ocid, "ally" )
+			commSearch_Frame:Close()
+		end	
+		allyBtn.Paint = function()
+			if allyBtn:IsDown() then 
+				allyBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+			else
+				allyBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			end
+		end
+	else
+		allyBtn.Paint = function()
+			allyBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+		end
+	end
+end

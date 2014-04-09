@@ -6,7 +6,7 @@ SWEP.Contact		= "slob187.pb@gmail.com"
 SWEP.Purpose		= "Hands."
 SWEP.Instructions	= "Left click to punch and gather.\nRight click to knock the door."
 
-SWEP.ViewModel		= ""
+SWEP.ViewModel		= "models/weapons/v_hands.mdl"
 SWEP.WorldModel		= ""
 
 SWEP.Spawnable      = false

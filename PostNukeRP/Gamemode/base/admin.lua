@@ -149,9 +149,9 @@ function PNRP.UpdateFromAdminMenu( )
 		RunConsoleCommand("pnrp_ReproduceRes", tostring(SpawnSettings.ReproduceRes))
 		RunConsoleCommand("pnrp_MaxReproducedRes", tostring(SpawnSettings.MaxReproducedRes))
 		
-		ErrorNoHalt( "[INFO] "..ply:Name().." Changed Admin settings ".."\n")
+		ErrorNoHalt( "[INFO] "..ply:Name().." changed admin settings ".."\n")
 		
-		ply:ChatPrint("Settings Confirmed!")
+		ply:ChatPrint("Settings confirmed!")
 	else
 		ply:ChatPrint("You are not an admin on this server!")
 	end
@@ -217,12 +217,13 @@ function PNRP.ImportMapGrid()
 	if file.Exists("PostNukeRP/export_import/"..fileName, "DATA") then
 		tbl = util.JSONToTable(file.Read("PostNukeRP/export_import/"..fileName, "DATA"))
 		local mapName = tbl[1]["map"]
+		if fileName != mapName then mapName = string.gsub(fileName, ".txt", "") end --Fix to allow easy duplication of map grids
 		if querySQL("SELECT * FROM spawn_grids WHERE map='"..mapName.."'") then
 			query = "DELETE FROM spawn_grids WHERE map='"..mapName.."'"
 			result = querySQL(query)
 		end
 		for k, v in pairs(tbl) do
-			query = "INSERT INTO spawn_grids VALUES ( '"..v["map"].."'"
+			query = "INSERT INTO spawn_grids VALUES ( '"..mapName.."'"
 			query = query..", '"..v["pos"].."'"
 			query = query..", '"..v["range"].."'"
 			query = query..", '"..v["spawn_res"].."'"
@@ -257,22 +258,23 @@ function PlyDevMode(ply, cmd, args)
 		ply:ChatPrint("You do not have access to this command!")
 		return
 	end
-	local setPlayer = args[1]
+	local setPlayer =args[1]
 	if not setPlayer then 
 		setPlayer = ply
 	else
+		setPlayer = string.lower(tostring(setPlayer))
 		local playerList = player.GetAll()
 		local FoundPly = false
 		for k, v in pairs(playerList) do
 			if IsValid(v) then
-				if string.find(string.lower(v:Nick()), string.lower(setPlayer)) then
+				if string.find(string.lower(tostring(v:Nick())), tostring(setPlayer)) then
 					FoundPly = true
 					setPlayer = v
 				end
 			end
 		end
 		if not FoundPly then
-			ply:ChatPrint("Cound not find the player")
+			ply:ChatPrint("Player could not be found.")
 			return
 		end
 	end
@@ -281,14 +283,14 @@ function PlyDevMode(ply, cmd, args)
 		setPlayer.DevMode = false
 		setPlayer:SetMoveType( MOVETYPE_WALK )
 		ply:ChatPrint("You removed Dev Mode from "..setPlayer:Nick().." ("..setPlayer:SteamName()..")")
-		setPlayer:ChatPrint("Dev Mode Removed")
+		setPlayer:ChatPrint("Dev Mode removed.")
 		ErrorNoHalt(ply:SteamName().." Removed Dev Mode from "..setPlayer:SteamName().."\n")
 	else
 		setPlayer:GodEnable()
 		setPlayer.DevMode = true
-		ply:ChatPrint("You gave Dev Mode to "..setPlayer:Nick().." ("..setPlayer:SteamName()..")")
-		setPlayer:ChatPrint("You have been placed in Dev Mode")
-		ErrorNoHalt(ply:SteamName().." Gave Dev Mode to "..setPlayer:SteamName().."\n")
+		ply:ChatPrint("You applied Dev Mode to "..setPlayer:Nick().." ("..setPlayer:SteamName()..")")
+		setPlayer:ChatPrint("Dev Mode applied.")
+		ErrorNoHalt(ply:SteamName().." Applied Dev Mode to "..setPlayer:SteamName().."\n")
 	end
 end
 concommand.Add( "pnrp_plydevmode", PlyDevMode )

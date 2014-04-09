@@ -181,7 +181,7 @@ function CreateNewStorage( )
 	local chkStoreage = querySQL("SELECT * FROM player_storage WHERE pid='"..tonumber(ply.pid).."'")
 	if chkStoreage then
 		if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
-			ply:ChatPrint("Admin No Cost")
+			ply:ChatPrint("You created this profile using admin no-cost...")
 			make = true
 		else
 			if ply:GetResource("Scrap") >= pScr and ply:GetResource("Chemicals") >= pChem and ply:GetResource("Small_Parts") >= pSP then 
@@ -226,7 +226,7 @@ function SetStorage( )
 	local foundStorage= ents.FindByClass("tool_storage")
 	for k, v in pairs(foundStorage) do
 		if tostring(v.storageID) == tostring(storageID) then
-			ply:ChatPrint( "This Storage Container is allready set!" )
+			ply:ChatPrint( "This profile is already in-use!" )
 			return
 		end
 	end
@@ -280,7 +280,7 @@ function TakeFromStorage( )
 			ply:AddToInventory( Item, Amount )
 			ply:EmitSound(Sound("items/ammo_pickup.wav"))
 		else
-			ply:ChatPrint("Unable to take item from Storage")
+			ply:ChatPrint("Unable to take item from storage.")
 		end
 	else
 		local weightDiff = weightCalc - weightCap
@@ -296,7 +296,7 @@ function TakeFromStorage( )
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
 				ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
 			else
-				ply:ChatPrint("Unable to take item from Storage")
+				ply:ChatPrint("Unable to take item from storage.")
 			end
 		end
 	end
@@ -369,13 +369,13 @@ function sendToPlayerStorage( p, command, arg )
 	
 	local totalStCap = PNRP.Items[itemID].Weight * count + getStorageCapacity(storageID)
 	if totalStCap > PNRP.Items[storageENT:GetClass()].Capacity then
-		ply:ChatPrint("Not enough space in storage")
+		ply:ChatPrint("Not enough space in storage.")
 		return
 	end
 	
 	local Check = PNRP.TakeFromInventoryBulk( ply, itemID, tonumber(count) )
 	if not Check then
-		ply:ChatPrint("You do not have enough of this")
+		ply:ChatPrint("You do not have enough of this.")
 		return
 	end
 		
@@ -612,3 +612,7 @@ function PlyRemStorage(ply, cmd, args)
 	end
 end
 concommand.Add( "pnrp_remstorage", PlyRemStorage )
+
+function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
+	self:Remove()
+end
