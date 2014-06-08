@@ -46,6 +46,34 @@ end
 function GM.SpawnMobs()
 	local GM = GAMEMODE
 	
+	local maxzombies = GetConVarNumber("pnrp_MaxZombies")
+		local maxfastzoms = GetConVarNumber("pnrp_MaxZombies")
+		local maxpoisonzoms = GetConVarNumber("pnrp_MaxZombies")
+		local maxantlions = GetConVarNumber("pnrp_MaxZombies")
+		local maxantguards = GetConVarNumber("pnrp_MaxZombies")
+		
+		--Added this check to make sure the sever does not get grifed by "max zombies"
+		if maxzombies > 100 then 
+			maxzombies = 30
+			RunConsoleCommand("pnrp_MaxZombies", "30") 
+		end
+		if maxfastzoms > 100 then 
+			maxfastzoms = 5
+			RunConsoleCommand("pnrp_MaxFastZombies", "5") 
+		end
+		if maxpoisonzoms > 100 then 
+			maxpoisonzoms = 2
+			RunConsoleCommand("pnrp_MaxPoisonZombs", "2") 
+		end
+		if maxantlions > 100 then
+			maxantlions = 10
+			RunConsoleCommand("pnrp_MaxAntlions", "10") 
+		end
+		if maxantguards > 100 then 
+			maxantguards = 1
+			RunConsoleCommand("pnrp_MaxAntGuards", "1") 
+		end
+		
 	spawnTbl = GM.spawnTbl
 	if GetConVarNumber("pnrp_SpawnMobs") == 1 then
 		local info = {}
@@ -61,19 +89,21 @@ function GM.SpawnMobs()
 		
 		local spawnables = {}
 		
+		
+				
 		--  Check 'em against max amounts.
-		local zombiespawn = (#zombies < GetConVarNumber("pnrp_MaxZombies"))
-		local fastzomspawn = (#fastzoms < GetConVarNumber("pnrp_MaxFastZombies"))
-		local poisonzomspawn = (#poisonzoms < GetConVarNumber("pnrp_MaxPoisonZombs"))
-		local antlionspawn = (#antlions < GetConVarNumber("pnrp_MaxAntlions"))
-		local antguardspawn = (#antguards < GetConVarNumber("pnrp_MaxAntGuards"))
+		local zombiespawn = (#zombies < maxzombies)
+		local fastzomspawn = (#fastzoms < maxfastzoms)
+		local poisonzomspawn = (#poisonzoms < maxpoisonzoms)
+		local antlionspawn = (#antlions < maxantlions)
+		local antguardspawn = (#antguards < maxantguards)
 		
 		if zombiespawn or fastzomspawn or poisonzomspawn or antlionspawn or antguardspawn then
 			--  Add 'em to a table with how much they need.
-			if zombiespawn then spawnables["npc_zombie"] = GetConVarNumber("pnrp_MaxZombies") - #zombies end
-			if fastzomspawn then spawnables["npc_fastzombie"] = GetConVarNumber("pnrp_MaxFastZombies") - #fastzoms end
-			if poisonzomspawn then spawnables["npc_poisonzombie"] = GetConVarNumber("pnrp_MaxPoisonZombs") - #poisonzoms end
-			if antlionspawn then spawnables["npc_antlion"] = GetConVarNumber("pnrp_MaxAntlions") - #antlions end
+			if zombiespawn then spawnables["npc_zombie"] = maxzombies - #zombies end
+			if fastzomspawn then spawnables["npc_fastzombie"] = maxfastzoms - #fastzoms end
+			if poisonzomspawn then spawnables["npc_poisonzombie"] = maxpoisonzoms - #poisonzoms end
+			if antlionspawn then spawnables["npc_antlion"] = maxantlions - #antlions end
 			if antguardspawn then 
 				if math.random(1,10) == 1 then
 					spawnables["npc_antlionguard"] = 1
