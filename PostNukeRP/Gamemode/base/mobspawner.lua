@@ -47,32 +47,32 @@ function GM.SpawnMobs()
 	local GM = GAMEMODE
 	
 	local maxzombies = GetConVarNumber("pnrp_MaxZombies")
-		local maxfastzoms = GetConVarNumber("pnrp_MaxZombies")
-		local maxpoisonzoms = GetConVarNumber("pnrp_MaxZombies")
-		local maxantlions = GetConVarNumber("pnrp_MaxZombies")
-		local maxantguards = GetConVarNumber("pnrp_MaxZombies")
-		
-		--Added this check to make sure the sever does not get grifed by "max zombies"
-		if maxzombies > 100 then 
-			maxzombies = 30
-			RunConsoleCommand("pnrp_MaxZombies", "30") 
-		end
-		if maxfastzoms > 100 then 
-			maxfastzoms = 5
-			RunConsoleCommand("pnrp_MaxFastZombies", "5") 
-		end
-		if maxpoisonzoms > 100 then 
-			maxpoisonzoms = 2
-			RunConsoleCommand("pnrp_MaxPoisonZombs", "2") 
-		end
-		if maxantlions > 100 then
-			maxantlions = 10
-			RunConsoleCommand("pnrp_MaxAntlions", "10") 
-		end
-		if maxantguards > 100 then 
-			maxantguards = 1
-			RunConsoleCommand("pnrp_MaxAntGuards", "1") 
-		end
+	local maxfastzoms = GetConVarNumber("pnrp_MaxFastZombies")
+	local maxpoisonzoms = GetConVarNumber("pnrp_MaxPoisonZombs")
+	local maxantlions = GetConVarNumber("pnrp_MaxAntlions")
+	local maxantguards = GetConVarNumber("pnrp_MaxAntGuards")
+	
+	--Added this check to make sure the sever does not get grifed by "max zombies"
+	if maxzombies > 100 then 
+		maxzombies = 30
+		RunConsoleCommand("pnrp_MaxZombies", "30") 
+	end
+	if maxfastzoms > 100 then 
+		maxfastzoms = 5
+		RunConsoleCommand("pnrp_MaxFastZombies", "5") 
+	end
+	if maxpoisonzoms > 100 then 
+		maxpoisonzoms = 2
+		RunConsoleCommand("pnrp_MaxPoisonZombs", "2") 
+	end
+	if maxantlions > 100 then
+		maxantlions = 10
+		RunConsoleCommand("pnrp_MaxAntlions", "10") 
+	end
+	if maxantguards > 100 then 
+		maxantguards = 1
+		RunConsoleCommand("pnrp_MaxAntGuards", "1") 
+	end
 		
 	spawnTbl = GM.spawnTbl
 	if GetConVarNumber("pnrp_SpawnMobs") == 1 then
@@ -578,13 +578,24 @@ concommand.Add( "pnrp_clearmobs", GM.RemoveMobs )
 function GM.CountMobs(ply,command,args)
 	if ply:IsAdmin() then
 		local mobNum = {}
+		local mobNumB = {}
+		local mobNumStr = ""
 		ply:ChatPrint("Counting mobs")
 		for k,v in pairs(ents.GetAll()) do
 			if v:IsMob() then
 				table.insert(mobNum,v)
+
+				if not mobNumB[v:GetClass()] then mobNumB[v:GetClass()] = 1
+				else mobNumB[v:GetClass()] = tonumber(mobNumB[v:GetClass()]) + 1 end
 			end
 		end
-		ply:ChatPrint("Mobs alive:  "..tostring(#mobNum))
+		for n,c in pairs(mobNumB) do
+			mobNumStr = mobNumStr.." "..tostring(n)..":"..tostring(c)
+			ply:ChatPrint(tostring(n).." : "..tostring(c))
+		end
+		ply:ChatPrint("Total Mobs alive:  "..tostring(#mobNum))
+	--	ply:ChatPrint(mobNumStr)
+		ErrorNoHalt( "[INFO] Mob Count: "..mobNumStr.." Total:"..tostring(#mobNum).."\n")
 --		self.SpawnMobs()
 	else
 		ply:ChatPrint("This is an admin only command!")
