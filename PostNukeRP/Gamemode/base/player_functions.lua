@@ -2318,12 +2318,14 @@ function PNRP.CheckDefWeps(wep)
 	end
 end
 
-function GM.set_Zombies(ply, command, arg)
-	RunConsoleCommand( "pnrp_MaxZombies", arg[1] )
+--Part of the old system before the admin panel
+--Removed to prevent exploitation of the zombie count
+--function GM.set_Zombies(ply, command, arg)
+--	RunConsoleCommand( "pnrp_MaxZombies", arg[1] )
 
-	return GetConVarNumber("pnrp_MaxZombies")
-end
-concommand.Add( "pnrp_SetZombies", GM.set_Zombies )
+--	return GetConVarNumber("pnrp_MaxZombies")
+--end
+--concommand.Add( "pnrp_SetZombies", GM.set_Zombies )
 
 
 function PNRP.ConvertAmmoType(ammoType)
