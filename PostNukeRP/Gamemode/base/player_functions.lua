@@ -2510,6 +2510,10 @@ function PNRP.DropAmmo(ply, command, args)
 		local EntSetting
 		local tr = ply:TraceFromEyes(200)
 		local trPos = tr.HitPos
+		
+		if ammoAmt > ply:GetAmmoCount(ammoType) then
+			ammoAmt = ply:GetAmmoCount(ammoType)
+		end
 
 		ply:ChatPrint("Dropping "..ammoAmt.." "..PNRP.Items[ItemID].Name)
 
