@@ -481,28 +481,33 @@ end
 timer.Simple(GetConVarNumber("pnrp_MoundRate")*60,SpawnMounds)
 
 function spawn_Combine(ply, cmd, args)
-	local tr = ply:TraceFromEyes(200)
-	local pos = tr.HitPos
-	local ent = ents.Create("npc_combine_s")
-	ent:SetKeyValue( "additionalequipment", "weapon_ar2" )
-	ent:SetKeyValue ("squadname", "Combine_Unit_1")
-	ent:SetKeyValue( "NumGrenades", "2" );
-    ent:SetKeyValue( "tacticalvariant", "false" );
-    ent:SetKeyValue( "spawnflags", tostring(bit.bor(8192, 256)) );
-	ent:SetModel( "models/combine_soldier.mdl" )
-	
-	ent:SetPos(pos+Vector(0,0,50))
-	ent:Spawn()
-	ent:Activate()
-	
-	--ent:Give("weapon_ar2")
-	ent:SetCurrentWeaponProficiency( WEAPON_PROFICIENCY_PERFECT )
-	
-	ent:Fire( "StartPatrolling", "", 0.5 );
-    ent:Fire( "SetSquad", "Combine_Unit_1", 0.5 );
-	
-	ent:SetNetworkedString("Owner", "Unownable")
-	print("Spawned")
+
+	if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+		local tr = ply:TraceFromEyes(200)
+		local pos = tr.HitPos
+		local ent = ents.Create("npc_combine_s")
+		ent:SetKeyValue( "additionalequipment", "weapon_ar2" )
+		ent:SetKeyValue ("squadname", "Combine_Unit_1")
+		ent:SetKeyValue( "NumGrenades", "2" );
+		ent:SetKeyValue( "tacticalvariant", "false" );
+		ent:SetKeyValue( "spawnflags", tostring(bit.bor(8192, 256)) );
+		ent:SetModel( "models/combine_soldier.mdl" )
+		
+		ent:SetPos(pos+Vector(0,0,50))
+		ent:Spawn()
+		ent:Activate()
+		
+		--ent:Give("weapon_ar2")
+		ent:SetCurrentWeaponProficiency( WEAPON_PROFICIENCY_PERFECT )
+		
+		ent:Fire( "StartPatrolling", "", 0.5 );
+		ent:Fire( "SetSquad", "Combine_Unit_1", 0.5 );
+		
+		ent:SetNetworkedString("Owner", "Unownable")
+		print("Spawned")
+	else
+		ply:ChatPrint("Admin only command!")
+	end
 end
 concommand.Add( "pnrp_sc", spawn_Combine )
 
