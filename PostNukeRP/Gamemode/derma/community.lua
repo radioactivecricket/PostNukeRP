@@ -80,243 +80,243 @@ function GM.community_window( )
 		
 		--//Community Main Menu
 								
-					local btnHPos = 50
-					local btnHeight = 40
-					local lblColor = Color( 245, 218, 210, 180 )
-							
-					local createBtn = vgui.Create("DImageButton", community_frame)
-						createBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						createBtn:SetSize(30,30)
-						if communityName == "none" then 
-							createBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							createBtn.DoClick = function() PNRP.CreateCommWindow() end
-							createBtn.Paint = function()
-								if createBtn:IsDown() then 
-									createBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									createBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
-							end
-						else
+			local btnHPos = 50
+			local btnHeight = 40
+			local lblColor = Color( 245, 218, 210, 180 )
+					
+			local createBtn = vgui.Create("DImageButton", community_frame)
+				createBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				createBtn:SetSize(30,30)
+				if communityName == "none" then 
+					createBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					createBtn.DoClick = function() PNRP.CreateCommWindow() end
+					createBtn.Paint = function()
+						if createBtn:IsDown() then 
 							createBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-						end	
-					local createBtnLbl = vgui.Create("DLabel", community_frame)
-						createBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						createBtnLbl:SetColor( lblColor )
-						createBtnLbl:SetText( "Create Community" )
-						createBtnLbl:SetFont("Trebuchet24")
-						createBtnLbl:SizeToContents()
-					
-					btnHPos = btnHPos + btnHeight
-					local disbandBtn = vgui.Create("DImageButton", community_frame)
-						disbandBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						disbandBtn:SetSize(30,30)
-						if communityRank == 3 then 
-							disbandBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							disbandBtn.DoClick = function() 
-								PNRP.OptionVerify( "pnrp_delcomm", nil, "pnrp_OpenCommunity", community_frame ) 
-							end	
-							disbandBtn.Paint = function()
-								if disbandBtn:IsDown() then 
-									disbandBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									disbandBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
-							end
 						else
+							createBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+						end
+					end
+				else
+					createBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				end	
+			local createBtnLbl = vgui.Create("DLabel", community_frame)
+				createBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				createBtnLbl:SetColor( lblColor )
+				createBtnLbl:SetText( "Create Community" )
+				createBtnLbl:SetFont("Trebuchet24")
+				createBtnLbl:SizeToContents()
+			
+			btnHPos = btnHPos + btnHeight
+			local disbandBtn = vgui.Create("DImageButton", community_frame)
+				disbandBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				disbandBtn:SetSize(30,30)
+				if communityRank == 3 then 
+					disbandBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					disbandBtn.DoClick = function() 
+						PNRP.OptionVerify( "pnrp_delcomm", nil, "pnrp_OpenCommunity", community_frame ) 
+					end	
+					disbandBtn.Paint = function()
+						if disbandBtn:IsDown() then 
 							disbandBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						else
+							disbandBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 						end
-					local disbandBtnLbl = vgui.Create("DLabel", community_frame)
-						disbandBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						disbandBtnLbl:SetColor( lblColor )
-						disbandBtnLbl:SetText( "Disband Community" )
-						disbandBtnLbl:SetFont("Trebuchet24")
-						disbandBtnLbl:SizeToContents()	
+					end
+				else
+					disbandBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				end
+			local disbandBtnLbl = vgui.Create("DLabel", community_frame)
+				disbandBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				disbandBtnLbl:SetColor( lblColor )
+				disbandBtnLbl:SetText( "Disband Community" )
+				disbandBtnLbl:SetFont("Trebuchet24")
+				disbandBtnLbl:SizeToContents()	
 
-					btnHPos = btnHPos + btnHeight
-					local leaveBtn = vgui.Create("DImageButton", community_frame)
-						leaveBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						leaveBtn:SetSize(30,30)
-						if communityName != "none" then 
-							leaveBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							leaveBtn.DoClick = function() 
-								PNRP.OptionVerify( "pnrp_leavecomm", nil, "pnrp_OpenCommunity", community_frame ) 
-							end	
-							leaveBtn.Paint = function()
-								if leaveBtn:IsDown() then 
-									leaveBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									leaveBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
-							end
-						else
+			btnHPos = btnHPos + btnHeight
+			local leaveBtn = vgui.Create("DImageButton", community_frame)
+				leaveBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				leaveBtn:SetSize(30,30)
+				if communityName != "none" then 
+					leaveBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					leaveBtn.DoClick = function() 
+						PNRP.OptionVerify( "pnrp_leavecomm", nil, "pnrp_OpenCommunity", community_frame ) 
+					end	
+					leaveBtn.Paint = function()
+						if leaveBtn:IsDown() then 
 							leaveBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-						end
-					local leaveBtnLbl = vgui.Create("DLabel", community_frame)
-						leaveBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						leaveBtnLbl:SetColor( lblColor )
-						leaveBtnLbl:SetText( "Leave Community" )
-						leaveBtnLbl:SetFont("Trebuchet24")
-						leaveBtnLbl:SizeToContents()
-					
-					btnHPos = btnHPos + btnHeight
-					local demoteSelfBtn = vgui.Create("DImageButton", community_frame)
-						demoteSelfBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						demoteSelfBtn:SetSize(30,30)
-						if communityName ~= "none" or tonumber(communityRank) >= 1 then
-							demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							demoteSelfBtn.DoClick = function() 
-								PNRP.OptionVerify( "pnrp_demselfcomm", nil, "pnrp_OpenCommunity", community_frame ) 
-							end	
-							demoteSelfBtn.Paint = function()
-								if demoteSelfBtn:IsDown() then 
-									demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
-							end
 						else
+							leaveBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+						end
+					end
+				else
+					leaveBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				end
+			local leaveBtnLbl = vgui.Create("DLabel", community_frame)
+				leaveBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				leaveBtnLbl:SetColor( lblColor )
+				leaveBtnLbl:SetText( "Leave Community" )
+				leaveBtnLbl:SetFont("Trebuchet24")
+				leaveBtnLbl:SizeToContents()
+			
+			btnHPos = btnHPos + btnHeight
+			local demoteSelfBtn = vgui.Create("DImageButton", community_frame)
+				demoteSelfBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				demoteSelfBtn:SetSize(30,30)
+				if communityName ~= "none" or tonumber(communityRank) >= 1 then
+					demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					demoteSelfBtn.DoClick = function() 
+						PNRP.OptionVerify( "pnrp_demselfcomm", nil, "pnrp_OpenCommunity", community_frame ) 
+					end	
+					demoteSelfBtn.Paint = function()
+						if demoteSelfBtn:IsDown() then 
 							demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-						end
-					local demoteSelfBtnLbl = vgui.Create("DLabel", community_frame)
-						demoteSelfBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						demoteSelfBtnLbl:SetColor( lblColor )
-						demoteSelfBtnLbl:SetText( "Demote Self" )
-						demoteSelfBtnLbl:SetFont("Trebuchet24")
-						demoteSelfBtnLbl:SizeToContents()
-						
-					btnHPos = btnHPos + btnHeight --Blank Space
-					
-					btnHPos = btnHPos + btnHeight
-					local placeStockBtn = vgui.Create("DImageButton", community_frame)
-						placeStockBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						placeStockBtn:SetSize(30,30)
-						if tonumber(communityRank) >= 2 then
-							placeStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							placeStockBtn.DoClick = function() 
-								RunConsoleCommand( "pnrp_placestock" ) 
-								community_frame:Close()
-							end	
-							placeStockBtn.Paint = function()
-								if placeStockBtn:IsDown() then 
-									placeStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									placeStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
-							end
 						else
+							demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+						end
+					end
+				else
+					demoteSelfBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				end
+			local demoteSelfBtnLbl = vgui.Create("DLabel", community_frame)
+				demoteSelfBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				demoteSelfBtnLbl:SetColor( lblColor )
+				demoteSelfBtnLbl:SetText( "Demote Self" )
+				demoteSelfBtnLbl:SetFont("Trebuchet24")
+				demoteSelfBtnLbl:SizeToContents()
+				
+			btnHPos = btnHPos + btnHeight --Blank Space
+			
+			btnHPos = btnHPos + btnHeight
+			local placeStockBtn = vgui.Create("DImageButton", community_frame)
+				placeStockBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				placeStockBtn:SetSize(30,30)
+				if tonumber(communityRank) >= 2 then
+					placeStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					placeStockBtn.DoClick = function() 
+						RunConsoleCommand( "pnrp_placestock" ) 
+						community_frame:Close()
+					end	
+					placeStockBtn.Paint = function()
+						if placeStockBtn:IsDown() then 
 							placeStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-						end
-					local placeStockBtnLbl = vgui.Create("DLabel", community_frame)
-						placeStockBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						placeStockBtnLbl:SetColor( lblColor )
-						placeStockBtnLbl:SetText( "Place Stockpile" )
-						placeStockBtnLbl:SetFont("Trebuchet24")
-						placeStockBtnLbl:SizeToContents()
-					
-					btnHPos = btnHPos + btnHeight
-					local remStockBtn = vgui.Create("DImageButton", community_frame)
-						remStockBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						remStockBtn:SetSize(30,30)
-						if tonumber(communityRank) >= 2 then
-							remStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							remStockBtn.DoClick = function() 
-								PNRP.OptionVerify( "pnrp_remstock", nil, nil, community_frame )
-							end	
-							remStockBtn.Paint = function()
-								if remStockBtn:IsDown() then 
-									remStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									remStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
-							end
 						else
+							placeStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+						end
+					end
+				else
+					placeStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				end
+			local placeStockBtnLbl = vgui.Create("DLabel", community_frame)
+				placeStockBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				placeStockBtnLbl:SetColor( lblColor )
+				placeStockBtnLbl:SetText( "Place Stockpile" )
+				placeStockBtnLbl:SetFont("Trebuchet24")
+				placeStockBtnLbl:SizeToContents()
+			
+			btnHPos = btnHPos + btnHeight
+			local remStockBtn = vgui.Create("DImageButton", community_frame)
+				remStockBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				remStockBtn:SetSize(30,30)
+				if tonumber(communityRank) >= 2 then
+					remStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					remStockBtn.DoClick = function() 
+						PNRP.OptionVerify( "pnrp_remstock", nil, nil, community_frame )
+					end	
+					remStockBtn.Paint = function()
+						if remStockBtn:IsDown() then 
 							remStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-						end
-					local remStockBtnLbl = vgui.Create("DLabel", community_frame)
-						remStockBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						remStockBtnLbl:SetColor( lblColor )
-						remStockBtnLbl:SetText( "Remove Stockpile" )
-						remStockBtnLbl:SetFont("Trebuchet24")
-						remStockBtnLbl:SizeToContents()
-						
-					btnHPos = btnHPos + btnHeight
-					local placeLockerBtn = vgui.Create("DImageButton", community_frame)
-						placeLockerBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						placeLockerBtn:SetSize(30,30)
-						if tonumber(communityRank) >= 2 then
-							placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							placeLockerBtn.DoClick = function() 
-								RunConsoleCommand( "pnrp_placelocker" ) 
-								community_frame:Close()
-							end	
-							placeLockerBtn.Paint = function()
-								if placeLockerBtn:IsDown() then 
-									placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
-							end
 						else
+							remStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+						end
+					end
+				else
+					remStockBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				end
+			local remStockBtnLbl = vgui.Create("DLabel", community_frame)
+				remStockBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				remStockBtnLbl:SetColor( lblColor )
+				remStockBtnLbl:SetText( "Remove Stockpile" )
+				remStockBtnLbl:SetFont("Trebuchet24")
+				remStockBtnLbl:SizeToContents()
+				
+			btnHPos = btnHPos + btnHeight
+			local placeLockerBtn = vgui.Create("DImageButton", community_frame)
+				placeLockerBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				placeLockerBtn:SetSize(30,30)
+				if tonumber(communityRank) >= 2 then
+					placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					placeLockerBtn.DoClick = function() 
+						RunConsoleCommand( "pnrp_placelocker" ) 
+						community_frame:Close()
+					end	
+					placeLockerBtn.Paint = function()
+						if placeLockerBtn:IsDown() then 
 							placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-						end
-					local placeLockerBtnLbl = vgui.Create("DLabel", community_frame)
-						placeLockerBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						placeLockerBtnLbl:SetColor( lblColor )
-						placeLockerBtnLbl:SetText( "Place Locker" )
-						placeLockerBtnLbl:SetFont("Trebuchet24")
-						placeLockerBtnLbl:SizeToContents()
-						
-					btnHPos = btnHPos + btnHeight
-					local remLockerBtn = vgui.Create("DImageButton", community_frame)
-						remLockerBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						remLockerBtn:SetSize(30,30)
-						if tonumber(communityRank) >= 2 then
-							remLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							remLockerBtn.DoClick = function() 
-								PNRP.OptionVerify( "pnrp_remlocker", nil, nil, community_frame )
-							end	
-							remLockerBtn.Paint = function()
-								if remLockerBtn:IsDown() then 
-									remLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-								else
-									remLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-								end
-							end
 						else
+							placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+						end
+					end
+				else
+					placeLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				end
+			local placeLockerBtnLbl = vgui.Create("DLabel", community_frame)
+				placeLockerBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				placeLockerBtnLbl:SetColor( lblColor )
+				placeLockerBtnLbl:SetText( "Place Locker" )
+				placeLockerBtnLbl:SetFont("Trebuchet24")
+				placeLockerBtnLbl:SizeToContents()
+				
+			btnHPos = btnHPos + btnHeight
+			local remLockerBtn = vgui.Create("DImageButton", community_frame)
+				remLockerBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				remLockerBtn:SetSize(30,30)
+				if tonumber(communityRank) >= 2 then
+					remLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					remLockerBtn.DoClick = function() 
+						PNRP.OptionVerify( "pnrp_remlocker", nil, nil, community_frame )
+					end	
+					remLockerBtn.Paint = function()
+						if remLockerBtn:IsDown() then 
 							remLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						else
+							remLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 						end
-					local placeLockerBtnLbl = vgui.Create("DLabel", community_frame)
-						placeLockerBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						placeLockerBtnLbl:SetColor( lblColor )
-						placeLockerBtnLbl:SetText( "Remove Locker" )
-						placeLockerBtnLbl:SetFont("Trebuchet24")
-						placeLockerBtnLbl:SizeToContents()
-					
-					btnHPos = btnHPos + btnHeight --Blank Space
-					
-					btnHPos = btnHPos + btnHeight
-					local comSearchBtn = vgui.Create("DImageButton", community_frame)
-						comSearchBtn:SetPos( community_frame:GetWide()-260,btnHPos )
-						comSearchBtn:SetSize(30,30)
+					end
+				else
+					remLockerBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				end
+			local placeLockerBtnLbl = vgui.Create("DLabel", community_frame)
+				placeLockerBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				placeLockerBtnLbl:SetColor( lblColor )
+				placeLockerBtnLbl:SetText( "Remove Locker" )
+				placeLockerBtnLbl:SetFont("Trebuchet24")
+				placeLockerBtnLbl:SizeToContents()
+			
+			btnHPos = btnHPos + btnHeight --Blank Space
+			
+			btnHPos = btnHPos + btnHeight
+			local comSearchBtn = vgui.Create("DImageButton", community_frame)
+				comSearchBtn:SetPos( community_frame:GetWide()-260,btnHPos )
+				comSearchBtn:SetSize(30,30)
+				comSearchBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				comSearchBtn.DoClick = function() 
+					RunConsoleCommand( "pnrp_communitysearch" ) 
+					community_frame:Close()
+				end	
+				comSearchBtn.Paint = function()
+					if comSearchBtn:IsDown() then 
+						comSearchBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+					else
 						comSearchBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-						comSearchBtn.DoClick = function() 
-							RunConsoleCommand( "pnrp_communitysearch" ) 
-							community_frame:Close()
-						end	
-						comSearchBtn.Paint = function()
-							if comSearchBtn:IsDown() then 
-								comSearchBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-							else
-								comSearchBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-							end
-						end
-					local comSearchBtnLbl = vgui.Create("DLabel", community_frame)
-						comSearchBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
-						comSearchBtnLbl:SetColor( lblColor )
-						comSearchBtnLbl:SetText( "Search Communities" )
-						comSearchBtnLbl:SetFont("Trebuchet24")
-						comSearchBtnLbl:SizeToContents()
+					end
+				end
+			local comSearchBtnLbl = vgui.Create("DLabel", community_frame)
+				comSearchBtnLbl:SetPos( community_frame:GetWide()-210,btnHPos+2 )
+				comSearchBtnLbl:SetColor( lblColor )
+				comSearchBtnLbl:SetText( "Search Communities" )
+				comSearchBtnLbl:SetFont("Trebuchet24")
+				comSearchBtnLbl:SizeToContents()
 					
 	function community_frame:Close()                  
 		comFrame = false                  
@@ -1410,6 +1410,9 @@ net.Receive("C_SND_CommSelResult", sCommDispComm)
 function war_ally_BTN_ENDS(enable, ocid)
 	local ply = LocalPlayer()
 	local cid = tonumber(ply:GetNWInt("cid", -1))
+	
+	if cid == nil then cid = -1 end
+	if ocid == nil then ocid = -1 end
 
 	if cid < 0 and tonumber(ocid) < 0 then enable = false end
 	
