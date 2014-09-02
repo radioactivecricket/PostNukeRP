@@ -773,6 +773,8 @@ function GetCommunityTbl( cid )
 	local cMemInfo
 	--"CREATE TABLE community_table ( cid INTEGER PRIMARY KEY AUTOINCREMENT, cname varchar(255), res varchar(255), inv varchar(255), founded varchar(255) )"
 	--"CREATE TABLE community_members ( pid int, cid int, rank int, title varchar(255) )"
+	
+	if cid == nil then cid = -1 end --nil check for people no tin community
 
 	query = "SELECT * FROM community_table WHERE cid="..tostring(cid)
 	result = querySQL(query)
@@ -856,6 +858,9 @@ function PNRP.OpenMainCommunity(ply)
 
 	local PlayerCommunityName
 	local tbl = { }
+	local cid = ply:GetTable().Community
+	
+	if cid == nil then cid = -1 end 
 
 	PlayerCommunityName = ply:GetTable().Community
 	if PlayerCommunityName == nil then
@@ -888,7 +893,7 @@ function PNRP.OpenMainCommunity(ply)
 		end
 	end
 	
-	queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(ply:GetTable().Community)
+	queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
 	resultPending = querySQL(queryPending)
 	if not resultPending then resultPending = {} end
 	
@@ -2128,6 +2133,8 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 			end
 		end
 		
+		PNRP.BountyCheck(ply, attacker)
+		
 	end
 	
 	local contents = {}
@@ -2755,6 +2762,59 @@ function pickupGas( ply, ent )
 			local gas = math.floor(ent.gas)
 			PNRP.AddToInventory( ply, "fuel_gas", gas )
 			ply:ChatPrint("Spare gas placed in inventory.")
+		end
+	end
+end
+
+function PNRP.GetPlayerNamePID(pid)
+	local query = "SELECT * FROM profiles WHERE pid='"..tostring(pid).."'"
+	local result = querySQL(query)
+	local name = "Unknown"
+	
+	if result then
+		name = result[1]["nick"]
+	end
+	
+	return name		
+end
+
+function PNRP.refundRes(pid, scrap, parts, chems)
+
+	local foundPlayer = "false"
+	
+	for _, ply in pairs(player.GetAll()) do
+		if ply:GetClass()=="player" then
+			if tostring(pid) == tostring(ply.pid) then
+				ply:IncResource("Scrap",scrap)
+				ply:IncResource("Small_Parts",parts)
+				ply:IncResource("Chemicals",chems)
+				
+				ply:EmitSound(Sound("items/ammo_pickup.wav"))
+				ply:ChatPrint("You were refunded: "..scrap..", "..parts..", "..chems)
+				
+				foundPlayer = "true"
+			end
+		end
+	end
+	
+	if foundPlayer == "false" then
+		query = "SELECT * FROM profiles WHERE pid='"..pid.."'"
+		result = querySQL(query)
+		
+		if result then
+			local res = result[1]["res"]
+			resTbl = string.Explode(",", res)
+			resTbl[1] = resTbl[1] + scrap
+			resTbl[2] = resTbl[2] + parts
+			resTbl[3] = resTbl[3] + chems
+
+			res = resTbl[1]..","..resTbl[2]..","..resTbl[3]
+
+			queryUpdate = "UPDATE profiles SET res='"..res.."' WHERE pid='"..pid.."'"
+			querySQL(queryUpdate)
+			
+			querytmp = "SELECT * FROM profiles WHERE pid='"..pid.."'"
+			resulttmp = querySQL(querytmp)
 		end
 	end
 end

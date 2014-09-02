@@ -7,6 +7,7 @@ function PNRP.SND_reopenComTab()
 	
 	local tbl = GetCommunityTbl( cid )
 	
+	if cid == nil then cid = -1 end --nil check for people no tin community
 	local queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
 	local resultPending = querySQL(queryPending)
 	if not resultPending then resultPending = {} end
@@ -15,19 +16,21 @@ function PNRP.SND_reopenComTab()
 	local allies = {}
 	
 	for ocid, cStatus in pairs(tbl["diplomacy"]) do
-		queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
-		resultOcid = querySQL(queryOcid)
-		local ocName
-		if resultOcid then
-			local oCtblInfo = resultOcid[1]
-			ocName = oCtblInfo["cname"]
-		else
-			ocName = "[Unknown CID: "..ocid.."] | Click Cancel -->"
-		end
-		if cStatus == "war" then
-			wars[ocid] = tostring(ocName)
-		elseif cStatus == "ally" then
-			allies[ocid] = tostring(ocName)
+		if ocid ~= nil then
+			queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
+			resultOcid = querySQL(queryOcid)
+			local ocName
+			if resultOcid then
+				local oCtblInfo = resultOcid[1]
+				ocName = oCtblInfo["cname"]
+			else
+				ocName = "[Unknown CID: "..ocid.."] | Click Cancel -->"
+			end
+			if cStatus == "war" then
+				wars[ocid] = tostring(ocName)
+			elseif cStatus == "ally" then
+				allies[ocid] = tostring(ocName)
+			end
 		end
 	end
 
@@ -76,19 +79,21 @@ function PNRP.CommSelID()
 	local allies = {}
 	
 	for ocid, cStatus in pairs(tbl["diplomacy"]) do
-		queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
-		resultOcid = querySQL(queryOcid)
-		local ocName
-		if resultOcid then
-			local oCtblInfo = resultOcid[1]
-			ocName = oCtblInfo["cname"]
-		else
-			ocName = "[Unknown CID: "..ocid.."]"
-		end
-		if cStatus == "war" then
-			wars[ocid] = tostring(ocName)
-		elseif cStatus == "ally" then
-			allies[ocid] = tostring(ocName)
+		if ocid ~= nil then
+			queryOcid = "SELECT * FROM community_table WHERE cid="..tostring(ocid)
+			resultOcid = querySQL(queryOcid)
+			local ocName
+			if resultOcid then
+				local oCtblInfo = resultOcid[1]
+				ocName = oCtblInfo["cname"]
+			else
+				ocName = "[Unknown CID: "..ocid.."]"
+			end
+			if cStatus == "war" then
+				wars[ocid] = tostring(ocName)
+			elseif cStatus == "ally" then
+				allies[ocid] = tostring(ocName)
+			end
 		end
 	end
 	
@@ -176,5 +181,21 @@ function PNRP.PlyDelComInfo(ply)
 	ply:SendDipl()
 	ply:ConCommand("pnrp_save")
 
+end
+
+function PNRP.GetCommunityName(pid)
+	local name = "N/A"
+	query = "SELECT * FROM community_members WHERE pid="..tostring(pid)
+	result = querySQL(query)
+	if result then 
+		query2 = "SELECT * FROM community_table WHERE cid="..tostring(result[1]["cid"])
+		result2 = querySQL(query2)
+		
+		if result2 then
+			name = result2[1]["cname"]
+		end
+	end
+		
+	return name
 end
 

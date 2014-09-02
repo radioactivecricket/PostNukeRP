@@ -192,6 +192,13 @@ function SQLiteTableCheck ()
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  vending_table\n")
 	end
+	
+	if not sql.TableExists("bounty_table") then
+		query = "CREATE TABLE bounty_table ( bid INTEGER PRIMARY KEY AUTOINCREMENT, poster_pid int, posted_date int, target_pid int, payment varchar(255), notes TXT, hitmen_pid int, completed varchar(255), completion_date int, completed_by_pid int )"
+		result = querySQL(query)
+	else
+		Msg(tostring(os.date()).." SQL TABLE EXISTS:  bounty_table\n")
+	end
 end
 hook.Add( "InitPostEntity", "tableCheck", SQLiteTableCheck )
 
@@ -208,6 +215,8 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	ply:GetTable().Endurance = 100
 	ply:GetTable().Hunger = 100
 	ply:GetTable().IsAsleep = false
+	
+	PNRP.BountyExpCheck() --Checks for expired bounties
 
 end --End the "when player first joins server and spawns" function
 
