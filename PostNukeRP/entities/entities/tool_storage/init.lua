@@ -213,7 +213,7 @@ net.Receive( "CreateNewStorage", CreateNewStorage )
 function deleteStorage( p, command, arg )
 	local storageID = arg[1]
 	
-	querySQL("DELETE FROM player_storage WHERE storageid='"..tonumber(storageID).."'")
+	querySQL("DELETE FROM player_storage WHERE storageid='"..tonumber(storageID).."' AND pid='"..tostring(p.pid).."'")
 end
 concommand.Add( "deleteStorage", deleteStorage )
 
