@@ -532,7 +532,13 @@ function VendorMenu()
 									local oSmall_parts = oInvBreakout[3]
 									local oChems = oInvBreakout[4]
 									local AddCostString = tostring(sellCount).." "..tostring(oScrap).." "..tostring(oSmall_parts).." "..tostring(oChems)
-									RunConsoleCommand("setVendorSellItem", vendor_table[1]["vendorid"], item.ID, AddCostString, "new")
+								--	RunConsoleCommand("setVendorSellItem", vendor_table[1]["vendorid"], item.ID, AddCostString, "new")
+									net.Start("setVendorSellItem")
+										net.WriteString(vendor_table[1]["vendorid"])
+										net.WriteString(item.ID)
+										net.WriteString(AddCostString)
+										net.WriteString("new")
+									net.SendToServer()
 									vendmenu_frame:Close()
 								else
 									setSellItem(vendorENT, item, tostring(sellCount), "new")
@@ -945,8 +951,14 @@ function setSellItem(vendorENT, item, count, option)
 					setChems = 0
 				end
 				local costString = tostring(count).." "..tostring(setScrap).." "..tostring(setSP).." "..tostring(setChems)
-				RunConsoleCommand("setVendorSellItem", vendorID, item.ID, costString, option)
-
+			--	RunConsoleCommand("setVendorSellItem", vendorID, item.ID, costString, option)
+				net.Start("setVendorSellItem")
+					net.WriteString(vendorID)
+					net.WriteString(item.ID)
+					net.WriteString(costString)
+					net.WriteString(option)
+				net.SendToServer()
+									
 				vendmenu_frame:Close()
 			end
 end
