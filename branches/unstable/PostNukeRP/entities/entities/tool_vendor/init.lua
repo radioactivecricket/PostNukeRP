@@ -422,11 +422,11 @@ function remVendorItem( vendorID, Item, Amount )
 	return foundItem
 end
 
-function setVendorSellItem( p, command, arg )
-	local vendorID = arg[1]
-	local itemID = arg[2]
-	local costString = arg[3]
-	local option = arg[4]
+function setVendorSellItem( l, p )
+	local vendorID = net.ReadString()
+	local itemID = net.ReadString()
+	local costString = net.ReadString()
+	local option = net.ReadString()
 	
 	local costTable = string.Explode(" ", costString)
 	local count = costTable[1]
@@ -501,7 +501,9 @@ function setVendorSellItem( p, command, arg )
 		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No Vendor match in vending_table! ["..tostring(vendorID).."] \n")
 	end
 end
-concommand.Add( "setVendorSellItem", setVendorSellItem )
+--concommand.Add( "setVendorSellItem", setVendorSellItem )
+net.Receive( "setVendorSellItem", setVendorSellItem )
+util.AddNetworkString("setVendorSellItem")
 
 function updateDispItemCost(vendorID, itemID, costTable)
 	vendorID = tonumber(vendorID)
