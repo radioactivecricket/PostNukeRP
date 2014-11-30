@@ -485,6 +485,10 @@ function setVendorSellItem( l, p )
 		end
 
 		if not foundItem then
+			if option ~= "new" then
+				p:ChatPrint("Item was removed or sold.")
+				return
+			end
 			invTbl[itemID] = tostring(costString)
 		end
 		
