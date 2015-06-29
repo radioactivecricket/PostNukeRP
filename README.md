@@ -1,5 +1,4 @@
 # PostNukeRP
-http://radioactivecricket.com/forums/styles/prosilver/imageset/postnukerp_logo.png
 
 PostNukeRP is a gamemode for Garry's Mod
 
