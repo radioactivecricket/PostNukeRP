@@ -3,7 +3,7 @@
 
 PostNukeRP is a gamemode for Garry's Mod
 
-**Official PostNukeRP Live Server: postnukerp.net:27015 **
+**Official PostNukeRP Live Server: postnukerp.net:27015**
 
 **Links:**
 - For more news and updates visit http://postnukerp.net
