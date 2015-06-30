@@ -17,7 +17,7 @@ function PaperHUDLabel()
 	
 	if trace.Entity:GetClass() == "tool_paper" then
 		local font = "CenterPrintText"
-		local text = trace.Entity:GetNWString("name")
+		local text = trace.Entity:GetNetVar("name")
 		surface.SetFont(font)
 		local tWidth, tHeight = surface.GetTextSize(text)
 		

@@ -34,9 +34,9 @@ function ITEM.Create( ply, class, pos )
 	ent:Activate()
 	
 	PNRP.SetOwner(ply, ent)
-	ent:SetNetworkedString("pid", ply.pid)
-	ent:SetNetworkedString("name", ply:Nick().."'s Storage")
-	ent:SetNetworkedString("storageid", nil)
+	ent:SetNetVar("pid", ply.pid)
+	ent:SetNetVar("name", ply:Nick().."'s Storage")
+	ent:SetNetVar("storageid", nil)
 	
 	ent:GetPhysicsObject():Wake()
 	

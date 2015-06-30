@@ -10,11 +10,11 @@ function PNRP.PlyDeathZombie(ply, packTbl)
 	local zombies = ents.FindByClass( "npc_zombie" )
 	local counter = 0
 	for _, v in pairs(zombies) do
-		if v:GetNetworkedString("deadplayername") == ply:Nick() then
+		if v:GetNetVar("deadplayername") == ply:Nick() then
 			counter = counter + 1
 		end
 	end
-	if GetConVarNumber("pnrp_PlyDeathZombie") == 1 and counter < 4 then
+	if getServerSetting("PlyDeathZombie") == 1 and counter < 4 then
 		local pos = ply:GetPos()
 		timer.Create(tostring(ply:UniqueID()), 5, 1, function()
 			local ent = ents.Create("npc_zombie")
@@ -23,8 +23,8 @@ function PNRP.PlyDeathZombie(ply, packTbl)
 			local squadnum = math.random(1,GetConVarNumber("pnrp_ZombieSquads"))
 			ent:SetKeyValue ("squadname", "npc_zombies"..tostring(squadnum))
 			ent:Spawn()
-			ent:SetNetworkedString("Owner", "Unownable")
-			ent:SetNetworkedString("deadplayername", ply:Nick())
+			ent:SetNetVar("Owner", "Unownable")
+			ent:SetNetVar("deadplayername", ply:Nick())
 			ent:AddRelationship("pnrp_antmound D_HT 99")
 			if table.Count(packTbl.inv) > 0 or table.Count(packTbl.ammo) > 0 or packTbl.res.scrap > 0 or packTbl.res.small > 0 or packTbl.res.chems > 0 then
 				ent.packTbl = packTbl
@@ -46,8 +46,36 @@ end
 function GM.SpawnMobs()
 	local GM = GAMEMODE
 	
+	local maxzombies = getSpawnerSetting("MaxZombies")
+	local maxfastzoms = getSpawnerSetting("MaxFastZombies")
+	local maxpoisonzoms = getSpawnerSetting("MaxPoisonZombies")
+	local maxantlions = getSpawnerSetting("MaxAntlions")
+	local maxantguards = getSpawnerSetting("MaxAntGuards")
+	
+	--Added this check to make sure the sever does not get grifed by "max zombies"
+	if maxzombies > 100 then 
+		maxzombies = 30
+		setServerSetting("MaxZombies", 30) 
+	end
+	if maxfastzoms > 100 then 
+		maxfastzoms = 5
+		setServerSetting("MaxFastZombies", 5) 
+	end
+	if maxpoisonzoms > 100 then 
+		maxpoisonzoms = 2
+		setServerSetting("MaxPoisonZombies", 2) 
+	end
+	if maxantlions > 100 then
+		maxantlions = 10
+		setServerSetting("MaxAntlions", 10) 
+	end
+	if maxantguards > 100 then 
+		maxantguards = 1
+		setServerSetting("MaxAntGuards", 1) 
+	end
+		
 	spawnTbl = GM.spawnTbl
-	if GetConVarNumber("pnrp_SpawnMobs") == 1 then
+	if getServerSetting("SpawnMobs") == 1 then
 		local info = {}
 		--local piles = ents.FindByClass( "ent_resource" )
 		-- Get all my amounts.
@@ -61,19 +89,21 @@ function GM.SpawnMobs()
 		
 		local spawnables = {}
 		
+		
+				
 		--  Check 'em against max amounts.
-		local zombiespawn = (#zombies < GetConVarNumber("pnrp_MaxZombies"))
-		local fastzomspawn = (#fastzoms < GetConVarNumber("pnrp_MaxFastZombies"))
-		local poisonzomspawn = (#poisonzoms < GetConVarNumber("pnrp_MaxPoisonZombs"))
-		local antlionspawn = (#antlions < GetConVarNumber("pnrp_MaxAntlions"))
-		local antguardspawn = (#antguards < GetConVarNumber("pnrp_MaxAntGuards"))
+		local zombiespawn = (#zombies < maxzombies)
+		local fastzomspawn = (#fastzoms < maxfastzoms)
+		local poisonzomspawn = (#poisonzoms < maxpoisonzoms)
+		local antlionspawn = (#antlions < maxantlions)
+		local antguardspawn = (#antguards < maxantguards)
 		
 		if zombiespawn or fastzomspawn or poisonzomspawn or antlionspawn or antguardspawn then
 			--  Add 'em to a table with how much they need.
-			if zombiespawn then spawnables["npc_zombie"] = GetConVarNumber("pnrp_MaxZombies") - #zombies end
-			if fastzomspawn then spawnables["npc_fastzombie"] = GetConVarNumber("pnrp_MaxFastZombies") - #fastzoms end
-			if poisonzomspawn then spawnables["npc_poisonzombie"] = GetConVarNumber("pnrp_MaxPoisonZombs") - #poisonzoms end
-			if antlionspawn then spawnables["npc_antlion"] = GetConVarNumber("pnrp_MaxAntlions") - #antlions end
+			if zombiespawn then spawnables["npc_zombie"] = maxzombies - #zombies end
+			if fastzomspawn then spawnables["npc_fastzombie"] = maxfastzoms - #fastzoms end
+			if poisonzomspawn then spawnables["npc_poisonzombie"] = maxpoisonzoms - #poisonzoms end
+			if antlionspawn then spawnables["npc_antlion"] = maxantlions - #antlions end
 			if antguardspawn then 
 				if math.random(1,10) == 1 then
 					spawnables["npc_antlionguard"] = 1
@@ -101,7 +131,7 @@ function GM.SpawnMobs()
 						
 						local doorEnt =  node["infLinked"]
 						if IsValid(doorEnt) then
-							if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+							if not (doorEnt:GetNetVar("Owner", "None") == "World" or doorEnt:GetNetVar("Owner", "None") == "None") then
 								isActive = false
 							end
 						end
@@ -215,7 +245,7 @@ function GM.SpawnMobs()
 									ent:SetKeyValue ("squadname", "npc_antlions")
 								end
 								ent:Spawn()
-								ent:SetNetworkedString("Owner", "Unownable")
+								ent:SetNetVar("Owner", "Unownable")
 								
 								spawned = true
 							end
@@ -238,7 +268,7 @@ function SpawnMounds()
 	local GM = GAMEMODE
 	spawnTbl = GM.spawnTbl
 	
-	if GetConVarNumber("pnrp_MaxMounds") <= 0 then return end
+	if getSpawnerSetting("MaxMounds") <= 0 then return end
 	
 	local moundsTbl = {}
 	for k,v in pairs(ents.GetAll()) do
@@ -249,9 +279,9 @@ function SpawnMounds()
 		end
 	end
 	
-	if #moundsTbl < GetConVarNumber("pnrp_MaxMounds") then
+	if #moundsTbl < getSpawnerSetting("MaxMounds") then
 		local randomizer = math.random(1, 100)
-		if randomizer <= GetConVarNumber("pnrp_MoundChance") then
+		if randomizer <= getSpawnerSetting("MoundChance") then
 			local newSpawnTbl = {}
 			local mySP = {}
 			local canSpawn = false
@@ -264,7 +294,7 @@ function SpawnMounds()
 			end
 			
 			if #newSpawnTbl <= 0 then 
-				timer.Simple(GetConVarNumber("pnrp_MoundRate")*60,SpawnMounds)
+				timer.Simple(getSpawnerSetting("MoundRate")*60,SpawnMounds)
 				return
 			end
 			
@@ -283,7 +313,7 @@ function SpawnMounds()
 				
 				local doorEnt = mySP["infLinked"]
 				if doorEnt then
-					if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+					if not (doorEnt:GetNetVar("Owner", "None") == "World" or doorEnt:GetNetVar("Owner", "None") == "None") then
 						isActive = false
 					end
 				end
@@ -388,7 +418,7 @@ function SpawnMounds()
 						local ent = ents.Create("pnrp_antmound")
 						ent:SetPos(spawnPos-Vector(0,0,50))
 						ent:Spawn()
-						ent:SetNetworkedString("Owner", "Unownable")
+						ent:SetNetVar("Owner", "Unownable")
 						ent:GetPhysicsObject():EnableMotion(false)
 						ent:SetMoveType(MOVETYPE_NONE)
 						
@@ -446,33 +476,38 @@ function SpawnMounds()
 			end
 		end
 	end
-	timer.Simple(GetConVarNumber("pnrp_MoundRate")*60,SpawnMounds)
-end
-timer.Simple(GetConVarNumber("pnrp_MoundRate")*60,SpawnMounds)
+	timer.Simple(getSpawnerSetting("MoundRate")*60,SpawnMounds)
+end 
+timer.Simple(getSpawnerSetting("MoundRate")*60,SpawnMounds)
 
 function spawn_Combine(ply, cmd, args)
-	local tr = ply:TraceFromEyes(200)
-	local pos = tr.HitPos
-	local ent = ents.Create("npc_combine_s")
-	ent:SetKeyValue( "additionalequipment", "weapon_ar2" )
-	ent:SetKeyValue ("squadname", "Combine_Unit_1")
-	ent:SetKeyValue( "NumGrenades", "2" );
-    ent:SetKeyValue( "tacticalvariant", "false" );
-    ent:SetKeyValue( "spawnflags", tostring(bit.bor(8192, 256)) );
-	ent:SetModel( "models/combine_soldier.mdl" )
-	
-	ent:SetPos(pos+Vector(0,0,50))
-	ent:Spawn()
-	ent:Activate()
-	
-	--ent:Give("weapon_ar2")
-	ent:SetCurrentWeaponProficiency( WEAPON_PROFICIENCY_PERFECT )
-	
-	ent:Fire( "StartPatrolling", "", 0.5 );
-    ent:Fire( "SetSquad", "Combine_Unit_1", 0.5 );
-	
-	ent:SetNetworkedString("Owner", "Unownable")
-	print("Spawned")
+
+	if ply:IsAdmin() and getServerSetting("adminCreateAll") == 1 then
+		local tr = ply:TraceFromEyes(200)
+		local pos = tr.HitPos
+		local ent = ents.Create("npc_combine_s")
+		ent:SetKeyValue( "additionalequipment", "weapon_ar2" )
+		ent:SetKeyValue ("squadname", "Combine_Unit_1")
+		ent:SetKeyValue( "NumGrenades", "2" );
+		ent:SetKeyValue( "tacticalvariant", "false" );
+		ent:SetKeyValue( "spawnflags", tostring(bit.bor(8192, 256)) );
+		ent:SetModel( "models/combine_soldier.mdl" )
+		
+		ent:SetPos(pos+Vector(0,0,50))
+		ent:Spawn()
+		ent:Activate()
+		
+		--ent:Give("weapon_ar2")
+		ent:SetCurrentWeaponProficiency( WEAPON_PROFICIENCY_PERFECT )
+		
+		ent:Fire( "StartPatrolling", "", 0.5 );
+		ent:Fire( "SetSquad", "Combine_Unit_1", 0.5 );
+		
+		ent:SetNetVar("Owner", "Unownable")
+		print("Spawned")
+	else
+		ply:ChatPrint("Admin only command!")
+	end
 end
 concommand.Add( "pnrp_sc", spawn_Combine )
 
@@ -548,13 +583,24 @@ concommand.Add( "pnrp_clearmobs", GM.RemoveMobs )
 function GM.CountMobs(ply,command,args)
 	if ply:IsAdmin() then
 		local mobNum = {}
+		local mobNumB = {}
+		local mobNumStr = ""
 		ply:ChatPrint("Counting mobs")
 		for k,v in pairs(ents.GetAll()) do
 			if v:IsMob() then
 				table.insert(mobNum,v)
+
+				if not mobNumB[v:GetClass()] then mobNumB[v:GetClass()] = 1
+				else mobNumB[v:GetClass()] = tonumber(mobNumB[v:GetClass()]) + 1 end
 			end
 		end
-		ply:ChatPrint("Mobs alive:  "..tostring(#mobNum))
+		for n,c in pairs(mobNumB) do
+			mobNumStr = mobNumStr.." "..tostring(n)..":"..tostring(c)
+			ply:ChatPrint(tostring(n).." : "..tostring(c))
+		end
+		ply:ChatPrint("Total Mobs alive:  "..tostring(#mobNum))
+	--	ply:ChatPrint(mobNumStr)
+		ErrorNoHalt( "[INFO] Mob Count: "..mobNumStr.." Total:"..tostring(#mobNum).."\n")
 --		self.SpawnMobs()
 	else
 		ply:ChatPrint("This is an admin only command!")
@@ -582,13 +628,13 @@ function GM.SetSpawnZone( ply, command, arg )
 			ent:GetPhysicsObject():EnableMotion(false)
 			ent:SetMoveType(MOVETYPE_NONE)
 			
-			ent:SetNWInt("distance", tonumber(arg[1]))
-			ent:SetNWBool("spwnsRes", util.tobool(arg[2]))
-			ent:SetNWBool("spwnsAnt", util.tobool(arg[3]))
-			ent:SetNWBool("spwnsZom", util.tobool(arg[4]))
-			ent:SetNWBool("infMound", util.tobool(arg[5]))
-			ent:SetNWBool("infIndoor", util.tobool(arg[6]))
-			ent:SetNWEntity("infLinked", nil )
+			ent:SetNetVar("distance", tonumber(arg[1]))
+			ent:SetNetVar("spwnsRes", util.tobool(arg[2]))
+			ent:SetNetVar("spwnsAnt", util.tobool(arg[3]))
+			ent:SetNetVar("spwnsZom", util.tobool(arg[4]))
+			ent:SetNetVar("infMound", util.tobool(arg[5]))
+			ent:SetNetVar("infIndoor", util.tobool(arg[6]))
+			ent:SetNetVar("infLinked", nil )
 		end
 	else
 		ply:ChatPrint("This is an admin only command!")
@@ -613,15 +659,15 @@ function GM.SaveSpawnGrid( ply, command, arg )
 		end
 		
 		sql.Begin()
-		query = "DELETE FROM spawn_grids WHERE map='"..game.GetMap().."'"
+		query = "DELETE FROM spawn_grids WHERE map="..SQLStr(game.GetMap())
 		result = querySQL(query)
 		--ErrorNoHalt(SysTime().." SQL QUERY: (Delete old map grid) Error:  "..tostring(sql.LastError()).."  Results:  "..tostring(result).."  Map name:  "..game.GetMap())
 		
 		for k,v in pairs(ents.GetAll()) do
 			if v:GetClass()=="mobspawn_gridbuilder" then
 				local infLinked = 0
-				if v:GetNWEntity("infLinked") and IsValid(v:GetNWEntity("infLinked")) then
-					if v:GetNWEntity("infLinked"):GetPos() then infLinked = tostring(v:GetNWEntity("infLinked"):GetPos().x)..","..tostring(v:GetNWEntity("infLinked"):GetPos().y)..","..tostring(v:GetNWEntity("infLinked"):GetPos().z) end
+				if v:GetNetVar("infLinked") and IsValid(v:GetNetVar("infLinked")) then
+					if v:GetNetVar("infLinked"):GetPos() then infLinked = tostring(v:GetNetVar("infLinked"):GetPos().x)..","..tostring(v:GetNetVar("infLinked"):GetPos().y)..","..tostring(v:GetNetVar("infLinked"):GetPos().z) end
 				end
 				
 				local spwnsRes
@@ -630,17 +676,17 @@ function GM.SaveSpawnGrid( ply, command, arg )
 				local infMound
 				local infIndoor
 				
-				if v:GetNWBool("spwnsRes") then spwnsRes = 1 else spwnsRes = 0 end
-				if v:GetNWBool("spwnsAnt") then spwnsAnt = 1 else spwnsAnt = 0 end
-				if v:GetNWBool("spwnsZom") then spwnsZom = 1 else spwnsZom = 0 end
-				if v:GetNWBool("infMound") then infMound = 1 else infMound = 0 end
-				if v:GetNWBool("infIndoor") then infIndoor = 1 else infIndoor = 0 end
+				if v:GetNetVar("spwnsRes") then spwnsRes = 1 else spwnsRes = 0 end
+				if v:GetNetVar("spwnsAnt") then spwnsAnt = 1 else spwnsAnt = 0 end
+				if v:GetNetVar("spwnsZom") then spwnsZom = 1 else spwnsZom = 0 end
+				if v:GetNetVar("infMound") then infMound = 1 else infMound = 0 end
+				if v:GetNetVar("infIndoor") then infIndoor = 1 else infIndoor = 0 end
 				
 				query = "INSERT INTO spawn_grids VALUES ( '"..game.GetMap()
 				query = query.."', '"..v:GetPos().x
 				query = query..","..v:GetPos().y
 				query = query..","..v:GetPos().z
-				query = query.."', "..v:GetNWInt("distance")
+				query = query.."', "..v:GetNetVar("distance")
 				query = query..", "..spwnsRes
 				query = query..", "..spwnsAnt
 				query = query..", "..spwnsZom
@@ -911,13 +957,13 @@ function GM.EditSpawnGrid( ply, command, arg )
 		
 		for k, v in pairs(GM.spawnTbl) do
 			local ent = ents.Create ("mobspawn_gridbuilder")
-			ent:SetNWInt("distance", tonumber(v["distance"]))
-			ent:SetNWBool("spwnsRes", util.tobool(v["spwnsRes"]))
-			ent:SetNWBool("spwnsAnt", util.tobool(v["spwnsAnt"]))
-			ent:SetNWBool("spwnsZom", util.tobool(v["spwnsZom"]))
-			ent:SetNWBool("infMound", util.tobool(v["infMound"]))
-			ent:SetNWBool("infIndoor", util.tobool(v["infIndoor"]))
-			ent:SetNWEntity("infLinked", v["infLinked"])
+			ent:SetNetVar("distance", tonumber(v["distance"]))
+			ent:SetNetVar("spwnsRes", util.tobool(v["spwnsRes"]))
+			ent:SetNetVar("spwnsAnt", util.tobool(v["spwnsAnt"]))
+			ent:SetNetVar("spwnsZom", util.tobool(v["spwnsZom"]))
+			ent:SetNetVar("infMound", util.tobool(v["infMound"]))
+			ent:SetNetVar("infIndoor", util.tobool(v["infIndoor"]))
+			ent:SetNetVar("infLinked", v["infLinked"])
 			ent.distance = v["distance"]
 			ent:SetPos( Vector(v["x"], v["y"], v["z"]) )
 			ent:Spawn()

@@ -33,12 +33,12 @@ function TOOL:LeftClick( trace )
 	local indoor		= util.tobool(self:GetClientNumber("indoor", 0))
 	
 	if trace.Entity:GetClass() == "mobspawn_gridbuilder" then
-		trace.Entity:SetNWInt("distance", distance)
-		trace.Entity:SetNWBool("spwnsRes", res)
-		trace.Entity:SetNWBool("spwnsAnt", ant)
-		trace.Entity:SetNWBool("spwnsZom", zom)
-		trace.Entity:SetNWBool("infMound", mound)
-		trace.Entity:SetNWBool("infIndoor", indoor)
+		trace.Entity:SetNetVar("distance", distance)
+		trace.Entity:SetNetVar("spwnsRes", res)
+		trace.Entity:SetNetVar("spwnsAnt", ant)
+		trace.Entity:SetNetVar("spwnsZom", zom)
+		trace.Entity:SetNetVar("infMound", mound)
+		trace.Entity:SetNetVar("infIndoor", indoor)
 	else
 		local ent = ents.Create ("mobspawn_gridbuilder")
 		
@@ -47,12 +47,12 @@ function TOOL:LeftClick( trace )
 		ent:GetPhysicsObject():EnableMotion(false)
 		ent:SetMoveType(MOVETYPE_NONE)
 		
-		ent:SetNWInt("distance", distance)
-		ent:SetNWBool("spwnsRes", res)
-		ent:SetNWBool("spwnsAnt", ant)
-		ent:SetNWBool("spwnsZom", zom)
-		ent:SetNWBool("infMound", mound)
-		ent:SetNWBool("infIndoor", indoor)
+		ent:SetNetVar("distance", distance)
+		ent:SetNetVar("spwnsRes", res)
+		ent:SetNetVar("spwnsAnt", ant)
+		ent:SetNetVar("spwnsZom", zom)
+		ent:SetNetVar("infMound", mound)
+		ent:SetNetVar("infIndoor", indoor)
 		
 		undo.Create("MonsterNode")
 			undo.AddEntity( ent )
@@ -81,11 +81,11 @@ function TOOL:RightClick( trace )
 		if trace.Entity:IsValid() and trace.Entity:IsDoor() then
 			local myNode = ents.GetByIndex( self:GetClientNumber("targindex") )
 			
-			myNode:SetNWEntity( "infLinked", trace.Entity )
+			myNode:SetNetVar( "infLinked", trace.Entity )
 			ply:ConCommand("pnrp_nodemaker_targindex -1")
 			ply:ChatPrint( "Door linked.")
 		elseif trace.Entity:IsValid() and trace.Entity:EntIndex() == self:GetClientNumber("targindex") then
-			trace.Entity:SetNWEntity( "infLinked", nil )
+			trace.Entity:SetNetVar( "infLinked", nil )
 			ply:ConCommand("pnrp_nodemaker_targindex -1")
 			ply:ChatPrint( "Link cancelled.")
 		else

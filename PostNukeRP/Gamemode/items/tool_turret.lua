@@ -66,7 +66,7 @@ function ITEM.Create( ply, class, pos )
 	-- Important power vars!
 	ent.PowerItem = true
 	ent.PowerLevel = -50
-	ent.Entity:SetNWString("PowerUsage", ent.PowerLevel)	
+	ent.Entity:SetNetVar("PowerUsage", ent.PowerLevel)	
 	ent.NetworkContainer = nil
 	ent.LinkedItems = {}
 	ent.DirectLinks = {}

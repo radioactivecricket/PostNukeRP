@@ -323,7 +323,7 @@ function pnrp_ev_PetHead_Spawn()
 	
 	local headcrabs = {}
 	for _, crab in pairs(ents.FindByClass( "npc_hdvermin" )) do
-		if crab:GetNetworkedString("Owner", "World") == "World" then
+		if crab:GetNetVar("Owner", "World") == "World" then
 			table.insert(headcrabs, crab)
 			crab:EmitSound("npc/turret_floor/ping.wav", 100, 100)
 		end
@@ -344,7 +344,7 @@ function pnrp_ev_PetHead_Spawn()
 		
 		local doorEnt =  node["infLinked"]
 		if IsValid(doorEnt) then
-			if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+			if not (doorEnt:GetNetVar("Owner", "None") == "World" or doorEnt:GetNetVar("Owner", "None") == "None") then
 				isActive = false
 			end
 		end
@@ -462,10 +462,10 @@ function pnrp_ev_PetHead_Spawn()
 					ent:SetPos(point)
 					
 					ent:Spawn()
-					ent:SetNetworkedString("Owner", "World")
+					ent:SetNetVar("Owner", "World")
 					
 					ent.Pet = true
-					ent:SetNWString("Pet", true)
+					ent:SetNetVar("Pet", "yes")
 					
 					spawned = true
 				end
@@ -552,7 +552,7 @@ function pnrp_ev_PreWar_Spawn()
 		
 		local doorEnt =  node["infLinked"]
 		if IsValid(doorEnt) then
-			if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+			if not (doorEnt:GetNetVar("Owner", "None") == "World" or doorEnt:GetNetVar("Owner", "None") == "None") then
 				isActive = false
 			end
 		end
@@ -719,7 +719,7 @@ function pnrp_ev_PreWar_DropPod( pos )
 	--canister:Fire("AddOutput", "OnOpened SpawnHeadcrabs", 0)
 	canister:Spawn()
 	canister:Activate()
-	canister:SetNetworkedString("Owner", "Unownable")
+	canister:SetNetVar("Owner", "Unownable")
 	
 	
 	timer.Simple(5, function()
@@ -855,7 +855,7 @@ function pnrp_ev_PreWar_DropPod( pos )
 			ent.packTbl = contents
 			ent.hasBackpack = true
 			
-			ent:SetNetworkedString("Owner", "Unownable")
+			ent:SetNetVar("Owner", "Unownable")
 		end
 		
 		for i = 1, PNRP.Events["Prewar Insertion"].vars["Amount"] do
@@ -964,7 +964,7 @@ function pnrp_ev_PreWar_DropPod( pos )
 					ent.hasBackpack = true
 				end
 
-				ent:SetNetworkedString("Owner", "Unownable")
+				ent:SetNetVar("Owner", "Unownable")
 			end
 		end
 	end)
@@ -1045,7 +1045,7 @@ function pnrp_ev_PetBird_Spawn()
 	
 	local birds = {}
 	for _, bird in pairs(ents.FindByClass( "npc_petbird" )) do
-		if bird:GetNetworkedString("Owner", "World") == "World" then
+		if bird:GetNetVar("Owner", "World") == "World" then
 			table.insert(birds, bird)
 			bird:EmitSound("npc/turret_floor/ping.wav", 100, 100)
 		end
@@ -1066,7 +1066,7 @@ function pnrp_ev_PetBird_Spawn()
 		
 		local doorEnt =  node["infLinked"]
 		if IsValid(doorEnt) then
-			if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+			if not (doorEnt:GetNetVar("Owner", "None") == "World" or doorEnt:GetNetVar("Owner", "None") == "None") then
 				isActive = false
 			end
 		end
@@ -1184,10 +1184,10 @@ function pnrp_ev_PetBird_Spawn()
 					ent:SetPos(point)
 					
 					ent:Spawn()
-					ent:SetNetworkedString("Owner", "World")
+					ent:SetNetVar("Owner", "World")
 					
 					ent.Pet = true
-					ent:SetNWString("Pet", true)
+					ent:SetNetVar("Pet", "yes")
 					
 					spawned = true
 				end

@@ -16,12 +16,14 @@ function DispItemViewCheck()
 	if !ent:IsValid() then return end
 	
 	if ent:GetClass() == "msc_display_item" then
-		local itemID = ent:GetNWString("itemID")
+		local itemID = ent:GetNetVar("itemID")
 		local item = PNRP.Items[itemID]
-		local open = ent:GetNWString("open")
+		local open = ent:GetNetVar("open")
 		local text = item.Name
 		local txtSize
-		local cost = ent:GetNWString("cost", "0,0,0,0")
+		local cost = ent:GetNetVar("cost", "0,0,0,0")
+		local iid = ent:GetNetVar("iid", "")
+		local status = ent:GetNetVar("status", "")
 		
 		surface.SetFont("CenterPrintText")
 		
@@ -32,7 +34,10 @@ function DispItemViewCheck()
 			local scrap = "Scrap: "..stringSplit[2]
 			local sp = "Small Parts: "..stringSplit[3]
 			local chems = "Chems: "..stringSplit[4]
-			text = text.."\n "..scrap.."\n "..sp.."\n "..chems
+			local HP
+			if status == "" then HP = "" 
+			else HP = "\n ".."HP: "..PNRP.GetFromStat(status, "HP") end
+			text = text.."\n "..scrap.."\n "..sp.."\n "..chems..HP
 		end
 		local font = "CenterPrintText"
 		local tWidth, tHeight = surface.GetTextSize(text)
@@ -57,6 +62,7 @@ function dispBuyVerify()
 	local ent = net.ReadEntity()
 	local item = PNRP.Items[net.ReadString()]
 	local costString = net.ReadString()
+	local iid = net.ReadString()
 	local infoTable = string.Explode( ",", costString )
 	
 	local disVerifyFrame = vgui.Create( "DFrame" )

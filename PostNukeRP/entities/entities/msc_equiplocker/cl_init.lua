@@ -21,7 +21,7 @@ function LockerViewCheck()
 	if !trace.Entity:IsValid() then return end
 	
 	if trace.Entity:GetClass() == "msc_equiplocker" then
-		local community = trace.Entity:GetNWString("communityName")
+		local community = trace.Entity:GetNetVar("communityName", "")
 		
 		surface.SetFont("CenterPrintText")
 		local tWidth, tHeight = surface.GetTextSize(community.." Community Equipment")
@@ -40,6 +40,7 @@ hook.Add( "HUDPaint", "LockerViewCheck", LockerViewCheck )
 function LockerMenu( )
 	local ply = net.ReadEntity()
 	local locker = net.ReadEntity()
+	local cid = net.ReadString()
 	local lockerHealth = net.ReadDouble()
 	local itemTble = net.ReadTable()
 	local inventoryTble = net.ReadTable()
@@ -80,7 +81,7 @@ function LockerMenu( )
 			pnlLIList:SetPadding(5)
 			--Generates the locker's inventory
 			for k, v in pairs( itemTble ) do
-				local item = PNRP.Items[k]
+				local item = PNRP.Items[v["itemid"]]
 				if item then
 					local pnlLIPanel = vgui.Create("DPanel", pnlLIList)
 						pnlLIPanel:SetSize( 75, 100 )
@@ -90,23 +91,50 @@ function LockerMenu( )
 						
 						pnlLIList:AddItem(pnlLIPanel)
 						
-						pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
-						pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
-						pnlLIPanel.NumberWang:SetMin( 1 )
-						pnlLIPanel.NumberWang:SetMax( v )
-						pnlLIPanel.NumberWang:SetDecimals( 0 )
-						pnlLIPanel.NumberWang:SetValue( 1 )
+						local countTxt = "Count: "..tostring(v["count"])
+						if v["status_table"] != "" then
+							local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+							if FuelLevel then countTxt = "Fuel: "..tostring(FuelLevel) end
+							local HPText = ""
+							local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
+							local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+							if HPLevel then HPText = "HP: "..HPLevel
+							elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+							pnlLIPanel.HP = vgui.Create("DLabel", pnlLIPanel)		
+							pnlLIPanel.HP:SetPos( 10, 75 )
+							pnlLIPanel.HP:SetText(HPText)
+							pnlLIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
+							pnlLIPanel.HP:SizeToContents() 
+							pnlLIPanel.HP:SetContentAlignment( 5 )
+						else
+							pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
+							pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
+							pnlLIPanel.NumberWang:SetMin( 1 )
+							pnlLIPanel.NumberWang:SetMax( v["count"] )
+							pnlLIPanel.NumberWang:SetDecimals( 0 )
+							pnlLIPanel.NumberWang:SetValue( 1 )
+						end
 						
 						pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
 						pnlLIPanel.Icon:SetModel(item.Model)
 						pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
-						pnlLIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
+						pnlLIPanel.Icon:SetToolTip( item.Name.."\n"..countTxt.."\n Press Icon to move item." )
 						pnlLIPanel.Icon.DoClick = function() 
+							local takeCount = 1
+							if v["iid"] == "" then
+								takeCount = math.Round(pnlLIPanel.NumberWang:GetValue())
+							end
+							if tonumber(takeCount) > tonumber(v["count"]) then
+								takeCount = v["count"]
+							elseif tonumber(takeCount) < 1 then
+								takeCount = 1
+							end
 							net.Start("locker_take")
 								net.WriteEntity(ply)
 								net.WriteEntity(locker)
 								net.WriteString(item.ID)
-								net.WriteDouble(pnlLIPanel.NumberWang:GetValue())
+								net.WriteDouble(takeCount)
+								net.WriteString(v["iid"])
 							net.SendToServer()
 							locker_frame:Close()
 						end	
@@ -131,7 +159,7 @@ function LockerMenu( )
 			--Generates the user's inventory
 			if inventoryTble != nil then
 				for k, v in pairs( inventoryTble ) do
-					local item = PNRP.Items[k]
+					local item = PNRP.Items[v["itemid"]]
 					if item then
 						local pnlUserIPanel = vgui.Create("DPanel", pnlUserIList)
 							pnlUserIPanel:SetSize( 75, 100 )
@@ -141,28 +169,57 @@ function LockerMenu( )
 							
 							pnlUserIList:AddItem(pnlUserIPanel)
 							
-							pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
-							pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
-							pnlUserIPanel.NumberWang:SetMin( 1 )
-							pnlUserIPanel.NumberWang:SetMax( v )
-							pnlUserIPanel.NumberWang:SetDecimals( 0 )
-							pnlUserIPanel.NumberWang:SetValue( 1 )
-													
+							local countTxt = "Count: "..tostring(v["count"])
+							if v["status_table"] != "" then
+								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+								if FuelLevel then countTxt = "Fuel: "..tostring(FuelLevel) end
+								local HPText = ""
+								local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
+								local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+								if HPLevel then HPText = "HP: "..HPLevel
+								elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+								pnlUserIPanel.HP = vgui.Create("DLabel", pnlUserIPanel)		
+								pnlUserIPanel.HP:SetPos( 10, 75 )
+								pnlUserIPanel.HP:SetText(HPText)
+								pnlUserIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
+								pnlUserIPanel.HP:SizeToContents() 
+								pnlUserIPanel.HP:SetContentAlignment( 5 )
+							else
+								pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
+								pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
+								pnlUserIPanel.NumberWang:SetMin( 1 )
+								pnlUserIPanel.NumberWang:SetMax( v["count"] )
+								pnlUserIPanel.NumberWang:SetDecimals( 0 )
+								pnlUserIPanel.NumberWang:SetValue( 1 )
+							end
+							
 							pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
 							pnlUserIPanel.Icon:SetModel(item.Model)
 							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
-							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
+							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..countTxt.."\n Press Icon to move item." )
 							pnlUserIPanel.Icon.DoClick = function() 
+								if v["iid"] == "" then
+									local sendCount = math.Round(pnlUserIPanel.NumberWang:GetValue())
+									if sendCount > v["count"] then
+										sendCount = v["count"]
+									end
 									if pnlUserIPanel.NumberWang:GetValue() < 1 then
-                                    LocalPlayer():ChatPrint("Not enough to store")
-                                    return
-                                end
-								net.Start("locker_put")
-									net.WriteEntity(ply)
-									net.WriteEntity(locker)
-									net.WriteString(item.ID)
-									net.WriteString(tostring(pnlUserIPanel.NumberWang:GetValue()))
-								net.SendToServer()
+										LocalPlayer():ChatPrint("Not enough to store")
+										return
+									end
+									net.Start("locker_put")
+										net.WriteEntity(ply)
+										net.WriteEntity(locker)
+										net.WriteString(item.ID)
+										net.WriteString(tostring(pnlUserIPanel.NumberWang:GetValue()))
+									net.SendToServer()
+								else	
+									net.Start( "pnrp_PersistMoveTo" )
+										net.WriteString(v["iid"])
+										net.WriteString("community")
+										net.WriteString(cid)
+									net.SendToServer()
+								end
 								locker_frame:Close()
 							end								
 					end
@@ -194,9 +251,15 @@ function LockerMenu( )
 				LDevide:SetParent( stockStatusList ) 
 				LDevide:SetType("Rect")
 				LDevide:SetSize( 100, 2 ) 	
-				lMenuList:AddItem( LDevide )	
+				lMenuList:AddItem( LDevide )
+			
+			local hpCVar = 255
+			hpCVar = 255-(((100 - lockerHealth)/lockerHealth)*255)
+			
+			local hpColor = Color( 255, hpCVar, hpCVar, 255 )
+			
 			local LHPLabel = vgui.Create("DLabel", stockStatusBlankLabel1)
-				LHPLabel:SetColor( Color( 255, 255, 255, 255 ) )
+				LHPLabel:SetColor( hpColor )
 				LHPLabel:SetText( " Health: "..lockerHealth.."%" )
 				LHPLabel:SizeToContents()
 				lMenuList:AddItem( LHPLabel )

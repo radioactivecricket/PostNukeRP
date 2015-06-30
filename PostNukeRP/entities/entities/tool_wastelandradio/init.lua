@@ -14,9 +14,9 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.pid = self.Entity:GetNWString("Owner_UID")
-	self.name = self.Entity:GetNWString("name", "")
-	self.text = self.Entity:GetNWString("text", "")
+	self.pid = self.Entity:GetNetVar("Owner_UID")
+	self.name = self.Entity:GetNetVar("name", "")
+	self.text = self.Entity:GetNetVar("text", "")
 		
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
 	
@@ -43,7 +43,7 @@ function ENT:Initialize()
 	self.DirectLinks = {}
 	
 	self.PowerUsage = -5
-	self.Entity:SetNWString("PowerUsage", self.PowerUsage)
+	self.Entity:SetNetVar("PowerUsage", self.PowerUsage)
 end
 
 function ENT:Use( activator, caller )

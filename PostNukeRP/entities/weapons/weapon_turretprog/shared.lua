@@ -80,7 +80,7 @@ function SWEP:PrimaryAttack()
 		if IsValid(traceRes.Entity) and traceRes.Entity:GetClass() == "npc_turret_floor" then
 			local ent = traceRes.Entity
 			local plUID = PNRP:GetUID( self.Owner )
-			local ownerUID = ent:GetNWString( "Owner_UID", "None" )
+			local ownerUID = ent:GetNetVar( "Owner_UID", "None" )
 			local canProg = false
 			
 			

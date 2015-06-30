@@ -17,9 +17,9 @@ function ENT:Use( activator, caller )
 		local actWeight = PNRP.InventoryWeight( activator )
 		local actCapacity
 		if team.GetName(activator:Team()) == "Scavenger" then
-			actCapacity = GetConVarNumber("pnrp_packCapScav") + (activator:GetSkill("Backpacking")*10)
+			actCapacity = getServerSetting("packCapScav") + (activator:GetSkill("Backpacking")*10)
 		else
-			actCapacity = GetConVarNumber("pnrp_packCap") + (activator:GetSkill("Backpacking")*10)
+			actCapacity = getServerSetting("packCap") + (activator:GetSkill("Backpacking")*10)
 		end
 		
 		if actCapacity >= actWeight + 6 then

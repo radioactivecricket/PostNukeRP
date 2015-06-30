@@ -45,14 +45,14 @@ function SWEP:Initialize()
 end
 
 function SWEP:Equip()
-	self.Weapon:SetNWBool("IronSights", false)
-	self.Weapon:SetNWBool("IsPassive", false)
+	self.Weapon:SetNetVar("IronSights", false)
+	self.Weapon:SetNetVar("IsPassive", false)
 end
 
 function SWEP:PrimaryAttack()
 
 	if not self:CanPrimaryAttack() or self.Owner:WaterLevel() > 2 then return end
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then return end
+	if self.Weapon:GetNetVar("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then return end
 	
 	self.Weapon:EmitSound(self.Primary.Sound)
 	self:TakePrimaryAmmo(self.Primary.NumShots)
@@ -61,7 +61,7 @@ function SWEP:PrimaryAttack()
 	
 	local handlingSkill = self.Owner:GetSkill("Weapon Handling")
 	
-	if self.Weapon:GetNWBool("IronSights", false) then
+	if self.Weapon:GetNetVar("IronSights", false) then
 		self.Owner:ViewPunch(Angle(math.Rand(-0.5,-2.5) * (self.Primary.Recoil - (0.06 * handlingSkill)), math.Rand(-1,1) * ((self.Primary.Recoil - (0.06 * handlingSkill)) / 2), 0))
 		self:ShootBullet(self.Primary.Damage, self.Primary.NumShots, (self.Primary.Cone - (0.001 * handlingSkill)) / 2, (self.Primary.Recoil - (0.06 * handlingSkill)) / 2 )
 	else
@@ -74,21 +74,21 @@ end
 
 function SWEP:SecondaryAttack()
 	if self.Owner:KeyDown( IN_WALK ) then
-		local savedBool = (not self.Weapon:GetNWBool("IsPassive", false))
-		self.Weapon:SetNWBool("IsPassive", (not self.Weapon:GetNWBool("IsPassive", false)))
+		local savedBool = (not self.Weapon:GetNetVar("IsPassive", false))
+		self.Weapon:SetNetVar("IsPassive", (not self.Weapon:GetNetVar("IsPassive", false)))
 		self.Owner:EmitSound("npc/combine_soldier/gear4.wav")
 		
 		if savedBool then
 			self:SetWeaponHoldType("passive")
 			self.Owner:SetFOV( 0, 0.15 )
-			self.Weapon:SetNWBool("IronSights", false)
+			self.Weapon:SetNetVar("IronSights", false)
 		else
 			self:SetWeaponHoldType("smg")
 		end
 	else
-		if self.Weapon:GetNWBool("IsPassive", false) then return end
-		local savedBool = (not self.Weapon:GetNWBool("IronSights", false))
-		self.Weapon:SetNWBool("IronSights", (not self.Weapon:GetNWBool("IronSights", false))) 
+		if self.Weapon:GetNetVar("IsPassive", false) then return end
+		local savedBool = (not self.Weapon:GetNetVar("IronSights", false))
+		self.Weapon:SetNetVar("IronSights", (not self.Weapon:GetNetVar("IronSights", false))) 
 		
 		if savedBool then
 			self.Owner:SetFOV( 65, 0.15 )
@@ -101,7 +101,7 @@ end
 
 function SWEP:Reload()
 	if self.Weapon:Clip1() < self.Primary.ClipSize and self.Owner:GetAmmoCount(self.Weapon:GetPrimaryAmmoType()) > 0 then
-		self.Weapon:SetNWBool("IronSights", false)
+		self.Weapon:SetNetVar("IronSights", false)
 		self.Owner:SetFOV( 0, 0.15 )
 		
 		-- self.Weapon:SetNextPrimaryFire(CurTime() + 1.5)
@@ -116,8 +116,8 @@ end
 function SWEP:Deploy()
 
 	self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
-	self.Owner:SetNWBool("IronSights", false)
-	self.Weapon:SetNWBool("IsPassive", false)
+	self.Owner:SetNetVar("IronSights", false)
+	self.Weapon:SetNetVar("IsPassive", false)
 	
 	self.Weapon:SetNextPrimaryFire(CurTime() + 1)
 	return true
@@ -136,7 +136,7 @@ local IRONSIGHT_TIME = 0.15
 
 function SWEP:GetViewModelPosition(pos, ang)
 	
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then
+	if self.Weapon:GetNetVar("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then
 		ang = ang * 1
 		ang:RotateAroundAxis(ang:Right(), 		-37.2258)
 		ang:RotateAroundAxis(ang:Up(), 		1.7237)
@@ -155,7 +155,7 @@ function SWEP:GetViewModelPosition(pos, ang)
 	
 	if (not self.IronSightsPos) then return pos, ang end
 
-	local bIron = self.Weapon:GetNWBool("IronSights", false)
+	local bIron = self.Weapon:GetNetVar("IronSights", false)
 
 	if (bIron != self.bLastIron) then
 		self.bLastIron = bIron

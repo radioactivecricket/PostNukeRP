@@ -12,7 +12,7 @@ function PNRP.DrawDeathZombieLabel()
 	if (not trace.Entity) or (not IsValid(trace.Entity)) then return end
 	
 	if trace.Entity:GetClass() == "npc_zombie" then
-		local zombieName = trace.Entity:GetNWString("deadplayername")
+		local zombieName = trace.Entity:GetNetVar("deadplayername", "")
 
 		if string.len(zombieName) > 0 then 
 		
@@ -44,7 +44,7 @@ function GM:HUDDrawTargetID()
 	for _, ent in ipairs( ents ) do
 		if IsValid(ent) then
 			--ent:SetNWString("Pet", true)
-			if ( ent != ply and ent:Health() > 0 and ent:GetNWString("pet", false) ) then
+			if ( ent != ply and ent:Health() > 0 and ent:GetNetVar("Pet", "no")=="yes" ) then
 				PetHUDLabel(ent)
 			elseif ( ent != ply and ent:Health() > 0 and ent:IsPlayer() ) then
 			
@@ -53,7 +53,16 @@ function GM:HUDDrawTargetID()
 				td.endpos = ent:GetShootPos()
 				local trace = util.TraceLine( td )
 				
-				if ( !trace.HitWorld ) then	
+				local traceBlocked = "false"
+				if (not trace.Entity) or (not IsValid(trace.Entity)) then
+					traceBlocked = "false"
+				else
+					if trace.Entity:GetClass() == "prop_physics" then
+						traceBlocked = "true"
+					end
+				end
+				
+				if ( !trace.HitWorld ) and traceBlocked == "false" then	
 					local pos = ent:GetShootPos()
 					local bone = ent:LookupBone( "ValveBiped.Bip01_Head1" )
 					if ( bone ) then
@@ -61,8 +70,8 @@ function GM:HUDDrawTargetID()
 					end		
 					
 					local nick = ent:Nick()
-					local community = ent:GetNWString("community", "N/A")
-					local title = ent:GetNWString("ctitle", " ")
+					local community = ent:GetNetVar("community", "N/A")
+					local title = ent:GetNetVar("ctitle", " ")
 					
 					local drawPos = ent:GetShootPos():ToScreen()
 					local textXPos = ent:GetShootPos():ToScreen()
@@ -90,7 +99,7 @@ function GM:HUDDrawTargetID()
 					local w = math.max(wNick, wCommunity, wTitle)
 
 					drawPos.x = drawPos.x - w / 2
-					drawPos.y = drawPos.y - h - 25
+					drawPos.y = drawPos.y - h - 45
 					
 					local alpha = 255
 					if ( distance > 64 ) then
@@ -103,8 +112,8 @@ function GM:HUDDrawTargetID()
 					surface.SetDrawColor( teamColor.r, teamColor.g, teamColor.b, alpha )
 					surface.DrawOutlinedRect( drawPos.x, drawPos.y, w, h )
 					
-					local plyCid = tonumber(ply:GetNWInt("cid", -1))
-					local oCid = tonumber(ent:GetNWInt("cid", -1))
+					local plyCid = tonumber(ply:GetNetVar("cid", -1))
+					local oCid = tonumber(ent:GetNetVar("cid", -1))
 					
 					local text
 					
@@ -157,7 +166,11 @@ function GM:HUDDrawTargetID()
 					
 					local text
 					
-					text = tostring(ent)
+					text = tostring(ent).." HP:"..ent:Health()
+					if ent.iid then
+						text = text.." IID: "..ent.iid
+					end
+					
 					surface.SetFont( font )
 					local w = surface.GetTextSize( text ) + 32
 					
@@ -196,9 +209,9 @@ function PowerUsageHUDLabel()
 		if IsValid(myPlayer:GetActiveWeapon()) then
 			if myPlayer:GetActiveWeapon():GetClass() == "gmod_tool" then
 				if tostring(myPlayer:GetActiveWeapon():GetMode()) == "pnrp_powerlinker" then
-					if trace.Entity:GetNWString("PowerUsage", "none") ~= "none" then
+					if trace.Entity:GetNetVar("PowerUsage", "none") ~= "none" then
 						local font = "CenterPrintText"
-						local text = "Required Power: "..tostring(-tonumber(trace.Entity:GetNWString("PowerUsage")))
+						local text = "Required Power: "..tostring(-tonumber(trace.Entity:GetNetVar("PowerUsage")))
 						surface.SetFont(font)
 						local tWidth, tHeight = surface.GetTextSize(text)
 						
@@ -229,8 +242,8 @@ function PetHUDLabel(ent)
 					pos = ent:GetBonePosition( bone )
 				end		
 				
-				local name = ent:GetNWString("name", "Pet")
-				
+				local name = ent:GetNetVar("name", "Pet")
+
 				local drawPos = ent:GetPos():ToScreen()
 				local textXPos = ent:GetPos():ToScreen()
 				local distance = ply:GetShootPos():Distance( pos )

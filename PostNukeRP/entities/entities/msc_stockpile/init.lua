@@ -14,8 +14,8 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.Community = self.Entity:GetNWString("community_owner")
-	self.CommunityName = self.Entity:GetNWString("communityName")
+	self.Community = self.Entity:GetNetVar("community_owner")
+	self.CommunityName = self.Entity:GetNetVar("communityName")
 	self.Enabled = false
 	self.BreakInTimer = 30
 	self.BreakingIn = nil
@@ -35,9 +35,9 @@ function ENT:Initialize()
 		self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
 		self.Entity:GetPhysicsObject():EnableMotion(false)
 		self.Entity:SetMoveType(MOVETYPE_NONE)
-		self.Entity:SetNWString("Owner", "Unownable")
-		self.Entity:SetNWString("Owner_UID", "")
-		self.Entity:SetNWEntity( "ownerent", self.Entity )
+		self.Entity:SetNetVar("Owner", "Unownable")
+		self.Entity:SetNetVar("Owner_UID", "")
+		self.Entity:SetNetVar( "ownerent", self.Entity )
 		
 		--self.Entity:SetPos(position)
 		self.Enabled = true
@@ -199,7 +199,7 @@ function StockBreakIn( )
 			ply:SetMoveType(MOVETYPE_NONE)
 			stockpile.BreakingIn = ply
 			timer.Create( ply:UniqueID()..tostring(stockpile:EntIndex()), 1, stockpile.BreakInTimer, function()
-				ply:SelectWeapon("gmod_rp_hands")
+				ply:SelectWeapon("weapon_simplekeys")
 				if (not stockpile:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
@@ -273,7 +273,7 @@ function StockRepair( )
 			ply:SetMoveType(MOVETYPE_NONE)
 			stockpile.Repairing = ply
 			timer.Create( ply:UniqueID()..tostring(stockpile:EntIndex()), 1, stockpile.BreakInTimer, function()
-				ply:SelectWeapon("gmod_rp_hands")
+				ply:SelectWeapon("weapon_simplekeys")
 				if (not stockpile:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
@@ -328,6 +328,6 @@ net.Receive("stockpile_repair", StockRepair )
 
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value
-	self.Entity:SetNWString (key, value)
+	self.Entity:SetNetVar(key, value)
 	print ("["..key.." = "..value.."] ")
 end

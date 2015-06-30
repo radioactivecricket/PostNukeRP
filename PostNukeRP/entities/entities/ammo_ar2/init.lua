@@ -11,9 +11,9 @@ function ENT:Initialize()
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	self.Entity:PhysWake()
 	
-	self.Entity:SetNetworkedString("NormalAmmo", "50")
-	if not self.Entity:GetNWString("Ammo") then
-		self.Entity:SetNetworkedString("Ammo", "50")
+	self.Entity:SetNetVar("NormalAmmo", "50")
+	if not self.Entity:GetNetVar("Ammo") then
+		self.Entity:SetNetVar("Ammo", "50")
 	end
 end
 
@@ -24,10 +24,10 @@ function ENT:Use( activator, caller )
 		self.Entity:EmitSound( sound )
 	
 		local ammo
-		if self.Entity:GetNWString("Ammo") then
-			ammo = tonumber(self.Entity:GetNWString("Ammo"))
+		if self.Entity:GetNetVar("Ammo") then
+			ammo = tonumber(self.Entity:GetNetVar("Ammo"))
 		else
-			self.Entity:SetNetworkedString("Ammo", "20")
+			self.Entity:SetNetVar("Ammo", "20")
 			ammo = 50
 		end
 	

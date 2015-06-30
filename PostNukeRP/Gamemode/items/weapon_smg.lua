@@ -22,6 +22,9 @@ ITEM.ShopHide = true
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "smg1"
+WEAPON.MagLoadTime = 9
+WEAPON.MagType = "normal"
+WEAPON.MagSize = "medium"
 
 function ITEM.ToolCheck( p )
 	return true
@@ -46,7 +49,7 @@ end
 function ITEM.Create( ply, class, pos )
 	local ent = ents.Create("ent_weapon")
 	--ent:SetNetworkedInt("Ammo", self.Energy)
-	ent:SetNWString("WepClass", ITEM.Ent)
+	ent:SetNetVar("WepClass", ITEM.Ent)
 	ent:SetModel(ITEM.Model)
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetPos(pos)

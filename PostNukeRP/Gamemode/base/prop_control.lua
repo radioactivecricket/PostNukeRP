@@ -9,44 +9,6 @@ function AddToolBlockedProp(mdl) table.insert(ToolBlockedProps, mdl) end
 AllowedProps = { }
 function AddAllowedProp(mdl) table.insert(AllowedProps, mdl) end
 
-PNRP.Items = {}
-
-function PNRP.AddItem( itemtable )
-
-	PNRP.Items[itemtable.ID] =
-	{
-		ID = itemtable.ID,
-		Name = itemtable.Name,
-		ClassSpawn = itemtable.ClassSpawn,		
-		Scrap = itemtable.Scrap,
-		SmallParts = itemtable.Small_Parts,
-		Chemicals = itemtable.Chemicals,
-		Chance = itemtable.Chance,
-		Info = itemtable.Info,	
-		Type = itemtable.Type,
-		Energy = itemtable.Energy,
-		Ent = itemtable.Ent,
-		Model = itemtable.Model,
-		Spawn = itemtable.Spawn,
-		Use = itemtable.Use,
-		Remove = itemtable.Remove,
-		Script = itemtable.Script,
-		Weight = itemtable.Weight,
-		Create = itemtable.Create,
-		ToolCheck = itemtable.ToolCheck,
-		ShopHide = itemtable.ShopHide,
-		Capacity = itemtable.Capacity,
-		ProfileCost = itemtable.ProfileCost,
-		Persistent = itemtable.Persistent,
-		UnBlock = itemtable.UnBlock
-	}
-	
-	if not itemtable.UnBlock then
-		AddBannedProp(itemtable.Model)
-	end
-	
-end	
-
 for k, v in pairs(PNRP.JunkModels) do
 	AddBannedProp(v)
 end
@@ -55,6 +17,11 @@ for k, v in pairs(PNRP.ChemicalModels) do
 end
 for k, v in pairs(PNRP.SmallPartsModels) do
 	AddBannedProp(v)
+end
+for k, item in pairs( PNRP.Items ) do
+	if not item.UnBlock then
+		AddBannedProp(item.Model)
+	end
 end
 
 function PNRP.GetBannedPropsList( )
@@ -235,7 +202,7 @@ net.Receive( "PropProtect_RemoveItem", PNRP.PropProtect_RemoveItem )
 --Checks spawn for props and removes them
 function PNRP.spawnPropProtect()
 	timer.Create( "spawnCheckTimer", 20, 0, function ()
-		if GetConVarNumber("pnrp_propSpawnpointProtection") == 1 then
+		if getServerSetting("propSpawnpointProtection") == 1 then
 			local fountEnts = ents.FindByClass("info_player_start")
 			table.Add(fountEnts,ents.FindByClass("info_player_terrorist"))
 			table.Add(fountEnts,ents.FindByClass("info_player_counterterrorist"))
@@ -243,11 +210,11 @@ function PNRP.spawnPropProtect()
 				local found_ents = ents.FindInSphere( v:GetPos(), 135)
 				for i, ent in ipairs(found_ents) do
 					local myClass = ent:GetClass()
-					if myClass == "prop_physics"  and not ent.ID then
+					if myClass == "prop_physics"  and not ent.ID and not ent.crafted then
 						ent:Remove()
 					end
 					if ent:IsDoor() then
-						ent:SetNetworkedString("Owner", "Unownable")
+						ent:SetNetVar("Owner", "Unownable")
 					end
 				end
 			end
@@ -262,7 +229,7 @@ function GM:PlayerSpawnProp(ply, model)
 	local allowed = false
 	
 	--Admin Create All Overide
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then 
+	if ply:IsAdmin() and getServerSetting("adminCreateAll") == 1 then 
 		
 		allowed = true 
 	
@@ -273,7 +240,7 @@ function GM:PlayerSpawnProp(ply, model)
 		if string.find(model,  "%../") then return false end
 		if string.find(model,  "//") then return false end
 		-- Banned props take precedence over allowed props
-		if GetConVarNumber("pnrp_propBanning") == 1 then
+		if getServerSetting("propBanning") == 1 then
 			local blockProp = false
 			for k, v in pairs(BannedProps) do
 				if string.lower(v) == string.lower(model) then 
@@ -289,7 +256,7 @@ function GM:PlayerSpawnProp(ply, model)
 			end
 		end
 	
-		if GetConVarNumber("pnrp_propAllowing") == 1 then
+		if getServerSetting("propAllowing") == 1 then
 		-- If we are specifically allowing certain props, if it's not in the list, allowed will remain false
 			for k, v in pairs(AllowedProps) do
 				if v == model then allowed = true end
@@ -308,16 +275,16 @@ end
 
 function GM:PlayerSpawnedProp( ply, model, ent )
 	local plUID = PNRP:GetUID( ply )
-	if GetConVarNumber("pnrp_propPay") == 1 then
+	if getServerSetting("propPay") == 1 then
 		
-		local price = math.Round(((ent:BoundingRadius() + ent:GetPhysicsObject():GetMass()) / 2) * (GetConVarNumber("pnrp_propCost") / 100))
+		local price = math.Round(((ent:BoundingRadius() + ent:GetPhysicsObject():GetMass()) / 2) * (getServerSetting("propCost") / 100))
 		
 		if price < 1 then price = 1 end
 		--ply:ChatPrint("Price:  "..tostring(price))
 		
 		--Admin No Cost Overide
 		local adminCostOveride = false
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+		if ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then 
 			adminCostOveride = true 
 		else
 			adminCostOveride = false
@@ -326,22 +293,22 @@ function GM:PlayerSpawnedProp( ply, model, ent )
 		if ply:GetResource("Scrap") >= price or adminCostOveride == true then
 			ply:ChatPrint(tostring(price).." scrap used to create this prop.")
 			ply:DecResource("Scrap", price)
-			ent:SetNWString( "Owner_UID", plUID )
-			ent:SetNWString( "Owner", ply:Nick())
-			ent:SetNWEntity( "ownerent", ply )
+			ent:SetNetVar( "Owner_UID", plUID )
+			ent:SetNetVar( "Owner", ply:Nick())
+			ent:SetNetVar( "ownerent", ply )
 		else
 			ply:ChatPrint(tostring(price).." scrap needed to create this prop.")
 			ent:Remove()
 		end
 	else
-		ent:SetNWString( "Owner_UID", plUID )
-		ent:SetNWString( "Owner", ply:Nick())
-		ent:SetNWEntity( "ownerent", ply )
+		ent:SetNetVar( "Owner_UID", plUID )
+		ent:SetNetVar( "Owner", ply:Nick())
+		ent:SetNetVar( "ownerent", ply )
 	end
 end
 
 function GM:PlayerSpawnVehicle( p, class, vehtbl )
-	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	if not (p:IsAdmin() and getServerSetting("adminCreateAll") == 1) then
 		for _, v in pairs(AllowedProps) do
 			if class == v then return true end
 		end
@@ -353,13 +320,13 @@ end
 
 function GM:PlayerSpawnedVehicle(ply, ent)
 	local plUID = PNRP:GetUID( ply )
-	ent:SetNWString( "Owner_UID", plUID )
-	ent:SetNWString( "Owner", ply:Nick())
-	ent:SetNWEntity( "ownerent", ply )
+	ent:SetNetVar( "Owner_UID", plUID )
+	ent:SetNetVar( "Owner", ply:Nick())
+	ent:SetNetVar( "ownerent", ply )
 end
 
 function GM:PlayerSpawnRagdoll( p, model )
-	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	if not (p:IsAdmin() and getServerSetting("adminCreateAll") == 1) then
 		p:ChatPrint( "Ragdoll spawning is disabled." )
 		return false
 	end	
@@ -368,13 +335,13 @@ end
 
 function GM:PlayerSpawnedRagdoll(ply, model, ent)
 	local plUID = PNRP:GetUID( ply )
-	ent:SetNWString( "Owner_UID", plUID )
-	ent:SetNWString( "Owner", ply:Nick())
-	ent:SetNWEntity( "ownerent", ply )
+	ent:SetNetVar( "Owner_UID", plUID )
+	ent:SetNetVar( "Owner", ply:Nick())
+	ent:SetNetVar( "ownerent", ply )
 end
 
 function GM:PlayerSpawnEffect( p, model )
-	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	if not (p:IsAdmin() and getServerSetting("adminCreateAll") == 1) then
 		p:ChatPrint( "Effect spawning is disabled." )
 		return false
 	end	
@@ -382,7 +349,7 @@ function GM:PlayerSpawnEffect( p, model )
 end	
 
 function GM:PlayerGiveSWEP( ply, class, info )
-	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	if not (ply:IsAdmin() and getServerSetting("adminCreateAll") == 1) then
 		ply:ChatPrint( "Weapon spawning is disabled." )
 		return false
 	end	
@@ -391,14 +358,14 @@ end
 
 function GM:PlayerSpawnedEffect(ply, model, ent)
 	local plUID = PNRP:GetUID( ply )
-	ent:SetNWString( "Owner_UID", plUID )
-	ent:SetNWString( "Owner", ply:Nick())
-	ent:SetNWEntity( "ownerent", ply )
+	ent:SetNetVar( "Owner_UID", plUID )
+	ent:SetNetVar( "Owner", ply:Nick())
+	ent:SetNetVar( "ownerent", ply )
 end
 
 
 function GM:PlayerSpawnSENT( p, classname )
-	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	if not (p:IsAdmin() and getServerSetting("adminCreateAll") == 1) then
 		p:ChatPrint( "SEnt spawning is disabled." )
 		return false
 	end
@@ -421,14 +388,14 @@ end
 
 function GM:PlayerSpawnedSENT(ply, ent)
 	local plUID = PNRP:GetUID( ply )
-	ent:SetNWString( "Owner_UID", plUID )
-	ent:SetNWString( "Owner", ply:Nick())
-	ent:SetNWEntity( "ownerent", ply )
+	ent:SetNetVar( "Owner_UID", plUID )
+	ent:SetNetVar( "Owner", ply:Nick())
+	ent:SetNetVar( "ownerent", ply )
 end
 
 function GM:PlayerSpawnSWEP( ply, class, wep )
 	ply:ChatPrint( "Spawning the F-ing Weapon" )
-	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	if not (ply:IsAdmin() and getServerSetting("adminCreateAll") == 1) then
 		ply:ChatPrint( "SWEP spawning is disabled." )
 		return false	
 	end	
@@ -436,18 +403,42 @@ function GM:PlayerSpawnSWEP( ply, class, wep )
 end
 
 function GM:PlayerSpawnNPC( p, npc_type, npc_weapon )
-	if not (p:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1) then
+	if not (p:IsAdmin() and getServerSetting("adminCreateAll") == 1) then
 		p:ChatPrint( "NPC spawning is disabled." )
 		return false	
 	end	
 	return true
 end	
 
+function PlayerUse(ply, ent)
+	if ( !IsValid( ent ) or !ent:IsVehicle() ) then return end
+
+	if ( ply:GetEyeTrace().HitBox == 3 ) then
+		
+		if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) then
+			local myModel = ent:GetModel()
+			if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
+			ply:SendLua( "CurCarMaxWeight = "..tostring(PNRP.Items[ItemID].Capacity) )
+			ply:ConCommand("pnrp_carinv")
+		end
+	
+		return false
+	end
+	return true
+end
+hook.Add("PlayerUse", "PlayerUse", PlayerUse)
+
 function PuntCheck(ply, ent)
-	if not (ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1) then
-		if GetConVarNumber("pnrp_AllowPunt") == 1 then
+	if not (ply:IsAdmin() and getServerSetting("adminTouchAll") == 1) then
+		if getServerSetting("AllowPunt") == 1 then
 			return true
 		else
+			local Item = PNRP.SearchItembase( ent )
+			if Item != nil then
+				if Item.AllowPunt == true then
+					return true
+				end
+			end
 			return false
 		end
 	end
@@ -469,9 +460,9 @@ end
 
 function PickupCheck( ply, ent)
 	--admin can do whatever they want
-	if ply:IsSuperAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then return true end
+	if ply:IsSuperAdmin() and getServerSetting("adminTouchAll") == 1 then return true end
 	
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 and not isPlayerAndAdmin( ent ) then return true end
+	if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 and not isPlayerAndAdmin( ent ) then return true end
 	
 	if ent:IsPlayer() then return false end
 	
@@ -507,8 +498,8 @@ function PickupCheck( ply, ent)
 	end
 	
 	local plUID = PNRP:GetUID( ply )
-	local owner = ent:GetNWString( "Owner", "None" )
-	local ownerUID = ent:GetNWString( "Owner_UID", "None" )
+	local owner = ent:GetNetVar( "Owner", "None" )
+	local ownerUID = ent:GetNetVar( "Owner_UID", "None" )
 	
 	local playerPos = ply:GetShootPos()
 	local entPos = ent:GetPos()
@@ -533,7 +524,7 @@ function PickupCheck( ply, ent)
 	--if owner == "None" or owner == "World" then return true end
 	
 	--Checks buddy system
-	local ownerEnt = ent:GetNWEntity( "ownerent", nil )
+	local ownerEnt = ent:GetNetVar( "ownerent", nil )
 	if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt then
 		ownerEnt = ent:GetPlayer() or nil
 	end
@@ -542,8 +533,8 @@ function PickupCheck( ply, ent)
 			if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
 				return true
 			elseif tostring(ownerEnt.CommunityBuddy) == "true" then
-				local entCID = tonumber(ownerEnt:GetNWInt("cid", -1))
-				local plyCID = tonumber(ply:GetNWInt("cid", -1))
+				local entCID = tonumber(ownerEnt:GetNetVar("cid", -1))
+				local plyCID = tonumber(ply:GetNetVar("cid", -1))
 				
 				if plyCID >= 0 and entCID == plyCID then
 					return true
@@ -567,7 +558,7 @@ hook.Add( "PhysgunPickup", "pickupCheck", PickupCheck )
 
 function PhysUnfreezeCheck ( ply, ent, physobj )
 	--admin can do whatever they want
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then return true end
+	if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then return true end
 	
 	if ent.moveActive == false then return false end
 
@@ -575,8 +566,8 @@ function PhysUnfreezeCheck ( ply, ent, physobj )
 	--local ent = ply:GetEyeTrace().Entity
 	
 	local plUID = PNRP:GetUID( ply )
-	local owner = ent:GetNWString( "Owner", "None" )
-	local ownerUID = ent:GetNWString( "Owner_UID", "None" )
+	local owner = ent:GetNetVar( "Owner", "None" )
+	local ownerUID = ent:GetNetVar( "Owner_UID", "None" )
 	
 	local playerPos = ply:GetShootPos()
 	local entPos = ent:GetPos()
@@ -593,7 +584,7 @@ function PhysUnfreezeCheck ( ply, ent, physobj )
 	--if owner == "None" or owner == "World" then return true end
 	
 	--Checks buddy system
-	local ownerEnt = ent:GetNWEntity( "ownerent", nil )
+	local ownerEnt = ent:GetNetVar( "ownerent", nil )
 	if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt then
 		ownerEnt = ent:GetPlayer() or nil
 	end
@@ -620,7 +611,7 @@ function ToolCheck( ply, tr, toolmode )
 	if (not ent) and (not ent:IsWorld()) then return false end
 
 	--If player is admin (Admin Touch All overide)
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+	if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 		return true
 	end
 	
@@ -707,15 +698,15 @@ function ToolCheck( ply, tr, toolmode )
 	
 	--Checks ownership
 	local plUID = PNRP:GetUID( ply )
-	local owner = ent:GetNWString( "Owner", "None" )
-	local ownerUID = ent:GetNWString( "Owner_UID", "None" )
+	local owner = ent:GetNetVar( "Owner", "None" )
+	local ownerUID = ent:GetNetVar( "Owner_UID", "None" )
 	if owner == "Unownable" then return false end
 	
 	
 	local IsBuddy = false
 	
 	--Checks buddy system
-	local ownerEnt = ent:GetNWEntity( "ownerent", nil )
+	local ownerEnt = ent:GetNetVar( "ownerent", nil )
 	if not ent:IsWorld() then
 		if ent.GetPlayer and type(ent.GetPlayer) == "function" and not ownerEnt then
 			ownerEnt = ent:GetPlayer() or nil
@@ -725,8 +716,8 @@ function ToolCheck( ply, tr, toolmode )
 				if ownerEnt.PropBuddyList[PNRP:GetUID( ply )] then
 					IsBuddy = true
 				elseif tostring(ownerEnt.CommunityBuddy) == "true" then
-					local entCID = tonumber(ownerEnt:GetNWInt("cid", -1))
-					local plyCID = tonumber(ply:GetNWInt("cid", -1))
+					local entCID = tonumber(ownerEnt:GetNetVar("cid", -1))
+					local plyCID = tonumber(ply:GetNetVar("cid", -1))
 					
 					if plyCID >= 0 and entCID == plyCID then
 						IsBuddy = true
@@ -779,15 +770,15 @@ function ToolCheck( ply, tr, toolmode )
 	end	
 	
 	if toolmode == "wire_expression" or toolmode == "wire_expression2" or toolmode == "wire_gate_expression" or toolmode == "wire_debugger" or toolmode == "wire_adv" then
-		if GetConVarNumber("pnrp_exp2Level") == 0 then 
+		if getServerSetting("exp2Level") == 0 then 
 			return false 
-		elseif GetConVarNumber("pnrp_exp2Level") == 1 and ply:IsAdmin() then
+		elseif getServerSetting("exp2Level") == 1 and ply:IsAdmin() then
 			return true
-		elseif GetConVarNumber("pnrp_exp2Level") == 2 and (ply:IsAdmin() or ply:Team() == TEAM_ENGINEER) then
+		elseif getServerSetting("exp2Level") == 2 and (ply:IsAdmin() or ply:Team() == TEAM_ENGINEER) then
 			return true
-		elseif GetConVarNumber("pnrp_exp2Level") == 3 and (ply:IsAdmin() or ply:Team() == TEAM_ENGINEER or ply:Team() == TEAM_SCIENCE) then
+		elseif getServerSetting("exp2Level") == 3 and (ply:IsAdmin() or ply:Team() == TEAM_ENGINEER or ply:Team() == TEAM_SCIENCE) then
 			return true
-		elseif GetConVarNumber("pnrp_exp2Level") == 4 then
+		elseif getServerSetting("exp2Level") == 4 then
 			return true
 		else
 			return false
@@ -796,11 +787,11 @@ function ToolCheck( ply, tr, toolmode )
 	
 	--check for globally allowed tools (Admins can use all tools)
 	local DoClassToolCheck = false
-	if GetConVarNumber("pnrp_toolLevel") == 1 and not ply:IsAdmin() then
+	if getServerSetting("toolLevel") == 1 and not ply:IsAdmin() then
 		DoClassToolCheck = true
-	elseif GetConVarNumber("pnrp_toolLevel") == 2 and ply:Team() ~= TEAM_ENGINEER then
+	elseif getServerSetting("toolLevel") == 2 and ply:Team() ~= TEAM_ENGINEER then
 		DoClassToolCheck = true
-	elseif GetConVarNumber("pnrp_toolLevel") == 3 and not (ply:Team() == TEAM_ENGINEER or ply:Team() == TEAM_SCIENCE) then
+	elseif getServerSetting("toolLevel") == 3 and not (ply:Team() == TEAM_ENGINEER or ply:Team() == TEAM_SCIENCE) then
 		DoClassToolCheck = true
 	end
 	

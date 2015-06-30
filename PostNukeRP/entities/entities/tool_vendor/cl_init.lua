@@ -17,7 +17,7 @@ function VendorHUDLabel()
 	
 	if trace.Entity:GetClass() == "tool_vendor" then
 		local font = "CenterPrintText"
-		local text = trace.Entity:GetNWString("name")
+		local text = trace.Entity:GetNetVar("name", "")
 		surface.SetFont(font)
 		local tWidth, tHeight = surface.GetTextSize(text)
 		
@@ -332,11 +332,13 @@ function VendorMenu()
 	local avModels = net.ReadTable()	
 	local Capacity = net.ReadString()
 	
-	local vendorInventory = vendor_table[1]["inventory"]
-	local vendorRes = vendor_table[1]["res"]
+	local vendorInventory = vendor_table["inv"]
+	local vendorRes = vendor_table["res"]
 	local vendScrap = 0
 	local vendSP = 0
 	local vendChems = 0
+	
+	local invTbl = {}
 	
 	if string.len(tostring(vendorRes)) > 3 then
 		local resSplit = string.Explode( ",", vendorRes )
@@ -385,20 +387,8 @@ function VendorMenu()
 			pnlLIList:EnableHorizontal(true) 
 			pnlLIList:SetSpacing(1)
 			pnlLIList:SetPadding(5)
-			--Generates the Vendor's inventory
-			local invTbl = {}
 			
-			local invLongStr = string.Explode( " ", vendorInventory )
-
-			if invLongStr then
-				for _, invStr in pairs( invLongStr ) do
-					local invSplit = string.Explode( ",", invStr )
-					if table.Count(invSplit) > 1 then
-						invTbl[invSplit[1]] = tostring(invSplit[2]..","..invSplit[3]..","..invSplit[4]..","..invSplit[5])
-					end
-				end
-			end
-			
+			--Generates the Vendor's inventory			
 			if vendorInventory == nil or vendorInventory == "" or tostring(vendorInventory) == "NULL" then
 				local EmptyLabel = vgui.Create( "DLabel", vendmenu_frame )
 					EmptyLabel:SetText("Vendor Inventory is Empty")
@@ -406,15 +396,18 @@ function VendorMenu()
 					EmptyLabel:SetColor( Color( 0, 255, 0, 255 ) )
 					EmptyLabel:SizeToContents()
 			else
-				for k, v in pairs( invTbl ) do
-					local item = PNRP.Items[k]
+				for k, v in pairs( vendorInventory ) do
+					local item = PNRP.Items[v["itemid"]]
 					if item then
-						local invBreakout = string.Explode( ",", v )
-						local count = invBreakout[1]
-						local scrap = invBreakout[2]
-						local small_parts = invBreakout[3]
-						local chems = invBreakout[4]
-						local toolTip = item.Name.."\n".."Count: "..count.."\n".."Cost \n Scrap: "..scrap.."\n Small Parts: "..small_parts.."\n Chems: "..chems
+						local count = v["count"]
+						local scrap = v["scrap"]
+						local small_parts = v["sp"]
+						local chems = v["chem"]
+						if scrap == nil or scrap == "" then scrap = 0 end
+						if small_parts == nil or small_parts == "" then small_parts = 0 end
+						if chems == nil or chems == "" then chems = 0 end
+						invTbl[v["itemid"]] = {oScrap=scrap, oSmall_parts=small_parts, oChems=chems}
+						
 						local pnlLIPanel = vgui.Create("DPanel", pnlLIList)
 							pnlLIPanel:SetSize( 75, 140 )
 							pnlLIPanel.Paint = function()
@@ -423,20 +416,41 @@ function VendorMenu()
 							
 							pnlLIList:AddItem(pnlLIPanel)
 							
-							pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
-							pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
-							pnlLIPanel.NumberWang:SetMin( 1 )
-							pnlLIPanel.NumberWang:SetMax( count )
-							pnlLIPanel.NumberWang:SetDecimals( 0 )
-							pnlLIPanel.NumberWang:SetValue( 1 )
-							
+							local countTxt = "Count: "..tostring(v["count"])
+							if v["status_table"] == "" then								
+								pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
+								pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
+								pnlLIPanel.NumberWang:SetMin( 1 )
+								pnlLIPanel.NumberWang:SetMax( count )
+								pnlLIPanel.NumberWang:SetDecimals( 0 )
+								pnlLIPanel.NumberWang:SetValue( 1 )
+							else
+								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+								if FuelLevel then countTxt = "Fuel: "..tostring(FuelLevel) end
+								local HPText = ""
+								local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
+								local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+								if HPLevel then HPText = "HP: "..HPLevel
+								elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+								pnlLIPanel.HP = vgui.Create("DLabel", pnlLIPanel)		
+								pnlLIPanel.HP:SetPos( 10, 75 )
+								pnlLIPanel.HP:SetText(HPText)
+								pnlLIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
+								pnlLIPanel.HP:SizeToContents() 
+								pnlLIPanel.HP:SetContentAlignment( 5 )
+							end
+							local toolTip = item.Name.."\n"..countTxt.."\n".."Cost \n Scrap: "..scrap.."\n Small Parts: "..small_parts.."\n Chems: "..chems
 							pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
 							pnlLIPanel.Icon:SetModel(item.Model)
 							pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
 							pnlLIPanel.Icon:SetToolTip( toolTip )
 							pnlLIPanel.Icon.DoClick = function() 
 								--Remove item and place in inventory (Not Sell Item)
-								local takeCount = pnlLIPanel.NumberWang:GetValue()
+								local takeCount = 1
+								if v["iid"] == "" then
+									takeCount = math.Round(pnlLIPanel.NumberWang:GetValue())
+								end
+								
 								if tonumber(takeCount) > tonumber(count) then
 									takeCount = count
 								elseif tonumber(takeCount) < 1 then
@@ -447,7 +461,9 @@ function VendorMenu()
 									net.WriteEntity(vendorENT)
 									net.WriteString(item.ID)
 									net.WriteDouble(takeCount)
+									net.WriteString(v["iid"])
 								net.SendToServer()
+								
 								vendmenu_frame:Close()
 							end	
 							
@@ -469,6 +485,8 @@ function VendorMenu()
 									net.WriteEntity(ply)
 									net.WriteEntity(vendorENT)
 									net.WriteString(item.ID)
+									net.WriteString(v["iid"])
+									net.WriteString(v["status_table"])
 								net.SendToServer()
 								vendmenu_frame:Close()
 							end
@@ -493,7 +511,7 @@ function VendorMenu()
 			--Generates the user's inventory
 			if inventoryTble != nil then
 				for k, v in pairs( inventoryTble ) do
-					local item = PNRP.Items[k]
+					local item = PNRP.Items[v["itemid"]]
 					if item then
 						local pnlUserIPanel = vgui.Create("DPanel", pnlUserIList)
 							pnlUserIPanel:SetSize( 75, 100 )
@@ -503,39 +521,69 @@ function VendorMenu()
 							
 							pnlUserIList:AddItem(pnlUserIPanel)
 							
-							pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
-							pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
-							pnlUserIPanel.NumberWang:SetMin( 1 )
-							pnlUserIPanel.NumberWang:SetMax( v )
-							pnlUserIPanel.NumberWang:SetDecimals( 0 )
-							pnlUserIPanel.NumberWang:SetValue( 1 )
-													
+							local countTxt = "Count: "..tostring(v["count"])
+							if v["status_table"] != "" then
+								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+								if FuelLevel then countTxt = "Fuel: "..tostring(FuelLevel) end
+								local HPText = ""
+								local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
+								local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+								if HPLevel then HPText = "HP: "..HPLevel
+								elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+								pnlUserIPanel.HP = vgui.Create("DLabel", pnlUserIPanel)		
+								pnlUserIPanel.HP:SetPos( 10, 75 )
+								pnlUserIPanel.HP:SetText(HPText)
+								pnlUserIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
+								pnlUserIPanel.HP:SizeToContents() 
+								pnlUserIPanel.HP:SetContentAlignment( 5 )
+							else
+								pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
+								pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
+								pnlUserIPanel.NumberWang:SetMin( 1 )
+								pnlUserIPanel.NumberWang:SetMax( v["count"] )
+								pnlUserIPanel.NumberWang:SetDecimals( 0 )
+								pnlUserIPanel.NumberWang:SetValue( 1 )
+							end
+							
 							pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
 							pnlUserIPanel.Icon:SetModel(item.Model)
 							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
-							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..v.."\n Press Icon to move item." )
+							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n"..countTxt.."\n Press Icon to move item." )
 							pnlUserIPanel.Icon.DoClick = function() 
-								local sellCount = pnlUserIPanel.NumberWang:GetValue()
-								if sellCount > v then
-									sellCount = v
+								local sellCount = 1
+								if v["iid"] == "" then 
+									sellCount = pnlUserIPanel.NumberWang:GetValue()
+								end
+								if sellCount > v["count"] then
+									sellCount = v["count"]
 								end                               
-								if pnlUserIPanel.NumberWang:GetValue() < 1 then
+								if sellCount < 1 then
                                     LocalPlayer():ChatPrint("Not enough to store")
                                     return
                                 end
 								local foundItem = false
 								local itmInfo = nil
-								if invTbl[k] then
-									print(tostring(invTbl[k]))
-									local oInvBreakout = string.Explode( ",", invTbl[k] )
-									local oScrap = oInvBreakout[2]
-									local oSmall_parts = oInvBreakout[3]
-									local oChems = oInvBreakout[4]
-									local AddCostString = tostring(sellCount).." "..tostring(oScrap).." "..tostring(oSmall_parts).." "..tostring(oChems)
-									RunConsoleCommand("setVendorSellItem", vendor_table[1]["vendorid"], item.ID, AddCostString, "new")
+								if invTbl[v["itemid"]] then
+									local oScrap = invTbl[v["itemid"]]["oScrap"]
+									local oSmall_parts = invTbl[v["itemid"]]["oSmall_parts"]
+									local oChems = invTbl[v["itemid"]]["oChems"]
+									
+									local costTbl = {}
+									costTbl["count"] = sellCount
+									costTbl["scrap"] = oScrap
+									costTbl["sp"] = oSmall_parts
+									costTbl["chems"] = oChems
+									
+									net.Start("setVendorSellItem")
+										net.WriteString(vendor_table["vendorid"])
+										net.WriteString(item.ID)
+										net.WriteTable(costTbl)
+										net.WriteString("new")
+										net.WriteString(v["iid"])
+									net.SendToServer()
 									vendmenu_frame:Close()
 								else
-									setSellItem(vendorENT, item, tostring(sellCount), "new")
+									setSellItem(vendorENT, item, tostring(sellCount), "new", v["iid"])
 									vendmenu_frame:Close()
 								end
 							end								
@@ -543,7 +591,7 @@ function VendorMenu()
 				end
 			end
 			
-		--//Locker Status			
+		--//Vendor Status			
 		local lMenuList = vgui.Create( "DPanelList", vendmenu_frame )
 			lMenuList:SetPos( 610,45 )
 			lMenuList:SetSize( 150, 175 )
@@ -653,7 +701,7 @@ function VendorMenu()
 				vendRenameBtn:SetSize(30,30)
 				vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 				vendRenameBtn.DoClick = function() 
-					renameVendor( vendorENT, vendor_table[1]["vendorid"], vendor_table[1]["name"] )
+					renameVendor( vendorENT, vendor_table["vendorid"], vendor_table[1]["name"] )
 					vendmenu_frame:Close()
 				end
 				vendRenameBtn.Paint = function()
@@ -846,14 +894,14 @@ function renameVendor( vendorENT, vendorid, name )
 			end
 end
 
-function setSellItem(vendorENT, item, count, option)
+function setSellItem(vendorENT, item, count, option, iid)
 	local ply = LocalPlayer()
 	
 	local w = 600
 	local h = 100
 	local title = "Set Sell Price"
 	
-	local vendorID = vendorENT:GetNWString("vendorid")
+	local vendorID = vendorENT:GetNetVar("vendorid")
 		
 	local vendmenu_frame = vgui.Create( "DFrame" )
 		vendmenu_frame:SetSize( w, h ) 
@@ -944,9 +992,21 @@ function setSellItem(vendorENT, item, count, option)
 				if setChems < 0 then
 					setChems = 0
 				end
-				local costString = tostring(count).." "..tostring(setScrap).." "..tostring(setSP).." "..tostring(setChems)
-				RunConsoleCommand("setVendorSellItem", vendorID, item.ID, costString, option)
 
+				local costTbl = {}
+				costTbl["count"] = count
+				costTbl["scrap"] = setScrap
+				costTbl["sp"] = setSP
+				costTbl["chems"] = setChems
+				
+				net.Start("setVendorSellItem")
+					net.WriteString(vendorID)
+					net.WriteString(item.ID)
+					net.WriteTable(costTbl)
+					net.WriteString(option)
+					net.WriteString(iid)
+				net.SendToServer()
+									
 				vendmenu_frame:Close()
 			end
 end
@@ -958,7 +1018,7 @@ function VendorShopMenu()
 	local vendor_table = net.ReadTable()
 	local inventoryTble = net.ReadTable()	
 	
-	local vendorInventory = vendor_table[1]["inventory"]
+	local vendorInventory = vendor_table["inv"]
 	
 	local w = 610
 	local h = 620
@@ -983,11 +1043,19 @@ function VendorShopMenu()
 			screenBG:SetSize(vendmenu_frame:GetWide(), vendmenu_frame:GetTall())
 			
 		local VendorShopLabel = vgui.Create( "DLabel", vendmenu_frame )
-			VendorShopLabel:SetText(vendor_table[1]["name"])
+			VendorShopLabel:SetText(vendor_table["name"])
 			VendorShopLabel:SetPos(55, 40)
 			VendorShopLabel:SetColor( Color( 0, 255, 0, 255 ) )
 			VendorShopLabel:SizeToContents()
-			
+		
+		local pnlList = vgui.Create("DPanelList", vendmenu_frame)
+			pnlList:SetPos(45, 60)
+			pnlList:SetSize(vendmenu_frame:GetWide() - 90, vendmenu_frame:GetTall() - 110)
+			pnlList:EnableVerticalScrollbar(true) 
+			pnlList:EnableHorizontal(false) 
+			pnlList:SetSpacing(1)
+			pnlList:SetPadding(10)
+				
 		--Shop Item List
 		if vendorInventory == nil or vendorInventory == "" or tostring(vendorInventory) == "NULL" then
 			local EmptyLabel = vgui.Create( "DLabel", vendmenu_frame )
@@ -996,116 +1064,121 @@ function VendorShopMenu()
 				EmptyLabel:SetColor( Color( 0, 255, 0, 255 ) )
 				EmptyLabel:SizeToContents()
 		else
-			local invTbl = {}
-			local invLongStr = string.Explode( " ", vendorInventory )
-			for _, invStr in pairs( invLongStr ) do
-				local invSplit = string.Explode( ",", invStr )
-				
-				invTbl[invSplit[1]] = tostring(invSplit[2]..","..invSplit[3]..","..invSplit[4]..","..invSplit[5])
-			end
-			
-			local pnlList = vgui.Create("DPanelList", vendmenu_frame)
-				pnlList:SetPos(45, 60)
-				pnlList:SetSize(vendmenu_frame:GetWide() - 90, vendmenu_frame:GetTall() - 110)
-				pnlList:EnableVerticalScrollbar(true) 
-				pnlList:EnableHorizontal(false) 
-				pnlList:SetSpacing(1)
-				pnlList:SetPadding(10)
-				pnlList.Paint = function()
-				--	draw.RoundedBox( 8, 0, 0, pnlList:GetWide(), pnlList:GetTall(), Color( 50, 50, 50, 255 ) )
-				end
-		
-				for k, v in pairs( invTbl ) do
-					local item = PNRP.Items[k]
-					if item then
-						local invBreakout = string.Explode( ",", v )
-						local count = invBreakout[1]
-						local scrap = invBreakout[2]
-						local small_parts = invBreakout[3]
-						local chems = invBreakout[4]
+			for k, v in pairs( vendorInventory ) do
+				local item = PNRP.Items[v["itemid"]]
+				if item then
+					local count = v["count"]
+					local scrap = v["scrap"]
+					local small_parts = v["sp"]
+					local chems = v["chem"]
+					if scrap == nil or scrap == "" then scrap = 0 end
+					if small_parts == nil or small_parts == "" then small_parts = 0 end
+					if chems == nil or chems == "" then chems = 0 end
+					
+					local pnlPanel = vgui.Create("DPanel")
+						pnlPanel:SetTall(75)
+						pnlPanel.Paint = function()
+							draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+							draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+						end
+						pnlList:AddItem(pnlPanel)
+													
+						pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
+						pnlPanel.Title:SetPos(90, 5)
+						pnlPanel.Title:SetText(item.Name)
+						pnlPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+						pnlPanel.Title:SizeToContents() 
+						pnlPanel.Title:SetContentAlignment( 5 )
 						
+						pnlPanel.Cost = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.Cost:SetPos(90, 55)
+						pnlPanel.Cost:SetText("Cost: Scrap "..tostring(scrap).." | Small Parts "..tostring(small_parts).." | Chemicals "..tostring(chems))
+						pnlPanel.Cost:SetColor(Color( 0, 255, 0, 255 ))
+						pnlPanel.Cost:SizeToContents() 
+						pnlPanel.Cost:SetContentAlignment( 5 )
 						
-						local pnlPanel = vgui.Create("DPanel")
-							pnlPanel:SetTall(75)
-							pnlPanel.Paint = function()
-								draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
-							end
-							pnlList:AddItem(pnlPanel)
-														
-							pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
-							pnlPanel.Title:SetPos(90, 5)
-							pnlPanel.Title:SetText(item.Name)
-							pnlPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
-							pnlPanel.Title:SizeToContents() 
-							pnlPanel.Title:SetContentAlignment( 5 )
-							
-							pnlPanel.Cost = vgui.Create("DLabel", pnlPanel)		
-							pnlPanel.Cost:SetPos(90, 55)
-							pnlPanel.Cost:SetText("Cost: Scrap "..tostring(scrap).." | Small Parts "..tostring(small_parts).." | Chemicals "..tostring(chems))
-							pnlPanel.Cost:SetColor(Color( 0, 0, 0, 255 ))
-							pnlPanel.Cost:SizeToContents() 
-							pnlPanel.Cost:SetContentAlignment( 5 )
-							
-							pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
-							pnlPanel.ClassBuild:SetPos(340, 5)
-							pnlPanel.ClassBuild:SetText("In Stock: "..count)
-							pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
-							pnlPanel.ClassBuild:SizeToContents() 
-							pnlPanel.ClassBuild:SetContentAlignment( 5 )
-							
-							pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
-							pnlPanel.ClassBuild:SetPos(90, 25)
-							pnlPanel.ClassBuild:SetText(item.Info)
-							pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
-							pnlPanel.ClassBuild:SetWide(250)
-							pnlPanel.ClassBuild:SetTall(25)
-							pnlPanel.ClassBuild:SetWrap(true)
-							pnlPanel.ClassBuild:SetContentAlignment( 5 )	
-							
-							pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
-							pnlPanel.ItemWeight:SetPos(340, 55)
-							pnlPanel.ItemWeight:SetText("Weight: "..item.Weight)
-							pnlPanel.ItemWeight:SetColor(Color( 0, 0, 0, 255 ))
-							pnlPanel.ItemWeight:SizeToContents() 
-							pnlPanel.ItemWeight:SetContentAlignment( 5 )
-							
+						pnlPanel.InStock = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.InStock:SetPos(340, 5)
+						pnlPanel.InStock:SetText("In Stock: "..count)
+						pnlPanel.InStock:SetColor(Color( 0, 250, 0, 255 ))
+						pnlPanel.InStock:SizeToContents() 
+						pnlPanel.InStock:SetContentAlignment( 5 )
+						
+						pnlPanel.ItmInfo = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.ItmInfo:SetPos(90, 25)
+						pnlPanel.ItmInfo:SetText(item.Info)
+						pnlPanel.ItmInfo:SetColor(Color( 0, 200, 0, 255 ))
+						pnlPanel.ItmInfo:SetWide(250)
+						pnlPanel.ItmInfo:SetTall(25)
+						pnlPanel.ItmInfo:SetWrap(true)
+						pnlPanel.ItmInfo:SetContentAlignment( 5 )	
+						
+						pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.ItemWeight:SetPos(340, 55)
+						pnlPanel.ItemWeight:SetText("Weight: "..item.Weight)
+						pnlPanel.ItemWeight:SetColor(Color( 0, 200, 0, 255 ))
+						pnlPanel.ItemWeight:SizeToContents() 
+						pnlPanel.ItemWeight:SetContentAlignment( 5 )
+						
+						if v["status_table"] == "" then
 							pnlPanel.ItemAmount = vgui.Create("DLabel", pnlPanel)		
 							pnlPanel.ItemAmount:SetPos(340, 30)
 							pnlPanel.ItemAmount:SetText("Buy amount: ")
-							pnlPanel.ItemAmount:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.ItemAmount:SetColor(Color( 0, 245, 0, 255 ))
 							pnlPanel.ItemAmount:SizeToContents() 
 							pnlPanel.ItemAmount:SetContentAlignment( 5 )
-							
+						
 							pnlPanel.NumberWang = vgui.Create( "DNumberWang", pnlPanel )
 							pnlPanel.NumberWang:SetPos(410, 25 )
 							pnlPanel.NumberWang:SetMin( 1 )
 							pnlPanel.NumberWang:SetMax( count )
 							pnlPanel.NumberWang:SetDecimals( 0 )
 							pnlPanel.NumberWang:SetValue( 1 )
-						
-							pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
-							pnlPanel.Icon:SetModel(item.Model)
-							pnlPanel.Icon:SetPos(10, 5)
-							pnlPanel.Icon:SetToolTip( "Click to buy" )
-							pnlPanel.Icon.DoClick = function()
-									local buyAmount = pnlPanel.NumberWang:GetValue()
-									if tonumber(buyAmount) <= 0 then
-										buyAmount = 1
-									elseif tonumber(buyAmount) > tonumber(count) then
-										buyAmount = count
-									end
-									local itemCost = {scrap,small_parts,chems}
-									net.Start("BuyFromVendor")
-										net.WriteEntity(ply)
-										net.WriteEntity(vendorENT)
-										net.WriteDouble(tonumber(buyAmount))
-										net.WriteString(item.ID)
-										net.WriteTable(itemCost)
-									net.SendToServer()
-									vendmenu_frame:Close()
-							end	
-					end
+						else
+							local HPTxt = ""
+							local HP = PNRP.GetFromStat(v["status_table"], "HP")
+							if HP then 	HPTxt = "HP: "..HP end
+							local PowerLevel = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+							if PowerLevel then 	HPTxt = HPTxt.." Charge: "..tostring(math.Round(PowerLevel/100)).."% " end
+							local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+							if FuelLevel then HPTxt = HPTxt.." Fuel: "..tostring(FuelLevel) end
+							
+							pnlPanel.HP = vgui.Create("DLabel", pnlPanel)		
+							pnlPanel.HP:SetPos(340, 30)
+							pnlPanel.HP:SetText(HPTxt)
+							pnlPanel.HP:SetColor(Color( 0, 255, 0, 255 ))
+							pnlPanel.HP:SizeToContents() 
+							pnlPanel.HP:SetContentAlignment( 5 )
+						end
+					
+						pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
+						pnlPanel.Icon:SetModel(item.Model)
+						pnlPanel.Icon:SetPos(10, 5)
+						pnlPanel.Icon:SetToolTip( "Click to buy" )
+						pnlPanel.Icon.DoClick = function()
+							local buyAmount = 1
+							if v["iid"] == "" then
+								buyAmount = math.Round(pnlPanel.NumberWang:GetValue())
+							end
+							
+							if tonumber(buyAmount) <= 0 then
+								buyAmount = 1
+							elseif tonumber(buyAmount) > tonumber(count) then
+								buyAmount = count
+							end
+							local itemCost = {scrap,small_parts,chems}
+							net.Start("BuyFromVendor")
+								net.WriteEntity(ply)
+								net.WriteEntity(vendorENT)
+								net.WriteDouble(tonumber(buyAmount))
+								net.WriteString(item.ID)
+								net.WriteTable(itemCost)
+								net.WriteString(v["iid"])
+							net.SendToServer()
+							vendmenu_frame:Close()
+						end	
 				end
+			end
 		end
 end
 net.Receive("vendor_shop_menu", VendorShopMenu)

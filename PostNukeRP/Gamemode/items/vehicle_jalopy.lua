@@ -16,7 +16,8 @@ ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_jeep"
 ITEM.Model = "models/vehicle.mdl"
 ITEM.Script = "scripts/vehicles/jalopy.txt"
-ITEM.Weight = 500
+ITEM.Weight = 50
+ITEM.Capacity = 500
 
 function ITEM.ToolCheck( p )
 	return {["intm_engine"]=1}
@@ -74,10 +75,12 @@ function ITEM.Create( ply, class, pos )
 		ent:Activate()
 		PNRP.SetOwner(ply, ent)
 		PNRP.AddWorldCache( ply,ITEM.ID )
+		
 	end
 	
 	ent.gas = 0
 	ent.tank = 10
+
 end
 
 PNRP.AddItem(ITEM)

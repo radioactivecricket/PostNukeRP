@@ -24,7 +24,7 @@ function ENT:SetAutomaticFrameAdvance( bUsingAnim )
 end
 
 function ENT:IsOutside()
-
+	--[[
 	local trace = {}
 	trace.start = self:GetLocalPos()
 	trace.endpos = trace.start + ( self:GetUp() * 500 )
@@ -38,5 +38,16 @@ function ENT:IsOutside()
 	end
 	
 	return false
-
+	]]--
+	local trace = {}
+	trace.start = self:GetPos()
+	trace.endpos = trace.start + Vector( 0, 0, 32768 )
+	trace.filter = self
+	local tr = util.TraceLine( trace )
+	
+	if tr.HitSky then
+		return true
+	end
+	
+	return false
 end

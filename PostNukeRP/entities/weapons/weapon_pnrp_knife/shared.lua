@@ -20,7 +20,7 @@ SWEP.MissSound 				= Sound("weapons/knife/knife_slash1.wav")
 SWEP.WallSound 				= Sound("weapons/knife/knife_hitwall1.wav")
 SWEP.DeploySound				= Sound("weapons/knife/knife_deploy1.wav")
 
-SWEP.Primary.Damage 		= 25
+SWEP.Primary.Damage 		= 10
 SWEP.Primary.ClipSize 		= -1
 SWEP.Primary.Delay 			= 0.5
 SWEP.Primary.DefaultClip 	= -1
@@ -71,6 +71,8 @@ function SWEP:PrimaryAttack()
 	self.Owner:SetAnimation( PLAYER_ATTACK1 )
 
 	if ( trace.Hit ) then
+		local skillRating = self.Owner:GetSkill("Strength")
+		
 		if trace.Entity:IsPlayer() or string.find(trace.Entity:GetClass(),"npc") or string.find(trace.Entity:GetClass(),"prop_ragdoll") then
 			self.Weapon:SendWeaponAnim(ACT_VM_HITCENTER)
 			bullet = {}
@@ -82,9 +84,9 @@ function SWEP:PrimaryAttack()
 			bullet.Force  = 1
 			if SERVER then
 				if trace.Entity:GetAimVector():DotProduct(self.Owner:GetAimVector()) > 0 then
-					bullet.Damage = self.Primary.Damage * 4
+					bullet.Damage = (self.Primary.Damage + math.Round( ((skillRating*20)*0.01)*10 )) * 4  --80 dmg
 				else
-					bullet.Damage = self.Primary.Damage
+					bullet.Damage = self.Primary.Damage + math.Round( ((skillRating*20)*0.01)*10 )  --20 dmg
 				end
 			end
 			self.Owner:FireBullets(bullet) 
@@ -98,7 +100,7 @@ function SWEP:PrimaryAttack()
 			bullet.Spread = Vector(0, 0, 0)
 			bullet.Tracer = 0
 			bullet.Force  = 1
-			bullet.Damage = self.Primary.Damage
+			bullet.Damage = self.Primary.Damage + math.Round( ((skillRating*20)*0.01)*10 ) --20 dmg
 			self.Owner:FireBullets(bullet) 
 			self.Weapon:EmitSound( self.WallSound )		
 			util.Decal("ManhackCut", trace.HitPos + trace.HitNormal, trace.HitPos - trace.HitNormal)

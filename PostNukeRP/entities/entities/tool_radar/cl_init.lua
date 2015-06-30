@@ -18,17 +18,17 @@ function RadarMenu( )
 	
 	ply = LocalPlayer( )
 	
-	local radarGPR = radarEnt:GetNWString("EnabledGPR", false)
-	local radarState = radarEnt:GetNWString("Status", 0)
-	local plyRadarIndex = ply:GetNWString("RadarENTIndex", nil)
+	local radarGPR = radarEnt:GetNetVar("EnabledGPR", false)
+	local radarState = radarEnt:GetNetVar("Status", 0)
+	local plyRadarIndex = ply:GetNetVar("RadarENTIndex", nil)
 	
 	local Allowed = false
 	local entMSG = "none"
 	
-	local owner = radarEnt:GetNWString( "Owner", "None" )
+	local owner = radarEnt:GetNetVar( "Owner", "None" )
 	
 	if radarState >= 0 then
-		if tostring(plyRadarIndex) ~= "" and plyRadarIndex ~= 0 then
+		if tostring(plyRadarIndex) ~= "" and plyRadarIndex ~= 0 and plyRadarIndex ~= nil then
 			if endIndex ~= plyRadarIndex then
 				entMSG = "You are allready Synced to another unit."
 				Allowed = false
@@ -253,7 +253,7 @@ function pnrpHUD_DrawRadar()
 --		return 
 --	end
 	
-	radarENT = ply:GetNWEntity("RadarENT")
+	radarENT = ply:GetNetVar("RadarENT")
 	if IsValid(radarENT) and radarENT ~= ply and plyRadarIndex ~= 0 then
 		radarHUD_Enabled = true
 	else
@@ -261,8 +261,8 @@ function pnrpHUD_DrawRadar()
 		return 
 	end
 	
-	local radarState = radarENT:GetNWString("Status", 0)
-	radar_GPR_Enabled = radarENT:GetNWString("EnabledGPR", false)
+	local radarState = radarENT:GetNetVar("Status", 0)
+	radar_GPR_Enabled = radarENT:GetNetVar("EnabledGPR", false)
 --	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then 
 		--Admin Overide
 --	else

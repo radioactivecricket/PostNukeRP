@@ -21,9 +21,9 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.pid = self.Entity:GetNWString("Owner_UID")
-	self.vendorID = self.Entity:GetNWString("vendorid")
-	self.name = self.Entity:GetNWString("name")
+	self.pid = self.Entity:GetNetVar("Owner_UID")
+	self.vendorID = self.Entity:GetNetVar("vendorid")
+	self.name = self.Entity:GetNetVar("name")
 	self.Enabled = false
 	
 	self.availableModels = {
@@ -48,8 +48,8 @@ function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
 		if activator:KeyPressed( IN_USE ) then
 			local vendorID = self.vendorID
-			if tostring(self:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( activator ) then
-				local result = querySQL("SELECT * FROM vending_table WHERE pid="..tostring(activator.pid))
+			if tostring(self:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( activator ) then
+				local result = querySQL("SELECT * FROM vending_table WHERE pid="..SQLStr(activator.pid))
 
 				if vendorID == nil or vendorID == "" then
 					if result then
@@ -63,12 +63,13 @@ function ENT:Use( activator, caller )
 						net.Send(activator)
 					end
 				else
-					local result = querySQL("SELECT * FROM vending_table WHERE vendorid="..tostring(vendorID))
+					local vendInv = getFullVendorInventory(vendorID)
+					getFullVendorInventory(vendorID)
 					local capString = tostring(getVendorCapacity(vendorID)).."/"..tostring(PNRP.Items["tool_vendor"].Capacity)
 					net.Start("vendor_menu")
 						net.WriteEntity(self)
-						net.WriteTable(result)
-						net.WriteTable(PNRP.Inventory( activator ))
+						net.WriteTable(vendInv)
+						net.WriteTable(PNRP.GetFullInventory( activator ))
 						net.WriteTable(self.availableModels)
 						net.WriteString(capString)
 					net.Send(activator)
@@ -77,12 +78,12 @@ function ENT:Use( activator, caller )
 				if vendorID == nil or vendorID == "" then
 					activator:ChatPrint( "This vendor has not been set!" )
 				else
-					local result = querySQL("SELECT * FROM vending_table WHERE vendorid="..tostring(vendorID))	
+					local vendInv = getFullVendorInventory(vendorID)
 					local plyInv = PNRP.Inventory( activator )
 					if not plyInv then plyInv = {} end
 					net.Start("vendor_shop_menu")
 						net.WriteEntity(self)
-						net.WriteTable(result)
+						net.WriteTable(vendInv)
 						net.WriteTable(plyInv)
 					net.Send(activator)
 				end
@@ -94,9 +95,36 @@ util.AddNetworkString("CreateNewVendor")
 util.AddNetworkString("vendor_menu")
 util.AddNetworkString("vendor_new_menu")
 
+function getFullVendorInventory(vendorID)
+	local invTbl = {}
+	invTbl["inv"] = {}
+	local result = querySQL("SELECT * FROM vending_table WHERE vendorid="..SQLStr(vendorID))
+	
+	if result then
+		invTbl["vendorid"] = result[1]["vendorid"]
+		invTbl["name"] = result[1]["name"]
+		invTbl["res"] = result[1]["res"]
+		local invLongStr = string.Explode( " ", result[1]["inventory"]  )
+		for _, invStr in pairs( invLongStr ) do
+			local invSplit = string.Explode( ",", invStr )
+			if table.Count(invSplit) > 1 then
+				table.insert( invTbl["inv"], {itemid=invSplit[1], status_table="", iid="", count=invSplit[2], scrap=invSplit[3], sp=invSplit[4], chem=invSplit[5]} )
+			end
+		end
+	end
+	
+	local Inv2 = PNRP.PersistOtherInventory( "vendor", vendorID )
+	for k, v in pairs(Inv2) do
+		local invSplit = string.Explode( ",", v["locdata"] )
+		table.insert( invTbl["inv"], {itemid=v["itemid"], iid=v["iid"], status_table=v["status_table"], count=1, scrap=invSplit[2], sp=invSplit[3], chem=invSplit[4]} )
+	end
+	
+	return invTbl
+end
+
 function getVendorCapacity(vendorID)
 
-	local query = "SELECT inventory FROM vending_table WHERE vendorid="..tostring(vendorID)
+	local query = "SELECT inventory FROM vending_table WHERE vendorid="..SQLStr(vendorID)
 	local result = querySQL(query)
 	
 	local weightSum = 0
@@ -120,6 +148,14 @@ function getVendorCapacity(vendorID)
 					end
 				end
 			end
+		end
+	end
+	
+	local Inv2 = PNRP.PersistOtherInventory( "vendor", vendorID )
+
+	for k, v in pairs(Inv2) do
+		if PNRP.Items[v["itemid"]].Type ~= "vehicle" then
+			weightSum = weightSum + PNRP.Items[v["itemid"]].Weight
 		end
 	end
 	
@@ -167,9 +203,9 @@ function CreateNewVendor( )
 	
 	local make = false
 	
-	local chkStoreage = querySQL("SELECT * FROM vending_table WHERE pid='"..tonumber(ply.pid).."'")
+	local chkStoreage = querySQL("SELECT * FROM vending_table WHERE pid="..SQLStr(tonumber(ply.pid)))
 	if chkStoreage then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+		if ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then 
 			ply:ChatPrint("Admin No Cost")
 			make = true
 		else
@@ -188,7 +224,7 @@ function CreateNewVendor( )
 	end
 	
 	if make then
-		local query = "INSERT INTO vending_table VALUES ( NULL, '"..ply.pid.."', "..SQLStr(vendorName)..", NULL, NULL )"
+		local query = "INSERT INTO vending_table VALUES ( NULL, "..SQLStr(ply.pid)..", "..SQLStr(vendorName)..", NULL, NULL )"
 		local result = querySQL(query)
 		ply:EmitSound(Sound("items/ammo_pickup.wav"))
 	else
@@ -201,7 +237,8 @@ net.Receive( "CreateNewVendor", CreateNewVendor )
 function deleteVendor( p, command, arg )
 	local vendorID = arg[1]
 	
-	querySQL("DELETE FROM vending_table WHERE vendorid='"..tonumber(vendorID).."'")
+	querySQL("DELETE FROM vending_table WHERE vendorid="..SQLStr(tonumber(vendorID)))
+	querySQL("DELETE FROM inventory_table WHERE location='vendor' AND locid="..SQLStr(tonumber(vendorID)))
 end
 concommand.Add( "deleteVendor", deleteVendor )
 
@@ -218,8 +255,8 @@ function SetVendor( )
 			return
 		end
 	end
-	vendorENT:SetNetworkedString("vendorid", vendorID)
-	vendorENT:SetNetworkedString("name", vendorName)
+	vendorENT:SetNetVar("vendorid", vendorID)
+	vendorENT:SetNetVar("name", vendorName)
 	
 	vendorENT.vendorID = vendorID
 	vendorENT.name = vendorName
@@ -232,8 +269,8 @@ function VendorReset( )
 	
 	cleanupDispItems(vendorENT.vendorID)
 	
-	vendorENT:SetNetworkedString("vendorid", nil)
-	vendorENT:SetNetworkedString("name", ply:Nick().."'s Vending Machine")
+	vendorENT:SetNetVar("vendorid", nil)
+	vendorENT:SetNetVar("name", ply:Nick().."'s Vending Machine")
 	
 	vendorENT.vendorID = nil
 	vendorENT.name = ply:Nick().."'s Vending Machine"
@@ -248,10 +285,10 @@ function VendorRename( )
 	
 	if vendorENT.vendorID == vendorID then
 		vendorENT.name = vendorName
-		vendorENT:SetNetworkedString("name", vendorName)
+		vendorENT:SetNetVar("name", vendorName)
 	end
 	
-	query = "UPDATE vending_table SET name="..SQLStr(vendorName).." WHERE vendorid='"..tostring(vendorID).."'"
+	query = "UPDATE vending_table SET name="..SQLStr(vendorName).." WHERE vendorid="..SQLStr(vendorID)
 	result = querySQL(query)
 
 end
@@ -261,7 +298,7 @@ function VendorGetRes( )
 	local ply = net.ReadEntity()
 	local vendorENT = net.ReadEntity()
 	
-	local result = querySQL("SELECT res FROM vending_table WHERE vendorid="..tostring(vendorENT.vendorID))
+	local result = querySQL("SELECT res FROM vending_table WHERE vendorid="..SQLStr(vendorENT.vendorID))
 	if result then
 		local vendorRes = result[1]["res"]
 		local vendScrap = 0
@@ -297,7 +334,7 @@ function VendorGetRes( )
 		
 		local newRes = tostring("0,0,0")
 		
-		query = "UPDATE vending_table SET res='"..newRes.."' WHERE vendorid='"..tostring(vendorENT.vendorID).."'"
+		query = "UPDATE vending_table SET res='"..newRes.."' WHERE vendorid="..SQLStr(vendorENT.vendorID)
 		result = querySQL(query)
 		
 	else
@@ -313,10 +350,10 @@ function VendorOwnerShop( )
 	
 	local vendorID = vendorENT.vendorID
 	
-	result = querySQL("SELECT * FROM vending_table WHERE vendorid="..tostring(vendorID))
+	local vendInv = getFullVendorInventory(vendorID)
 	net.Start("vendor_shop_menu")
 		net.WriteEntity(vendorENT)
-		net.WriteTable(result)
+		net.WriteTable(vendInv)
 		net.WriteTable(PNRP.Inventory( ply ))
 	net.Send(ply)
 end
@@ -327,6 +364,7 @@ function TakeFromVendor( )
 	local vendorENT = net.ReadEntity()
 	local Item = net.ReadString()
 	local Amount = net.ReadDouble()
+	local iid = net.ReadString()
 	
 	local weight = PNRP.Items[Item].Weight
 	if PNRP.Items[Item].Type == "vehicle" then weight = 0 end
@@ -334,46 +372,57 @@ function TakeFromVendor( )
 	
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	
 	local weightCalc = PNRP.InventoryWeight( ply ) + sumWeight
-	if weightCalc <= weightCap then
-		if remVendorItem( vendorENT.vendorID, Item, Amount ) then
-			ply:AddToInventory( Item, Amount )
-			ply:EmitSound(Sound("items/ammo_pickup.wav"))
-			
-			checkRMDispItems(ply, Item, vendorENT.vendorID)
-		else
-			ply:ChatPrint("Unable to take item from Vendor")
-		end
-	else
-		local weightDiff = weightCalc - weightCap
-		local extra = math.ceil(weightDiff/weight)
-		
-		if extra >= Amount then
-			ply:ChatPrint("You can't carry any of these!")
-		else
-			local taken = Amount - extra
-			if remVendorItem( vendorENT.vendorID, Item, taken ) then
-				ply:AddToInventory( Item, taken )
-				
+	
+	if iid == nil or iid == "" then
+		if weightCalc <= weightCap then
+			if remVendorItem( vendorENT.vendorID, Item, Amount ) then
+				ply:AddToInventory( Item, Amount )
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
-				ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
 				
-				checkRMDispItems(ply, Item, vendorENT.vendorID)
+				checkRMDispItems(ply, Item, vendorENT.vendorID, iid)
 			else
 				ply:ChatPrint("Unable to take item from Vendor")
 			end
+		else
+			local weightDiff = weightCalc - weightCap
+			local extra = math.ceil(weightDiff/weight)
+			
+			if extra >= Amount then
+				ply:ChatPrint("You can't carry any of these!")
+			else
+				local taken = Amount - extra
+				if remVendorItem( vendorENT.vendorID, Item, taken ) then
+					ply:AddToInventory( Item, taken )
+					
+					ply:EmitSound(Sound("items/ammo_pickup.wav"))
+					ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
+					
+					checkRMDispItems(ply, Item, vendorENT.vendorID, iid)
+				else
+					ply:ChatPrint("Unable to take item from Vendor")
+				end
+			end
+		end
+	else
+		if weightCalc <= weightCap then
+			PNRP.PersistMoveTo( ply, iid, "player")	
+			
+			checkRMDispItems(ply, Item, vendorENT.vendorID, iid)
+		else
+			ply:ChatPrint("Unable to take item from vendor.")
 		end
 	end
 end
 net.Receive( "vendor_take", TakeFromVendor )
 
 function remVendorItem( vendorID, Item, Amount )
-	query = "SELECT inventory FROM vending_table WHERE vendorid="..tostring(vendorID)
+	query = "SELECT inventory FROM vending_table WHERE vendorid="..SQLStr(vendorID)
 	result = querySQL(query)
 	local foundItem = false
 	
@@ -414,7 +463,7 @@ function remVendorItem( vendorID, Item, Amount )
 				newInvString = newInvString.." "..tostring(k)..","..tostring(v)
 			end
 			newInvString = string.Trim(newInvString)
-			query = "UPDATE vending_table SET inventory='"..newInvString.."' WHERE vendorid='"..tostring(vendorID).."'"
+			query = "UPDATE vending_table SET inventory='"..newInvString.."' WHERE vendorid="..SQLStr(vendorID)
 			result = querySQL(query)
 		end
 	end
@@ -422,18 +471,17 @@ function remVendorItem( vendorID, Item, Amount )
 	return foundItem
 end
 
-function setVendorSellItem( p, command, arg )
-	local vendorID = arg[1]
-	local itemID = arg[2]
-	local costString = arg[3]
-	local option = arg[4]
+function setVendorSellItem( l, p )
+	local vendorID = net.ReadString()
+	local itemID = net.ReadString()
+	local costTbl = net.ReadTable()
+	local option = net.ReadString()
+	local iid = net.ReadString()
 	
-	local costTable = string.Explode(" ", costString)
-	local count = costTable[1]
-	local scrap = costTable[2]
-	local SP = costTable[3]
-	local chems = costTable[4]
-	costString = string.gsub(costString, "%s+", ",") 
+	local count = tonumber(costTbl["count"])
+	local scrap = costTbl["scrap"]
+	local SP = costTbl["sp"]
+	local chems = costTbl["chems"]
 	
 	local item = {}
 	
@@ -441,20 +489,28 @@ function setVendorSellItem( p, command, arg )
 	local result
 	
 	if option == "new" then
-		local totalStCap = PNRP.Items[itemID].Weight * count + getVendorCapacity(vendorID)
+		local itmWeight = PNRP.Items[itemID].Weight
+		local totalStCap = itmWeight * count + getVendorCapacity(vendorID)
 		if totalStCap > PNRP.Items["tool_vendor"].Capacity then
 			p:ChatPrint("Not enough space in vendor")
 			return
 		end
-		
-		local Check = PNRP.TakeFromInventoryBulk( p, itemID, tonumber(count) )
-		if not Check then
-			p:ChatPrint("You do not have enough of this")
+		if iid == nil or iid == "" then 
+			local Check = PNRP.TakeFromInventoryBulk( p, itemID, tonumber(count) )
+			if not Check then
+				p:ChatPrint("You do not have enough of this")
+				return
+			end
+		else
+		--	itemID = iid
+			local perstCostString = tostring(1)..","..scrap..","..SP..","..chems
+			PNRP.PersistMoveTo( p, iid, "vendor", vendorID, perstCostString )
+			
 			return
 		end
 	end
 	
-	query = "SELECT inventory FROM vending_table WHERE vendorid="..tostring(vendorID)
+	query = "SELECT inventory FROM vending_table WHERE vendorid="..SQLStr(vendorID)
 	result = querySQL(query)
 
 	-- Inventory string design:  itemID, count scrap smallpats chems
@@ -476,7 +532,12 @@ function setVendorSellItem( p, command, arg )
 			for k, v in pairs(invTbl) do
 				if k == itemID then
 					local stringSplit = string.Explode(",", v)
-					local totalCount = tonumber(stringSplit[1]) + tonumber(count)
+					local totalCount
+					if iid == nil or iid == "" then
+						totalCount = tonumber(stringSplit[1]) + tonumber(count)
+					else
+						totalCount = 1
+					end
 					local newCostString = tostring(totalCount)..","..scrap..","..SP..","..chems
 					invTbl[itemID] = tostring(newCostString)
 					foundItem = true
@@ -485,6 +546,11 @@ function setVendorSellItem( p, command, arg )
 		end
 
 		if not foundItem then
+			if option ~= "new" then
+				p:ChatPrint("Item was removed or sold.")
+				return
+			end
+			local costString = count..","..scrap..","..SP..","..chems
 			invTbl[itemID] = tostring(costString)
 		end
 		
@@ -493,24 +559,25 @@ function setVendorSellItem( p, command, arg )
 			newInvString = newInvString.." "..tostring(k)..","..tostring(v)
 		end
 		newInvString = string.Trim(newInvString)
-		query = "UPDATE vending_table SET inventory='"..newInvString.."' WHERE vendorid='"..tostring(vendorID).."'"
+		query = "UPDATE vending_table SET inventory='"..newInvString.."' WHERE vendorid="..SQLStr(vendorID)
 		result = querySQL(query)
-		updateDispItemCost(vendorID, itemID, costTable)
+		updateDispItemCost(vendorID, itemID, costTbl)
 		p:EmitSound(Sound("items/ammo_pickup.wav"))
 	else
 		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No Vendor match in vending_table! ["..tostring(vendorID).."] \n")
 	end
 end
-concommand.Add( "setVendorSellItem", setVendorSellItem )
+net.Receive( "setVendorSellItem", setVendorSellItem )
+util.AddNetworkString("setVendorSellItem")
 
 function updateDispItemCost(vendorID, itemID, costTable)
 	vendorID = tonumber(vendorID)
-	local costString = costTable[1]..","..costTable[2]..","..costTable[3]..","..costTable[4]
+	local costString = costTable["count"]..","..costTable["scrap"]..","..costTable["sp"]..","..costTable["chems"]
 	local foundDispItems = ents.FindByClass("msc_display_item")
 	for _, v in pairs(foundDispItems) do
 		if v.vendorid == vendorID and v.item == itemID then
 			v.cost = costString
-			v:SetNWString("cost", costString)
+			v:SetNetVar("cost", costString)
 		end
 	end
 end
@@ -522,12 +589,13 @@ function doBuyFromVendor( )
 	local Item = net.ReadString()
 	local Cost = net.ReadTable()
 	local vendorID = vendorENT.vendorID
+	local iid = net.ReadString()
 	
-	BuyFromVendor(ply, vendorID, Item, Cost, Amount, "vendor")
+	BuyFromVendor(ply, vendorID, Item, Cost, Amount, "vendor", iid)
 end
 net.Receive( "BuyFromVendor", doBuyFromVendor )
 
-function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From )
+function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From, iid )
 	
 	local enough = false
 	local soldItem = false
@@ -535,7 +603,7 @@ function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From )
 	local totalScrap = 0
 	local totalSmall = 0
 	local totalChems = 0
-	
+	Msg("IID: "..tostring(iid).."\n")
 	Cost[1] = tonumber(Cost[1])
 	Cost[2] = tonumber(Cost[2])
 	Cost[3] = tonumber(Cost[3])
@@ -546,13 +614,13 @@ function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From )
 	
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	
 	--Verifies Player has the needed Resources to buy the item
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then
+	if ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then
 		enough = true
 	else
 		totalScrap = Cost[1] * Amount
@@ -567,9 +635,56 @@ function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From )
 	
 	if enough == true then
 		local weightCalc = PNRP.InventoryWeight( ply ) + sumWeight
-		if weightCalc <= weightCap then
-			if remVendorItem( vendorID, Item, Amount ) then
-				ply:AddToInventory( Item, Amount )
+		if iid == nil or iid == "" then
+			if weightCalc <= weightCap then
+				if remVendorItem( vendorID, Item, Amount ) then
+					ply:AddToInventory( Item, Amount )
+					
+					totalScrap = Cost[1] * Amount
+					totalSmall = Cost[2] * Amount
+					totalChems = Cost[3] * Amount
+					
+					ply:DecResource("Scrap", totalScrap)
+					ply:DecResource("Small_Parts", totalSmall)
+					ply:DecResource("Chemicals", totalChems)
+					
+					ply:EmitSound(Sound("items/ammo_pickup.wav"))
+					
+					soldItem = true
+				else
+					ply:ChatPrint("Unable to take item from Vendor")
+				end
+			else
+				local weightDiff = weightCalc - weightCap
+				local extra = math.ceil(weightDiff/weight)
+				
+				if extra >= Amount then
+					ply:ChatPrint("You can't carry any of these!")
+				else
+					local taken = Amount - extra
+					if remVendorItem( vendorID, Item, taken ) then
+						ply:AddToInventory( Item, taken )
+						
+						totalScrap = Cost[1] * taken
+						totalSmall = Cost[2] * taken
+						totalChems = Cost[3] * taken
+						
+						ply:DecResource("Scrap", totalScrap)
+						ply:DecResource("Small_Parts", totalSmall)
+						ply:DecResource("Chemicals", totalChems)
+						
+						ply:EmitSound(Sound("items/ammo_pickup.wav"))
+						ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
+						
+						soldItem = true
+					else
+						ply:ChatPrint("Unable to take item from Vendor")
+					end
+				end
+			end
+		else
+			if weightCalc <= weightCap then
+				PNRP.PersistMoveTo( ply, iid, "player")	
 				
 				totalScrap = Cost[1] * Amount
 				totalSmall = Cost[2] * Amount
@@ -579,48 +694,18 @@ function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From )
 				ply:DecResource("Small_Parts", totalSmall)
 				ply:DecResource("Chemicals", totalChems)
 				
-				ply:EmitSound(Sound("items/ammo_pickup.wav"))
-				
 				soldItem = true
 			else
-				ply:ChatPrint("Unable to take item from Vendor")
-			end
-		else
-			local weightDiff = weightCalc - weightCap
-			local extra = math.ceil(weightDiff/weight)
-			
-			if extra >= Amount then
-				ply:ChatPrint("You can't carry any of these!")
-			else
-				local taken = Amount - extra
-				if remVendorItem( vendorID, Item, taken ) then
-					ply:AddToInventory( Item, taken )
-					
-					totalScrap = Cost[1] * taken
-					totalSmall = Cost[2] * taken
-					totalChems = Cost[3] * taken
-					
-					ply:DecResource("Scrap", totalScrap)
-					ply:DecResource("Small_Parts", totalSmall)
-					ply:DecResource("Chemicals", totalChems)
-					
-					ply:EmitSound(Sound("items/ammo_pickup.wav"))
-					ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
-					
-					soldItem = true
-				else
-					ply:ChatPrint("Unable to take item from Vendor")
-				end
+				ply:ChatPrint("Unable to take item from vendor.")
 			end
 		end
-		
 		
 	else
 		ply:ChatPrint("You can afford this!")
 	end
 	if soldItem then
 		
-		local result = querySQL("SELECT res FROM vending_table WHERE vendorid="..tostring(vendorID))
+		local result = querySQL("SELECT res FROM vending_table WHERE vendorid="..SQLStr(vendorID))
 		local vendorRes = result[1]["res"]
 		local vendScrap = 0
 		local vendSP = 0
@@ -642,10 +727,10 @@ function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From )
 		local newRes = tostring(totalScrap..","..totalSmall..","..totalChems)
 		newRes = string.Trim(newRes)
 
-		local resultRes = querySQL("UPDATE vending_table SET res='"..tostring(newRes).."' WHERE vendorid="..tostring(vendorID))
+		local resultRes = querySQL("UPDATE vending_table SET res='"..tostring(newRes).."' WHERE vendorid="..SQLStr(vendorID))
 		
 		if From == "vendor" then
-			checkRMDispItems(ply, Item, vendorID)
+			checkRMDispItems(ply, Item, vendorID, iid)
 		end
 	end
 	
@@ -653,7 +738,7 @@ function BuyFromVendor(ply, vendorID, Item, Cost, Amount, From )
 end
 
 --Finds nearest display item and deletes it if needed
-function checkRMDispItems(ply, itemID, vendorID)
+function checkRMDispItems(ply, itemID, vendorID, iid)
 	local Pos = ply:GetPos()
 	local itmCount = 0
 	local itemString = string.Explode( ",", getItemInfo(itemID, vendorID))
@@ -662,8 +747,10 @@ function checkRMDispItems(ply, itemID, vendorID)
 	local disItemTable = {}
 	local distTable = {}
 	local idCount = 0
+	if not iid then iid = "" end
 	for _, v in pairs(foundDispItems) do
-		if v.vendorid == vendorID and v.item == itemID then
+		if not v.iid then v.iid = "" end
+		if v.vendorid == vendorID and v.item == itemID and v.iid == iid then
 			if itmCount == 0 then
 				v:Remove()
 			else
@@ -707,25 +794,35 @@ function cleanupDispItems(vendorID)
 end
 
 --Gets the cost and count string
-function getItemInfo(itemID, vendorID)
+function getItemInfo(itemID, vendorID, iid)
 	local returnString = "0,0,0,0"
-	query = "SELECT inventory FROM vending_table WHERE vendorid='"..tostring(vendorID).."'"
-	result = querySQL(query)
-	if result then
-		local invTbl = {}
-		local getInvTable = result[1]["inventory"]
-		local invLongStr = string.Explode( " ", getInvTable )
-		for _, invStr in pairs( invLongStr ) do
-			local invSplit = string.Explode( ",", invStr )
+	
+	if iid == nil or iid == "" then
+		query = "SELECT inventory FROM vending_table WHERE vendorid="..SQLStr(vendorID)
+		result = querySQL(query)
+		if result then
+			local invTbl = {}
+			local getInvTable = result[1]["inventory"]
+			local invLongStr = string.Explode( " ", getInvTable )
+			for _, invStr in pairs( invLongStr ) do
+				local invSplit = string.Explode( ",", invStr )
+				
+				invTbl[invSplit[1]] = tostring(invSplit[2]..","..invSplit[3]..","..invSplit[4]..","..invSplit[5])
+			end
+			for k, v in pairs(invTbl) do
+				if k == itemID then
+					returnString = v
+				end
+			end
 			
-			invTbl[invSplit[1]] = tostring(invSplit[2]..","..invSplit[3]..","..invSplit[4]..","..invSplit[5])
 		end
-		for k, v in pairs(invTbl) do
-			if k == itemID then
-				returnString = v
+	else
+		local item = PNRP.GetPersistItem( iid )
+		if item then
+			if item["locdata"] ~= "" then
+				returnString = item["locdata"]
 			end
 		end
-		
 	end
 	
 	return returnString
@@ -738,17 +835,19 @@ function VendorCreateDisplayItem()
 	local vendorID = vendorENT.vendorID
 	local item = PNRP.Items[itemID]
 	local plUID = PNRP:GetUID( ply )
-	
+	local iid = net.ReadString()
+	local status = net.ReadString()
+
 	local pos = ply:GetPos()
 	
-	local infoString = getItemInfo(itemID, vendorID)
+	local infoString = getItemInfo(itemID, vendorID, iid)
 	local infoTable = string.Explode( ",", infoString )
 	local itmCount = infoTable[1]
 	
 	local idCount = 0
 	local foundDispItems = ents.FindByClass("msc_display_item")
 	for _, v in pairs(foundDispItems) do
-		if v.vendorid == vendorID and v.item == itemID then
+		if v.vendorid == vendorID and v.item == itemID and v.iid == iid then
 			if itmCount == 0 then
 				v:Remove()
 			else
@@ -764,11 +863,14 @@ function VendorCreateDisplayItem()
 		ent:Spawn()
 		ent:Activate()
 		
-		ent:SetNWString("itemID", itemID)
-		ent:SetNWString("vendorid", vendorID)
-		ent:SetNWString("cost", infoString)
+		ent:SetNetVar("itemID", itemID)
+		ent:SetNetVar("vendorid", vendorID)
+		ent:SetNetVar("cost", infoString)
+		ent:SetNetVar("iid", iid)
+		ent:SetNetVar("status", status)
 		ent.vendorid = vendorID
 		ent.item = itemID
+		ent.iid = iid
 		PNRP.SetOwner(ply, ent)
 	else
 		ply:ChatPrint("Not enough of this item in Vendor to create more Displays.")

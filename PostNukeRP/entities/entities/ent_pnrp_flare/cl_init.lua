@@ -16,7 +16,7 @@ function ENT:Initialize()
 
 	for i = 1, 1500 do 
 		timer.Simple(i / 150, function()
-			if not self.Entity or not self.Entity:GetNWBool("Smoke") then return end
+			if not self.Entity or not self.Entity:GetNetVar("Smoke") then return end
 
 			local vOffset 	= self.Entity:LocalToWorld(Vector(0, 0, self.Entity:OBBMins().z))
 			local vNormal 	= (vOffset - self.Entity:GetPos()):GetNormalized()

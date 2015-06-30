@@ -26,7 +26,7 @@ function SWEP.ToggleWhitelist(len, ply)
 	local turretEnt = net.ReadEntity()
 	
 	local plUID = PNRP:GetUID( ply )
-	local ownerUID = turretEnt:GetNWString( "Owner_UID", "None" )
+	local ownerUID = turretEnt:GetNetVar( "Owner_UID", "None" )
 	local canProg = false
 	
 	
@@ -36,7 +36,7 @@ function SWEP.ToggleWhitelist(len, ply)
 	end
 	
 	if not canProg then
-		local ownerEnt = turretEnt:GetNWEntity( "ownerent", nil )
+		local ownerEnt = turretEnt:GetNetVar( "ownerent", nil )
 		if turretEnt.GetPlayer and type(turretEnt.GetPlayer) == "function" and not ownerEnt then
 			ownerEnt = turretEnt:GetPlayer() or nil
 		end
@@ -64,7 +64,7 @@ function SWEP.TurretAddTarget(len, ply)
 	local trgEnt = net.ReadEntity()
 	
 	local plUID = PNRP:GetUID( ply )
-	local ownerUID = turretEnt:GetNWString( "Owner_UID", "None" )
+	local ownerUID = turretEnt:GetNetVar( "Owner_UID", "None" )
 	local canProg = false
 	
 	
@@ -74,7 +74,7 @@ function SWEP.TurretAddTarget(len, ply)
 	end
 	
 	if not canProg then
-		local ownerEnt = turretEnt:GetNWEntity( "ownerent", nil )
+		local ownerEnt = turretEnt:GetNetVar( "ownerent", nil )
 		if turretEnt.GetPlayer and type(turretEnt.GetPlayer) == "function" and not ownerEnt then
 			ownerEnt = turretEnt:GetPlayer() or nil
 		end
@@ -102,7 +102,7 @@ function SWEP.TurretRemTarget(len, ply)
 	local trgEnt = net.ReadEntity()
 	
 	local plUID = PNRP:GetUID( ply )
-	local ownerUID = turretEnt:GetNWString( "Owner_UID", "None" )
+	local ownerUID = turretEnt:GetNetVar( "Owner_UID", "None" )
 	local canProg = false
 	
 	
@@ -112,7 +112,7 @@ function SWEP.TurretRemTarget(len, ply)
 	end
 	
 	if not canProg then
-		local ownerEnt = turretEnt:GetNWEntity( "ownerent", nil )
+		local ownerEnt = turretEnt:GetNetVar( "ownerent", nil )
 		if turretEnt.GetPlayer and type(turretEnt.GetPlayer) == "function" and not ownerEnt then
 			ownerEnt = turretEnt:GetPlayer() or nil
 		end
@@ -143,7 +143,7 @@ function SWEP.TurretClearTarget(len, ply)
 	local turretEnt = net.ReadEntity()
 	
 	local plUID = PNRP:GetUID( ply )
-	local ownerUID = turretEnt:GetNWString( "Owner_UID", "None" )
+	local ownerUID = turretEnt:GetNetVar( "Owner_UID", "None" )
 	local canProg = false
 	
 	
@@ -153,7 +153,7 @@ function SWEP.TurretClearTarget(len, ply)
 	end
 	
 	if not canProg then
-		local ownerEnt = turretEnt:GetNWEntity( "ownerent", nil )
+		local ownerEnt = turretEnt:GetNetVar( "ownerent", nil )
 		if turretEnt.GetPlayer and type(turretEnt.GetPlayer) == "function" and not ownerEnt then
 			ownerEnt = turretEnt:GetPlayer() or nil
 		end

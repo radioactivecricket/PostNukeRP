@@ -15,7 +15,7 @@ function ENT:Initialize()
 	self.Entity:DrawShadow( false )
 	
 	self.Entity:SetCollisionGroup( COLLISION_GROUP_WEAPON )
-	self.Entity:SetNetworkedString("Owner", "World")
+	self.Entity:SetNetVar("Owner", "World")
 	
 	local phys = self.Entity:GetPhysicsObject()
 	

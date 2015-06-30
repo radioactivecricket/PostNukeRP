@@ -23,7 +23,7 @@ function ENT:Initialize()
 	-- -13 = Cower
 
 	self.Pet = true
-	self:SetNWString("pet", "yes")
+	self:SetNetVar("Pet", "yes")
 	
 	self:SetModel( "models/seagull.mdl" )
 	self:SetHullType( HULL_TINY );
@@ -42,7 +42,7 @@ function ENT:Initialize()
  
 	self:SetHealth(100)
 	
-	self:SetNWString("name", "Wild Bird")
+	self:SetNetVar("name", "Wild Bird")
 	
 	self:SelectSchedule( SCHED_IDLE_WANDER )
 
@@ -70,6 +70,10 @@ function ENT:SelectSchedule( iNPCState )
 		self.iNPCState = iNPCState
 	end
 	
+	if self.iNPCState == nil then
+		self.iNPCState = SCHED_IDLE_WANDER
+	end
+	
 	self:SetSchedule( self.iNPCState )
 
 end
@@ -78,7 +82,7 @@ function ENT:AcceptInput( name, activator, caller )
 	if name == "Use" and IsValid(activator) and activator:IsPlayer() then
 		local ply = activator
 		if ply:KeyPressed( IN_USE ) then
-			if tostring(self:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then		
+			if tostring(self:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then		
 				self:CommandSound()
 				if self.Option == 0 then
 					self.Option = 1
@@ -188,9 +192,9 @@ function ENT:OnTakeDamage(dmg)
 		--Remove From World Cache		
 		local MyPlayer = nil
 	
-		if self:GetNetworkedString("Owner", "none") ~= "World" and self:GetNetworkedString("Owner", "none") ~= "none" then
+		if self:GetNetVar("Owner", "none") ~= "World" and self:GetNetVar("Owner", "none") ~= "none" then
 			for k, v in pairs(player.GetAll()) do
-				if v:Nick() == self:GetNetworkedString("Owner", "none") then
+				if v:Nick() == self:GetNetVar("Owner", "none") then
 					MyPlayer = v
 					break
 				end

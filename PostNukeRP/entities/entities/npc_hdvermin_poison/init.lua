@@ -24,7 +24,7 @@ function ENT:Initialize()
 	-- 2 = Poison Headcrab
 	
 	self.Pet = true
-	self:SetNWString("Pet", true)
+	self:SetNetVar("Pet", "yes")
 	
 	self.Model = "models/headcrabblack.mdl"
 	self:SetModel( self.Model )
@@ -41,7 +41,7 @@ function ENT:Initialize()
  
 	self:SetHealth(100)
 	
-	self:SetNWString("name", "Wild Headcrab")
+	self:SetNetVar("name", "Wild Headcrab")
 	
 	self:SelectSchedule( SCHED_IDLE_WANDER )
 
@@ -68,6 +68,10 @@ function ENT:SelectSchedule( iNPCState )
 		self.iNPCState = iNPCState
 	end
 	
+	if self.iNPCState == nil then
+		self.iNPCState = SCHED_IDLE_WANDER
+	end
+	
 	self:SetSchedule( self.iNPCState )
 
 end
@@ -76,7 +80,7 @@ function ENT:AcceptInput( name, activator, caller )
 	if name == "Use" and IsValid(activator) and activator:IsPlayer() then
 		local ply = activator
 		if ply:KeyPressed( IN_USE ) then
-			if tostring(self:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then		
+			if tostring(self:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then		
 				self:CommandSound()
 				if self.Option == 0 then
 					self.Option = 1
@@ -157,7 +161,7 @@ function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
 	
 --	print(tostring(self).." Run Away")
-	self:SelectSchedule( SCHED_RUN_FROM_ENEM )
+	self:SelectSchedule( SCHED_RUN_FROM_ENEMY )
 	self.NPCMode = -11
 	self.Option = 0
 	self:HDPainSounds()
@@ -184,9 +188,9 @@ function ENT:OnTakeDamage(dmg)
 		--Remove From World Cache		
 		local MyPlayer = nil
 	
-		if self:GetNetworkedString("Owner", "none") ~= "World" and self:GetNetworkedString("Owner", "none") ~= "none" then
+		if self:GetNetVar("Owner", "none") ~= "World" and self:GetNetVar("Owner", "none") ~= "none" then
 			for k, v in pairs(player.GetAll()) do
-				if v:Nick() == self:GetNetworkedString("Owner", "none") then
+				if v:Nick() == self:GetNetVar("Owner", "none") then
 					MyPlayer = v
 					break
 				end

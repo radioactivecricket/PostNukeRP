@@ -16,8 +16,8 @@ function BoxViewCheck()
 	if !trace.Entity:IsValid() then return end
 	
 	if trace.Entity:GetClass() == "msc_itembox" then
-		local item = trace.Entity:GetNWString("itemname")
-		local amount = trace.Entity:GetNWInt("amount")
+		local item = trace.Entity:GetNetVar("itemname", "")
+		local amount = trace.Entity:GetNetVar("amount", 0)
 		amount = math.Round(amount)
 		if (not item) or (not amount) then return end
 		

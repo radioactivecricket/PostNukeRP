@@ -42,7 +42,7 @@ end
 ---------------------------------------------------------*/
 function ENT:Explosion()
 
-	local doorent = self.Entity:GetNWEntity("door", nil)
+	local doorent = self.Entity:GetNetVar("door", nil)
 	if doorent:IsValid() and (doorent:GetClass() == "prop_door_rotating" or doorent:GetClass() == "func_door_rotating" or doorent:GetClass() == "func_door") then
 		doorent:Fire("unlock", "", 0.1)
 		doorent:Fire("open", "", 0.1)
@@ -104,7 +104,7 @@ function ENT:Explosion()
 		effectdata:SetOrigin(self.Entity:GetPos())
 	util.Effect("HelicopterMegaBomb", effectdata)
 	
-	local owner = self.Entity:GetNWEntity("ownerent", nil)
+	local owner = self.Entity:GetNetVar("ownerent", nil)
 	
 	if owner:IsValid() then
 		local rf = RecipientFilter()
@@ -144,7 +144,7 @@ function ENT:Use(activator, caller)
 	else
 		activator:Give("weapon_testcharge")
 	end
-	local chargeOwner = self.Entity:GetNWEntity("ownerent", nil)
+	local chargeOwner = self.Entity:GetNetVar("ownerent", nil)
 	
 	if chargeOwner:IsValid() then
 		local trgWeapon = chargeOwner:GetWeapon("weapon_testcharge")

@@ -35,9 +35,9 @@ function ENT:Use( activator, caller )
 			
 			local weightCap
 			if activator:Team() == TEAM_SCAVENGER then
-				weightCap = GetConVarNumber("pnrp_packCapScav") + (activator:GetSkill("Backpacking")*10)
+				weightCap = getServerSetting("packCapScav") + (activator:GetSkill("Backpacking")*10)
 			else
-				weightCap = GetConVarNumber("pnrp_packCap") + (activator:GetSkill("Backpacking")*10)
+				weightCap = getServerSetting("packCap") + (activator:GetSkill("Backpacking")*10)
 			end
 			
 			
@@ -110,9 +110,9 @@ function RemoveFromBackpack()
 		-- Calculate carry weight
 		local weightCap
 		if ply:Team() == TEAM_SCAVENGER then
-			weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+			weightCap = getServerSetting("packCapScav") + (ply:GetSkill("Backpacking")*10)
 		else
-			weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+			weightCap = getServerSetting("packCap") + (ply:GetSkill("Backpacking")*10)
 		end
 		
 		-- removal scripts
@@ -263,9 +263,9 @@ function RemoveFromBackpack()
 		-- Calculate carry weight
 		local weightCap
 		if ply:Team() == TEAM_SCAVENGER then
-			weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+			weightCap = getServerSetting("packCapScav") + (ply:GetSkill("Backpacking")*10)
 		else
-			weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+			weightCap = getServerSetting("packCap") + (ply:GetSkill("Backpacking")*10)
 		end
 		
 		local totalWeight = 0
@@ -350,9 +350,9 @@ function ENT:F2Use(ply)
 	
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	
 	local weightCalc = PNRP.InventoryWeight( ply ) + sumWeight
@@ -371,7 +371,7 @@ function ENT:F2Use(ply)
 			local taken = Amount - extra
 			
 			ply:AddToInventory( Item, taken )
-			self.Entity:SetNWInt("amount", Amount - taken )
+			self.Entity:SetNetVar("amount", Amount - taken )
 			self.Amount = Amount - taken
 			ply:EmitSound(Sound("items/ammo_pickup.wav"))
 			ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")

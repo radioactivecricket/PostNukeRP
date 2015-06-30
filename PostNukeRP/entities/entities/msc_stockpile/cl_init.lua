@@ -21,7 +21,7 @@ function StockViewCheck()
 	if !trace.Entity:IsValid() then return end
 	
 	if trace.Entity:GetClass() == "msc_stockpile" then
-		local community = trace.Entity:GetNWString("communityName")
+		local community = trace.Entity:GetNetVar("communityName", "")
 		
 		surface.SetFont("CenterPrintText")
 		local tWidth, tHeight = surface.GetTextSize(community.." Community Stockpile")

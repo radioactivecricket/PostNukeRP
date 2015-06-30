@@ -6,7 +6,7 @@ SWEP.Contact		= "N/A"
 SWEP.Purpose		= "PNRP radio swep."
 SWEP.Instructions	= "Left click to change channel.\nRight click to turn the radio on and off."
 
-SWEP.ViewModel		= "" //"models/Weapons/V_hands.mdl"
+SWEP.ViewModel		= "models/weapons/v_hands.mdl"
 SWEP.WorldModel		= "models/props_citranspondertizen_tech.mdl"
 
 SWEP.Spawnable      = false

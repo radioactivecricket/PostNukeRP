@@ -13,8 +13,8 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.pid = self.Entity:GetNWString("Owner_UID")
-	self.name = self.Entity:GetNWString("name", "")
+	self.pid = self.Entity:GetNetVar("Owner_UID")
+	self.name = self.Entity:GetNetVar("name", "")
 		
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
 	
@@ -27,7 +27,7 @@ function ENT:Initialize()
 	self.soundlevel = 80
 	self.FM = 101.9
 	self.playing = false
-	self.Track = self.Entity:GetNWString("Track", 0)
+	self.Track = self.Entity:GetNetVar("Track", 0)
 	
 	self.PlayList = {}
 	
@@ -44,7 +44,7 @@ function ENT:Initialize()
 	self.DirectLinks = {}
 	
 	self.PowerUsage = -200
-	self.Entity:SetNWString("PowerUsage", self.PowerUsage)	
+	self.Entity:SetNetVar("PowerUsage", self.PowerUsage)	
 end
 
 function ENT:Use( activator, caller )
@@ -218,7 +218,7 @@ function WR_PlayNextTrack( transENT )
 	local Soundfile = Sound("music/"..file)
 	transENT.File = Soundfile
 	transENT.Track = playlist[1][1]
-	transENT.Entity:SetNWString("Track", playlist[1][1])
+	transENT.Entity:SetNetVar("Track", playlist[1][1])
 	local setname = string.sub(file,0,-5)
 	local foundRadios = ents.FindByClass("tool_wastelandradio")
 	for k, v in pairs(foundRadios) do

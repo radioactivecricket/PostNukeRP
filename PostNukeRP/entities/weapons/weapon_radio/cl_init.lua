@@ -56,6 +56,17 @@ local function RadioFreq( )
 			net.SendToServer()
 			freq_frame:Close()
 		end
+	local bbButton = vgui.Create( "DButton" )
+		bbButton:SetParent( freq_frame )
+		bbButton:SetText( "Bounty Board" )
+		bbButton:SetPos( freq_frame:GetWide() / 2 + 10, 100 )
+		bbButton:SetSize( 100, 30 )
+		bbButton.DoClick = function ()
+			net.Start( "startBountyBoard" )
+				net.WriteEntity(ply)		
+			net.SendToServer()
+			freq_frame:Close()
+		end
 end
 net.Receive("radiofreq_select", RadioFreq)
 

@@ -79,7 +79,7 @@ function PNRP:HUD_2()
 	local i = 4		--Number of bars on the HUD (HP, Armor, End, Hunger)
 	
 	--Gets the players Max HP
-	local MaxHealth = ply:GetNetworkedInt( "MaxHealth" ) 
+	local MaxHealth = ply:GetNetVar( "MaxHealth", 100) 
 	
 	local stat = {
 		HP = string.format( "Health: %iHP", ply:Health( ) ),	-- Heath Text
@@ -224,16 +224,20 @@ function showOwner(x, y, h, w)
 	local tr = util.TraceLine( trace )	
 	
 	local ent = tr.Entity
-		
-	local OwnerNick = ent:GetNWString( "Owner", "None" )
-	
 	local targetSTR = " "
-	if(OwnerNick == "None") then
-		targetSTR = "Press F11 to own"
-	elseif(ent:IsWorld()) then
-		targetSTR = "World"
+	
+	if IsValid(ent) then
+		local OwnerNick = ent:GetNetVar( "Owner", "None" )
+		
+		if(OwnerNick == "None") then
+			targetSTR = "Press F11 to own"
+		elseif(ent:IsWorld()) then
+			targetSTR = "World"
+		else
+			targetSTR = OwnerNick
+		end
 	else
-		targetSTR = OwnerNick
+		targetSTR = " "
 	end
 	
 	PNRP_HUD:PaintRoundedPanel( 0, x, y, w, h, HUD_col.bg )

@@ -34,7 +34,7 @@ function ITEM.Create( ply, class, pos )
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetPos(pos)
 	ent:Spawn()
-	ent:SetNetworkedString("Ammo", tostring(ITEM.Energy))
+	ent:SetNetVar("Ammo", tostring(ITEM.Energy))
 end
 
 PNRP.AddItem(ITEM)

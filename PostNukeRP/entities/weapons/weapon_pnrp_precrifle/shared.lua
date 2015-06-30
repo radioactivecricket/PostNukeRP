@@ -182,12 +182,12 @@ function SWEP:SecondaryAttack()
 		
 		if savedBool then
 			self.Owner:SetFOV( 10, 0.15 )
-			self.Weapon:SetNWFloat("MouseSensitivity", 0.5)
+			self.Weapon:SetNetVar("MouseSensitivity", 0.5)
 			if (SERVER) then self.Owner:DrawViewModel(false) end
 			self.Owner:EmitSound(sndZoomIn)
 		else
 			self.Owner:SetFOV( 0, 0.15 )
-			self.Weapon:SetNWFloat("MouseSensitivity", 1)
+			self.Weapon:SetNetVar("MouseSensitivity", 1)
 			if (SERVER) then self.Owner:DrawViewModel(true) end
 			self.Owner:EmitSound(sndZoomOut)
 		end
@@ -216,7 +216,7 @@ function SWEP:Deploy()
 	self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
 	self.Weapon:SetDTBool(0, false)
 	self.Weapon:SetDTBool(1, false)
-	self.Weapon:SetNWFloat("MouseSensitivity", 1)
+	self.Weapon:SetNetVar("MouseSensitivity", 1)
 
 	self.Weapon:SetNextPrimaryFire(CurTime() + 1)
 	return true

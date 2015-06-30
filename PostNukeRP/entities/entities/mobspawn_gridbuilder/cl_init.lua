@@ -4,7 +4,7 @@ function ENT:Draw()
 	self.Entity:DrawModel()
 	local myPlayer = LocalPlayer()
 	
-	local distance = tonumber(self.Entity:GetNWString("distance"))
+	local distance = tonumber(self.Entity:GetNetVar("distance"))
 	if not distance then return end
 	
 	local tracedata = {}
@@ -14,17 +14,17 @@ function ENT:Draw()
 	local trace = util.TraceLine(tracedata)
 	
 	if trace.Entity == self then
-		local resources = self.Entity:GetNWBool("spwnsRes")
-		local antlions = self.Entity:GetNWBool("spwnsAnt")
-		local zombies = self.Entity:GetNWBool("spwnsZom")
+		local resources = self.Entity:GetNetVar("spwnsRes")
+		local antlions = self.Entity:GetNetVar("spwnsAnt")
+		local zombies = self.Entity:GetNetVar("spwnsZom")
 		
-		local mounds = self.Entity:GetNWBool("infMound")
-		local indoor = self.Entity:GetNWBool("infIndoor")
+		local mounds = self.Entity:GetNetVar("infMound")
+		local indoor = self.Entity:GetNetVar("infIndoor")
 		
 		local gridMessage = "Distance:  "..tostring(distance).."\nSpawn Resources:  "..tostring(resources).."\nSpawn Antlions:  "..tostring(antlions).."\nSpawn Zombies:  "..tostring(zombies).."\nCan Make Mounds:  "..tostring(mounds).."\nIs Indoor:  "..tostring(indoor)
 		AddWorldTip( self.Entity:EntIndex(), gridMessage, 0.5, self.Entity:GetPos(), self.Entity )
 		
-		local linked = self.Entity:GetNWEntity("infLinked")
+		local linked = self.Entity:GetNetVar("infLinked")
 		if linked:IsValid() then
 			render.SetMaterial( Material( "cable/redlaser" ) )
 			render.DrawBeam( self.Entity:GetPos(), linked:GetPos(), 5, 0, 0, Color( 255, 255, 255, 255 ) )

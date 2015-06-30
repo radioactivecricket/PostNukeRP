@@ -16,7 +16,7 @@ end
 
 function PNRP.chtTest( ply, cmd, text )
 
-	ply:ChatPrint("Test")
+	ply:ChatPrint("Test") 
 
 end
 PNRP.ChatCmd( "/test", PNRP.chtTest )
@@ -35,9 +35,9 @@ function SetItmName(ply, cmd, args)
 	
 	if IsValid(ent) then
 		if !ent:IsPlayer() then
-			if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then
 				if args[1] then
-					ent:SetNWString("name", args[1])
+					ent:SetNetVar("name", args[1])
 				end
 			end
 		end
@@ -81,6 +81,32 @@ concommand.Add( "pnrp_setrpname", SetRPName )
 PNRP.ChatConCmd( "/rpname", "pnrp_setrpname" )
 util.AddNetworkString("RPNameChange")
 
+function PNRP.ChangeRPName(len, pl)
+	local ply = net.ReadEntity()
+	local name = net.ReadString()
+	
+	if pl ~= ply then return end
+	
+	if (not name) or name == "" or name == nil then
+		ply.rpname = ply:SteamName()
+	else
+		if string.len(name) > 40 then
+			ply:ChatPrint("Name too long! Must be under 40 characters.")
+			return
+		end
+
+		ply.rpname = name
+	end
+	
+	net.Start("RPNameChange")
+		net.WriteEntity(ply)
+		net.WriteString(ply.rpname)
+		net.WriteBit(false)
+	net.Broadcast()
+end
+net.Receive("PNRP_ChangeRPName", PNRP.ChangeRPName )
+util.AddNetworkString("PNRP_ChangeRPName")
+
 function GetAllRPNames(ply)
 	local plyList = player.GetAll()
 
@@ -109,6 +135,24 @@ function SetModel(ply, cmd, args)
 end
 concommand.Add( "pnrp_setmodel", SetModel )
 PNRP.ChatConCmd( "/setmodel", "pnrp_setmodel" )
+
+function PNRP.SetPlayerModel(len, pl)
+	local GM = GAMEMODE
+	local ply = net.ReadEntity()
+	local model = net.ReadString()
+	local playerColor = net.ReadVector()
+	local wepColor = net.ReadVector()
+	
+	if pl ~= ply then return end
+	
+	ply.rpmodel = model
+	GM:PlayerSetModel( ply )
+	
+	ply:SetPlayerColor( playerColor )
+	ply:SetWeaponColor( wepColor )
+end
+net.Receive("PNRP_SetPlayerModel", PNRP.SetPlayerModel )
+util.AddNetworkString("PNRP_SetPlayerModel")
 
 /*---------------------------------------------------------
   Save/Load
@@ -185,14 +229,27 @@ function GM.CreateCharacter( ply, plyModel, plyClass )
 	ply:ChatPrint("New character created!")
 end
 
-function GM.DeleteProfile( )
+function GM.DeleteProfile( len, pl )
 	local GM = GAMEMODE
 	local ply = net.ReadEntity()
 	local pid = net.ReadString()
+	local testResult
+	
+	if pl ~= ply and (not pl:IsAdmin()) then
+		ErrorNoHalt("[ALERT] Possible Lua Injection: DeleteProfile by "..tostring(pl).."\n")
+		return
+	end
+	
+	if not ply:IsAdmin() then
+		testResult = querySQL("SELECT * FROM profiles WHERE pid="..SQLStr(tonumber(pid)).." AND  steamid='"..ply:SteamID().."'")
+		if not result then return nil end
+	end
+	
 	querySQL("DELETE FROM profiles WHERE pid='"..tonumber(pid).."'")
 	querySQL("DELETE FROM player_inv WHERE pid='"..tonumber(pid).."'")
 	querySQL("DELETE FROM world_cache WHERE pid='"..tonumber(pid).."'")
 	querySQL("DELETE FROM community_members WHERE pid='"..tonumber(pid).."'")
+	querySQL("DELETE FROM inventory_table WHERE location='player' AND pid='"..tonumber(pid).."'")
 
 	--This calls the profile selection window
 	local result = GM.GetCharacterList( ply )
@@ -202,15 +259,17 @@ function GM.DeleteProfile( )
 	end
 
 	net.Start("pnrp_runProfilePicker")
-	--	net.WriteEntity(ply)
 		net.WriteTable(tbl)
 	net.Send(ply)
 end
-net.Receive("delProfile", GM.DeleteProfile );
+net.Receive("delProfile", GM.DeleteProfile )
 
-function GM.initProfileMenu( )
+function GM.initProfileMenu( len, pl )
 	local GM = GAMEMODE
 	local ply = net.ReadEntity()
+	
+	if pl ~= ply then return end
+	
 	--This calls the profile selection window
 	local result = GM.GetCharacterList( ply )
 	local tbl = {}
@@ -219,7 +278,6 @@ function GM.initProfileMenu( )
 	end
 
 	net.Start("pnrp_runProfilePicker")
-	--	net.WriteEntity(ply)
 		net.WriteTable(tbl)
 	net.Send(ply)
 end
@@ -244,7 +302,7 @@ function GM.LoadCharacter( ply, pid )
 
 	ply.pid = pid
 
-	query = "SELECT * FROM profiles WHERE pid="..tostring(pid)
+	query = "SELECT * FROM profiles WHERE pid="..SQLStr(tostring(pid))
 	result = querySQL(query)
 
 	if not result then return end
@@ -299,6 +357,20 @@ end
 concommand.Add( "pnrp_save", GM.SaveCharacter )
 PNRP.ChatConCmd( "/save", "pnrp_save" )
 
+function PNRP.openPlayerInfoWindow(len, pl)
+	local ply = net.ReadEntity()
+	local targetPly = net.ReadEntity()
+	
+	if pl ~= ply then return end
+
+	net.Start("viewPlayerInfoWindow")
+		net.WriteEntity(targetPly)
+	net.Send(ply)
+end
+net.Receive("start_openPlayerInfoWindow", PNRP.openPlayerInfoWindow );
+util.AddNetworkString( "start_openPlayerInfoWindow" )
+util.AddNetworkString( "viewPlayerInfoWindow" )
+
 -- Community Functions
 
 -- Loads a player's community information.
@@ -306,7 +378,7 @@ function LoadCommunityInfo( ply, pid )
 	local query
 	local result
 
-	query = "SELECT * FROM community_members WHERE pid="..tostring(pid)
+	query = "SELECT * FROM community_members WHERE pid="..SQLStr(tostring(pid))
 	result = querySQL(query)
 
 	if result then
@@ -314,10 +386,10 @@ function LoadCommunityInfo( ply, pid )
 		local result2
 
 		ply.Community = tonumber(result[1]["cid"])
-		ply:SetNWInt( "cid", ply.Community )
+		ply:SetNetVar( "cid", ply.Community )
 		ply.CommunityRank = tonumber(result[1]["rank"])
 				
-		ply:SetNWString("ctitle", result[1]["title"])
+		ply:SetNetVar("ctitle", result[1]["title"])
 
 		query2 = "SELECT * FROM community_table WHERE cid="..tostring(result[1]["cid"])
 		result2 = querySQL(query2)
@@ -336,7 +408,7 @@ function LoadCommunityInfo( ply, pid )
 		end
 		
 		ply:SendDipl()
-		ply:SetNWString("community", result2[1]["cname"])
+		ply:SetNetVar("community", result2[1]["cname"])
 	else
 	--	ply.Community = nil
 	--	ply:SetNWInt( "cid", nil )
@@ -442,10 +514,10 @@ function NewCommunityInfo( ply, community )
 		result = querySQL(query)
 
 		ply:GetTable().Community = mycid
-		ply:SetNWInt( "cid", mycid )
-		ply:SetNWString("community", community)
+		ply:SetNetVar( "cid", mycid )
+		ply:SetNetVar("community", community)
 		ply:GetTable().CommunityRank = 1
-		ply:SetNWString("ctitle", "Recruit")
+		ply:SetNetVar("ctitle", "Recruit")
 		ply:ConCommand("pnrp_save")
 	else
 		query = "INSERT INTO community_table VALUES ( NULL, "..SQLStr(tostring(community))..", '0,0,0', ' ', "..SQLStr(tostring(os.date()))..", '' )"
@@ -472,10 +544,10 @@ function NewCommunityInfo( ply, community )
 		result = querySQL(query)
 
 		ply:GetTable().Community = newcid
-		ply:SetNWInt( "cid", newcid )
-		ply:SetNWString("community", community)
+		ply:SetNetVar( "cid", newcid )
+		ply:SetNetVar("community", community)
 		ply:GetTable().CommunityRank = 3
-		ply:SetNWString("ctitle", "Founder")
+		ply:SetNetVar("ctitle", "Founder")
 		ply:ConCommand("pnrp_save")
 	end
 
@@ -501,12 +573,7 @@ function RemCommunityInfo( cid, pid )
 	for _, myUser in pairs(player.GetAll()) do
 		if tonumber(myUser.pid) == tonumber(pid) then
 			PNRP.PlyDelComInfo(myUser)
-		--	myUser:GetTable().Community = nil
-		--	myUser:SetNWInt( "cid", nil )
-		--	myUser:SetNWString("community", nil)
-		--	myUser:GetTable().CommunityRank = nil
-		--	myUser:SetNWString("ctitle", nil)
-		--	myUser:ConCommand("pnrp_save")
+
 			myUser:ChatPrint("You've been removed from your community.")
 		end
 	end
@@ -570,6 +637,8 @@ function DelCommunity( cid )
 	local queryDip = "SELECT * FROM community_table WHERE diplomacy LIKE '%"..tostring(cid).."%'"
 	local resultDip = querySQL(queryDip)
 	
+	querySQL("DELETE FROM inventory_table WHERE location='locker' AND locid="..SQLStr(tonumber(cid)))
+	
 	--Removed diplomacy entries
 	if resultDip then
 		for _, com in pairs(resultDip) do
@@ -613,7 +682,7 @@ function SetCommunityRes( cid, scrap, small, chems )
 		query = "UPDATE community_table SET res='"..tostring(scrap)..","..tostring(small)..","..tostring(chems).."' WHERE cid="..tostring(cid)
 		result = querySQL(query)
 	else
-		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No cid match in SetCommunityRes!" )
+		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No cid match in SetCommunityRes!\n" )
 		return
 	end
 end
@@ -641,14 +710,14 @@ function AddCommunityRes( cid, mytype, amount )
 			newRes = tonumber(myRes[3]) + amount
 			newResStr = myRes[1]..","..myRes[2]..","..tostring(newRes)
 		else
-			ErrorNoHalt(tostring(os.date()).." INPUT ERROR:  mytype non-valid for AddCommunityRes!")
+			ErrorNoHalt(tostring(os.date()).." INPUT ERROR:  mytype non-valid for AddCommunityRes!\n")
 			return
 		end
 
 		query = "UPDATE community_table SET res='"..newResStr.."' WHERE cid="..tostring(cid)
 		result = querySQL(query)
 	else
-		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No cid match in AddCommunityRes!" )
+		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No cid match in AddCommunityRes!\n" )
 	end
 end
 
@@ -691,7 +760,7 @@ function AddCommunityItem( cid, mytype, amount )
 	local query
 	local result
 
-	query = "SELECT inv FROM community_table WHERE cid="..tostring(cid)
+	query = "SELECT inv FROM community_table WHERE cid="..SQLStr(cid)
 	result = querySQL(query)
 
 	-- Inventory string design:  'item_code,amount item_code2,amount item_code3,amount'
@@ -718,7 +787,7 @@ function AddCommunityItem( cid, mytype, amount )
 		end
 		newInvString = string.TrimRight(newInvString)
 
-		query = "UPDATE community_table SET inv='"..newInvString.."' WHERE cid='"..tostring(cid).."'"
+		query = "UPDATE community_table SET inv='"..newInvString.."' WHERE cid="..SQLStr(cid)
 		result = querySQL(query)
 	else
 		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No cid match in AddCommunityItem! ["..tostring(cid).."] \n")
@@ -729,7 +798,7 @@ function SubCommunityItem( cid, mytype, amount )
 	local query
 	local result
 
-	query = "SELECT inv FROM community_table WHERE cid="..tostring(cid)
+	query = "SELECT inv FROM community_table WHERE cid="..SQLStr(cid)
 	result = querySQL(query)
 
 	if result then
@@ -757,10 +826,10 @@ function SubCommunityItem( cid, mytype, amount )
 		end
 		newInvString = string.TrimRight(newInvString)
 
-		query = "UPDATE community_table SET inv='"..newInvString.."' WHERE cid="..tostring(cid)
+		query = "UPDATE community_table SET inv='"..newInvString.."' WHERE cid="..SQLStr(cid)
 		result = querySQL(query)
 	else
-		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No cid match in SubCommunityItem!" )
+		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No cid match in SubCommunityItem! \n" )
 	end
 end
 
@@ -773,8 +842,10 @@ function GetCommunityTbl( cid )
 	local cMemInfo
 	--"CREATE TABLE community_table ( cid INTEGER PRIMARY KEY AUTOINCREMENT, cname varchar(255), res varchar(255), inv varchar(255), founded varchar(255) )"
 	--"CREATE TABLE community_members ( pid int, cid int, rank int, title varchar(255) )"
+	
+	if cid == nil then cid = -1 end --nil check for people no tin community
 
-	query = "SELECT * FROM community_table WHERE cid="..tostring(cid)
+	query = "SELECT * FROM community_table WHERE cid="..SQLStr(cid)
 	result = querySQL(query)
 
 	if not result then
@@ -782,7 +853,7 @@ function GetCommunityTbl( cid )
 	end
 	ctblInfo = result[1]
 
-	query = "SELECT * FROM community_members WHERE cid="..tostring(cid)
+	query = "SELECT * FROM community_members WHERE cid="..SQLStr(cid)
 	result = querySQL(query)
 
 	if not result then
@@ -856,13 +927,16 @@ function PNRP.OpenMainCommunity(ply)
 
 	local PlayerCommunityName
 	local tbl = { }
+	local cid = ply:GetTable().Community
+	
+	if cid == nil then cid = -1 end 
 
 	PlayerCommunityName = ply:GetTable().Community
 	if PlayerCommunityName == nil then
 		PlayerCommunityName = "none"
 	else
 		tbl = GetCommunityTbl( PlayerCommunityName )
-		PlayerCommunityName = ply:GetNWString("community")
+		PlayerCommunityName = ply:GetNetVar("community")
 	end
 	
 	local wars = {}
@@ -888,7 +962,7 @@ function PNRP.OpenMainCommunity(ply)
 		end
 	end
 	
-	queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(ply:GetTable().Community)
+	queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
 	resultPending = querySQL(queryPending)
 	if not resultPending then resultPending = {} end
 	
@@ -929,7 +1003,7 @@ function AdmDelCom(ply, cmd, args)
 
 		for _, v in pairs(player.GetAll()) do
 			if tostring(v:GetTable().Community) == tostring(cid) then
-				v:ChatPrint( "Your community, "..v:GetNWString("community")..", has been deleted by an Admin!" )
+				v:ChatPrint( "Your community, "..v:GetNetVar("community")..", has been deleted by an Admin!" )
 				
 				PNRP.PlyDelComInfo(v)
 			--	v:GetTable().Community = nil
@@ -973,7 +1047,7 @@ function AdmEditCom(ply, cmd, args)
 			end
 		end
 		
-		queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+		queryPending = "SELECT * FROM community_pending WHERE cid="..SQLStr(cid)
 		resultPending = querySQL(queryPending)
 		if not resultPending then resultPending = {} end
 		
@@ -1001,7 +1075,7 @@ function PlyDelComm(ply, cmd, args)
 			--	v:SetNWString("community", "N/A")
 				PNRP.PlyDelComInfo(v)
 				
-				v:ChatPrint( "Your community, "..ply:GetNWString("community")..", has been deleted by an Owner!" )
+				v:ChatPrint( "Your community, "..ply:GetNetVar("community")..", has been deleted by an Owner!" )
 			end
 		end
 		
@@ -1041,9 +1115,9 @@ function PlyInvComm(ply, cmd, args)
 			ply:ChatPrint( trgEnt:Nick().." has been invited to the community!" )
 			
 			local CommunityID = ply:GetTable().Community
-			local CommunityName = ply:GetNWString("community")
+			local CommunityName = ply:GetNetVar("community")
 
-			PNRP.PendingInvites[trgEnt:Nick()] = ply:GetNWString("community")
+			PNRP.PendingInvites[trgEnt:Nick()] = ply:GetNetVar("community")
 			net.Start( "sendinvite" )
 				net.WriteString( ply:Nick() )
 				net.WriteString( CommunityID )
@@ -1111,11 +1185,12 @@ function PlyNewComm(ply, cmd, args)
 
 	query = "SELECT cid FROM community_table WHERE cname='"..tostring(args[1]).."'"
 	result = sql.Query(query)
-	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (Find matching community name) Error:  "..tostring(sql.LastError()))
+--	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (Find matching community name) Error:  "..tostring(sql.LastError()))
 
 	if not result then
 		NewCommunityInfo( ply, args[1] )
 		ply:ChatPrint("You have created a community called "..tostring(args[1]).."!")
+		ErrorNoHalt(tostring(os.date()).." New Community: "..tostring(args[1]).." by "..ply:Nick().." ("..ply:SteamID()..")".."\n")
 	else
 		ply:ChatPrint("This community name is already taken!")
 	end
@@ -1134,7 +1209,7 @@ function PlySetTitle(ply, cmd, args)
 
 	for _, v in pairs(player.GetAll()) do
 		if tostring(v.pid) == pid then
-			v:SetNWString("ctitle", newTitle)
+			v:SetNetVar("ctitle", newTitle)
 		end
 	end
 end
@@ -1149,7 +1224,7 @@ function PlyLeaveComm(ply, cmd, args)
 	ErrorNoHalt(tostring(os.date()).." SQL QUERY: (Find matching community) Error:  "..tostring(sql.LastError()))
 
 	if result then
-		ply:ChatPrint("You have left the community called "..tostring(ply:GetNWString("community")).."!")
+		ply:ChatPrint("You have left the community called "..tostring(ply:GetNetVar("community")).."!")
 		RemCommunityInfo( ply:GetTable().Community, ply.pid )
 	else
 		ply:ChatPrint("This community doesn't exist!")
@@ -1218,7 +1293,7 @@ function PlyPlaceStockpile(ply, cmd, args)
 		if ply:GetTable().CommunityRank > 1 then
 			local foundStockpiles = ents.FindByClass("msc_stockpile")
 			for k, v in pairs(foundStockpiles) do
-				if tostring(v:GetNWString("community_owner")) == tostring(ply:GetTable().Community) then
+				if tostring(v:GetNetVar("community_owner")) == tostring(ply:GetTable().Community) then
 					ply:ChatPrint( "You can only have one stockpile out at a time!" )
 					return
 				end
@@ -1238,11 +1313,11 @@ function PlyPlaceStockpile(ply, cmd, args)
 
 			if trace.Hit then
 				local ent = ents.Create ("msc_stockpile")
-				ent:SetNWString("communityName", ply:GetNWString("community"))
-				ent:SetNWString("community_owner", ply:GetTable().Community)
-				ent:SetNWString("Owner", ply:Name())
-				ent:SetNWString("Owner_UID", PNRP:GetUID( ply ))
-				ent:SetNWEntity( "ownerent", ply )
+				ent:SetNetVar("communityName", ply:GetNetVar("community"))
+				ent:SetNetVar("community_owner", ply:GetTable().Community)
+				ent:SetNetVar("Owner", ply:Name())
+				ent:SetNetVar("Owner_UID", PNRP:GetUID( ply ))
+				ent:SetNetVar( "ownerent", ply )
 				ent:SetPos( trace.HitPos + Vector(0,0,80) )
 				ent:Spawn()
 				ply:ChatPrint( "You have placed a community stockpile.  It will take 10 seconds to become active." )
@@ -1264,7 +1339,7 @@ function PlyPlaceLocker(ply, cmd, args)
 		if ply:GetTable().CommunityRank > 1 then
 			local foundComLockers = ents.FindByClass("msc_equiplocker")
 			for _, v in pairs(foundComLockers) do
-				if tostring(v:GetNWString("community_owner")) == tostring(ply:GetTable().Community) then
+				if tostring(v:GetNetVar("community_owner")) == tostring(ply:GetTable().Community) then
 					ply:ChatPrint( "You can only have one locker out at a time!" )
 					return
 				end
@@ -1284,14 +1359,16 @@ function PlyPlaceLocker(ply, cmd, args)
 
 			if trace.Hit then
 				local ent = ents.Create ("msc_equiplocker")
-				ent:SetNWString("communityName", ply:GetNWString("community"))
-				ent:SetNWString("community_owner", ply:GetTable().Community)
-				ent:SetNWString("Owner", ply:Name())
-				ent:SetNWString("Owner_UID", PNRP:GetUID( ply ))
-				ent:SetNWEntity( "ownerent", ply )
+				ent:SetNetVar("communityName", ply:GetNetVar("community"))
+				ent:SetNetVar("community_owner", ply:GetTable().Community)
+				ent:SetNetVar("Owner", ply:Name())
+				ent:SetNetVar("Owner_UID", PNRP:GetUID( ply ))
+				ent:SetNetVar( "ownerent", ply )
 				ent:SetPos( trace.HitPos + Vector(0,0,12) )
 				ent:Spawn()
-
+				
+				ent.Community = ply:GetTable().Community
+				ent.CommunityName = ply:GetNetVar("community")
 				ply:ChatPrint( "You have placed a community locker.  It will take 10 seconds to become active." )
 			else
 				ply:ChatPrint( "Did not touch ground.  Move closer to your position and try again." )
@@ -1311,7 +1388,7 @@ function PlyRemStockpile(ply, cmd, args)
 		if ply:GetTable().CommunityRank > 1 then
 			local foundStockpiles = ents.FindByClass("msc_stockpile")
 			for k, v in pairs(foundStockpiles) do
-				if tostring(v:GetNWString("community_owner")) == tostring(ply:GetTable().Community) then
+				if tostring(v:GetNetVar("community_owner")) == tostring(ply:GetTable().Community) then
 					local stockpile = v
 					ply:ChatPrint( "Your stockpile will take 1 minute to break down.  It can be interacted with in that time." )
 					timer.Simple(60, function ()
@@ -1338,7 +1415,7 @@ function PlyRemLocker(ply, cmd, args)
 		if ply:GetTable().CommunityRank > 1 then
 			local foundComLockers = ents.FindByClass("msc_equiplocker")
 			for _, v in pairs(foundComLockers) do
-				if tostring(v:GetNWString("community_owner")) == tostring(ply:GetTable().Community) then
+				if tostring(v:GetNetVar("community_owner")) == tostring(ply:GetTable().Community) then
 					local locker = v
 					ply:ChatPrint( "Your locker will take 1 minute to break down.  It can be interacted with in that time." )
 					timer.Simple(60, function ()
@@ -1373,7 +1450,7 @@ concommand.Add( "pnrp_testdip", pnrp_testdip )
 
  -- Community War/Ally Functions -- 
 function AddDiplomacy( cid, ocid, status )
-	local query = "SELECT diplomacy FROM community_table WHERE cid="..tostring(cid)
+	local query = "SELECT diplomacy FROM community_table WHERE cid="..SQLStr(cid)
 	local result = querySQL(query)
 	
 	if result[1]["diplomacy"] then
@@ -1394,10 +1471,10 @@ function AddDiplomacy( cid, ocid, status )
 		end
 		dipStr = string.TrimRight(dipStr)
 		
-		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(cid)
+		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..SQLStr(cid)
 		result = querySQL(query)
 	else
-		query = "UPDATE community_table SET diplomacy='"..tostring(ocid)..","..tostring(status).."' WHERE cid="..tostring(cid)
+		query = "UPDATE community_table SET diplomacy='"..SQLStr2(tostring(ocid))..","..SQLStr(tostring(status)).."' WHERE cid="..SQLStr(cid)
 		result = querySQL(query)
 	end
 	
@@ -1407,7 +1484,7 @@ function AddDiplomacy( cid, ocid, status )
 		end
 	end
 		
-	query = "SELECT diplomacy FROM community_table WHERE cid="..tostring(ocid)
+	query = "SELECT diplomacy FROM community_table WHERE cid="..SQLStr(ocid)
 	result = querySQL(query)
 	
 	if result[1]["diplomacy"] then
@@ -1428,10 +1505,10 @@ function AddDiplomacy( cid, ocid, status )
 		end
 		dipStr = string.TrimRight(dipStr)
 		
-		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(ocid)
+		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..SQLStr(ocid)
 		result = querySQL(query)
 	else
-		query = "UPDATE community_table SET diplomacy='"..tostring(cid)..","..tostring(status).."' WHERE cid="..tostring(ocid)
+		query = "UPDATE community_table SET diplomacy='"..SQLStr2(tostring(cid))..","..SQLStr2(tostring(status)).."' WHERE cid="..SQLStr(ocid)
 		result = querySQL(query)
 	end
 	
@@ -1480,7 +1557,7 @@ function warDipCrawler(cid, ocid)
 end
 
 function RemDiplomacy( cid, ocid )
-	local query = "SELECT diplomacy FROM community_table WHERE cid="..tostring(cid)
+	local query = "SELECT diplomacy FROM community_table WHERE cid="..SQLStr(cid)
 	local result = querySQL(query)
 	
 	if result[1]["diplomacy"] then
@@ -1491,7 +1568,7 @@ function RemDiplomacy( cid, ocid )
 		for _, ncid in pairs(diplomacySplit) do
 			local splitDip = string.Explode(",", ncid)
 			
-			ErrorNoHalt("splitDip[1] = "..tostring(splitDip[1]).." splitDip[2] = "..tostring(splitDip[2]).."\n")
+--			ErrorNoHalt("splitDip[1] = "..tostring(splitDip[1]).." splitDip[2] = "..tostring(splitDip[2]).."\n")
 			dipTbl[splitDip[1]] = splitDip[2]
 		end
 		
@@ -1503,9 +1580,9 @@ function RemDiplomacy( cid, ocid )
 		end
 		dipStr = string.TrimRight(dipStr)
 		
-		ErrorNoHalt("dipStr = "..tostring(dipStr).."\n")
+--		ErrorNoHalt("dipStr = "..tostring(dipStr).."\n")
 		
-		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(cid)
+		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..SQLStr(cid)
 		result = querySQL(query)
 		
 		for _, member in pairs(player.GetAll()) do
@@ -1517,7 +1594,7 @@ function RemDiplomacy( cid, ocid )
 		
 	end
 	
-	query = "SELECT diplomacy FROM community_table WHERE cid="..tostring(ocid)
+	query = "SELECT diplomacy FROM community_table WHERE cid="..SQLStr(ocid)
 	result = querySQL(query)
 	
 	if result[1]["diplomacy"] then
@@ -1538,7 +1615,7 @@ function RemDiplomacy( cid, ocid )
 		end
 		dipStr = string.TrimRight(dipStr)
 		
-		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..tostring(ocid)
+		query = "UPDATE community_table SET diplomacy='"..dipStr.."' WHERE cid="..SQLStr(ocid)
 		result = querySQL(query)
 		
 		for _, member in pairs(player.GetAll()) do
@@ -1607,7 +1684,7 @@ function PlyAddDiplomacy(ply, cmd, args)
 					msgString = msgString.."declare war against you."
 				end
 				
-				query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+				query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 				querySQL(query)
 			else
 				local newDataTbl = {}
@@ -1630,7 +1707,7 @@ function PlyAddDiplomacy(ply, cmd, args)
 					msgString = msgString.."declare war against you."
 				end
 				
-				query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+				query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 				querySQL(query)
 			end
 		else
@@ -1648,10 +1725,10 @@ function PlyRemDiplomacy(ply, cmd, args)
 	
 	if ply:GetTable().Community then
 		if ply:GetTable().CommunityRank > 1 then
-			local query = "SELECT * FROM community_pending WHERE cid="..tostring(ocid)
+			local query = "SELECT * FROM community_pending WHERE cid="..SQLStr(ocid)
 			local ocidPending = querySQL(query)
 			
-			local query2 = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+			local query2 = "SELECT * FROM community_pending WHERE cid="..SQLStr(cid)
 			local cidPending = querySQL(query)
 			
 			if ocidPending then
@@ -1689,7 +1766,7 @@ function PlyRemDiplomacy(ply, cmd, args)
 					
 					local msgString = "The community, "..comTbl.name..", has broken your alliance."
 					
-					query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+					query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 					querySQL(query)
 				else
 					local newDataTbl = {}
@@ -1707,7 +1784,7 @@ function PlyRemDiplomacy(ply, cmd, args)
 					
 					local msgString = "The community, "..comTbl.name..", wishes to return to a neutral status with you."
 					
-					query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+					query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 					querySQL(query)
 				end
 			else
@@ -1728,7 +1805,7 @@ function PlyRemDiplomacy(ply, cmd, args)
 					
 					local msgString = "The community, "..comTbl.name..", has broken your alliance."
 					
-					query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+					query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 					querySQL(query)
 				else
 					local newDataTbl = {}
@@ -1746,7 +1823,7 @@ function PlyRemDiplomacy(ply, cmd, args)
 					
 					local msgString = "The community, "..comTbl.name..", wishes to return to a neutral status with you."
 					
-					query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+					query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 					querySQL(query)
 				end
 			end
@@ -1765,7 +1842,7 @@ function PlyCancelDiplomacy(ply, cmd, args)
 	
 	if ply:GetTable().Community then
 		if ply:GetTable().CommunityRank > 1 then
-			local query = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+			local query = "SELECT * FROM community_pending WHERE cid="..SQLStr(cid)
 			local cidPending = querySQL(query)
 			
 			if cidPending then
@@ -1780,7 +1857,7 @@ function PlyCancelDiplomacy(ply, cmd, args)
 					end
 					
 					if dataTbl["cid"] == tostring(cid) and (dataTbl["info"] or "none") == "diplomacy" then
-						query = "DELETE FROM community_pending WHERE cid="..tostring(cid).." AND time='"..entry["time"].."'"
+						query = "DELETE FROM community_pending WHERE cid="..SQLStr(cid).." AND time='"..entry["time"].."'"
 						querySQL(query)
 						return
 					end
@@ -1853,7 +1930,7 @@ function PlyAcptPending(ply, cmd, args)
 									msgString = msgString.."your declaration of war."
 								end
 								
-								query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+								query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 								querySQL(query)
 							else
 								RemDiplomacy( cid, ocid )
@@ -1872,7 +1949,7 @@ function PlyAcptPending(ply, cmd, args)
 								
 								local msgString = "The community, "..comTbl.name..", has agreed to return to a neutral status."
 								
-								query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+								query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 								querySQL(query)
 							end
 						elseif pendingType == "msg" then
@@ -1955,7 +2032,7 @@ function PlyDclnPending(ply, cmd, args)
 									msgString = msgString.."your declaration of war."
 								end
 								
-								query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+								query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 								querySQL(query)
 							else
 								local comTbl = GetCommunityTbl(cid)
@@ -1972,7 +2049,7 @@ function PlyDclnPending(ply, cmd, args)
 								
 								local msgString = "The community, "..comTbl.name..", has declined to return to a neutral status."
 								
-								query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+								query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 								querySQL(query)
 							end
 						elseif pendingType == "msg" then
@@ -2009,7 +2086,7 @@ function meta:ActOfWar( ocid )
 		
 		self:ChatPrint( "You have committed an act of war!" )
 		
-		local query = "SELECT * FROM community_pending WHERE cid="..tostring(ocid)
+		local query = "SELECT * FROM community_pending WHERE cid="..SQLStr(ocid)
 		local ocidPending = querySQL(query)
 		
 		if ocidPending then
@@ -2043,7 +2120,7 @@ function meta:ActOfWar( ocid )
 			
 			local msgString = "The community, "..comTbl.name..", has committed an act of war against you!  Do you wish to declare war?"
 			
-			query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+			query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 			querySQL(query)
 		else
 			local newDataTbl = {}
@@ -2061,7 +2138,7 @@ function meta:ActOfWar( ocid )
 			
 			local msgString = "The community, "..comTbl.name..", has committed an act of war against you!  Do you wish to declare war?"
 			
-			query = "INSERT INTO community_pending VALUES ( "..tostring(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
+			query = "INSERT INTO community_pending VALUES ( "..SQLStr(ocid)..", '"..msgString.."', '"..dataStr.."', '"..tostring(os.date()).." "..tostring(os.time()).."' )"
 			querySQL(query)
 		end
 	end
@@ -2094,7 +2171,7 @@ end
 
 function GM:DoPlayerDeath( ply, attacker, dmginfo )
 
-	if ply:GetNetworkedBool("IsAsleep") then
+	if ply:GetNetVar("IsAsleep") then
 		ply:ConCommand("pnrp_wake")
 	end
 
@@ -2128,6 +2205,8 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 			end
 		end
 		
+		PNRP.BountyCheck(ply, attacker)
+		
 	end
 	
 	local contents = {}
@@ -2135,7 +2214,7 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 	
 	local getRec
 	local int
-	local cost = (GetConVarNumber("pnrp_deathCost") / 100)
+	local cost = (getServerSetting("deathCost") / 100)
 
 	contents.name = ply:Nick()
 	
@@ -2293,10 +2372,10 @@ function GM:DoPlayerDeath( ply, attacker, dmginfo )
 end
 
 function PNRP.DeathPay(ply, Recource)
-	if GetConVarNumber("pnrp_deathPay") == 1 then
+	if getServerSetting("deathPay") == 1 then
 	    local getRec
 	    local int
-	    local cost = GetConVarNumber("pnrp_deathCost") / 100
+	    local cost = getServerSetting("deathCost") / 100
 
 	    getRec = ply:GetResource(Recource)
 	    int = getRec * cost
@@ -2318,12 +2397,14 @@ function PNRP.CheckDefWeps(wep)
 	end
 end
 
-function GM.set_Zombies(ply, command, arg)
-	RunConsoleCommand( "pnrp_MaxZombies", arg[1] )
+--Part of the old system before the admin panel
+--Removed to prevent exploitation of the zombie count
+--function GM.set_Zombies(ply, command, arg)
+--	RunConsoleCommand( "pnrp_MaxZombies", arg[1] )
 
-	return GetConVarNumber("pnrp_MaxZombies")
-end
-concommand.Add( "pnrp_SetZombies", GM.set_Zombies )
+--	return GetConVarNumber("pnrp_MaxZombies")
+--end
+--concommand.Add( "pnrp_SetZombies", GM.set_Zombies )
 
 
 function PNRP.ConvertAmmoType(ammoType)
@@ -2391,9 +2472,9 @@ function PNRP.DropWeapon (ply, command, args)
 		ent:SetAngles(Angle(0,0,0))
 		ent:SetPos(pos)
 		ent:Spawn()
-		ent:SetNetworkedString("Owner", "World")
-		ent:SetNWString("WepClass", myWep:GetClass())
-		ent:SetNetworkedInt("Ammo", myWep:Clip1())
+		ent:SetNetVar("Owner", "World")
+		ent:SetNetVar("WepClass", myWep:GetClass())
+		ent:SetNetVar("Ammo", myWep:Clip1())
 
 		ply:StripWeapon(myWep:GetClass())
 	end
@@ -2413,13 +2494,13 @@ PNRP.ChatCmd( "/eq", PNRP.OpenEquipment )
 PNRP.ChatCmd( "/equipment", PNRP.OpenEquipment )
 
 --Will evntually build this to replace the above function
-function PNRP.DropWep()
+function PNRP.DropWep( len, pl )
 
 	local ply = net.ReadEntity()
 	local myWep = PNRP.Items[net.ReadString()]
 	local curWepAmmo = net.ReadString()
-	--local myWep = PNRP.Items[decoded[1]]
-	--local curWepAmmo = decoded[2]
+	
+	if pl ~= ply then return end
 
 	local tr = ply:TraceFromEyes(200)
 	local trPos = tr.HitPos
@@ -2430,9 +2511,9 @@ function PNRP.DropWep()
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetPos(pos)
 	ent:Spawn()
-	ent:SetNetworkedString("Owner", "World")
-	ent:SetNWString("WepClass", myWep.Ent)
-	ent:SetNetworkedInt("Ammo", curWepAmmo)
+	ent:SetNetVar("Owner", "World")
+	ent:SetNetVar("WepClass", myWep.Ent)
+	ent:SetNetVar("Ammo", curWepAmmo)
 
 end
 --datastream.Hook( "pnrp_dropWepFromEQ", PNRP.DropWep )
@@ -2465,9 +2546,9 @@ function PNRP.StowWeapon (ply, command, args)
 			local weightCap
 
 			if team.GetName(ply:Team()) == "Scavenger" then
-				weightCap = GetConVarNumber("pnrp_packCapScav")
+				weightCap = getServerSetting("packCapScav")
 			else
-				weightCap = GetConVarNumber("pnrp_packCap")
+				weightCap = getServerSetting("packCap")
 			end
 
 			if weight <= weightCap then
@@ -2508,6 +2589,10 @@ function PNRP.DropAmmo(ply, command, args)
 		local EntSetting
 		local tr = ply:TraceFromEyes(200)
 		local trPos = tr.HitPos
+		
+		if ammoAmt > ply:GetAmmoCount(ammoType) then
+			ammoAmt = ply:GetAmmoCount(ammoType)
+		end
 
 		ply:ChatPrint("Dropping "..ammoAmt.." "..PNRP.Items[ItemID].Name)
 
@@ -2520,9 +2605,9 @@ function PNRP.DropAmmo(ply, command, args)
 		ent:SetAngles(Angle(0,0,0))
 		ent:SetPos(pos)
 		ent:Spawn()
-		ent:SetNetworkedString("WepClass", PNRP.Items[ItemID].Ent)
-		ent:SetNetworkedString("Owner", "World")
-		ent:SetNetworkedString("Ammo", tostring(ammoAmt))
+		ent:SetNetVar("WepClass", PNRP.Items[ItemID].Ent)
+		ent:SetNetVar("Owner", "World")
+		ent:SetNetVar("Ammo", tostring(ammoAmt))
 	else
 		ply:ChatPrint("Invalid ammo type. "..ammoFType)
 		return
@@ -2605,7 +2690,7 @@ function seatSetup(ply, cmd, args)
 				ItemID = "vehicle_jeep"
 			end
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(car:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
+			if tostring(car:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
 				
 				local seatModel
 				local seatPos
@@ -2637,7 +2722,7 @@ function seatSetup(ply, cmd, args)
 				ent:Spawn()
 				ent:Activate()
 				ent.seat = 1
-				ent:SetNetworkedString( "hud" , false )
+				ent:SetNetVar( "hud" , false )
 				PNRP.SetOwner(ply, ent)
 				
 				constraint.Weld(car, ent, 0, 0, 0, true)
@@ -2680,8 +2765,8 @@ function plyAFK(ply, cmd, args)
 			ply:Freeze(true)
 			ply:SetRenderMode(1)
 			ply:SetColor( Color(255,255,255,150) )
-			if ply:HasWeapon( "gmod_rp_hands" ) then
-				ply:SelectWeapon( "gmod_rp_hands")
+			if ply:HasWeapon( "weapon_simplekeys" ) then
+				ply:SelectWeapon( "weapon_simplekeys")
 			end
 			net.Start("sleepeffects")
 				net.WriteBit(true)
@@ -2749,6 +2834,59 @@ function pickupGas( ply, ent )
 			local gas = math.floor(ent.gas)
 			PNRP.AddToInventory( ply, "fuel_gas", gas )
 			ply:ChatPrint("Spare gas placed in inventory.")
+		end
+	end
+end
+
+function PNRP.GetPlayerNamePID(pid)
+	local query = "SELECT * FROM profiles WHERE pid="..SQLStr(pid)
+	local result = querySQL(query)
+	local name = "Unknown"
+	
+	if result then
+		name = result[1]["nick"]
+	end
+	
+	return name		
+end
+
+function PNRP.refundRes(pid, scrap, parts, chems)
+
+	local foundPlayer = "false"
+	
+	for _, ply in pairs(player.GetAll()) do
+		if ply:GetClass()=="player" then
+			if tostring(pid) == tostring(ply.pid) then
+				ply:IncResource("Scrap",scrap)
+				ply:IncResource("Small_Parts",parts)
+				ply:IncResource("Chemicals",chems)
+				
+				ply:EmitSound(Sound("items/ammo_pickup.wav"))
+				ply:ChatPrint("You were refunded: "..scrap..", "..parts..", "..chems)
+				
+				foundPlayer = "true"
+			end
+		end
+	end
+	
+	if foundPlayer == "false" then
+		query = "SELECT * FROM profiles WHERE pid="..SQLStr(pid)
+		result = querySQL(query)
+		
+		if result then
+			local res = result[1]["res"]
+			resTbl = string.Explode(",", res)
+			resTbl[1] = resTbl[1] + scrap
+			resTbl[2] = resTbl[2] + parts
+			resTbl[3] = resTbl[3] + chems
+
+			res = resTbl[1]..","..resTbl[2]..","..resTbl[3]
+
+			queryUpdate = "UPDATE profiles SET res='"..res.."' WHERE pid="..SQLStr(pid)
+			querySQL(queryUpdate)
+			
+			querytmp = "SELECT * FROM profiles WHERE pid="..SQLStr(pid)
+			resulttmp = querySQL(querytmp)
 		end
 	end
 end

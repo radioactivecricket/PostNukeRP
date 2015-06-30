@@ -44,7 +44,7 @@ function SWEP:DrawHUD()
 		
 	elseif 	bScope then
 	
-		local fScopeZoom = self.Weapon:GetNetworkedFloat("ScopeZoom")
+		local fScopeZoom = self.Weapon:GetNetVar("ScopeZoom")
 		if fScopeZoom ~= self.fLastScopeZoom then -- Are we changing the scope zoom level?
 	
 			self.fLastScopeZoom = fScopeZoom

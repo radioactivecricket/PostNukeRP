@@ -14,9 +14,9 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.pid = self.Entity:GetNWString("Owner_UID")
-	self.name = self.Entity:GetNWString("name", "")
-	self.text = self.Entity:GetNWString("text", "")
+	self.pid = self.Entity:GetNetVar("Owner_UID")
+	self.name = self.Entity:GetNetVar("name", "")
+	self.text = self.Entity:GetNetVar("text", "")
 
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_WEAPON)
 	
@@ -27,7 +27,7 @@ end
 function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
 		if activator:KeyPressed( IN_USE ) then
-			if tostring(self:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( activator ) then
+			if tostring(self:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( activator ) then
 				net.Start("Edit_Paper")
 					net.WriteEntity(self)
 					net.WriteString(self.name)
@@ -51,8 +51,8 @@ function WritePaper( )
 	local text = net.ReadString()
 	paperENT.name = name
 	paperENT.text = text
-	paperENT:SetNetworkedString("name", name)
-	paperENT:SetNetworkedString("text", text)
+	paperENT:SetNetVar("name", name)
+	paperENT:SetNetVar("text", text)
 end
 util.AddNetworkString("Write_Paper")
 net.Receive( "Write_Paper", WritePaper )

@@ -37,93 +37,31 @@ end
 
 function ENT:Use( activator, caller )
 	if activator:KeyPressed( IN_USE ) then
-		if self.Repairing then
-			if self.Repairing == activator then
-				self.Repairing = nil
-				activator:ChatPrint("You stop repairing the battery.")
-				
-				activator:SetMoveType(MOVETYPE_WALK)
-				net.Start("stopProgressBar")
-				net.Send(activator)
-				self.Repairing = nil
-				if self:IsValid() then 
-					timer.Stop(activator:UniqueID().."_repair_"..tostring(self))
-				end
-			else
-				activator:ChatPrint("This battery is currently being repaired.")
-			end
-		else
 					
-			if self.entOwner == "none" then
-				self.entOwner = activator:Nick()
-			end
-			
-			activator:ChatPrint("Charge Left:  "..tostring(math.Round(self.UnitLeft/100)).."%")
+		if self.entOwner == "none" then
+			self.entOwner = activator:Nick()
 		end
+		
+		local UnitLeft = tonumber(self.UnitLeft)
+		if not UnitLeft then 
+			UnitLeft = 0
+			self.UnitLeft = 0
+		end
+		
+		activator:ChatPrint("Charge Left:  "..tostring(math.Round(UnitLeft/100)).."%")
 	end
 end
 
 function ENT:OnTakeDamage(dmg)
-	--[[self:SetHealth(self:Health() - dmg:GetDamage())
-	if self:Health() < 200 then self.BlockF2 = true end
-	if self:Health() <= 0 then --run on death
-		self:SetHealth( 0 )
-		
-		local ownerEnt = self:GetNWEntity( "ownerent" )
-		if ownerEnt then
-			PNRP.TakeFromWorldCache( ownerEnt, "tool_solar" )
-		end
-		self:EmitSound("physics/glass/glass_sheet_break1.wav", 100, 100)
-		self:Remove()
-	end]]--
+
 end
 
 function ENT.Repair()
-	local ply = net.ReadEntity()
-	local ent = net.ReadEntity()
-	
-	ply:SelectWeapon("gmod_rp_hands")
-	ply:SetMoveType(MOVETYPE_NONE)
-	ent.Repairing = ply
-	
-	net.Start("startProgressBar")
-		net.WriteDouble(200 - ent:Health())
-	net.Send(ply)
-	
-	timer.Create( ply:UniqueID().."_repair_"..tostring(ent), 0.25, (200 - ent:Health())*4, function()
-		ply:SelectWeapon("gmod_rp_hands")
-		if (not ent:IsValid()) or (not ply:Alive()) then
-			ply:SetMoveType(MOVETYPE_WALK)
-			net.Start("stopProgressBar")
-			net.Send(ply)
-			ent.Repairing = nil
-			if ent:IsValid() then 
-				timer.Stop(ply:UniqueID().."_repair_"..tostring(ent))
-			end
-			return
-		end
-	end )
+
 end
 net.Receive( "repbatgen_stream", ENT.Repair )
 
-function ENT:Think()
-	if self.Repairing then
-		self:SetHealth(self:Health() + 1)
-		
-		if self:Health() >= 200 then
-			self.Repairing:ChatPrint("You finish repairing the generator.")
-			
-			self.Repairing:SetMoveType(MOVETYPE_WALK)
-			net.Start("stopProgressBar")
-			net.Send(self.Repairing)
-			if self:IsValid() then 
-				timer.Stop(self.Repairing:UniqueID().."_repair_"..tostring(self))
-			end
-			self.Repairing = nil
-			self.BlockF2 = false
-		end
-	end
-	
+function ENT:Think()	
 	if IsValid(self.NetworkContainer) and self.PowerLevel > 0 then
 		self.UnitLeft = self.UnitLeft - math.ceil(self.PowerLevel / 5)
 	end
@@ -144,6 +82,7 @@ function ENT:Think()
 end
 
 function ENT:OnRemove()
+	PNRP.SaveState(nil, self)
 	self:PowerUnLink()
 end
 
