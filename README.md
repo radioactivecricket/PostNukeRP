@@ -3,11 +3,6 @@
 
 PostNukeRP is a gamemode for Garry's Mod
 
-### Please Read
-**The current version has not been updated yet. This version is currently unstable due to Garry breaking Network Variables.**
-**This version has also not been patched with fixes for exploits yet.**
-**Will post once we have uploaded our development branch.**
-
 Official PostNukeRP Live Server: postnukerp.net:27015 
 
 **Links:**
