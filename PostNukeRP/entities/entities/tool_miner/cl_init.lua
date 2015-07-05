@@ -15,7 +15,7 @@ function MinerMenu( )
 	local Allowed = "true"
 	local entMSG = "none"
 	ply = LocalPlayer( )
-	local owner = minerEnt:GetNWString( "Owner", "None" )
+	local owner = minerEnt:GetNetVar( "Owner", "None" )
 	--Verifies the miners state
 	if minerPower == 0 then
 		minerState = "off"

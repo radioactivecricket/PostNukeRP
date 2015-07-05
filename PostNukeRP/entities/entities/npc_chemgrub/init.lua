@@ -61,9 +61,9 @@ function ENT:OnTakeDamage(dmg)
 		--Remove Grub from World Cache
 		local MyPlayer = nil
 	
-		if self:GetNetworkedString("Owner", "none") ~= "World" and self:GetNetworkedString("Owner", "none") ~= "none" then
+		if self:GetNetVar("Owner", "none") ~= "World" and self:GetNetVar("Owner", "none") ~= "none" then
 			for k, v in pairs(player.GetAll()) do
-				if v:Nick() == self:GetNetworkedString("Owner", "none") then
+				if v:Nick() == self:GetNetVar("Owner", "none") then
 					MyPlayer = v
 					break
 				end
@@ -90,7 +90,7 @@ function ENT:SelectSchedule()
 end
 
 function ENT:GrubUpdate()
-	local MyPlayer = self:GetNWEntity( "ownerent", nil )
+	local MyPlayer = self:GetNetVar( "ownerent", nil )
 	
 	if self.mother and MyPlayer:IsValid() and self.FoodLevel >= 5 and self.partner.FoodLevel >= 5 then
 		self.breedLevel = self.breedLevel + 1
@@ -214,7 +214,7 @@ end
 function ENT:AcceptInput( name, activator, caller )
 	if name == "Use" and IsValid(activator) and activator:IsPlayer() then
 		if activator:KeyPressed( IN_USE ) then
-			if IsValid(self:GetNWEntity( "ownerent", nil )) and self:GetNWEntity( "ownerent", nil ) == activator then
+			if IsValid(self:GetNetVar( "ownerent", nil )) and self:GetNetVar( "ownerent", nil ) == activator then
 				if activator:Team() == TEAM_SCIENCE then
 					if IsValid(activator.grubSelect) and self.Entity ~= activator.grubSelect then
 						if IsValid(self.partner) then

@@ -56,36 +56,13 @@ function ENT:Use( activator, caller )
 				activator:ChatPrint("This generator is currently being repaired.")
 			end
 		else
-			if activator:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+			if activator:IsAdmin() and getServerSetting("adminCreateAll") == 1 then
 				
 			end
 					
 			if self.entOwner == "none" then
 				self.entOwner = activator:Nick()
 			end
-			
-			-- if self.Status == "off" then
-				-- self.Status = "on"
-				-- self.PowerLevel = 500
-				
-				-- self:GetPhysicsObject():EnableMotion(false)
-				-- self.moveActive = false
-				-- self:UpdatePower()
-			-- elseif self.Status == "on" then
-				-- self.Status = "off"
-				-- self.PowerLevel = 0
-				
-				-- --self:GetPhysicsObject():EnableMotion(true)
-				-- self.moveActive = true
-				-- self:UpdatePower()
-			-- else
-				
-			-- end
-			
-			-- activator:ChatPrint("You switch the power to "..self.Status)
-			
-			-- local actInv = PNRP.Inventory( activator )
-			-- local availFuel = actInv["fuel_gas"]
 
 			net.Start("solgen_menu")
 				net.WriteDouble(self:Health())
@@ -108,22 +85,28 @@ util.AddNetworkString("solgen_menu")
 
 function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
-	if self:Health() < 200 then self.BlockF2 = true end
+--	if self:Health() < 200 then self.BlockF2 = true end
 	if self:Health() <= 0 then --run on death
 		self:SetHealth( 0 )
 		
-		local ownerEnt = self:GetNWEntity( "ownerent" )
+		local ownerEnt = self:GetNetVar( "ownerent" )
 		if ownerEnt then
 			PNRP.TakeFromWorldCache( ownerEnt, "tool_solar" )
 		end
 		self:EmitSound("physics/glass/glass_sheet_break1.wav", 100, 100)
 		self:Remove()
+		
+		PNRP.DelPersistItem(self.iid)
+	else
+		PNRP.SaveState(nil, self, "world")
 	end
+	
 end 
 
 function ENT:TogglePower()
 	if not self.Status then
-		if self:IsOutside() then
+		local radTimer = timer.Exists( "pnrp_ev_radstorm_damage" )
+		if self:IsOutside() and (not radTimer) then
 			self.Status = true
 			self.PowerLevel = 75
 			
@@ -136,6 +119,8 @@ function ENT:TogglePower()
 			end
 			self.genSound:Play()
 			self.genSound:ChangeVolume(0.18, 0)
+		else
+			return false
 		end
 	elseif self.Status then
 		self.Status = false
@@ -149,19 +134,27 @@ function ENT:TogglePower()
 		end
 		self.genSound:Stop()
 	end
+	
+	return true
 end
 
 function ENT.TogglePowerNet()
 	local ply = net.ReadEntity()
 	local ent = net.ReadEntity()
 	
-	if not ent.Status then
-		ply:ChatPrint("You switch the power on.")
-	elseif ent.Status then
-		ply:ChatPrint("You switch the power off.")
+	local togglePower = ent:TogglePower()
+	
+	if togglePower then
+		if not ent.Status then
+			ply:ChatPrint("You switch the power off.")
+		elseif ent.Status then
+			ply:ChatPrint("You switch the power on.")
+		end
+	else
+		ply:ChatPrint("Unable to toggle power")
 	end
 	
-	ent:TogglePower()
+	
 end
 net.Receive( "togglesolgen_stream", ENT.TogglePowerNet )
 
@@ -169,7 +162,7 @@ function ENT.Repair()
 	local ply = net.ReadEntity()
 	local ent = net.ReadEntity()
 	
-	ply:SelectWeapon("gmod_rp_hands")
+	ply:SelectWeapon("weapon_simplekeys")
 	ply:SetMoveType(MOVETYPE_NONE)
 	ent.Repairing = ply
 	
@@ -178,7 +171,7 @@ function ENT.Repair()
 	net.Send(ply)
 	
 	timer.Create( ply:UniqueID().."_repair_"..tostring(ent), 0.25, (200 - ent:Health())*4, function()
-		ply:SelectWeapon("gmod_rp_hands")
+		ply:SelectWeapon("weapon_simplekeys")
 		if (not ent:IsValid()) or (not ply:Alive()) then
 			ply:SetMoveType(MOVETYPE_WALK)
 			net.Start("stopProgressBar")
@@ -211,7 +204,9 @@ function ENT:Think()
 		end
 	end
 	
-	if self.Status and (not self:IsOutside()) then
+	local radTimer = timer.Exists( "pnrp_ev_radstorm_damage" )
+	
+	if (self.Status and (not self:IsOutside())) or (self.Status and radTimer) then
 		self:TogglePower()
 	end
 	self.Entity:NextThink(CurTime() + 1)

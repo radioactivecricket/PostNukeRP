@@ -64,7 +64,7 @@ function ENT:Use( activator, caller )
 				activator:ChatPrint("This generator is currently being repaired.")
 			end
 		else
-			if activator:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+			if activator:IsAdmin() and getServerSetting("adminCreateAll") == 1 then
 				if activator:Team() ~= TEAM_SCIENCE then
 					activator:ChatPrint("Admin overide.")
 				end
@@ -78,26 +78,6 @@ function ENT:Use( activator, caller )
 			if self.entOwner == "none" then
 				self.entOwner = activator:Nick()
 			end
-			
-			-- if self.Status == "off" then
-				-- self.Status = "on"
-				-- self.PowerLevel = 500
-				
-				-- self:GetPhysicsObject():EnableMotion(false)
-				-- self.moveActive = false
-				-- self:UpdatePower()
-			-- elseif self.Status == "on" then
-				-- self.Status = "off"
-				-- self.PowerLevel = 0
-				
-				-- --self:GetPhysicsObject():EnableMotion(true)
-				-- self.moveActive = true
-				-- self:UpdatePower()
-			-- else
-				
-			-- end
-			
-			-- activator:ChatPrint("You switch the power to "..self.Status)
 			
 			local actInv = PNRP.Inventory( activator )
 			local availFuel = actInv["fuel_h2"]
@@ -127,7 +107,7 @@ util.AddNetworkString("fusgen_menu")
 
 function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
-	if self:Health() < 200 then self.BlockF2 = true end
+--	if self:Health() < 200 then self.BlockF2 = true end
 	if self:Health() <= 0 then --run on death
 		self:SetHealth( 0 )
 		
@@ -165,6 +145,8 @@ function ENT:OnTakeDamage(dmg)
 			end )
 		end
 	end
+	
+	PNRP.SaveState(nil, self, "world")
 end 
 
 function ENT:MeltDown()
@@ -219,7 +201,7 @@ function ENT:MeltDown()
 		util.BlastDamage( self, self, self:GetPos(), 1000, 1000 )
 		
 		self:EmitSound( "weapons/physcannon/energy_sing_explosion2.wav", 100, 100)
-		local ownerEnt = self:GetNWEntity( "ownerent" )
+		local ownerEnt = self:GetNetVar( "ownerent" )
 		if ownerEnt then
 			PNRP.TakeFromWorldCache( ownerEnt, "tool_fusion" )
 		end
@@ -273,6 +255,7 @@ function ENT:MeltDown()
 			end
 		end )
 		self:Remove()
+		PNRP.DelPersistItem(self.iid)
 	end )
 end
 
@@ -346,7 +329,7 @@ function ENT.Repair()
 	local ply = net.ReadEntity()
 	local ent = net.ReadEntity()
 	
-	ply:SelectWeapon("gmod_rp_hands")
+	ply:SelectWeapon("weapon_simplekeys")
 	ply:SetMoveType(MOVETYPE_NONE)
 	ent.Repairing = ply
 	
@@ -355,7 +338,7 @@ function ENT.Repair()
 	net.Send(ply)
 	
 	timer.Create( ply:UniqueID().."_repair_"..tostring(ent), 0.25, ((200 - ent:Health())*4)/2, function()
-		ply:SelectWeapon("gmod_rp_hands")
+		ply:SelectWeapon("weapon_simplekeys")
 		if (not ent:IsValid()) or (not ply:Alive()) then
 			ply:SetMoveType(MOVETYPE_WALK)
 			net.Start("stopProgressBar")
@@ -363,6 +346,7 @@ function ENT.Repair()
 			ent.Repairing = nil
 			if ent:IsValid() then 
 				timer.Stop(ply:UniqueID().."_repair_"..tostring(ent))
+				PNRP.SaveState(nil, ent, "world")
 			end
 			return
 		end
@@ -388,7 +372,8 @@ function ENT.AddFuel()
 	ent.FuelLevel = ent.FuelLevel + amnt
 	PNRP.TakeFromInventoryBulk(ply, "fuel_h2", amnt)
 	
-	ply:ChatPrint("You have added "..tostring(amnt).." wafers of fuel.")
+	PNRP.SaveState(nil, ent, "world")
+	ply:ChatPrint("You have added "..tostring(amnt).." units of fuel.")
 end
 net.Receive( "loadfusgen_stream", ENT.AddFuel )
 
@@ -404,7 +389,8 @@ function ENT.RemFuel()
 	ent.FuelLevel = ent.FuelLevel - amnt
 	ply:AddToInventory("fuel_h2", amnt)
 	
-	ply:ChatPrint("You have removed "..tostring(amnt).." wafers of fuel.")
+	PNRP.SaveState(nil, ent, "world")
+	ply:ChatPrint("You have removed "..tostring(amnt).." units of fuel.")
 end
 net.Receive( "unloadfusgen_stream", ENT.RemFuel )
 
@@ -421,6 +407,7 @@ function ENT:Think()
 			net.Send(self.Repairing)
 			if self:IsValid() then 
 				timer.Stop(self.Repairing:UniqueID().."_repair_"..tostring(self))
+				PNRP.SaveState(nil, self, "world")
 			end
 			self.Repairing = nil
 			self.BlockF2 = false
@@ -435,6 +422,8 @@ function ENT:Think()
 				self.FuelLevel = self.FuelLevel - 1
 				self.UnitLeft = 60
 			end
+			
+			PNRP.SaveState(nil, self, "world")
 		else
 			self.UnitLeft = self.UnitLeft - 1
 		end

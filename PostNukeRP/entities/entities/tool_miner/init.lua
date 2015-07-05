@@ -37,7 +37,7 @@ function ENT:Initialize()
 	self.ThmpAmb = CreateSound(self.Entity, Thumper_Sound )
 	
 	self.PowerUsage = -100
-	self.Entity:SetNWString("PowerUsage", self.PowerUsage)
+	self.Entity:SetNetVar("PowerUsage", self.PowerUsage)
 end
 
 function ENT:ThumperEnable()
@@ -54,11 +54,6 @@ function ENT:ThumperEnable()
 	--Keeps miner from beeing moved.
 	self:GetPhysicsObject():EnableMotion(false)
 	self.moveActive = false
---	for k, v in pairs( ents.GetAll() ) do
---		if v:IsWorld() then
---			constraint.Weld(self.Entity, v, 0, 0, 0, true)
---		end
---	end
 	
 	self.playbackRate = 0.1
 	
@@ -80,16 +75,9 @@ function ENT:ThumperEnable()
 	local MyPlayer = nil
 	local MySkill = 0
 	
-	if self.Entity:GetNetworkedString("Owner", "none") ~= "World" and self.Entity:GetNetworkedString("Owner", "none") ~= "none" then
-		MyPlayer = self.Entity:GetNetworkedString("ownerent", nil)
+	if self.Entity:GetNetVar("Owner", "none") ~= "World" and self.Entity:GetNetVar("Owner", "none") ~= "none" then
+		MyPlayer = self.Entity:GetNetVar("ownerent", nil)
 		MySkill = MyPlayer:GetSkill("Mining")
-		-- for k, v in pairs(player.GetAll()) do
-			-- if v:GetNetworkedString( "UID" , "none" ) == self.Entity:GetNetworkedString("Owner_UID", "none") then
-				-- MyPlayer = v
-				-- MySkill = MyPlayer:GetSkill("Mining")
-				-- break
-			-- end
-		-- end
 	end
 	
 	-- The mining code
@@ -135,12 +123,7 @@ end
 
 function ENT:Use( activator, caller )
 	if activator:KeyPressed( IN_USE ) then
---		if self.Power == 0 then
---			self.Entity:ThumperEnable()
---		elseif self.Power == 1 then
---			self.Entity:ThumperDisable()
---		end
-		if activator:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if activator:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			if activator:Team() ~= TEAM_SCAVENGER then
 				activator:ChatPrint("Admin override.")
 			end
@@ -167,12 +150,14 @@ util.AddNetworkString("miner_menu")
 
 function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
+
 	if self:Health() <= 0 then --run on death
---		self:Remove()
 		self:SetHealth( 0 )
 
 		self.Entity:ThumperDisable()
 	end
+	
+	PNRP.SaveState(nil, self, "world")
 end 
 
 function DoOnline( )
@@ -218,7 +203,7 @@ function DoRepair( )
 		if ent:Health() > 200 then ent:SetHealth( 200 ) end
 		
 		ply:ChatPrint("Repair complete!")
-		
+		PNRP.SaveState(ply, ent, "world")
 	end )
 end
 --datastream.Hook( "miner_repair_stream", DoRepair )

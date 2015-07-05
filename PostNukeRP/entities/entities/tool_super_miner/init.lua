@@ -38,7 +38,7 @@ function ENT:Initialize()
 	self.ThmpAmb = CreateSound(self.Entity, Thumper_Sound )
 	
 	self.PowerUsage = -150
-	self.Entity:SetNWString("PowerUsage", self.PowerUsage)
+	self.Entity:SetNetVar("PowerUsage", self.PowerUsage)
 end
 
 function ENT:ThumperEnable()
@@ -69,12 +69,6 @@ function ENT:ThumperEnable()
 	self.ladderEnt:Spawn()
 	self.ladderEnt:Activate()
 	
---	for k, v in pairs( ents.GetAll() ) do
---		if v:IsWorld() then
---			constraint.Weld(self.Entity, v, 0, 0, 0, true)
---		end
---	end
-	
 	self.playbackRate = 0.1
 	
 	self.Entity:SetPlaybackRate(self.playbackRate)
@@ -95,15 +89,9 @@ function ENT:ThumperEnable()
 	local MyPlayer = nil
 	local MySkill = 0
 	
-	if self.Entity:GetNetworkedString("Owner", "none") ~= "World" and self.Entity:GetNetworkedString("Owner", "none") ~= "none" then
-		-- for k, v in pairs(player.GetAll()) do
-			-- if v:Nick() == self.Entity:GetNetworkedString("Owner", "none") then
-				-- MyPlayer = v
-				-- MySkill = MyPlayer:GetSkill("Mining")
-				-- break
-			-- end
-		-- end
-		MyPlayer = self.Entity:GetNWEntity( "ownerent", nil )
+	if self.Entity:GetNetVar("Owner", "none") ~= "World" and self.Entity:GetNetVar("Owner", "none") ~= "none" then
+
+		MyPlayer = self.Entity:GetNetVar( "ownerent", nil )
 		MySkill = MyPlayer:GetSkill("Mining")
 	end
 	
@@ -155,12 +143,7 @@ end
 
 function ENT:Use( activator, caller )
 	if activator:KeyPressed( IN_USE ) then
---		if self.Power == 0 then
---			self.Entity:ThumperEnable()
---		elseif self.Power == 1 then
---			self.Entity:ThumperDisable()
---		end
-		if activator:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if activator:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			if activator:Team() ~= TEAM_SCAVENGER then
 				activator:ChatPrint("Admin override.")
 			end
@@ -188,11 +171,12 @@ util.AddNetworkString("super_miner_menu")
 function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
 	if self:Health() <= 0 then --run on death
---		self:Remove()
 		self:SetHealth( 0 )
 
 		self.Entity:ThumperDisable()
 	end
+	
+	PNRP.SaveState(nil, self, "world")
 end 
 
 function DoOnline( )

@@ -31,10 +31,10 @@ function ITEM.Create( ply, class, pos )
 	ent:Activate()
 	
 	PNRP.SetOwner(ply, ent)
-	ent:SetNetworkedString("pid", ply.pid)
-	ent:SetNetworkedString("name", ply:Nick().."'s Radio")
-	ent.name = ent.Entity:GetNWString("name", "")
-	ent.text = ent.Entity:GetNWString("text", "")
+	ent:SetNetVar("pid", ply.pid)
+	ent:SetNetVar("name", ply:Nick().."'s Radio")
+	ent.name = ent.Entity:GetNetVar("name", "")
+	ent.text = ent.Entity:GetNetVar("text", "")
 	
 	ent:GetPhysicsObject():Wake()
 	

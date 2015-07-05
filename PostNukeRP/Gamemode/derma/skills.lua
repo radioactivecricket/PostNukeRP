@@ -65,7 +65,7 @@ function GM.skills_window( ply )
 			Skills_DPanel.Team:SetContentAlignment( 5 )
 			
 			local MemberOf
-			MemberOf = ply:GetNWString("community", "N/A")
+			MemberOf = ply:GetNetVar("community", "N/A")
 			
 			Skills_DPanel.Community = vgui.Create("DLabel", Skills_DPanel)
 			Skills_DPanel.Community:SetPos(90, 40)
@@ -263,7 +263,7 @@ function SKlevel_Bar(Skill, CurLvl, XLoc, YLoc, parent_frame)
 
 	local SkillBar = vgui.Create( "DPanel", parent_frame )
 		SkillBar:SetPos( XLoc, YLoc )
-		SkillBar:SetSize( parent_frame:GetWide() - 20, 20 )
+		SkillBar:SetSize( parent_frame:GetWide() - 25, 20 )
 		SkillBar:SetToolTip( PNRP.Skills[Skill].desc )
 		SkillBar.Paint = function()
 			surface.SetDrawColor( 50, 50, 50, 255 )			

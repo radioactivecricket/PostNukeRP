@@ -16,7 +16,8 @@ ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_jeep_old"
 ITEM.Model = "models/buggy.mdl"
 ITEM.Script = "scripts/vehicles/jeep_test.txt"
-ITEM.Weight = 300
+ITEM.Weight = 40
+ITEM.Capacity = 300
 
 function ITEM.ToolCheck( p )
 	return {["intm_engine"]=1}

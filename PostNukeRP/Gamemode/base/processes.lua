@@ -340,25 +340,25 @@ function PROCESS:OnStop()
 				self.Data.Create(self.Owner, self.Data.Ent, pos)
 			elseif self.Data.Type == "weapon" then
 				local ent = ents.Create("ent_weapon")
-				ent:SetNetworkedInt("Ammo", self.Data.Energy)
-				ent:SetNWString("WepClass", self.Data.Ent)
+				ent:SetNetVar("Ammo", self.Data.Energy)
+				ent:SetNetVar("WepClass", self.Data.Ent)
 				ent:SetModel(self.Data.Model)
 				ent:SetAngles(Angle(0,0,0))
 				ent:SetPos(pos)
 				ent:Spawn()
-				ent:SetNetworkedString("Owner", "World")
+				ent:SetNetVar("Owner", "World")
 			else
 				local ent = ents.Create(self.Data.Ent)
 				if self.Data.Type == "ammo" or self.Data.Type == "weapon" then
 			
-					ent:SetNetworkedString("Ammo", tostring(self.Data.Energy))
+					ent:SetNetVar("Ammo", tostring(self.Data.Energy))
 
 				end
 				ent:SetModel(self.Data.Model)
 				ent:SetAngles(Angle(0,0,0))
 				ent:SetPos(pos)
 				ent:Spawn()
-				ent:SetNetworkedString("Owner", "World")
+				ent:SetNetVar("Owner", "World")
 --				PNRP.AddWorldCache( self.Owner, self.Data.ID )
 			end
 			
@@ -448,7 +448,7 @@ function PROCESS:OnStop()
 						duplicator.StoreEntityModifier( ent, "VehicleMemDupe", vehicle.Members );
 					end
 					
-					ent:SetNetworkedString("Owner", "World")
+					ent:SetNetVar("Owner", "World")
 				end
 			else
 			
@@ -461,7 +461,7 @@ function PROCESS:OnStop()
 				ent:SetKeyValue( "model", self.Data.Model )
 				ent:Spawn()
 				ent:Activate()
-				ent:SetNetworkedString("Owner", "World")
+				ent:SetNetVar("Owner", "World")
 --				if self.Data.Ent == "weapon_seat" then
 --					ent:SetNetworkedString("Type", "1")
 --				end

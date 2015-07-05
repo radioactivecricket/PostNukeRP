@@ -1,6 +1,6 @@
 include('shared.lua')
 
-SWEP.PrintName			= "Keys"			
+SWEP.PrintName			= "Hands/Keys"			
 SWEP.Slot				= 1
 SWEP.SlotPos			= 1
 SWEP.DrawAmmo			= false

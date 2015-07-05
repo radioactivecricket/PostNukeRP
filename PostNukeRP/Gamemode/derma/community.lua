@@ -324,7 +324,6 @@ function GM.community_window( )
 		self:Remove()          
 	end 
 end
---datastream.Hook( "pnrp_OpenCommunityWindow", GM.community_window )
 net.Receive( "pnrp_OpenCommunityWindow", GM.community_window )
 
 local memberSheet
@@ -342,14 +341,6 @@ function communityTabWindow(communityName, fullComTable, tab)
 --	local communityRank = -1
 	
 	if not communityRank then communityRank = -1 end
-	
---	if communityName != "none" then
---		for i, u in pairs(communityUsers) do
---			if plyPID == i then
---				communityRank = u["rank"]
---			end
---		end
---	end
 
 	community_TabSheet = vgui.Create( "DPropertySheet" )
 		community_TabSheet:SetParent( community_frame )
@@ -515,7 +506,7 @@ function communityTabWindow(communityName, fullComTable, tab)
 				
 				for _, iplayer in pairs(player.GetAll()) do
 					local getCommunity
-					getCommunity = iplayer:GetNWString("community", "N/A")
+					getCommunity = iplayer:GetNetVar("community", "N/A")
 					if getCommunity == "N/A" then
 						local iPlayerPanel = vgui.Create("DPanel")
 						iPlayerPanel:SetTall(50)
@@ -1409,7 +1400,7 @@ net.Receive("C_SND_CommSelResult", sCommDispComm)
 
 function war_ally_BTN_ENDS(enable, ocid)
 	local ply = LocalPlayer()
-	local cid = tonumber(ply:GetNWInt("cid", -1))
+	local cid = tonumber(ply:GetNetVar("cid", -1))
 	
 	if cid == nil then cid = -1 end
 	if ocid == nil then ocid = -1 end

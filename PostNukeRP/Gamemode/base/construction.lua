@@ -13,7 +13,7 @@ function PNRP.SpawnBulkCrate( )
 			local allowed = false
 			local enough = false
 			--Admin overide
-			if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then allowed = true 
+			if ply:IsAdmin() and getServerSetting("adminCreateAll") == 1 then allowed = true 
 			else allowed = false end
 			--If Right Class
 			if team.GetName(ply:Team()) == item.ClassSpawn or item.ClassSpawn == "All" or allowed == true then
@@ -35,7 +35,7 @@ function PNRP.SpawnBulkCrate( )
 				local totalChems = item.Chemicals * Count
 				if ply:GetResource("Scrap") >= totalScrap and ply:GetResource("Chemicals") >= totalChems and ply:GetResource("Small_Parts") >= totalSmall then 
 					enough = true
-				elseif ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+				elseif ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then 
 					enough = true
 				else
 					enough = false
@@ -47,7 +47,7 @@ function PNRP.SpawnBulkCrate( )
 						return
 					end
 					
-					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then
+					if ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then
 						--Admin No cost
 					else
 						local toolcheck = item.ToolCheck( ply )
@@ -88,7 +88,7 @@ function PNRP.SpawnBulkCrate( )
 						net.WriteDouble(tonumber(totalTime))
 					net.Send(ply)
 					
-					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+					if ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then 
 						ply:ChatPrint("You have spawned this using admin no-cost...")
 					else
 						ply:DecResource("Scrap", totalScrap)
@@ -103,8 +103,8 @@ function PNRP.SpawnBulkCrate( )
 						local ent = ents.Create("msc_itembox")
 						--Spawns the entity
 						ent:SetPos(pos)
-						ent:SetNWString("itemtype", item.ID)
-						ent:SetNWInt("amount", Count)
+						ent:SetNetVar("itemtype", item.ID)
+						ent:SetNetVar("amount", Count)
 						--ent:SetNWString("Owner", ply:Nick())
 						--ent:SetNWString("Owner_UID", plUID)
 						--ent:SetNWEntity( "ownerent", ply )
@@ -143,8 +143,8 @@ function PNRP.DropBulkCrate( )
 				local ent = ents.Create("msc_itembox")
 				--Spawns the entity
 				ent:SetPos(pos)
-				ent:SetNWString("itemtype", item.ID)
-				ent:SetNWInt("amount", Count)
+				ent:SetNetVar("itemtype", item.ID)
+				ent:SetNetVar("amount", Count)
 				--ent:SetNWString("Owner", ply:Nick())
 				--ent:SetNWString("Owner_UID", plUID)
 				--ent:SetNWEntity( "ownerent", ply )
@@ -166,8 +166,8 @@ function PNRP.DropCrate( ItemID, Count, pos )
 			local ent = ents.Create("msc_itembox")
 			--Spawns the entity
 			ent:SetPos(pos)
-			ent:SetNWString("itemtype", item.ID)
-			ent:SetNWInt("amount", Count)
+			ent:SetNetVar("itemtype", item.ID)
+			ent:SetNetVar("amount", Count)
 			ent:Spawn()
 		end
 	end
@@ -196,8 +196,8 @@ function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
 				end
 				--Spawns the entity
 				ent:SetPos(pos)
-				ent:SetNWString("itemtype", item.ID)
-				ent:SetNWInt("amount", Count)
+				ent:SetNetVar("itemtype", item.ID)
+				ent:SetNetVar("amount", Count)
 				--ent:SetNWString("Owner", ply:Nick())
 				PNRP.SetOwner(ply, ent)
 				ent:Spawn()
@@ -218,7 +218,7 @@ function GM.BuildItem( ply, command, arg )
 			local allowed = false
 			local enough = false
 			
-			if ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then allowed = true 
+			if ply:IsAdmin() and getServerSetting("adminCreateAll") == 1 then allowed = true 
 			else allowed = false end
 			
 			if team.GetName(ply:Team()) == item.ClassSpawn or item.ClassSpawn == "All" or allowed == true then
@@ -237,7 +237,7 @@ function GM.BuildItem( ply, command, arg )
 				--Verifies Player has the needed Materials to build the item
 				if ply:GetResource("Scrap") >= item.Scrap and ply:GetResource("Chemicals") >= item.Chemicals and ply:GetResource("Small_Parts") >= item.SmallParts then 
 					enough = true
-				elseif ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+				elseif ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then 
 					enough = true
 				else
 					enough = false
@@ -248,7 +248,7 @@ function GM.BuildItem( ply, command, arg )
 					
 					ply:ChatPrint("Creating "..item.Name)
 					
-					if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then
+					if ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then
 						--Admin No cost
 					else
 						local toolcheck = item.ToolCheck( ply )
@@ -286,27 +286,27 @@ function GM.BuildItem( ply, command, arg )
 					local mychems = item.Chemicals
 					local myenergy = item.Energy
 					timer.Simple( 2, function() 
-							if ply and IsValid(ply) and ply:Alive() then
-								ply:Freeze(false)
-								net.Start("stopProgressBar")
-								net.Send(ply)
-								if item.Type == "food" then
-									ply:EmitSound(Sound("ambient/materials/dinnerplates5.wav"))
-								else
-									ply:EmitSound(Sound("items/ammo_pickup.wav"))
-								end
-								ply:DecResource("Scrap", myscrap)
-								ply:DecResource("Small_Parts", mysmall)
-								ply:DecResource("Chemicals", mychems)
-								
-								local tr = ply:TraceFromEyes(200)
-								local myEnt = item.Create(ply, item.Ent, tr.HitPos + Vector(0,0,20))
-								
-								if item.Type == "weapon" then
-									myEnt:SetNWInt("Ammo", myenergy)
-								end
+						if ply and IsValid(ply) and ply:Alive() then
+							ply:Freeze(false)
+							net.Start("stopProgressBar")
+							net.Send(ply)
+							if item.Type == "food" then
+								ply:EmitSound(Sound("ambient/materials/dinnerplates5.wav"))
+							else
+								ply:EmitSound(Sound("items/ammo_pickup.wav"))
 							end
-						end )
+							ply:DecResource("Scrap", myscrap)
+							ply:DecResource("Small_Parts", mysmall)
+							ply:DecResource("Chemicals", mychems)
+							
+							local tr = ply:TraceFromEyes(200)
+							local myEnt = item.Create(ply, item.Ent, tr.HitPos + Vector(0,0,20))
+							
+							if item.Type == "weapon" then
+								myEnt:SetNetVar("Ammo", myenergy)
+							end
+						end
+					end )
 				else
 					--If Not enough Materials
 					ply:ChatPrint("Insufficient Materials!")
@@ -378,17 +378,30 @@ function PNRP.Salvage( ply, command, arg )
 	local plUID = PNRP:GetUID( ply )
 	local count = 1
 	local myClass
+	local iid = ""
 	
 	if tostring(command) == "pnrp_dosalvage"  or tostring(command) == "pnrp_docarsalvage" then
 		local split = string.Explode(",",arg[1])
 		ItemID = split[1]
 		count = math.Round(tonumber(split[2]))
 		allowed = true
+	elseif tostring(command) == "pnrp_dopersalvage"  then
+		iid = arg[1]
+		query = "SELECT * FROM inventory_table WHERE iid="..tostring(iid)
+		result = querySQL(query)
+		
+		if not result then return end
+		Msg("PerSalvage: "..tostring(result[1]["pid"]).." = "..tostring(ply.pid).."\n")
+		if tostring(result[1]["pid"]) == tostring(ply.pid) then
+			allowed = true
+			ItemID = result[1]["itemid"]
+			count = 1
+		end
 	else
 		local tr = ply:TraceFromEyes(400)
 		ent = tr.Entity
 
-		if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
+		if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == plUID then
 			allowed = true
 		else
 			allowed = false
@@ -422,16 +435,17 @@ function PNRP.Salvage( ply, command, arg )
 					ply:ChatPrint("Item not found!")
 					return
 				end
-			else
-				if tostring(command) == "pnrp_docarsalvage" then
-					local Check = PNRP.TakeFromCarInventoryBulk( ply, ItemID, count )
-					if !Check then
-						ply:ChatPrint("Item not found!")
-						return
-					end
-				else
-					ent:Remove()
+			elseif tostring(command) == "pnrp_docarsalvage" then
+				local Check = PNRP.TakeFromCarInventoryBulk( ply, ItemID, count )
+				if !Check then
+					ply:ChatPrint("Item not found!")
+					return
 				end
+			elseif tostring(command) == "pnrp_dopersalvage"  then
+				PNRP.DelPersistItem(iid)
+			else
+				if ent.iid then PNRP.DelPersistItem(ent.iid) end
+				ent:Remove()
 			end
 			
 			if team.GetName(ply:Team()) == "Wastelander" or team.GetName(ply:Team()) == "Scavenger" then
@@ -465,6 +479,6 @@ end
 concommand.Add( "pnrp_salvage", PNRP.Salvage)
 concommand.Add( "pnrp_dosalvage", PNRP.Salvage)
 concommand.Add( "pnrp_docarsalvage", PNRP.Salvage)
-
+concommand.Add( "pnrp_dopersalvage", PNRP.Salvage)
 
 --EOF

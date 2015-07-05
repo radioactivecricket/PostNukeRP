@@ -31,6 +31,7 @@ function ITEM.Create( ply, class, pos )
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetModel(ITEM.Model)
 	ent:SetPos(pos)
+	ent.crafted = true
 	ent:Spawn()
 end
 

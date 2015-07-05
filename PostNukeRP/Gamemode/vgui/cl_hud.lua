@@ -137,7 +137,7 @@ function HUD_Default()
 	PNRP_HUD:PaintRoundedPanel( 6, marginX, marginY, width, height, HUD_col.bg )
 	
 	--Gets the players Max HP
-	local MaxHealth = ply:GetNetworkedInt( "MaxHealth" ) 
+	local MaxHealth = ply:GetNetVar( "MaxHealth", 100 ) 
 	
 	local stat = {
 		HP = string.format( "Health: %iHP", ply:Health( ) ),	-- Heath Text
@@ -377,7 +377,7 @@ function DrawInfoHUD( HUD )
 	local smallparts = GetResource("Small_Parts")
 	local chems = GetResource("Chemicals")
 	--Gets Player End %
-	local endur = ply:GetNetworkedInt("Endurance")
+	local endur = Endurance
 	local endPerc = endur / 100
 	
 	--Top bar
@@ -447,7 +447,13 @@ function DrawInfoHUD( HUD )
 	surface.SetFont( HUD.info_font )
 	surface.SetTextPos( hudPos, 3 )
 	
-	local OwnerNick = ent:GetNWString( "Owner", "None" )
+	local OwnerNick = " "
+	if IsValid(ent) then
+		OwnerNick = ent:GetNetVar( "Owner", "None" )
+	else
+		OwnerNick = " "
+	end
+	
 	surface.DrawText( "Owner:  "..OwnerNick)
 	
 	--Quick Key Referance (Bottom Bar)
@@ -620,7 +626,7 @@ function PNRP_HUD:showGas(x,y,h,w,hudVar,colors)
 		if !gas then gas = 0 end
 		if !tank then tank = 0 end
 		
-		local showHUD = car:GetNetworkedString( "hud" , true )
+		local showHUD = car:GetNetVar( "hud" , true )
 		if showHUD then
 			local gasW = w - 24
 			local gX = x + 12

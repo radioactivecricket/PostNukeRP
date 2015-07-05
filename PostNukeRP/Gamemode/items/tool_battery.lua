@@ -17,6 +17,18 @@ ITEM.Ent = "tool_battery"
 ITEM.Model = "models/items/car_battery01.mdl"
 ITEM.Script = ""
 ITEM.Weight = 3
+ITEM.SaveState = true
+
+function ITEM.BuildState( ent )
+	local PowerLevel = 0
+	if( IsValid(ent) ) then 
+		PowerLevel = ent.UnitLeft
+	end
+	
+	if PowerLevel == "" or PowerLevel == nil then PowerLevel = 0 end
+	
+	return "PowerLevel="..PowerLevel
+end
 
 function ITEM.ToolCheck( p )
 	-- This one returns required items.
@@ -24,12 +36,25 @@ function ITEM.ToolCheck( p )
 	return true
 end
 
-function ITEM.Create( ply, class, pos )	
+function ITEM.Create( ply, class, pos, iid )	
 	local ent = ents.Create(class)
 	ent:SetAngles(ply:GetAngles())
 	ent:SetPos(pos + Vector(0,0,20))
 	ent:Spawn()
 	ent:Activate()
+	
+	if ITEM.SaveState then
+		if iid then
+			local stateStr = PNRP.ReturnState(iid)
+			ent.UnitLeft = tonumber(PNRP.GetFromStat(stateStr, "PowerLevel"))
+		else 
+			ent.UnitLeft = 0
+		end
+		
+		PNRP.BuildPersistantItem(ply, ent, iid)
+	end
+	
+	if not ent.UnitLeft then ent.UnitLeft = 0 end
 	
 	PNRP.SetOwner(ply, ent)
 	

@@ -11,7 +11,7 @@ end
 
 function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
-		local myWep = self.Entity:GetNWString("WepClass", nil)
+		local myWep = self.Entity:GetNetVar("WepClass", nil)
 		
 		if not myWep then return end
 		
@@ -22,7 +22,7 @@ function ENT:Use( activator, caller )
 			self.Entity:Remove()
 			
 			local weaponEntity = activator:Give(myWep)
-			local ammo = self.Entity:GetNWInt("Ammo", nil)
+			local ammo = self.Entity:GetNetVar("Ammo", nil)
 			
 			if ammo then
 				weaponEntity:SetClip1(ammo)

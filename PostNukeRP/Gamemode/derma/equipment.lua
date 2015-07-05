@@ -14,7 +14,7 @@ function isNearCar(ply)
 		local ItemID = PNRP.FindItemID( v:GetClass() )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
+			if tostring(v:GetNetVar( "Owner" , "None" )) == ply:Nick() && myType == "vehicle" then
 				return true
 			end
 		end
@@ -31,10 +31,14 @@ function ConvertWepEnt( weaponModel )
 	return nil
 end
 
-local eq_frame
-local eqFrameOpen = false
+--local eq_frame
+--local eqFrameOpen = false
 function GM.EquipmentWindow( )
-	if eqFrameOpen then return end 
+--	if eqFrameOpen then return end 
+	
+	eq_frame = PNRP.PNRP_Frame()
+	if not eq_frame then return end
+
 	local ply = net.ReadEntity() 
 	local MyWeight = tonumber(net.ReadString())
 	local CarWeight = net.ReadString()
@@ -42,7 +46,7 @@ function GM.EquipmentWindow( )
 	local foundCar = false
 	local CarItemID
 	local CarWeightCap
-	eqFrameOpen = true
+--	eqFrameOpen = true
 	local maxAmmo = 0	
 	PNRP.RMDerma()
 	
@@ -53,14 +57,14 @@ function GM.EquipmentWindow( )
 				CarItemID = "vehicle_jeep"
 			end
 			local myCarType = PNRP.Items[CarItemID].Type
-			if tostring(c:GetNetworkedString( "Owner" , "None" )) == ply:Nick() && myCarType == "vehicle" then	
+			if tostring(c:GetNetVar( "Owner" , "None" )) == ply:Nick() && myCarType == "vehicle" then	
 				foundCar = true
 				CarWeightCap = PNRP.Items[CarItemID].Weight
 			end
 		end
 	end
 	
-	eq_frame = vgui.Create( "DFrame" )
+--	eq_frame = vgui.Create( "DFrame" )
 		eq_frame:SetSize( 585, 289 ) --Set the size
 		eq_frame:SetPos(ScrW() / 2 - eq_frame:GetWide() / 2, ScrH() / 2 - eq_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 		eq_frame:SetTitle( "Equipment Menu" ) --Set title
@@ -161,7 +165,6 @@ function GM.EquipmentWindow( )
 						end
 
 						local pnlPanel = vgui.Create("DPanel", Scroller)
-						--	pnlPanel:SetTall(pnlList:GetTall() - 20)
 							pnlPanel:SetSize( 75, eqPanel:GetTall() - 20 )
 							pnlPanel.Paint = function()
 								draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
@@ -388,11 +391,13 @@ function GM.EquipmentWindow( )
 				ammoToCarBtnLbl:SetFont("Trebuchet24")
 				ammoToCarBtnLbl:SizeToContents()	
 		end
+--[[
 	function eq_frame:Close()                  
 		eqFrameOpen = false                  
 		self:SetVisible( false )                  
 		self:Remove()          
 	end 
+]]--
 end
 net.Receive( "pnrp_OpenEquipmentWindow", GM.EquipmentWindow)
 
@@ -865,7 +870,208 @@ function GM.TShopInterface()
 end
 net.Receive( "pnrp_OpenTShopInterface", GM.TShopInterface)
 
+function playerEQ2()
+	EQ2_frame = PNRP.PNRP_Frame()
+	if not EQ2_frame then return end
+	
+	local ply = LocalPlayer()
+	
+	EQ2_frame:SetSize( 710, 510 ) --Set the size Extra 40 must be from the top bar
+	--Set the window in the middle of the players screen/game window
+	EQ2_frame:SetPos(ScrW() / 2 - EQ2_frame:GetWide() / 2, ScrH() / 2 - EQ2_frame:GetTall() / 2) 
+	EQ2_frame:SetTitle( "Player Info" ) --Set title
+	EQ2_frame:SetVisible( true )
+	EQ2_frame:SetDraggable( true )
+	EQ2_frame:ShowCloseButton( true )
+	EQ2_frame:MakePopup()
+	EQ2_frame.Paint = function() 
+		surface.SetDrawColor( 50, 50, 50, 0 )
+	end
+	
+	local screenBG = vgui.Create("DImage", EQ2_frame)
+		screenBG:SetImage( "VGUI/gfx/pnrp_screen_2b.png" )
+		screenBG:SetSize(EQ2_frame:GetWide(), EQ2_frame:GetTall())
+		
+		local mdl = vgui.Create( "DModelPanel", EQ2_frame )
+			mdl:SetSize( 250, 360 )
+			mdl:SetPos(225,40)
+			mdl.Angles = Angle( 0, 0, 0 )			
+			mdl:SetFOV( 36 )
+			mdl:SetCamPos( Vector( 0, 0, 0 ) )
+			mdl:SetDirectionalLight( BOX_RIGHT, Color( 255, 160, 80, 255 ) )
+			mdl:SetDirectionalLight( BOX_LEFT, Color( 80, 160, 255, 255 ) )
+			mdl:SetAmbientLight( Vector( -64, -64, -64 ) )
+			mdl:SetAnimated( true )
+			mdl:SetLookAt( Vector( -100, 0, -22 ) )
+			
+			mdl:SetModel( ply:GetModel() ) -- you can only change colors on playermodels
+			function mdl.Entity:GetPlayerColor() return ply:GetPlayerColor() end
+			
+			mdl.Entity:SetPos( Vector( -80, 0, -55 ) )
+		
+			-- Hold to rotate
+			function mdl:DragMousePress()
+				self.PressX, self.PressY = gui.MousePos()
+				self.Pressed = true
+			end
 
+			function mdl:DragMouseRelease() self.Pressed = false end
+
+			function mdl:LayoutEntity( Entity )
+			--	if ( self.bAnimated ) then self:RunAnimation() end
+
+				if ( self.Pressed ) then
+					local mx, my = gui.MousePos()
+					self.Angles = self.Angles - Angle( 0, ( self.PressX or mx ) - mx, 0 )
+					
+					self.PressX, self.PressY = gui.MousePos()
+				end
+
+				Entity:SetAngles( self.Angles )
+			end
+			
+			
+		local v3 = 50
+		local y3 = 160
+		local title = vgui.Create("DLabel", EQ2_frame)
+			title:SetPos(y3, v3)
+			title:SetText("Medium Ammo")
+			title:SetColor(Color( 0, 255, 0, 255 ))
+			title:SetFont("HudHintTextLarge")
+			title:SizeToContents() 
+		v3 = v3 + 20
+		local pnlPanel = vgui.Create("DPanel", EQ2_frame)
+			pnlPanel:SetPos( y3+10, v3 )
+			pnlPanel:SetSize( 85, 85 )
+			pnlPanel.Paint = function()
+				local GreenColor = 180
+				draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, pnlPanel:GetWide()-1, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+			end
+		local SpawnI = vgui.Create( "SpawnIcon" , pnlPanel ) -- SpawnIcon
+			SpawnI:SetPos( 5, 5 )
+			SpawnI:SetSize( 75, 75 )
+			SpawnI:SetModel( "models/items/boxmrounds.mdl" )
+		-----
+		v3 = v3 + 100
+		local title = vgui.Create("DLabel", EQ2_frame)
+			title:SetPos(y3, v3)
+			title:SetText("Small Ammo")
+			title:SetColor(Color( 0, 255, 0, 255 ))
+			title:SetFont("HudHintTextLarge")
+			title:SizeToContents()
+		v3 = v3 + 20
+		local pnlPanel = vgui.Create("DPanel", EQ2_frame)
+			pnlPanel:SetPos( y3+10, v3 )
+			pnlPanel:SetSize( 85, 85 )
+			pnlPanel.Paint = function()
+				local GreenColor = 180
+				draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, pnlPanel:GetWide()-1, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+			end
+		local SpawnI = vgui.Create( "SpawnIcon" , pnlPanel ) -- SpawnIcon
+			SpawnI:SetPos( 5, 5 )
+			SpawnI:SetSize( 75, 75 )
+			SpawnI:SetModel( "models/items/boxsrounds.mdl" )
+		-----
+		v3 = v3 + 100
+		local title = vgui.Create("DLabel", EQ2_frame)
+			title:SetPos(y3+5, v3)
+			title:SetText("Melee Weapon")
+			title:SetColor(Color( 0, 255, 0, 255 ))
+			title:SetFont("HudHintTextLarge")
+			title:SizeToContents() 
+		v3 = v3 + 20
+		local pnlPanel = vgui.Create("DPanel", EQ2_frame)
+			pnlPanel:SetPos( y3+10, v3 )
+			pnlPanel:SetSize( 85, 85 )
+			pnlPanel.Paint = function()
+				local GreenColor = 180
+				draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, pnlPanel:GetWide()-1, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+			end
+		local SpawnI = vgui.Create( "SpawnIcon" , pnlPanel ) -- SpawnIcon
+			SpawnI:SetPos( 5, 5 )
+			SpawnI:SetSize( 75, 75 )
+			SpawnI:SetModel( "models/weapons/w_knife_t.mdl" )
+-----------------------------		
+		v3 = 50
+		y3 = 450
+		local title = vgui.Create("DLabel", EQ2_frame)
+			title:SetPos(y3, v3)
+			title:SetText("Primary Weapon")
+			title:SetColor(Color( 0, 255, 0, 255 ))
+			title:SetFont("HudHintTextLarge")
+			title:SizeToContents() 
+		v3 = v3 + 20
+		local pnlPanel = vgui.Create("DPanel", EQ2_frame)
+			pnlPanel:SetPos( y3+10, v3 )
+			pnlPanel:SetSize( 85, 85 )
+			pnlPanel.Paint = function()
+				local GreenColor = 180
+				draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, pnlPanel:GetWide()-1, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+			end
+		local SpawnI = vgui.Create( "SpawnIcon" , pnlPanel ) -- SpawnIcon
+			SpawnI:SetPos( 5, 5 )
+			SpawnI:SetSize( 75, 75 )
+			SpawnI:SetModel( "models/weapons/w_mach_m249para.mdl" )
+		-----
+		v3 = v3 + 100
+		local title = vgui.Create("DLabel", EQ2_frame)
+			title:SetPos(y3-5, v3)
+			title:SetText("Secondary Weapon")
+			title:SetColor(Color( 0, 255, 0, 255 ))
+			title:SetFont("HudHintTextLarge")
+			title:SizeToContents()
+		v3 = v3 + 20
+		local pnlPanel = vgui.Create("DPanel", EQ2_frame)
+			pnlPanel:SetPos( y3+10, v3 )
+			pnlPanel:SetSize( 85, 85 )
+			pnlPanel.Paint = function()
+				local GreenColor = 180
+				draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, pnlPanel:GetWide()-1, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+			end
+		local SpawnI = vgui.Create( "SpawnIcon" , pnlPanel ) -- SpawnIcon
+			SpawnI:SetPos( 5, 5 )
+			SpawnI:SetSize( 75, 75 )
+			SpawnI:SetModel( "models/weapons/w_smg1.mdl" )
+		-----
+		v3 = v3 + 100
+		local title = vgui.Create("DLabel", EQ2_frame)
+			title:SetPos(y3+20, v3)
+			title:SetText("Sidearm")
+			title:SetColor(Color( 0, 255, 0, 255 ))
+			title:SetFont("HudHintTextLarge")
+			title:SizeToContents() 
+		v3 = v3 + 20
+		local pnlPanel = vgui.Create("DPanel", EQ2_frame)
+			pnlPanel:SetPos( y3+10, v3 )
+			pnlPanel:SetSize( 85, 85 )
+			pnlPanel.Paint = function()
+				local GreenColor = 180
+				draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, 0, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+				draw.RoundedBox( 1, pnlPanel:GetWide()-1, 0, 1, pnlPanel:GetTall(), Color( 0, GreenColor, 0, 60 ) )
+			end
+		local SpawnI = vgui.Create( "SpawnIcon" , pnlPanel ) -- SpawnIcon
+			SpawnI:SetPos( 5, 5 )
+			SpawnI:SetSize( 75, 75 )
+			SpawnI:SetModel( "models/weapons/w_pist_p228.mdl" )
+end
+concommand.Add( "pnrp_eq2",  playerEQ2 )
 
 
 --EOF

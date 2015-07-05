@@ -10,14 +10,14 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.Item = self.Entity:GetNWString("itemtype")
-	self.Amount = self.Entity:GetNWInt("amount")
+	self.Item = self.Entity:GetNetVar("itemtype")
+	self.Amount = self.Entity:GetNetVar("amount")
 	self.myItem = {}
 	 
 	for _, item in pairs(PNRP.Items) do
 		if self.Item == item.ID then
-			self.Entity:SetNWString("itemname", item.Name)
-			self.Entity:SetNWInt("ammoamount", item.Energy)
+			self.Entity:SetNetVar("itemname", item.Name)
+			self.Entity:SetNetVar("ammoamount", item.Energy)
 			self.myItem = item
 			break
 		end
@@ -31,12 +31,12 @@ function ENT:Use( activator, caller )
 				local ent 
 				if self.myItem.Type == "weapon" then
 					ent = ents.Create("ent_weapon")
-					ent:SetNetworkedString("WepClass", self.myItem.Ent)
+					ent:SetNetVar("WepClass", self.myItem.Ent)
 					--ent:SetNetworkedInt("Ammo", self:GetNWInt("ammoamount", 0))
-					ent:SetNetworkedInt("Ammo", 0)
+					ent:SetNetVar("Ammo", 0)
 				else
 					ent = ents.Create(self.myItem.Ent)
-					ent:SetNetworkedString("Ammo", tostring(self:GetNWInt("ammoamount", 0)))
+					ent:SetNetVar("Ammo", tostring(self:GetNetVar("ammoamount", 0)))
 				end
 				
 				--ent:SetModel(self.myItem.Model)
@@ -49,7 +49,7 @@ function ENT:Use( activator, caller )
 				
 				
 				self.Amount = self.Amount - 1
-				self.Entity:SetNWInt("amount", self.Amount )
+				self.Entity:SetNetVar("amount", self.Amount )
 				if self.Amount <= 0 then
 					self:Remove()
 				end
@@ -62,7 +62,7 @@ end
 
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value
-	self.Entity:SetNWString (key, value)
+	self.Entity:SetNetVar (key, value)
 	print ("["..key.." = "..value.."] ")
 end
 
@@ -75,9 +75,9 @@ function ENT:F2Use(ply)
 	
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	
 	local weightCalc = PNRP.InventoryWeight( ply ) + sumWeight
@@ -96,7 +96,7 @@ function ENT:F2Use(ply)
 			local taken = Amount - extra
 			
 			ply:AddToInventory( Item, taken )
-			self.Entity:SetNWInt("amount", Amount - taken )
+			self.Entity:SetNetVar("amount", Amount - taken )
 			self.Amount = Amount - taken
 			ply:EmitSound(Sound("items/ammo_pickup.wav"))
 			ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")

@@ -82,6 +82,7 @@ local function DrunkCheck()
 					end
 					v:GetTable().LastDrnkUpdate = CurTime()
 				end
+				if (v.Drunkness == nil) then v:SetDrunkness( 0 ) end
 				if (not v:Alive()) and v.Drunkness > 0 then
 					v:SetDrunkness( 0 )
 				end

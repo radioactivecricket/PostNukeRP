@@ -17,6 +17,7 @@ ITEM.Ent = "prop_physics"
 ITEM.Model = "models/props_junk/sawblade001a.mdl"
 ITEM.Script = ""
 ITEM.Weight = 7
+ITEM.AllowPunt = true
 
 function ITEM.ToolCheck( p )
 	return true
@@ -31,6 +32,7 @@ function ITEM.Create( ply, class, pos )
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetModel(ITEM.Model)
 	ent:SetPos(pos)
+	ent.crafted = true
 	ent:Spawn()
 end
 

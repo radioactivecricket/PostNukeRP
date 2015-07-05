@@ -405,7 +405,8 @@ function GM.bountyBoardMenu()
 				postBtnLbl:SetFont("Trebuchet24")
 				postBtnLbl:SizeToContents()
 			
-			if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		--	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then	
+			if ply:IsAdmin() then
 				btnHPos = btnHPos + btnHeight
 				local adminBtn = vgui.Create("DImageButton", bounty_Frame)
 					adminBtn:SetPos( bounty_Frame:GetWide()-260,btnHPos )
@@ -1206,7 +1207,7 @@ function PNRP.PostBountyWindow()
 					iPlayerPanel.Class:SetContentAlignment( 5 )
 					
 					local MemberOf
-					MemberOf = iplayer:GetNWString("community", "N/A")
+					MemberOf = iplayer:GetNetVar("community", "N/A")
 					
 					iPlayerPanel.Community = vgui.Create("DLabel", iPlayerPanel)
 					iPlayerPanel.Community:SetPos(90, 35)

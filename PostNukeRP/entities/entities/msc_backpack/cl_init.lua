@@ -16,7 +16,7 @@ function BoxViewCheck()
 	if trace.Entity == nil then return end
 	
 	if trace.Entity:GetClass() == "msc_backpack" then
-		local dropper = trace.Entity:GetNWString("dropperName", nil)
+		local dropper = trace.Entity:GetNetVar("dropperName", nil)
 		
 		if (not dropper) then return end
 		

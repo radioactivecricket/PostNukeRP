@@ -16,7 +16,8 @@ ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_airboat"
 ITEM.Model = "models/airboat.mdl"
 ITEM.Script = "scripts/vehicles/airboat.txt"
-ITEM.Weight = 200
+ITEM.Weight = 20
+ITEM.Capacity =  200
 
 function ITEM.ToolCheck( p )
 	return {["intm_engine"]=1}
@@ -73,6 +74,7 @@ function ITEM.Create( ply, class, pos )
 		ent:Activate()
 		PNRP.SetOwner(ply, ent)
 		PNRP.AddWorldCache( ply,ITEM.ID )
+		
 	end
 	
 	ent.gas = 0

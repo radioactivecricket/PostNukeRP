@@ -165,7 +165,7 @@ function SWEP:Reload()
 	
 	if !tr.Entity:IsValid() then return end
 	
-	local owner = tr.Entity:GetNWString( "Owner", "None" )
+	local owner = tr.Entity:GetNetVar( "Owner", "None" )
 	
 	-- if tr.Entity:IsDoor() and self.Owner:Nick() == owner then
 		-- if todo == "unlock" then

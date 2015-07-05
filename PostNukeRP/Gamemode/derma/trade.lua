@@ -68,7 +68,7 @@ function open_trade(ply)
 				PlayerPanel.Title:SetContentAlignment( 5 )
 				
 				local MemberOf
-				MemberOf = v:GetNWString("community", "N/A")
+				MemberOf = v:GetNetVar("community", "N/A")
 				
 				PlayerPanel.Community = vgui.Create("DLabel", PlayerPanel)
 				PlayerPanel.Community:SetPos(90, 25)
@@ -79,7 +79,7 @@ function open_trade(ply)
 				
 				PlayerPanel.Title = vgui.Create("DLabel", PlayerPanel)
 				PlayerPanel.Title:SetPos(90, 40)
-				PlayerPanel.Title:SetText(v:GetNWString("ctitle", " "))
+				PlayerPanel.Title:SetText(v:GetNetVar("ctitle", " "))
 				PlayerPanel.Title:SetColor(team.GetColor(v:Team()))
 				PlayerPanel.Title:SizeToContents() 
 				PlayerPanel.Title:SetContentAlignment( 5 )
@@ -406,7 +406,7 @@ function open_admin_trade(ply)
 				PlayerPanel.Title:SetContentAlignment( 5 )
 				
 				local MemberOf
-				MemberOf = v:GetNWString("community", "N/A")
+				MemberOf = v:GetNetVar("community", "N/A")
 				
 				PlayerPanel.Community = vgui.Create("DLabel", PlayerPanel)
 				PlayerPanel.Community:SetPos(90, 25)
@@ -417,7 +417,7 @@ function open_admin_trade(ply)
 				
 				PlayerPanel.Title = vgui.Create("DLabel", PlayerPanel)
 				PlayerPanel.Title:SetPos(90, 40)
-				PlayerPanel.Title:SetText(v:GetNWString("ctitle", " "))
+				PlayerPanel.Title:SetText(v:GetNetVar("ctitle", " "))
 				PlayerPanel.Title:SetColor(team.GetColor(v:Team()))
 				PlayerPanel.Title:SizeToContents() 
 				PlayerPanel.Title:SetContentAlignment( 5 )

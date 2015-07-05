@@ -3,9 +3,14 @@
 function PNRP.SetOwner(ply, ent)
 	local plUID = PNRP:GetUID( ply )
 	
-	ent:SetNetworkedString("Owner_UID", plUID)
-	ent:SetNetworkedString("Owner", ply:Nick())
-	ent:SetNWEntity( "ownerent", ply )
+	ent:SetNetVar("Owner_UID", plUID)
+	ent:SetNetVar("Owner", ply:Nick())
+	ent:SetNetVar( "ownerent", ply )
+--	ent:SetOwner(ply)
+
+	if ent.iid or ent.iid != "" then
+		PNRP.SaveState(ply, ent, "world")
+	end
 end
 
 function PNRP.SetOwnership( ply )
@@ -20,9 +25,9 @@ function PNRP.SetOwnership( ply )
 	if ent:IsWorld() then return end
 	if ent:IsPlayer() then return end
 	--Checks for Admin Overide
-	if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+	if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 		
-		if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
+		if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == plUID then
 			ply:ConCommand("pnrp_removeowner")
 			ent:EmitSound( "buttons/button14.wav" )
 		else
@@ -46,12 +51,12 @@ function PNRP.SetOwnership( ply )
 		return
 	end
 	--If spawn door	
-	if tostring(ent:GetNetworkedString( "pnrp_spawndoor" , "None" )) == "1" then
+	if tostring(ent:GetNetVar( "pnrp_spawndoor" , "None" )) == "1" then
 		ply:ChatPrint("You can not own this door.")
 		return
 	end
 	
-	if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
+	if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == plUID then
 		ply:ConCommand("pnrp_removeowner")
 		ent:EmitSound( "buttons/button14.wav" )
 	else
@@ -60,7 +65,7 @@ function PNRP.SetOwnership( ply )
 			AddOwner(ply, 0)
 			ent:EmitSound( "buttons/blip1.wav" )
 		end
-		if DoorsOwned < GetConVarNumber("pnrp_maxOwnDoors") and ent:IsDoor() then
+		if DoorsOwned < getServerSetting("maxOwnDoors") and ent:IsDoor() then
 			--ply:ConCommand("pnrp_addowner")
 			AddOwner(ply, 0)
 			ent:EmitSound( "buttons/blip1.wav" )
@@ -85,7 +90,7 @@ function AddOwner(ply, args)
 	local playerNick = ply:Nick()
 	local plUID = PNRP:GetUID( ply )
 	
-	if ent:GetNetworkedString("Owner") == "World" or ent:GetNetworkedString("Owner") == "None" or ent:GetNetworkedString("Owner") == "" then
+	if ent:GetNetVar("Owner", "") == "World" or ent:GetNetVar("Owner", "") == "None" or ent:GetNetVar("Owner", "") == "" then
 		PNRP.SetOwner(ply, ent)
 		
 		local myClass = ent:GetClass()
@@ -101,7 +106,7 @@ function AddOwner(ply, args)
 		end
 		
 	else
-		ply:ChatPrint("Object allready owned by "..tostring(ent:GetNetworkedString( "Owner" , "None" )))
+		ply:ChatPrint("Object allready owned by "..tostring(ent:GetNetVar( "Owner" , "None" )))
 	end
 	
 	return ""
@@ -121,12 +126,17 @@ function removeOwner(ply, args)
 	local playerNick = ply:Nick()
 	local plUID = PNRP:GetUID( ply )
 	
-	if ent:GetNetworkedString("Owner_UID") == plUID then
-		ent:SetNetworkedString("Owner", "" )
-		ent:SetNetworkedString("Owner", "World" )
-		ent:SetNetworkedString("Owner_UID", "None")
-		ent:SetNWEntity( "ownerent", nil )
+	if ent:GetNetVar("Owner_UID") == plUID then
+		ent:SetNetVar("Owner", "" )
+		ent:SetNetVar("Owner", "World" )
+		ent:SetNetVar("Owner_UID", "None")
+		ent:SetNetVar( "ownerent", nil )
+	--	ent:SetOwner(nil)
 		SK_Srv.ReleaseOwner( ply, ent )
+		
+		if ent.iid or ent.iid != "" then
+			PNRP.SaveState("none", ent, "world")
+		end
 	
 		local myClass = ent:GetClass()
 		local ItemID = PNRP.FindItemID( myClass )
@@ -158,7 +168,7 @@ function ReadOwner(ply, args)
 	local tr = util.TraceLine( trace )	
 	local ent = tr.Entity
 	
-	ply:ChatPrint(tostring(ent:GetNetworkedString( "Owner" , "None" )))
+	ply:ChatPrint(tostring(ent:GetNetVar( "Owner" , "None" )))
 
 end
 concommand.Add( "pnrp_readowner", ReadOwner )
@@ -167,7 +177,7 @@ function PNRP.ListOwnedItems( UID )
 	local OwnedEntTbl = {}
 	
 	for k, v in pairs(ents.GetAll()) do
-		if !v:IsDoor() and v:GetNetworkedString( "Owner_UID" , "None" ) == UID then
+		if !v:IsDoor() and v:GetNetVar( "Owner_UID" , "None" ) == UID then
 			table.insert(OwnedEntTbl, v)
 		end
 	end
@@ -179,7 +189,7 @@ function PNRP.ListDoors( ply )
 	local DoorEntTbl = {}
 	local plUID = PNRP:GetUID( ply )
 	for k, v in pairs(ents.GetAll()) do
-		if v:IsDoor() and v:GetNetworkedString( "Owner_UID" , "None" ) == plUID then
+		if v:IsDoor() and v:GetNetVar( "Owner_UID" , "None" ) == plUID then
 			table.insert(DoorEntTbl, v)
 		end
 	end

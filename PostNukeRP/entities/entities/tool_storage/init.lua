@@ -16,9 +16,9 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.pid = self.Entity:GetNWString("Owner_UID")
-	self.storageID = self.Entity:GetNWString("storageid")
-	self.name = self.Entity:GetNWString("name")
+	self.pid = self.Entity:GetNetVar("Owner_UID")
+	self.storageID = self.Entity:GetNetVar("storageid")
+	self.name = self.Entity:GetNetVar("name")
 	self.Enabled = false
 	self.BreakInTimer = 60
 	self.BreakingIn = nil
@@ -54,8 +54,8 @@ function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
 		if activator:KeyPressed( IN_USE ) then
 			local storageID = self.storageID
-			if tostring(self:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( activator ) then
-				local result = querySQL("SELECT * FROM player_storage WHERE pid="..tostring(activator.pid))
+			if tostring(self:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( activator ) then
+				local result = querySQL("SELECT * FROM player_storage WHERE pid="..SQLStr(activator.pid))
 
 				if storageID == nil or storageID == "" then
 					if result then
@@ -69,12 +69,15 @@ function ENT:Use( activator, caller )
 						net.Send(activator)
 					end
 				else
-					local result = querySQL("SELECT * FROM player_storage WHERE storageid="..tostring(storageID))
-					local capString = tostring(getStorageCapacity(storageID)).."/"..tostring(PNRP.Items[self:GetClass()].Capacity)
+				--	local result = querySQL("SELECT * FROM player_storage WHERE storageid="..SQLStr(storageID))
+					
+					local storageInventory = GetFullStorageInventory( ply, storageID )
+					local capString = tostring(getStorageCapacity( storageID )).."/"..tostring(PNRP.Items[self:GetClass()].Capacity)
 					net.Start("storage_menu")
 						net.WriteEntity(self)
-						net.WriteTable(result)
-						net.WriteTable(PNRP.Inventory( activator ))
+						net.WriteString(storageID)
+						net.WriteTable(storageInventory)
+						net.WriteTable(PNRP.GetFullInventory( activator ))
 						net.WriteTable(self.availableModels)
 						net.WriteDouble(math.Round((self.BreakInTimer / 60) * 100))
 						net.WriteString(capString)
@@ -97,9 +100,38 @@ end
 util.AddNetworkString("storage_new_menu")
 util.AddNetworkString("storage_breakin")
 
-function getStorageCapacity(storageID)
+function GetFullStorageInventory( ply, storageID )
+	local query
+	local result
 
-	local query = "SELECT inventory FROM player_storage WHERE storageid="..tostring(storageID)
+	query = "SELECT * FROM player_storage WHERE storageid="..SQLStr(storageID)
+	result = querySQL(query)
+
+	if not result then return nil end
+	
+	local invTbl = {}
+	
+	local invLongStr = string.Explode( " ", result[1]["inventory"] )
+	for i, invStr in pairs( invLongStr ) do
+		local invSplit = string.Explode( ",", invStr )
+		local have = math.Round(tonumber(invSplit[2]) or 0)
+		if have > 0 and itemid != "" then
+			table.insert( invTbl, {itemid=invSplit[1], status_table="", iid="", count=have} )
+		end
+	end
+	
+	local Inv2 = PNRP.PersistOtherInventory( "storage", storageID )
+
+	for k, v in pairs(Inv2) do
+		table.insert( invTbl, {itemid=v["itemid"], status_table=v["status_table"], iid=v["iid"], count=1} )
+	end
+
+	return invTbl
+end
+
+function getStorageCapacity( storageID )
+
+	local query = "SELECT inventory FROM player_storage WHERE storageid="..SQLStr(storageID)
 	local result = querySQL(query)
 	
 	local weightSum = 0
@@ -123,6 +155,14 @@ function getStorageCapacity(storageID)
 					end
 				end
 			end
+		end
+	end
+	
+	local Inv2 = PNRP.PersistOtherInventory( "storage", storageID )
+
+	for k, v in pairs(Inv2) do
+		if PNRP.Items[v["itemid"]].Type ~= "vehicle" then
+			weightSum = weightSum + PNRP.Items[v["itemid"]].Weight
 		end
 	end
 	
@@ -178,9 +218,9 @@ function CreateNewStorage( )
 	
 	local make = false
 	
-	local chkStoreage = querySQL("SELECT * FROM player_storage WHERE pid='"..tonumber(ply.pid).."'")
+	local chkStoreage = querySQL("SELECT * FROM player_storage WHERE pid="..SQLStr(tonumber(ply.pid)))
 	if chkStoreage then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+		if ply:IsAdmin() and getServerSetting("adminNoCost") == 1 then 
 			ply:ChatPrint("You created this profile using admin no-cost...")
 			make = true
 		else
@@ -213,7 +253,8 @@ net.Receive( "CreateNewStorage", CreateNewStorage )
 function deleteStorage( p, command, arg )
 	local storageID = arg[1]
 	
-	querySQL("DELETE FROM player_storage WHERE storageid='"..tonumber(storageID).."' AND pid='"..tostring(p.pid).."'")
+	querySQL("DELETE FROM player_storage WHERE storageid="..SQLStr(tonumber(storageID)).." AND pid='"..tostring(p.pid).."'")
+	querySQL("DELETE FROM inventory_table WHERE location='storage' AND locid="..SQLStr(tonumber(storageID)))
 end
 concommand.Add( "deleteStorage", deleteStorage )
 
@@ -230,8 +271,8 @@ function SetStorage( )
 			return
 		end
 	end
-	storageENT:SetNetworkedString("storageid", storageID)
-	storageENT:SetNetworkedString("name", storageName)
+	storageENT:SetNetVar("storageid", storageID)
+	storageENT:SetNetVar("name", storageName)
 	
 	storageENT.storageID = storageID
 	storageENT.name = storageName
@@ -247,7 +288,7 @@ function StorageRename( )
 	
 	if storageENT.storageID == storageID then
 		storageENT.name = storageName
-		storageENT:SetNetworkedString("name", storageName)
+		storageENT:SetNetVar("name", storageName)
 	end
 	
 	query = "UPDATE player_storage SET name="..SQLStr(storageName).." WHERE storageid='"..tostring(storageID).."'"
@@ -262,6 +303,7 @@ function TakeFromStorage( )
 	local storageENT = net.ReadEntity()
 	local Item = net.ReadString()
 	local Amount = net.ReadDouble()
+	local iid = net.ReadString()
 	
 	local weight = PNRP.Items[Item].Weight
 	if PNRP.Items[Item].Type == "vehicle" then weight = 0 end
@@ -269,35 +311,44 @@ function TakeFromStorage( )
 	
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	
 	local weightCalc = PNRP.InventoryWeight( ply ) + sumWeight
-	if weightCalc <= weightCap then
-		if remStorageItem( storageENT.storageID, Item, Amount ) then
-			ply:AddToInventory( Item, Amount )
-			ply:EmitSound(Sound("items/ammo_pickup.wav"))
-		else
-			ply:ChatPrint("Unable to take item from storage.")
-		end
-	else
-		local weightDiff = weightCalc - weightCap
-		local extra = math.ceil(weightDiff/weight)
-		
-		if extra >= Amount then
-			ply:ChatPrint("You can't carry any of these!")
-		else
-			local taken = Amount - extra
-			if remStorageItem( storageENT.storageID, Item, taken ) then
-				ply:AddToInventory( Item, taken )
-				
+	
+	if iid == nil or iid == "" then
+		if weightCalc <= weightCap then
+			if remStorageItem( storageENT.storageID, Item, Amount ) then
+				ply:AddToInventory( Item, Amount )
 				ply:EmitSound(Sound("items/ammo_pickup.wav"))
-				ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
 			else
 				ply:ChatPrint("Unable to take item from storage.")
 			end
+		else
+			local weightDiff = weightCalc - weightCap
+			local extra = math.ceil(weightDiff/weight)
+			
+			if extra >= Amount then
+				ply:ChatPrint("You can't carry any of these!")
+			else
+				local taken = Amount - extra
+				if remStorageItem( storageENT.storageID, Item, taken ) then
+					ply:AddToInventory( Item, taken )
+					
+					ply:EmitSound(Sound("items/ammo_pickup.wav"))
+					ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
+				else
+					ply:ChatPrint("Unable to take item from storage.")
+				end
+			end
+		end
+	else
+		if weightCalc <= weightCap then
+			PNRP.PersistMoveTo( ply, iid, "player")		
+		else
+			ply:ChatPrint("Unable to take item from storage.")
 		end
 	end
 end
@@ -305,7 +356,7 @@ util.AddNetworkString("storage_take")
 net.Receive( "storage_take", TakeFromStorage )
 
 function remStorageItem( storageID, Item, Amount )
-	query = "SELECT inventory FROM player_storage WHERE storageid="..tostring(storageID)
+	query = "SELECT inventory FROM player_storage WHERE storageid="..SQLStr(storageID)
 	result = querySQL(query)
 	local foundItem = false
 	
@@ -346,7 +397,7 @@ function remStorageItem( storageID, Item, Amount )
 				newInvString = newInvString.." "..tostring(k)..","..tostring(v)
 			end
 			newInvString = string.Trim(newInvString)
-			query = "UPDATE player_storage SET inventory='"..newInvString.."' WHERE storageid='"..tostring(storageID).."'"
+			query = "UPDATE player_storage SET inventory='"..newInvString.."' WHERE storageid="..SQLStr(storageID)
 			result = querySQL(query)
 		end
 	end
@@ -361,7 +412,6 @@ function sendToPlayerStorage( p, command, arg )
 	local count = net.ReadDouble()
 	local storageID = storageENT.storageID
 
---	print("["..tostring(itemID).."] "..tostring(count))
 	local item = {}
 	
 	local query
@@ -379,7 +429,7 @@ function sendToPlayerStorage( p, command, arg )
 		return
 	end
 		
-	query = "SELECT inventory FROM player_storage WHERE storageid="..tostring(storageID)
+	query = "SELECT inventory FROM player_storage WHERE storageid="..SQLStr(storageID)
 	result = querySQL(query)
 
 	-- Inventory string design:  itemID, count scrap smallpats chems
@@ -416,7 +466,7 @@ function sendToPlayerStorage( p, command, arg )
 			newInvString = newInvString.." "..tostring(k)..","..tostring(v)
 		end
 		newInvString = string.Trim(newInvString)
-		query = "UPDATE player_storage SET inventory='"..newInvString.."' WHERE storageid='"..tostring(storageID).."'"
+		query = "UPDATE player_storage SET inventory='"..newInvString.."' WHERE storageid="..SQLStr(storageID)
 		result = querySQL(query)
 		
 		ply:EmitSound(Sound("items/ammo_pickup.wav"))
@@ -445,7 +495,7 @@ function StorageBreakIn( )
 		return
 	end
 	
-	result = querySQL("SELECT * FROM player_storage WHERE storageid="..tostring(storageID))
+	local storageInventory = GetFullStorageInventory( ply, storageID )
 	local capString = tostring(getStorageCapacity(storageID)).."/"..tostring(PNRP.Items[storage:GetClass()].Capacity)
 			
 	if not storage.BreakingIn then
@@ -455,8 +505,9 @@ function StorageBreakIn( )
 						
 			net.Start("storage_menu")
 				net.WriteEntity(storage)
-				net.WriteTable(result)
-				net.WriteTable(PNRP.Inventory( ply ))
+				net.WriteString(storageID)
+				net.WriteTable(storageInventory)
+				net.WriteTable(PNRP.GetFullInventory( ply ))
 				net.WriteTable(storage.availableModels)
 				net.WriteDouble(math.Round((storage.BreakInTimer / 60) * 100))
 				net.WriteString(capString)
@@ -467,7 +518,7 @@ function StorageBreakIn( )
 			ply:SetMoveType(MOVETYPE_NONE)
 			storage.BreakingIn = ply
 			timer.Create( ply:UniqueID()..tostring(storage:EntIndex()), 1, storage.BreakInTimer, function()
-				ply:SelectWeapon("gmod_rp_hands")
+				ply:SelectWeapon("weapon_simplekeys")
 				if (not storage:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
@@ -489,8 +540,9 @@ function StorageBreakIn( )
 									
 					net.Start("storage_menu")
 						net.WriteEntity(storage)
-						net.WriteTable(result)
-						net.WriteTable(PNRP.Inventory( ply ))
+						net.WriteString(storageID)
+						net.WriteTable(storageInventory)
+						net.WriteTable(PNRP.GetFullInventory( ply ))
 						net.WriteTable(storage.availableModels)
 						net.WriteDouble(math.Round((storage.BreakInTimer / 60) * 100))
 						net.WriteString(capString)
@@ -538,7 +590,7 @@ function StorageRepair( )
 			ply:SetMoveType(MOVETYPE_NONE)
 			storage.Repairing = ply
 			timer.Create( ply:UniqueID()..tostring(storage:EntIndex()), 1, storage.BreakInTimer, function()
-				ply:SelectWeapon("gmod_rp_hands")
+				ply:SelectWeapon("weapon_simplekeys")
 				if (not storage:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
@@ -559,12 +611,13 @@ function StorageRepair( )
 					storage.Repairing = nil
 					storage.BreakInTimer = 60
 					
-					result = querySQL("SELECT * FROM player_storage WHERE storageid="..tostring(storageID))
+					local storageInventory = GetFullStorageInventory( ply, storageID )
 					local capString = tostring(getStorageCapacity(storageID)).."/"..tostring(PNRP.Items[storage:GetClass()].Capacity)
 					net.Start("storage_menu")
 						net.WriteEntity(storage)
-						net.WriteTable(result)
-						net.WriteTable(PNRP.Inventory( ply ))
+						net.WriteString(storageID)
+						net.WriteTable(storageInventory)
+						net.WriteTable(PNRP.GetFullInventory( ply ))
 						net.WriteTable(storage.availableModels)
 						net.WriteDouble(math.Round((storage.BreakInTimer / 60) * 100))
 						net.WriteString(capString)
@@ -591,7 +644,7 @@ util.AddNetworkString("storage_stoprepair")
 
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value
-	self.Entity:SetNWString (key, value)
+	self.Entity:SetNetVar(key, value)
 	print ("["..key.." = "..value.."] ")
 end
 

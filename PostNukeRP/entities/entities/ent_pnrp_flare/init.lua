@@ -27,8 +27,8 @@ function ENT:Initialize()
 	self.RepeatTimer = CurTime() + 0.5
 	self.EndTimer = CurTime() + 4
 
-	self.Entity:SetNWBool("Smoke", true)
-	self.Entity:SetNWBool("Lit", false)
+	self.Entity:SetNetVar("Smoke", true)
+	self.Entity:SetNetVar("Lit", false)
 	self.Entity.Explode = false
 end
 
@@ -48,8 +48,8 @@ function ENT:Think()
 		local effectdata = EffectData()
 			effectdata:SetOrigin(self.Entity:GetPos())
 		util.Effect("effect_flare_explode", effectdata)
-		self.Entity:SetNWBool("Smoke", false)
-		self.Entity:SetNWBool("Lit", true)
+		self.Entity:SetNetVar("Smoke", false)
+		self.Entity:SetNetVar("Lit", true)
 		self.Timer = CurTime() + 5
 	end
 	

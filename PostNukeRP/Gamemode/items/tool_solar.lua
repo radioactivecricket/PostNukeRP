@@ -18,6 +18,14 @@ ITEM.Model = "models/hunter/plates/plate1x2.mdl"
 ITEM.Script = ""
 ITEM.Weight = 15
 ITEM.UnBlock = true
+ITEM.SaveState = true
+
+function ITEM.BuildState( ent )
+	local toolHP = 200
+	if( IsValid(ent) ) then toolHP = ent:Health() end
+	
+	return "HP="..toolHP
+end
 
 function ITEM.ToolCheck( p )
 	-- This one returns required items.
@@ -25,13 +33,17 @@ function ITEM.ToolCheck( p )
 	--return true
 end
 
-function ITEM.Create( ply, class, pos )	
+function ITEM.Create( ply, class, pos, iid )	
 	local ent = ents.Create(class)
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetPos(pos)
 	ent:Spawn()
 	ent:Activate()
-	--ent:SetNetworkedString("Owner", ply:Nick())
+	
+	if ITEM.SaveState then
+		PNRP.BuildPersistantItem(ply, ent, iid)
+	end
+	
 	PNRP.SetOwner(ply, ent)
 	
 	PNRP.AddWorldCache( ply,ITEM.ID )

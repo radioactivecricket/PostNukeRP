@@ -4,6 +4,7 @@ local SCFrame = false
 function GM:ScoreboardShow()
 	SCFrame = true
 	
+	local ply = LocalPlayer()
 	ScoreFrame = vgui.Create( "DFrame" )
 		ScoreFrame:SetSize( 710, 720 ) --Set the size
 		--frame:SetPos( ScrW() / 2, ScrH() / 2 ) --Set the window in the middle of the players screen/game window
@@ -48,7 +49,7 @@ function GM:ScoreboardShow()
 				PlayerPanel:SetTall(75)
 				PlayerPanel.Paint = function()
 				
-					draw.RoundedBox( 6, 0, 0, PlayerPanel:GetWide(), PlayerPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+					draw.RoundedBox( 6, 0, 0, PlayerPanel:GetWide(), PlayerPanel:GetTall(), Color( 180, 180, 180, 180 ) )		
 			
 				end
 				PlayerList:AddItem(PlayerPanel)
@@ -58,6 +59,14 @@ function GM:ScoreboardShow()
 				PlayerPanel.Icon:SetModel(idiot:GetModel())
 				PlayerPanel.Icon:SetPos(3, 3)
 				PlayerPanel.Icon:SetToolTip( nil )
+				PlayerPanel.Icon.DoClick = function()
+					net.Start("start_openPlayerInfoWindow")
+						net.WriteEntity(ply)
+						net.WriteEntity(idiot)
+					net.SendToServer()
+					SCFrame=false 
+					ScoreFrame:Close() 
+				end 
 			
 				PlayerPanel.Title = vgui.Create("DLabel", PlayerPanel)
 				PlayerPanel.Title:SetPos(90, 5)
@@ -73,7 +82,7 @@ function GM:ScoreboardShow()
 		 		PlayerPanel.Title:SetContentAlignment( 5 )
 				
 				local MemberOf
-				MemberOf = idiot:GetNWString("community", "N/A")
+				MemberOf = idiot:GetNetVar("community", "N/A")
 				
 				PlayerPanel.Community = vgui.Create("DLabel", PlayerPanel)
 				PlayerPanel.Community:SetPos(90, 25)
@@ -84,7 +93,7 @@ function GM:ScoreboardShow()
 				
 				PlayerPanel.Title = vgui.Create("DLabel", PlayerPanel)
 				PlayerPanel.Title:SetPos(90, 40)
-				PlayerPanel.Title:SetText(idiot:GetNWString("ctitle", " "))
+				PlayerPanel.Title:SetText(idiot:GetNetVar("ctitle", " "))
 				PlayerPanel.Title:SetColor(team.GetColor(idiot:Team()))
 				PlayerPanel.Title:SizeToContents() 
 		 		PlayerPanel.Title:SetContentAlignment( 5 )
@@ -170,6 +179,8 @@ function PNRP.buildMenu(parent_frame)
 --				adminmenu.DoClick = function() RunConsoleCommand( "pnrp_admin_window" ) SCFrame=false parent_frame:Close() end
 --		end		
 		
+		sideMenu(parent_frame)
+		--[[
 		local menuH = 260
 		--Add space needed for Admin Button
 		if ply:IsAdmin() then
@@ -187,11 +198,8 @@ function PNRP.buildMenu(parent_frame)
 			menu2_frame:MakePopup()
 			menu2_frame.Paint = function( ) 
 				draw.RoundedBox( 8, 0, 0, menu2_frame:GetWide(), menu2_frame:GetTall(), Color( 50, 50, 50, 0 ) )
---				menu2_frame:GetWide()
---				menu2_frame:GetTall() 
---				surface.SetDrawColor( 50, 50, 50, 0 )
 			end
-			
+	
 			local vlimit
 			local vlimitColor
 			if GetConVarNumber("pnrp_voiceLimit") == 1 then
@@ -256,9 +264,10 @@ function PNRP.buildMenu(parent_frame)
 						menu2List:AddItem( devide1menu2a )
 					local skillsmenu = vgui.Create("DButton") 
 						skillsmenu:SetParent( menu2List ) 
-						skillsmenu:SetText( "Skills Menu >" ) 
+						skillsmenu:SetText( "Player Profile >" ) 
 						skillsmenu:SetSize( 100, 20 ) 
-						skillsmenu.DoClick = function() RunConsoleCommand( "pnrp_skills" ) SCFrame=false parent_frame:Close() end	
+					--	skillsmenu.DoClick = function() RunConsoleCommand( "pnrp_skills" ) SCFrame=false parent_frame:Close() end
+						skillsmenu.DoClick = function() RunConsoleCommand( "pnrp_playerprofile" ) SCFrame=false parent_frame:Close() end
 						menu2List:AddItem( skillsmenu )
 					local communitymenu = vgui.Create("DButton") 
 						communitymenu:SetParent( menu2List ) 
@@ -307,6 +316,297 @@ function PNRP.buildMenu(parent_frame)
 						saveBtn:SetSize( 100, 20 ) 
 						saveBtn.DoClick = function() RunConsoleCommand( "pnrp_save" ) SCFrame=false parent_frame:Close() end	
 						menu2List:AddItem( saveBtn )
+		]]--
+end
+
+function sideMenu(parent_frame)
+	local ply = LocalPlayer()
+	local menu2_frame = vgui.Create( "DFrame" )
+		menu2_frame:SetParent( parent_frame )
+		menu2_frame:SetSize( 180, 450 ) 
+		menu2_frame:SetPos( ScrW() / 2 + parent_frame:GetWide() / 2 + 5, ScrH() / 2 - parent_frame:GetTall() / 2 )
+		menu2_frame:SetTitle( " " )
+		menu2_frame:SetVisible( true )
+		menu2_frame:SetDraggable( true )
+		menu2_frame:ShowCloseButton( false )
+		menu2_frame:MakePopup()
+		menu2_frame.Paint = function( ) 
+			surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+		
+		local menu2BG = vgui.Create("DImage", menu2_frame)
+			menu2BG:SetImage( "VGUI/gfx/pnrp_screen_7b.png" )
+			menu2BG:SetSize(menu2_frame:GetWide(), menu2_frame:GetTall())
+			
+		local vlimit
+		local vlimitColor
+		if GetConVarNumber("pnrp_voiceLimit") == 1 then
+			vlimit = "On"
+			vlimitColor = Color( 0, 255, 0, 255 )
+		else
+			vlimit = "Off"
+			vlimitColor = Color( 255, 0, 0, 255 )
+		end
+		
+		local pcost
+		local pcostColor
+		if GetConVarNumber("pnrp_propPay") == 1 then
+			pcostColor = Color( 0, 255, 0, 255 )
+			pcost = "On @ "..GetConVarNumber("pnrp_propCost").."%"
+		else
+			pcostColor = Color( 255, 0, 0, 255 )
+			pcost = "Off"
+		end	
+		
+		local VoiceLimiterLabel = vgui.Create("DLabel", menu2_frame	)
+			VoiceLimiterLabel:SetPos(40,40)
+			VoiceLimiterLabel:SetColor( vlimitColor )
+			VoiceLimiterLabel:SetText( "Voice Limiter: "..vlimit )
+			VoiceLimiterLabel:SizeToContents()
+			
+		local PCostLabel = vgui.Create("DLabel", menu2_frame )
+			PCostLabel:SetPos(40,60)
+			PCostLabel:SetColor( pcostColor )
+			PCostLabel:SetText( "Prop Cost: "..pcost )
+			PCostLabel:SizeToContents()
+		
+		local btnHPos = 125
+		local btnWPos = 10
+		local btnHeight = 30
+		local lblColor = Color( 245, 228, 220, 180 )
+		local menuFont = "HudHintTextLarge"
+		local devideW = 150
+		
+		if ply:IsAdmin() then	
+			local adminmenuBtn = vgui.Create("DImageButton", menu2_frame)
+				adminmenuBtn:SetPos( btnWPos,btnHPos )
+				adminmenuBtn:SetSize(25,25)
+				adminmenuBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				adminmenuBtn.DoClick = function() 
+					RunConsoleCommand( "pnrp_admin_window" ) 
+					SCFrame=false 
+					parent_frame:Close()
+				end
+				adminmenuBtn.Paint = function()
+					if adminmenuBtn:IsDown() then 
+						adminmenuBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+					else
+						adminmenuBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					end
+				end	
+			local adminmenuBtnLbl = vgui.Create("DLabel", menu2_frame)
+				adminmenuBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+				adminmenuBtnLbl:SetColor( lblColor )
+				adminmenuBtnLbl:SetText( "Admin Menu" )
+				adminmenuBtnLbl:SetFont(menuFont)
+				adminmenuBtnLbl:SizeToContents()	
+			btnHPos = btnHPos + btnHeight
+			local devide1menu2a = vgui.Create("DShape") 
+				devide1menu2a:SetParent( menu2_frame ) 
+				devide1menu2a:SetPos( btnWPos,btnHPos )
+				devide1menu2a:SetType("Rect")
+				devide1menu2a:SetSize( devideW, 2 ) 
+			btnHPos = btnHPos + 10
+		end
+		
+		local skillsmenuBtn = vgui.Create("DImageButton", menu2_frame)
+			skillsmenuBtn:SetPos( btnWPos,btnHPos )
+			skillsmenuBtn:SetSize(25,25)
+			skillsmenuBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			skillsmenuBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_playerprofile" ) 
+				SCFrame=false 
+				parent_frame:Close()
+			end
+			skillsmenuBtn.Paint = function()
+				if skillsmenuBtn:IsDown() then 
+					skillsmenuBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					skillsmenuBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local skillsmenuBtnLbl = vgui.Create("DLabel", menu2_frame)
+			skillsmenuBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+			skillsmenuBtnLbl:SetColor( lblColor )
+			skillsmenuBtnLbl:SetText( "Player Profile" )
+			skillsmenuBtnLbl:SetFont(menuFont)
+			skillsmenuBtnLbl:SizeToContents()	
+		btnHPos = btnHPos + btnHeight
+	
+		local communitymenuBtn = vgui.Create("DImageButton", menu2_frame)
+			communitymenuBtn:SetPos( btnWPos,btnHPos )
+			communitymenuBtn:SetSize(25,25)
+			communitymenuBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			communitymenuBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_OpenCommunity" ) 
+				SCFrame=false 
+				parent_frame:Close()
+			end
+			communitymenuBtn.Paint = function()
+				if communitymenuBtn:IsDown() then 
+					communitymenuBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					communitymenuBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local communitymenuBtnLbl = vgui.Create("DLabel", menu2_frame)
+			communitymenuBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+			communitymenuBtnLbl:SetColor( lblColor )
+			communitymenuBtnLbl:SetText( "Community Menu" )
+			communitymenuBtnLbl:SetFont(menuFont)
+			communitymenuBtnLbl:SizeToContents()	
+		btnHPos = btnHPos + btnHeight
+		
+		local buddymenuBtn = vgui.Create("DImageButton", menu2_frame)
+			buddymenuBtn:SetPos( btnWPos,btnHPos )
+			buddymenuBtn:SetSize(25,25)
+			buddymenuBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			buddymenuBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_buddy_window" ) 
+				SCFrame=false 
+				parent_frame:Close()
+			end
+			buddymenuBtn.Paint = function()
+				if buddymenuBtn:IsDown() then 
+					buddymenuBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					buddymenuBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local buddymenuBtnLbl = vgui.Create("DLabel", menu2_frame)
+			buddymenuBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+			buddymenuBtnLbl:SetColor( lblColor )
+			buddymenuBtnLbl:SetText( "Buddy Menu" )
+			buddymenuBtnLbl:SetFont(menuFont)
+			buddymenuBtnLbl:SizeToContents()	
+		btnHPos = btnHPos + btnHeight
+		
+		local devide1menu2b = vgui.Create("DShape") 
+			devide1menu2b:SetParent( menu2_frame ) 
+			devide1menu2b:SetPos( btnWPos,btnHPos )
+			devide1menu2b:SetType("Rect")
+			devide1menu2b:SetSize( devideW, 2 ) 
+		btnHPos = btnHPos + 10
+		
+		local sleepBtn = vgui.Create("DImageButton", menu2_frame)
+			sleepBtn:SetPos( btnWPos,btnHPos )
+			sleepBtn:SetSize(25,25)
+			sleepBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			sleepBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_sleep" ) 
+				SCFrame=false 
+				parent_frame:Close()
+			end
+			sleepBtn.Paint = function()
+				if sleepBtn:IsDown() then 
+					sleepBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					sleepBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local sleepBtnLbl = vgui.Create("DLabel", menu2_frame)
+			sleepBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+			sleepBtnLbl:SetColor( lblColor )
+			sleepBtnLbl:SetText( "Sleep" )
+			sleepBtnLbl:SetFont(menuFont)
+			sleepBtnLbl:SizeToContents()	
+		btnHPos = btnHPos + btnHeight
+		
+		local wakeBtn = vgui.Create("DImageButton", menu2_frame)
+			wakeBtn:SetPos( btnWPos,btnHPos )
+			wakeBtn:SetSize(25,25)
+			wakeBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			wakeBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_wake" ) 
+				SCFrame=false 
+				parent_frame:Close()
+			end
+			wakeBtn.Paint = function()
+				if wakeBtn:IsDown() then 
+					wakeBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					wakeBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local wakeBtnLbl = vgui.Create("DLabel", menu2_frame)
+			wakeBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+			wakeBtnLbl:SetColor( lblColor )
+			wakeBtnLbl:SetText( "Wake" )
+			wakeBtnLbl:SetFont(menuFont)
+			wakeBtnLbl:SizeToContents()	
+		btnHPos = btnHPos + btnHeight
+		
+		local gCarBtn = vgui.Create("DImageButton", menu2_frame)
+			gCarBtn:SetPos( btnWPos,btnHPos )
+			gCarBtn:SetSize(25,25)
+			gCarBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			gCarBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_GetCar" ) 
+				SCFrame=false 
+				parent_frame:Close()
+			end
+			gCarBtn.Paint = function()
+				if gCarBtn:IsDown() then 
+					gCarBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					gCarBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local gCarBtnLbl = vgui.Create("DLabel", menu2_frame)
+			gCarBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+			gCarBtnLbl:SetColor( lblColor )
+			gCarBtnLbl:SetText( "Get Car" )
+			gCarBtnLbl:SetFont(menuFont)
+			gCarBtnLbl:SizeToContents()	
+		btnHPos = btnHPos + btnHeight
+		
+		local gCarsBtn = vgui.Create("DImageButton", menu2_frame)
+			gCarsBtn:SetPos( btnWPos,btnHPos )
+			gCarsBtn:SetSize(25,25)
+			gCarsBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			gCarsBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_GetAllCar" ) 
+				SCFrame=false 
+				parent_frame:Close()
+			end
+			gCarsBtn.Paint = function()
+				if gCarsBtn:IsDown() then 
+					gCarsBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					gCarsBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local gCarsBtnLbl = vgui.Create("DLabel", menu2_frame)
+			gCarsBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+			gCarsBtnLbl:SetColor( lblColor )
+			gCarsBtnLbl:SetText( "Get All Cars" )
+			gCarsBtnLbl:SetFont(menuFont)
+			gCarsBtnLbl:SizeToContents()	
+		btnHPos = btnHPos + btnHeight
+		
+		local saveBtn = vgui.Create("DImageButton", menu2_frame)
+			saveBtn:SetPos( btnWPos,btnHPos )
+			saveBtn:SetSize(25,25)
+			saveBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			saveBtn.DoClick = function() 
+				RunConsoleCommand( "pnrp_save" ) 
+				SCFrame=false 
+				parent_frame:Close()
+			end
+			saveBtn.Paint = function()
+				if saveBtn:IsDown() then 
+					saveBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					saveBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local saveBtnLbl = vgui.Create("DLabel", menu2_frame)
+			saveBtnLbl:SetPos( btnWPos+35,btnHPos+5 )
+			saveBtnLbl:SetColor( lblColor )
+			saveBtnLbl:SetText( "Save" )
+			saveBtnLbl:SetFont(menuFont)
+			saveBtnLbl:SizeToContents()	
+		btnHPos = btnHPos + btnHeight
 end
 
 function GM:ScoreboardHide()
@@ -317,5 +617,6 @@ function GM:ScoreboardHide()
 	return true
 	
 end
+
 
 --EOF

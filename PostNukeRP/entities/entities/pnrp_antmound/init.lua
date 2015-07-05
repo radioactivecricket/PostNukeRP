@@ -13,11 +13,11 @@ function ENT:Initialize()
 	
 	self.AntList = {}
 	self.GuardList = {}
-	self.MaxAnts = GetConVarNumber("pnrp_MaxMoundAntlions")
-	self.MaxGuards = GetConVarNumber("pnrp_MaxMoundGuards")
-	self.SquadSize = GetConVarNumber("pnrp_MoundAntlionsPerCycle")
-	self.SpawnRate = math.Round(GetConVarNumber("pnrp_MoundMobRate") * 60)
-	self.GuardChance = GetConVarNumber("pnrp_MoundGuardChance")
+	self.MaxAnts = getSpawnerSetting("MaxMoundAntlions")
+	self.MaxGuards = getSpawnerSetting("MaxMoundGuards")
+	self.SquadSize = getSpawnerSetting("MoundAntlionsPerCycle")
+	self.SpawnRate = math.Round(getSpawnerSetting("MoundMobRate") * 60)
+	self.GuardChance = getSpawnerSetting("MoundGuardChance")
 	self.MyPos = self:GetPos()
 	self.BelowZ = 400
 	self.ZAmount = self.BelowZ / 50
@@ -157,10 +157,10 @@ function ENT:Think()
 end
 
 function ENT:MoundUpdate()
-	self.MaxAnts = GetConVarNumber("pnrp_MaxMoundAntlions")
-	self.MaxGuards = GetConVarNumber("pnrp_MaxMoundGuards")
-	self.SpawnRate = math.Round(GetConVarNumber("pnrp_MoundMobRate") * 60)
-	self.GuardChance = GetConVarNumber("pnrp_MoundGuardChance")
+	self.MaxAnts = getSpawnerSetting("MaxMoundAntlions")
+	self.MaxGuards = getSpawnerSetting("MaxMoundGuards")
+	self.SpawnRate = math.Round(getSpawnerSetting("MoundMobRate") * 60)
+	self.GuardChance = getSpawnerSetting("MoundGuardChance")
 	
 	local myAnts = self.AntList
 	local myGuards = self.GuardList
@@ -201,7 +201,7 @@ function ENT:MoundUpdate()
 		guard:SetKeyValue ("squadname", "npc_antlions_"..self.Entity:EntIndex())
 		
 		guard:Spawn()
-		guard:SetNetworkedString("Owner", "Unownable")
+		guard:SetNetVar("Owner", "Unownable")
 		
 		table.insert(self.GuardList, guard)
 		return
@@ -236,7 +236,7 @@ function ENT:MoundUpdate()
 		antlion:SetKeyValue ("squadname", "npc_antlions_"..self.Entity:EntIndex())
 		
 		antlion:Spawn()
-		antlion:SetNetworkedString("Owner", "Unownable")
+		antlion:SetNetVar("Owner", "Unownable")
 		
 		table.insert(self.AntList, antlion)
 	end
@@ -302,7 +302,7 @@ function ENT:Use( activator, caller )
 	
 	if self.eggs <= 0 then return end
 	
-	activator:SelectWeapon("gmod_rp_hands")
+	activator:SelectWeapon("weapon_simplekeys")
 	activator:SetMoveType(MOVETYPE_NONE)
 	activator.scavving = self
 	
@@ -314,7 +314,7 @@ function ENT:Use( activator, caller )
 	
 	local mound = self
 	timer.Create( activator:UniqueID().."_mound_"..tostring(self), 0.25, 120, function()
-			activator:SelectWeapon("gmod_rp_hands")
+			activator:SelectWeapon("weapon_simplekeys")
 			if (not mound:IsValid()) or (not activator:Alive()) then
 				activator:SetMoveType(MOVETYPE_WALK)
 				net.Start("stopProgressBar")

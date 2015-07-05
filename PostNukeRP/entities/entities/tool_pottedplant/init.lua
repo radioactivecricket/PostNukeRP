@@ -91,7 +91,7 @@ function DoFilter( )
 		
 		for k, v in pairs(nearbyEnts) do
 			if v:GetClass() == "tool_waterpurifier" and !v.Attached and (not IsValid(v.NetworkContainer)) then
-				if ent:GetPos():Distance(v:GetPos()) < dist and ply == v:GetNWEntity( "ownerent" ) then
+				if ent:GetPos():Distance(v:GetPos()) < dist and ply == v:GetNetVar( "ownerent" ) then
 					filter = v
 					dist = ent:GetPos():Distance(v:GetPos())
 				end
@@ -170,7 +170,7 @@ function DoAirator( )
 		
 		for k, v in pairs(nearbyEnts) do
 			if v:GetClass() == "tool_airator" and !v.Attached and (not IsValid(v.NetworkContainer)) then
-				if ent:GetPos():Distance(v:GetPos()) < dist and ply == v:GetNWEntity( "ownerent" ) then
+				if ent:GetPos():Distance(v:GetPos()) < dist and ply == v:GetNetVar( "ownerent" ) then
 					airator = v
 					dist = ent:GetPos():Distance(v:GetPos())
 				end
@@ -201,7 +201,7 @@ function DoPrune( )
 	local ply = net.ReadEntity()
 	local ent = net.ReadEntity()
 	
-	ply:SelectWeapon("gmod_rp_hands")
+	ply:SelectWeapon("weapon_simplekeys")
 	ply:SetMoveType(MOVETYPE_NONE)
 	ent.Pruning = ply
 	ent.CanPrune = false
@@ -211,7 +211,7 @@ function DoPrune( )
 	net.Send(ply)
 	
 	timer.Create( ply:UniqueID().."_prune_"..tostring(ent), 0.25, ((100 - ent.PlantStatus)*4)/2, function()
-		ply:SelectWeapon("gmod_rp_hands")
+		ply:SelectWeapon("weapon_simplekeys")
 		if (not ent:IsValid()) or (not ply:Alive()) then
 			ply:SetMoveType(MOVETYPE_WALK)
 			net.Start("stopProgressBar")
@@ -233,7 +233,7 @@ end
 
 function ENT:Use( activator, caller )
 	if activator:KeyPressed( IN_USE ) then
-		if activator:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if activator:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			if activator:Team() ~= TEAM_CULTIVATOR then
 				activator:ChatPrint("Admin overide.")
 			end

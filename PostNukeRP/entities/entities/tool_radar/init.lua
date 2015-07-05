@@ -6,21 +6,21 @@ include('shared.lua')
 util.PrecacheModel ("models/props_mining/antlion_detector.mdl")
 
 function ENT:Initialize()	
-	self.Entity:SetModel("models/props_mining/antlion_detector.mdl")
-	self.Entity:PhysicsInit( SOLID_VPHYSICS )      -- Make us work with physics,
-	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
-	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
+	self:SetModel("models/props_mining/antlion_detector.mdl")
+	self:PhysicsInit( SOLID_VPHYSICS )      -- Make us work with physics,
+	self:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
+	self:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	self:SetHealth( 200 )
 	self.moveActive = true
-	self.Entity:PhysWake()
+	self:PhysWake()
 	self:GetPhysicsObject():Wake()
 	self.playbackRate = 0
-	self.SyncTime = self.Entity:GetNWString("SyncTime", 30)
+	self.SyncTime = self:GetNetVar("SyncTime", 30)
 	self.PlayerENT = nil
-	self.Enabled = self.Entity:GetNWString("Enabled", false)
+	self.Enabled = self:GetNetVar("Enabled", false)
 	self.GPRENT = nil
-	self.EnabledGPR = self.Entity:GetNWString("EnabledGPR", false)
-	self.Status = self.Entity:GetNWString("Status", 0)
+	self.EnabledGPR = self:GetNetVar("EnabledGPR", false)
+	self.Status = self:GetNetVar("Status", 0)
 	--Status Options
 	-- -2 = Dead
 	-- -1 = No Power
@@ -37,12 +37,12 @@ function ENT:Initialize()
 	self.DirectLinks = {}
 	
 	local Radar_Sound = Sound("plats/tram_move.wav")
-	self.RadarAmb = CreateSound(self.Entity, Radar_Sound )
+	self.RadarAmb = CreateSound(self, Radar_Sound )
 	
-	self.Entity:NextThink(CurTime() + 1.0)
+	self:NextThink(CurTime() + 1.0)
 	
 	self.PowerUsage = -50
-	self.Entity:SetNWString("PowerUsage", self.PowerUsage)
+	self:SetNetVar("PowerUsage", self.PowerUsage)
 end
 
 function ENT:Use( activator, caller )
@@ -52,7 +52,7 @@ function ENT:Use( activator, caller )
 
 		RADAR_FixPlayer(activator, self)
 		
-		if activator:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then 
+		if activator:IsAdmin() and getServerSetting("adminTouchAll") == 1 then 
 			activator:ChatPrint("Admin Overide.")
 			allowedtouse = true
 		else
@@ -75,8 +75,8 @@ function ENT:Use( activator, caller )
 			
 			net.Start("radar_menu")
 				net.WriteDouble(self:Health())
-				net.WriteDouble(self.Entity:EntIndex())
-				net.WriteEntity(self.Entity)
+				net.WriteDouble(self:EntIndex())
+				net.WriteEntity(self)
 				net.WriteDouble(self.SyncTime)
 			net.Send(activator)
 		end
@@ -97,7 +97,7 @@ function RADAR_FixPlayer(ply, ent)
 		end
 	end
 	
-	if ent.Entity:EntIndex() == ply.RadarENTIndex then
+	if ent:EntIndex() == ply.RadarENTIndex then
 		if ent.Status < 1 then
 			foundRadar = false
 		end
@@ -106,8 +106,8 @@ function RADAR_FixPlayer(ply, ent)
 	if not foundRadar then
 		ply.RadarENT = nil
 		ply.RadarENTIndex = nil
-		ply:SetNWString("RadarENTIndex", nil)
-		ply:SetNWEntity("RadarENT", nil)
+		ply:SetNetVar("RadarENTIndex", nil)
+		ply:SetNetVar("RadarENT", nil)
 	end
 end
 
@@ -124,9 +124,9 @@ function RADAR_Attach()
 	ent.moveActive = false
 	
 	ply.RadarENT = ent
-	ply:SetNWEntity("RadarENT", ent)
-	ply.RadarENTIndex = ent.Entity:EntIndex()
-	ply:SetNWString("RadarENTIndex", ent.Entity:EntIndex())
+	ply:SetNetVar("RadarENT", ent)
+	ply.RadarENTIndex = ent:EntIndex()
+	ply:SetNetVar("RadarENTIndex", ent:EntIndex())
 	ent.PlayerENT = ply
 		
 	ent.PowerLevel = -50
@@ -136,7 +136,7 @@ function RADAR_Attach()
 	
 	if ent.Status == 0 then 
 		ent.Status = 1
-		ent:SetNWString("Status", 1)
+		ent:SetNetVar("Status", 1)
 	end
 
 end
@@ -152,8 +152,8 @@ end
 function RADAR_DoDetach(ply, ent)
 	ply.RadarENT = nil
 	ply.RadarENTIndex = nil
-	ply:SetNWString("RadarENTIndex", 0)
-	ply:SetNWEntity("RadarENT", ply)
+	ply:SetNetVar("RadarENTIndex", 0)
+	ply:SetNetVar("RadarENT", ply)
 	ent.PlayerENT = nil
 --	ent.Status = 0
 --	ent:SetNWString("Status", 0)
@@ -190,7 +190,7 @@ function RADAR_AttachGPR()
 		
 		ent.GPRENT = gprENT
 		ent.EnabledGPR = true
-		ent:SetNWString("EnabledGPR", true)
+		ent:SetNetVar("EnabledGPR", true)
 		
 		ent.PowerLevel = -60
 		if IsValid(ent.NetworkContainer) then
@@ -233,7 +233,7 @@ function RADAR_DetachGPR(ent)
 	end
 	ent.GPRENT = nil
 	ent.EnabledGPR = false
-	ent:SetNWString("EnabledGPR", false)
+	ent:SetNetVar("EnabledGPR", false)
 end
 util.AddNetworkString("RADAR_RemoveGPR")
 net.Receive( "RADAR_RemoveGPR", RADAR_RemoveGPR )
@@ -248,7 +248,7 @@ function RADAR_Synch()
 	end
 	
 	ent.Status = 2
-	ent:SetNWString("Status", 2)
+	ent:SetNetVar("Status", 2)
 	
 	ply:ChatPrint("Syncing Radar...")
 	--Keeps radar from beeing moved.
@@ -266,7 +266,7 @@ function RADAR_Synch()
 		ply:ChatPrint("Sync complete!")
 		
 		ent.Status = 3
-		ent:SetNWString("Status", 3)
+		ent:SetNetVar("Status", 3)
 		
 		ent.BlockF2 = true
 		
@@ -294,7 +294,7 @@ function RADAR_Repair()
 		ply:ChatPrint("Repair compleate!")
 		
 		ent.Status = 0
-		ent:SetNWString("Status", 0)
+		ent:SetNetVar("Status", 0)
 		
 	end )
 end
@@ -327,7 +327,7 @@ end
 
 function RADAR_Shutdown(ent)
 	ent.Enabled = false
-	ent:SetNWString("Enabled", false)
+	ent:SetNetVar("Enabled", false)
 	
 	if IsValid(ent.PlayerENT) then
 		local ply = ent.PlayerENT
@@ -340,7 +340,7 @@ function RADAR_Shutdown(ent)
 	ent.GPRENT = nil
 	
 	ent.Status = 0
-	ent:SetNWString("Status", 0)
+	ent:SetNetVar("Status", 0)
 	
 	ent:GetPhysicsObject():EnableMotion(true)
 	ent.moveActive = true

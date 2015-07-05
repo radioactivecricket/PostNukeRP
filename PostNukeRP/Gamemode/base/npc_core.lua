@@ -110,7 +110,7 @@ function changePetActivity(ENT)
 	end
 	
 	if petDebug == 1 then
-		local petString = ENT:GetNetworkedString("name")
+		local petString = ENT:GetNetVar("name", "")
 		if !ENT.dbTXT then ENT.dbTXT = petString end
 		local state = ENT:GetNPCState( )
 		if state == -1 then state = "invalid" end
@@ -131,9 +131,9 @@ function changePetActivity(ENT)
 		if mode == -12 then mode = "hide" end
 		if mode == -13 then mode = "cower" end
 		petString = ENT.dbTXT.." [Mode: "..mode.." State: "..state.." Target: "..tostring(target).."]"
-		ENT:SetNetworkedString("name", petString)
+		ENT:SetNetVar("name", petString)
 	elseif ENT.dbTXT then
-		ENT:SetNetworkedString("name", ENT.dbTXT)
+		ENT:SetNetVar("name", ENT.dbTXT)
 		ENT.dbTXT = nil
 	end
 end 

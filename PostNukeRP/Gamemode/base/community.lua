@@ -1,14 +1,15 @@
 
-function PNRP.SND_reopenComTab()
+function PNRP.SND_reopenComTab(len, pl)
 	local ply = net.ReadEntity()
 	local cid = net.ReadString()
 	local tab = net.ReadString()
-	local PlayerCommunityName = ply:GetNWString("community", "none")
+	if pl ~= ply then return end
+	local PlayerCommunityName = ply:GetNetVar("community", "none")
 	
 	local tbl = GetCommunityTbl( cid )
 	
 	if cid == nil then cid = -1 end --nil check for people no tin community
-	local queryPending = "SELECT * FROM community_pending WHERE cid="..tostring(cid)
+	local queryPending = "SELECT * FROM community_pending WHERE cid="..SQLStr(cid)
 	local resultPending = querySQL(queryPending)
 	if not resultPending then resultPending = {} end
 	
@@ -54,7 +55,7 @@ function PNRP.SearchCommunities()
 	local ply = net.ReadEntity()
 	local searchString = net.ReadString()
 	
-	local query = "SELECT * FROM community_table WHERE cname LIKE '%"..tostring(searchString).."%'"
+	local query = "SELECT * FROM community_table WHERE cname LIKE '%"..SQLStr2(searchString).."%'"
 	local result = querySQL(query)
 	
 	if not result then return end
@@ -107,8 +108,9 @@ util.AddNetworkString("SND_CommSelID")
 util.AddNetworkString("C_SND_CommSelResult")
 net.Receive( "SND_CommSelID", PNRP.CommSelID )
 
-function PNRP.SendPending()
+function PNRP.SendPending(len, pl)
 	local ply = net.ReadEntity()
+	if pl ~= ply then return end 
 	
 	local queryPending = "SELECT * FROM community_pending, community_table WHERE community_pending.cid = community_table.cid"
 	local resultPending = querySQL(queryPending)
@@ -127,13 +129,14 @@ util.AddNetworkString("SND_CommViewPending")
 util.AddNetworkString("C_SND_CommSendPending")
 net.Receive( "SND_CommViewPending", PNRP.SendPending )
 
-function PNRP.SND_DelPending()
+function PNRP.SND_DelPending(len, pl)
 	local ply = net.ReadEntity()
 	local cid = tonumber(net.ReadString())
 	local pTime = net.ReadString()
 	local fromMenu = net.ReadString()
-
-	local query = "DELETE FROM community_pending WHERE cid="..tostring(cid).." AND time='"..pTime.."'"
+	if pl ~= ply then return end
+	
+	local query = "DELETE FROM community_pending WHERE cid="..SQLStr(cid).." AND time="..SQLStr(pTime)
 	querySQL(query)
 
 	local query2 = "SELECT * FROM community_pending, community_table WHERE community_pending.cid = community_table.cid"
@@ -156,10 +159,11 @@ end
 util.AddNetworkString("SND_DelPending")
 net.Receive( "SND_DelPending", PNRP.SND_DelPending )
 
-function PNRP.SND_AdmDelComDep()
+function PNRP.SND_AdmDelComDep(len, pl)
 	local ply = net.ReadEntity()
 	local cid = tonumber(net.ReadString())
 	local ocid = tonumber(net.ReadString())
+	if pl ~= ply then return end
 	
 	if ply:IsAdmin() then
 		RemDiplomacy( cid, ocid )
@@ -173,10 +177,10 @@ function PNRP.PlyDelComInfo(ply)
 	
 	ply.Community = nil
 	ply:GetTable().Community = nil
-	ply:SetNWInt( "cid", nil )
-	ply:SetNWString("community", "N/A")
+	ply:SetNetVar( "cid", 0 )
+	ply:SetNetVar("community", "N/A")
 	ply:GetTable().CommunityRank = nil
-	ply:SetNWString("ctitle", "")
+	ply:SetNetVar("ctitle", "")
 	ply.ComDiplomacy = {}
 	ply:SendDipl()
 	ply:ConCommand("pnrp_save")
@@ -185,7 +189,7 @@ end
 
 function PNRP.GetCommunityName(pid)
 	local name = "N/A"
-	query = "SELECT * FROM community_members WHERE pid="..tostring(pid)
+	query = "SELECT * FROM community_members WHERE pid="..SQLStr(pid)
 	result = querySQL(query)
 	if result then 
 		query2 = "SELECT * FROM community_table WHERE cid="..tostring(result[1]["cid"])

@@ -4,15 +4,14 @@ local pp_frame
 function GM.open_admin()
 	local GM = GAMEMODE
 	local ply = LocalPlayer()
-	--local GMSettings = decoded["GMSettings"]
-	--local SpawnSettings = decoded["SpawnSettings"]
+
 	local GMSettings = net.ReadTable()
 	local SpawnSettings = net.ReadTable()
 	local mapList = net.ReadTable()
 	local importList = net.ReadTable()
 	local EventsTbl = net.ReadTable()
 	local EventsFunctions = net.ReadTable()
-	if ply:IsAdmin() then	
+	if ply:IsAdmin() then
 		admin_frame = vgui.Create( "DFrame" )
 				admin_frame:SetSize( 425, 660 ) --Set the size
 				admin_frame:SetPos(ScrW() / 2 - admin_frame:GetWide() / 2, ScrH() / 2 - admin_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
@@ -46,12 +45,12 @@ function GM.open_admin()
 		local textColor = Color(200,200,200,255)
 		local dListBKColor = Color(50,50,50,255)
 		
---		local plymenu = vgui.Create("DButton") -- Create the button
---			plymenu:SetParent( admin_frame ) -- parent the button to the frame
---			plymenu:SetText( "Player Control >" ) -- set the button text
---			plymenu:SetPos(220, 25) -- set the button position in the frame
---			plymenu:SetSize( 100, 20 ) -- set the button size
---			plymenu.DoClick = function() RunConsoleCommand( "pnrp_playerAdminList" ) SCFrame=false admin_frame:Close() end 
+		local plymenu = vgui.Create("DButton") -- Create the button
+			plymenu:SetParent( admin_frame ) -- parent the button to the frame
+			plymenu:SetText( "Player Control >" ) -- set the button text
+			plymenu:SetPos(220, 25) -- set the button position in the frame
+			plymenu:SetSize( 100, 20 ) -- set the button size
+			plymenu.DoClick = function() RunConsoleCommand( "pnrp_playerAdminList" ) SCFrame=false admin_frame:Close() end 
 		
 		local AdminTabSheet = vgui.Create( "DPropertySheet" )
 			AdminTabSheet:SetParent( admin_frame )
@@ -80,7 +79,7 @@ function GM.open_admin()
 				local E2RestrictSlider = vgui.Create( "DNumSlider", GModeSettingsList )
 				    E2RestrictSlider:SetSize( GModeSettingsList:GetWide() - 20, 40 ) -- Keep the second number at 50
 				--	E2RestrictSlider:SetWide( 50 )
-				    E2RestrictSlider:SetText( "0 - None, 1 - Admin, 2 - Eng, 3 - Eng/Science, 4 - All " )
+				    E2RestrictSlider:SetText( "0 None, 1 Admin, 2 Eng,\n3 Eng/Sci, 4 All" )
 				    E2RestrictSlider:SetMin( 0 )
 				    E2RestrictSlider:SetMax( 4 )
 				    E2RestrictSlider:SetDecimals( 0 )
@@ -98,7 +97,7 @@ function GM.open_admin()
 					
 				local ToolRestrictSlider = vgui.Create( "DNumSlider", GModeSettingsList )
 				    ToolRestrictSlider:SetSize( GModeSettingsList:GetWide() - 20, 50 ) -- Keep the second number at 50
-				    ToolRestrictSlider:SetText( "0 - None, 1 - Admin, 2 - Eng, 3 - Eng/Science, 4 - All " )
+				    ToolRestrictSlider:SetText( "0 None, 1 Admin, 2 Eng,\n3 Eng/Sci, 4 All" )
 				    ToolRestrictSlider:SetMin( 0 )
 				    ToolRestrictSlider:SetMax( 4 )
 				    ToolRestrictSlider:SetDecimals( 0 )
@@ -708,7 +707,6 @@ function GM.open_admin()
 		ply:ChatPrint("You are not an admin on this server!")
 	end
 end
---datastream.Hook( "pnrp_OpenAdminWindow", GM.open_admin )
 net.Receive( "pnrp_OpenAdminWindow", GM.open_admin )
 
 function buildEventList(event, var, funcs, parent)
@@ -722,9 +720,6 @@ function buildEventList(event, var, funcs, parent)
 			EventsSettingsList:SetSpacing( 5 )
 			EventsSettingsList:EnableHorizontal( false )
 			EventsSettingsList:EnableVerticalScrollbar( true )
-			EventsSettingsList.Paint = function()
-			--	draw.RoundedBox( 8, 0, 0, EventsSettingsList:GetWide(), EventsSettingsList:GetTall(), Color( 50, 50, 50, 255 ) )
-			end
 			
 			EventsSettingsCats:SetContents( EventsSettingsList )
 			
@@ -763,7 +758,6 @@ function buildEventList(event, var, funcs, parent)
 								if sValue == 1 then sValue = "true"
 								else sValue = "false" end	
 								RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "bool")
-							--	admin_frame:Close()
 							end
 					else
 						local valueNWang = vgui.Create( "DNumberWang", varPanel )
@@ -779,7 +773,6 @@ function buildEventList(event, var, funcs, parent)
 							funcSetBTN.DoClick = function()
 								local sValue = valueNWang:GetValue()
 								RunConsoleCommand( "pnrp_ev_setvar", event, name, sValue, "number")
-							--	admin_frame:Close()
 							end
 					end
 						
@@ -838,11 +831,6 @@ function GM.OpenPropProtectWindow( )
 			pp_TabSheet:SetPos( 5, 25 )
 			pp_TabSheet:SetSize( pp_frame:GetWide() - 10, pp_frame:GetTall() - 55 )
 			
-		--	local ppvLabel = vgui.Create("DLabel", pp_frame)
-		--		ppvLabel:SetPos(10, 25)
-		--		ppvLabel:SetColor( Color( 0, 0, 0, 255 ) )
-		--		ppvLabel:SetText( "Blocked Props" )
-		--		ppvLabel:SizeToContents()
 			local pBanPanel = vgui.Create( "DPanel", pp_TabSheet )
 				pBanPanel:SetPos( 5, 5 )
 				pBanPanel:SetSize( pp_TabSheet:GetWide(), pp_TabSheet:GetTall() )
@@ -883,14 +871,14 @@ function GM.OpenPropProtectWindow( )
 						else
 							model = tostring(ent:GetModel())
 							ply:ChatPrint(model)
-							--datastream.StreamToServer("PropProtect_AddItem", {model, 1} ) 
+
 							net.Start("PropProtect_AddItem")
 								net.WriteEntity(ply)
 								net.WriteString(model)
 								net.WriteDouble(1)
 							net.SendToServer()
 							pp_frame:Close()
-							--datastream.StreamToServer( "Start_open_PropProtection" )
+							
 							net.Start("Start_open_PropProtection")
 								net.WriteEntity(ply)
 							net.SendToServer()
@@ -947,14 +935,14 @@ function GM.OpenPropProtectWindow( )
 						else
 							model = tostring(ent:GetModel())
 							ply:ChatPrint(model)
-							--datastream.StreamToServer("PropProtect_AddItem", {model, 2} ) 
+							
 							net.Start("PropProtect_AddItem")
 								net.WriteEntity(ply)
 								net.WriteString(model)
 								net.WriteDouble(2)
 							net.SendToServer()
 							pp_frame:Close()
-							--datastream.StreamToServer( "Start_open_PropProtection" )
+							
 							net.Start("Start_open_PropProtection")
 								net.WriteEntity(ply)
 							net.SendToServer()
@@ -972,7 +960,6 @@ function GM.OpenPropProtectWindow( )
 			pp_TabSheet:AddSheet( "Allowed Props List", pAllowedPanel, "gui/icons/brick_add.png", false, false, "Allowed Props List" )
 	end
 end
---datastream.Hook( "pnrp_OpenPropProtectWindow", GM.OpenPropProtectWindow )
 net.Receive( "pnrp_OpenPropProtectWindow", GM.OpenPropProtectWindow )
 
 function PNRP.RemoveItemVerify(model, switch)
@@ -999,7 +986,7 @@ function PNRP.RemoveItemVerify(model, switch)
 					ppv_yes:SetPos(30, 50) -- set the button position in the frame
 					ppv_yes:SetSize( 50, 20 ) -- set the button size
 					ppv_yes.DoClick = function() 
-						--datastream.StreamToServer( "PropProtect_RemoveItem", {model, switch}) 
+						
 						net.Start("PropProtect_RemoveItem")
 							net.WriteEntity(ply)
 							net.WriteString(model)
@@ -1007,7 +994,7 @@ function PNRP.RemoveItemVerify(model, switch)
 						net.SendToServer()
 						ppv_frame:Close() 
 						pp_frame:Close() 
-						--datastream.StreamToServer( "Start_open_PropProtection" )
+						
 						net.Start("Start_open_PropProtection")
 							net.WriteEntity(ply)
 						net.SendToServer()
@@ -1023,66 +1010,1398 @@ function PNRP.RemoveItemVerify(model, switch)
 	end
 end
 
-local PlyAdminLs_frame
-local PlyAdminLsFrameCK = false
+local plyADM_frame
+local plyADMSearchBody_Frame
+local profileADM_frame
 function GM.OpenPlyAdminLstWindow( )
 	local GM = GAMEMODE
 	local ply = LocalPlayer()
 	local Players =  net.ReadTable()
-	PlyAdminLsFrameCK = true
 	
-	PlyAdminLs_frame = vgui.Create( "DFrame" )
-		PlyAdminLs_frame:SetSize( 400, 450 ) 
-		PlyAdminLs_frame:SetPos(ScrW() / 2 - PlyAdminLs_frame:GetWide() / 2, ScrH() / 2 - PlyAdminLs_frame:GetTall() / 2)
-		PlyAdminLs_frame:SetTitle( "Player Admin" )
-		PlyAdminLs_frame:SetVisible( true )
-		PlyAdminLs_frame:SetDraggable( true )
-		PlyAdminLs_frame:ShowCloseButton( true )
-		PlyAdminLs_frame:MakePopup()
+	plyADM_frame = PNRP.PNRP_Frame()
+	if not plyADM_frame then return end
+
+	plyADM_frame:SetSize( 575, 265 ) 
+	plyADM_frame:SetPos(ScrW() / 2 - plyADM_frame:GetWide() / 2, ScrH() / 2 - plyADM_frame:GetTall() / 2)
+	plyADM_frame:SetTitle( " " )
+	plyADM_frame:SetVisible( true )
+	plyADM_frame:SetDraggable( false )
+	plyADM_frame:ShowCloseButton( true )
+	plyADM_frame:MakePopup()
+	plyADM_frame.Paint = function() 
+		surface.SetDrawColor( 50, 50, 50, 0 )
+	end
+	
+	local screenBG = vgui.Create("DImage", plyADM_frame)
+		screenBG:SetImage( "VGUI/gfx/pnrp_screen_6b.png" )
+		screenBG:SetSize(plyADM_frame:GetWide(), plyADM_frame:GetTall())	
+	
+	--Creates the body to keep it from beeing nil
+	plyADMSearchBody_Frame = vgui.Create( "DPanel", plyADM_frame )
+		plyADMSearchBody_Frame:SetPos( 30, 33 ) -- Set the position of the panel
+		plyADMSearchBody_Frame:SetSize( plyADM_frame:GetWide() - 250, plyADM_frame:GetTall() - 40)
+		plyADMSearchBody_Frame.Paint = function() 
+		--	surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+	plyADMBTN_Panel = vgui.Create( "DPanel", plyADM_frame )
+		plyADMBTN_Panel:SetPos( plyADM_frame:GetWide() - 215, plyADM_frame:GetTall() - 100 )
+		plyADMBTN_Panel:SetSize( 250, 100 )
+		plyADMBTN_Panel.Paint = function() 
+		--	surface.SetDrawColor( 50, 50, 50, 0 )
+		end
 		
-		local PlyAdminLs_TabSheet = vgui.Create( "DPropertySheet" )
-			PlyAdminLs_TabSheet:SetParent( PlyAdminLs_frame )
-			PlyAdminLs_TabSheet:SetPos( 5, 25 )
-			PlyAdminLs_TabSheet:SetSize( PlyAdminLs_frame:GetWide() - 15, PlyAdminLs_frame:GetTall() - 55 )
+	--Search Bar
+		plyADMSearchPanel = vgui.Create( "DPanel", plyADM_frame )
+			plyADMSearchPanel:SetPos( 370, 35 ) -- Set the position of the panel
+			plyADMSearchPanel:SetSize( 155, 100 )
+			plyADMSearchPanel.Paint = function() 
+				surface.SetDrawColor( 50, 50, 50, 0 )
+			end
+		local DLabel = vgui.Create( "DLabel", plyADMSearchPanel )
+			DLabel:SetPos( 5, 5 )
+			DLabel:SetText( "ADM Player Search" )
+			DLabel:SizeToContents()		
+		local plyADMNameTxt = vgui.Create("DTextEntry", plyADMSearchPanel)
+			plyADMNameTxt:SetText("")
+			plyADMNameTxt:SetPos(5,25)
+			plyADMNameTxt:SetWide(150)
+			plyADMNameTxt.OnEnter = function()
+				plyADMSearchBody_Frame:Remove()
+				net.Start("SND_plyADMSearch")
+					net.WriteString(plyADMNameTxt:GetValue())
+					net.WriteString("name")
+				net.SendToServer()
+			end
+		local DButton = vgui.Create( "DButton", plyADMSearchPanel )
+			 DButton:SetPos( 5, 55 )
+			 DButton:SetText( "Search Name" )
+			 DButton:SetSize( 150, 20 )
+			 DButton.DoClick = function()
+				plyADMSearchBody_Frame:Remove()
+				net.Start("SND_plyADMSearch")
+					net.WriteString(plyADMNameTxt:GetValue())
+					net.WriteString("name")
+				net.SendToServer()
+			 end
+		local SButton = vgui.Create( "DButton", plyADMSearchPanel )
+			 SButton:SetPos( 5, 75 )
+			 SButton:SetText( "Search SteamID" )
+			 SButton:SetSize( 150, 20 )
+			 SButton.DoClick = function()
+				plyADMSearchBody_Frame:Remove()
+				net.Start("SND_plyADMSearch")
+					net.WriteString(plyADMNameTxt:GetValue())
+					net.WriteString("steamid")
+				net.SendToServer()
+			 end
+	
+end
+net.Receive( "pnrp_OpenPlyAdminLstWindow", GM.OpenPlyAdminLstWindow )
+
+function plyADMDispResults()
+	local result = net.ReadTable()
+	local ply = LocalPlayer()
+	
+	if not plyADM_frame then return end
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+
+	plyADMSearchBody_Frame = vgui.Create( "DPanel", plyADM_frame )
+		plyADMSearchBody_Frame:SetPos( 25, 40 ) -- Set the position of the panel
+		plyADMSearchBody_Frame:SetSize( plyADM_frame:GetWide() - 260, plyADM_frame:GetTall() - 40)
+		plyADMSearchBody_Frame.Paint = function() 
+		--	surface.SetDrawColor( 50, 50, 50, 0 )
+		end
 		
-			local PlyAdminLsPanel = vgui.Create( "DPanel", PlyAdminLs_TabSheet )
-				PlyAdminLsPanel:SetPos( 5, 5 )
-				PlyAdminLsPanel:SetSize( PlyAdminLs_TabSheet:GetWide(), PlyAdminLs_TabSheet:GetTall() )
-				PlyAdminLsPanel.Paint = function() -- Paint function
+	local plyList = vgui.Create("DPanelList", plyADMSearchBody_Frame)
+		plyList:SetPos(0, 0)
+		plyList:SetSize(plyADMSearchBody_Frame:GetWide() - 5, plyADMSearchBody_Frame:GetTall() - 40)
+		plyList:EnableVerticalScrollbar(true) 
+		plyList:EnableHorizontal(false) 
+		plyList:SetSpacing(1)
+		plyList:SetPadding(10)
+	
+		for k, v in pairs(result) do
+			local plyPanel = vgui.Create("DPanel")
+				plyPanel:SetTall(25)
+				plyPanel.Paint = function()
+					draw.RoundedBox( 6, 0, 0, plyPanel:GetWide(), plyPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+				end
+				plyList:AddItem(plyPanel)
+					
+				local textCom = tostring(v["name"])
+				
+				plyPanel.Name = vgui.Create("DLabel", plyPanel)
+				plyPanel.Name:SetPos(5, 5)
+				plyPanel.Name:SetText(textCom)
+				plyPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+				plyPanel.Name:SizeToContents() 
+				plyPanel.Name:SetContentAlignment( 5 )
+				
+				local DButton = vgui.Create( "DButton", plyPanel )
+					DButton:SetPos( 225 , 3 )
+					DButton:SetText( "Select" )
+					DButton:SetSize( 50, 20 )
+					DButton.DoClick = function()
+						plyADMSearchBody_Frame:Remove()
+
+						net.Start("SND_plyADMSelSID")
+							net.WriteString(v["steamid"])
+						net.SendToServer()
+					end
+		end
+	
+end
+net.Receive("C_SND_plyADMSearchResults", plyADMDispResults)
+
+function PlyAdminDispPlayer()
+	local playerTBL = net.ReadTable()
+	local profileTBL = net.ReadTable()
+	local CommunityTBL = net.ReadTable()
+	local ply = LocalPlayer()
+	playerTBL = playerTBL[1]
+	
+	if not plyADM_frame then return end
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+
+	plyADMSearchBody_Frame = vgui.Create( "DPanel", plyADM_frame )
+		plyADMSearchBody_Frame:SetPos( 25, 35 ) -- Set the position of the panel
+		plyADMSearchBody_Frame:SetSize( plyADM_frame:GetWide() - 270, plyADM_frame:GetTall() - 30)
+		plyADMSearchBody_Frame.Paint = function() 
+		--	surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+		
+		local plyADMPanel = vgui.Create("DPanel", plyADMSearchBody_Frame)
+			plyADMPanel:SetPos( 0, 0 )
+			plyADMPanel:SetSize(plyADMSearchBody_Frame:GetWide() - 5, plyADMSearchBody_Frame:GetTall() - 40)
+			plyADMPanel.Paint = function()
+			--	draw.RoundedBox( 6, 0, 0, plyADMPanel:GetWide(), plyADMPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+			end
+
+			local plyName = vgui.Create("DLabel", plyADMPanel)
+				plyName:SetPos(10, 5)
+				plyName:SetText("Name: "..tostring(playerTBL["name"]))
+				plyName:SetColor(Color( 0, 255, 0, 255 ))
+				plyName:SizeToContents() 
+				plyName:SetContentAlignment( 5 )
+			local steamIDTxt = vgui.Create("DLabel", plyADMPanel)
+				steamIDTxt:SetPos(10, 20)
+				steamIDTxt:SetText("SteamID:")
+				steamIDTxt:SetColor(Color( 0, 255, 0, 255 ))
+				steamIDTxt:SizeToContents() 
+				steamIDTxt:SetContentAlignment( 5 )
+			local TextSteamID = vgui.Create( "DTextEntry", plyADMPanel )
+				TextSteamID:SetPos( 50, 20 )
+				TextSteamID:SetSize( 115, 15 )
+				TextSteamID:SetText( tostring(playerTBL["steamid"]) )
+			local ipTxt = vgui.Create("DLabel", plyADMPanel)
+				ipTxt:SetPos(10, 35)
+				ipTxt:SetText("IP:")
+				ipTxt:SetColor(Color( 0, 255, 0, 255 ))
+				ipTxt:SizeToContents() 
+				ipTxt:SetContentAlignment( 5 )
+			local TextIP = vgui.Create( "DTextEntry", plyADMPanel )
+				TextIP:SetPos( 35, 35 )
+				TextIP:SetSize( 115, 15 )
+				TextIP:SetText( tostring(playerTBL["ip"]) )
+			local FirstOnTxt = vgui.Create("DLabel", plyADMPanel)
+				FirstOnTxt:SetPos(165, 20)
+				FirstOnTxt:SetText("Joined: "..tostring(playerTBL["first_joined"]))
+				FirstOnTxt:SetColor(Color( 0, 255, 0, 255 ))
+				FirstOnTxt:SizeToContents() 
+				FirstOnTxt:SetContentAlignment( 5 )
+			local LastOnTxt = vgui.Create("DLabel", plyADMPanel)
+				LastOnTxt:SetPos(160, 35)
+				LastOnTxt:SetText("Last On: "..tostring(playerTBL["last_joined"]))
+				LastOnTxt:SetColor(Color( 0, 255, 0, 255 ))
+				LastOnTxt:SizeToContents() 
+				LastOnTxt:SetContentAlignment( 5 )
+			
+			local profilePanel = vgui.Create( "DPanel", plyADMPanel )
+				profilePanel:SetPos( 10, 50 )
+				profilePanel:SetSize( plyADMPanel:GetWide(), plyADMPanel:GetTall() - 50 )
+				profilePanel.Paint = function() -- Paint function
+				--	surface.SetDrawColor( 50, 50, 50, 0 )
+					draw.RoundedBox( 1, 0, 0, profilePanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+					draw.RoundedBox( 1, 0, profilePanel:GetTall()-1, profilePanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+				end			
+			local profileList = vgui.Create("DPanelList", profilePanel)
+				profileList:SetPos(-10, 0)
+				profileList:SetSize(profilePanel:GetWide()-5, profilePanel:GetTall()-2)
+				profileList:EnableVerticalScrollbar(true) 
+				profileList:EnableHorizontal(false) 
+				profileList:SetSpacing(1)
+				profileList:SetPadding(10)
+				profileList.Paint = function()
+				--	draw.RoundedBox( 8, 0, 0, profileList:GetWide(), profileList:GetTall(), Color( 50, 50, 50, 255 ) )
+				end
+				
+				for k, v in pairs(profileTBL) do
+					local pPanel = vgui.Create("DPanel")
+						pPanel:SetTall(40)
+						pPanel.Paint = function()
+						--	draw.RoundedBox( 6, 0, 0, pPanel:GetWide(), pPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+							draw.RoundedBox( 1, 0, 0, pPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+							draw.RoundedBox( 1, 0, pPanel:GetTall()-1, pPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+						end
+						profileList:AddItem(pPanel)
+						
+						pPanel.Icon = vgui.Create("SpawnIcon", pPanel)
+						pPanel.Icon:SetSize( 35, 35 )
+						pPanel.Icon:SetModel(v["model"])
+						pPanel.Icon:SetPos(10, 2)
+						pPanel.Icon:SetToolTip( "Last On: "..tostring(v["lastlog"]) )
+						pPanel.Icon.DoClick = function()
+							net.Start("SND_plyADMSelProfile")
+								net.WriteString(v["pid"])
+							net.SendToServer()
+							
+							if profileADM_frame then profileADM_frame:Remove() end
+						end
+						
+						pPanel.Name = vgui.Create("DLabel", pPanel)
+						pPanel.Name:SetPos(50, 3)
+						pPanel.Name:SetText("Name: "..tostring(v["nick"]))
+						pPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+						pPanel.Name:SizeToContents() 
+						pPanel.Name:SetContentAlignment( 5 )
+						
+						pPanel.Class = vgui.Create("DLabel", pPanel)
+						pPanel.Class:SetPos(50, 14)
+						pPanel.Class:SetText("Class: "..team.GetName(tonumber(v["class"])))
+						pPanel.Class:SetColor(Color( 0, 255, 0, 255 ))
+						pPanel.Class:SizeToContents() 
+						pPanel.Class:SetContentAlignment( 5 )
+
+						if CommunityTBL[v["pid"]] then
+							local comInfo = CommunityTBL[v["pid"]]
+							
+							pPanel.Community = vgui.Create("DLabel", pPanel)
+							pPanel.Community:SetPos(50, 25)
+							pPanel.Community:SetText("Community: "..tostring(comInfo["cname"]))
+							pPanel.Community:SetColor(Color( 0, 255, 0, 255 ))
+							pPanel.Community:SizeToContents() 
+							pPanel.Community:SetContentAlignment( 5 )
+							
+							pPanel.Rank = vgui.Create("DLabel", pPanel)
+							pPanel.Rank:SetPos(225, 3)
+							pPanel.Rank:SetText("Rank: "..tostring(comInfo["rank"]))
+							pPanel.Rank:SetColor(Color( 0, 255, 0, 255 ))
+							pPanel.Rank:SizeToContents() 
+							pPanel.Rank:SetContentAlignment( 5 )
+							
+							pPanel.Title = vgui.Create("DLabel", pPanel)
+							pPanel.Title:SetPos(150, 14)
+							pPanel.Title:SetText("Title: "..tostring(comInfo["title"]))
+							pPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+							pPanel.Title:SizeToContents() 
+							pPanel.Title:SetContentAlignment( 5 )
+						end
+				end
+	
+end
+net.Receive("C_SND_PlyAdminSelResult", PlyAdminDispPlayer)
+
+local Inventory_DPanel
+local Inventory_TabSheet
+local pnlUserInv_DPanel
+local pnlUserInvList
+local storageADM_frame
+local vendorADM_frame
+function PlyAdminProfileView()
+	local playerTBL = net.ReadTable()
+	local inventoryTBL = net.ReadTable()
+	local communityTBL = net.ReadTable()
+	local storageTBL = net.ReadTable()
+	local vendorTBL = net.ReadTable()
+	local ply = LocalPlayer()
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	local playerOnline, targetPly
+	for _, p in pairs(player.GetAll()) do
+		if tostring(p:GetNetVar("pid", nil)) == tostring(playerTBL["pid"]) then
+			playerOnline = true
+			targetPly = p
+		end
+	end
+	
+	profileADM_frame = vgui.Create( "DFrame" )
+	profileADM_frame:SetSize( 710, 510 ) --Set the size Extra 40 must be from the top bar
+		--Set the window in the middle of the players screen/game window
+		profileADM_frame:SetPos(ScrW() / 2 - profileADM_frame:GetWide() / 2, ScrH() / 2 - profileADM_frame:GetTall() / 2) 
+		profileADM_frame:SetTitle( "Player Info" ) --Set title
+		profileADM_frame:SetVisible( true )
+		profileADM_frame:SetDraggable( true )
+		profileADM_frame:ShowCloseButton( true )
+		profileADM_frame:MakePopup()
+		profileADM_frame.Paint = function() 
+			surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+		
+		local screenBG = vgui.Create("DImage", profileADM_frame)
+			screenBG:SetImage( "VGUI/gfx/pnrp_screen_2b.png" )
+			screenBG:SetSize(profileADM_frame:GetWide(), profileADM_frame:GetTall())
+		
+		local onlineTxt = "Offline"
+		local onlineColor = Color( 170, 10, 0, 255 )
+		if playerOnline then
+			onlineTxt = "Online"
+			onlineColor = Color( 0, 200, 0, 255 )
+		end
+		local isOnlineTxt = vgui.Create( "DLabel", profileADM_frame)
+			isOnlineTxt:SetPos(50, 35)
+			isOnlineTxt:SetText(onlineTxt)
+			isOnlineTxt:SetColor(onlineColor)
+			isOnlineTxt:SetFont("Trebuchet24")
+			isOnlineTxt:SizeToContents()
+
+					
+		local mdl = vgui.Create( "DModelPanel", profileADM_frame )
+			mdl:SetSize( 350, 740 )
+			mdl:SetPos(-60,-125)
+			mdl.Angles = Angle( 0, 0, 0 )			
+			mdl:SetFOV( 36 )
+			mdl:SetCamPos( Vector( 0, 0, 0 ) )
+			mdl:SetDirectionalLight( BOX_RIGHT, Color( 255, 160, 80, 255 ) )
+			mdl:SetDirectionalLight( BOX_LEFT, Color( 80, 160, 255, 255 ) )
+			mdl:SetAmbientLight( Vector( -64, -64, -64 ) )
+			mdl:SetAnimated( true )
+			mdl:SetLookAt( Vector( -100, 0, -22 ) )
+			
+			mdl:SetModel( playerTBL["model"] ) -- you can only change colors on playermodels
+		--	function mdl.Entity:GetPlayerColor() return Vector( GetConVarString( "cl_playercolor" ) ) end
+			
+			mdl.Entity:SetPos( Vector( -100, 0, -61 ) )
+	
+			-- Hold to rotate
+			function mdl:DragMousePress()
+				self.PressX, self.PressY = gui.MousePos()
+				self.Pressed = true
+			end
+
+			function mdl:DragMouseRelease() self.Pressed = false end
+
+			function mdl:LayoutEntity( Entity )
+
+				if ( self.Pressed ) then
+					local mx, my = gui.MousePos()
+					self.Angles = self.Angles - Angle( 0, ( self.PressX or mx ) - mx, 0 )
+					
+					self.PressX, self.PressY = gui.MousePos()
+				end
+
+				Entity:SetAngles( self.Angles )
+			end
+			
+		local profileAdm_TabSheet = vgui.Create( "DPropertySheet" )
+			profileAdm_TabSheet:SetParent( profileADM_frame )
+			profileAdm_TabSheet:SetPos( 200, 45 )
+			profileAdm_TabSheet:SetSize( profileADM_frame:GetWide() - 250, profileADM_frame:GetTall() - 90 )
+			profileAdm_TabSheet.Paint = function() -- Paint function
+				surface.SetDrawColor( 50, 50, 50, 0 )
+			end
+			
+			local pInfoPanel = vgui.Create( "DPanel", profileAdm_TabSheet )
+				pInfoPanel:SetPos( 5, 5 )
+				pInfoPanel:SetSize( profileAdm_TabSheet:GetWide(), profileAdm_TabSheet:GetTall() )
+				pInfoPanel.Paint = function() -- Paint function
 					surface.SetDrawColor( 50, 50, 50, 0 )
 				end
-			local PlyAdminLsList = vgui.Create("DPanelList", PlyAdminLsPanel)
-				PlyAdminLsList:SetPos(5, 5)
-				PlyAdminLsList:SetSize(PlyAdminLsPanel:GetWide() - 10, PlyAdminLsPanel:GetTall() - 40)
-				PlyAdminLsList:EnableVerticalScrollbar(true) 
-				PlyAdminLsList:EnableHorizontal(false) 
-				PlyAdminLsList:SetSpacing(1)
-				PlyAdminLsList:SetPadding(10)
-				
-				for k, v in pairs( Players ) do
-					local PLyPanel = vgui.Create("DPanel")
-						PLyPanel:SetTall(75)
-						PLyPanel.Paint = function()
-							draw.RoundedBox( 6, 0, 0, PLyPanel:GetWide(), PLyPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
-						end
-						PlyAdminLsList:AddItem(PLyPanel)
+			
+				local name = vgui.Create("DLabel", pInfoPanel)
+					name:SetPos(0, 10)
+					name:SetText("Name: ")
+					name:SetColor(Color( 0, 200, 0, 255 ))
+					name:SetFont("Trebuchet24")
+					name:SizeToContents()
+				local TextName = vgui.Create( "DTextEntry", pInfoPanel )
+					TextName:SetPos( 60, 12 )
+					TextName:SetSize( 175, 22 )
+					TextName:SetText( playerTBL["nick"] )
+					TextName.OnEnter = function( self )
 						
-						PLyPanel.Title = vgui.Create("DLabel", PLyPanel)
-						PLyPanel.Title:SetPos(10, 5)
-						PLyPanel.Title:SetText(v["name"])
-						PLyPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
-						PLyPanel.Title:SizeToContents() 
-						PLyPanel.Title:SetContentAlignment( 5 )
+					end
+				local NameChangeBtn = vgui.Create("DButton", pInfoPanel )
+					NameChangeBtn:SetPos(250, 12)
+					NameChangeBtn:SetSize(90,20)
+					NameChangeBtn:SetText( "Change Name" )
+					NameChangeBtn.DoClick = function()
+						net.Start("SND_AdmEditPlayer")
+							net.WriteString("changeName")
+							net.WriteString(playerTBL["pid"])
+							net.WriteString(TextName:GetValue())
+						net.SendToServer()
+					end
+					
+				function chName(newName)
+					net.Start("PNRP_ChangeRPName")
+						net.WriteEntity(ply)
+						net.WriteString(TextName:GetValue())
+					net.SendToServer()
 				end
-	
-	function PlyAdminLs_frame:Close()                  
-		PlyAdminLsFrameCK = false                  
-		self:SetVisible( false )                  
-		self:Remove()          
-	end 
+				
+				local class = vgui.Create("DLabel", pInfoPanel)
+					class:SetPos(0, 40)
+					class:SetText("Class: "..team.GetName(tonumber(playerTBL["class"])))
+					class:SetColor(Color( 0, 255, 0, 255 ))
+					class:SetFont("HudHintTextLarge")
+					class:SizeToContents() 
+				local community = vgui.Create("DLabel", pInfoPanel)
+					community:SetPos(0, 65)
+					community:SetText("Member of "..tostring(communityTBL["cname"]))
+					community:SetColor(Color( 0, 255, 0, 255 ))
+					community:SetFont("HudHintTextLarge")
+					community:SizeToContents() 
+				local rank = vgui.Create("DLabel", pInfoPanel)
+					rank:SetPos(0, 80)
+					rank:SetText("Rank: "..tostring(communityTBL["rank"]))
+					rank:SetColor(Color( 0, 200, 0, 255 ))
+					rank:SetFont("HudHintTextLarge")
+					rank:SizeToContents() 
+				local title = vgui.Create("DLabel", pInfoPanel)
+					title:SetPos(0, 95)
+					title:SetText("Title: "..tostring(communityTBL["title"]))
+					title:SetColor(Color( 0, 200, 0, 255 ))
+					title:SetFont("HudHintTextLarge")
+					title:SizeToContents()
+					
+				--Player Resources
+				local res = string.Explode(",", playerTBL["res"])
+				local scrapLbl = vgui.Create("DLabel", pInfoPanel)
+					scrapLbl:SetPos(0, 120)
+					scrapLbl:SetText("Scrap: ")
+					scrapLbl:SetColor(Color( 0, 200, 0, 255 ))
+					scrapLbl:SetFont("HudHintTextLarge")
+					scrapLbl:SizeToContents()
+				local scrapTxt = vgui.Create( "DTextEntry", pInfoPanel )
+					scrapTxt:SetPos( 60, 120 )
+					scrapTxt:SetSize( 50, 15 )
+					scrapTxt:SetText( res[1] )
+				local spLbl = vgui.Create("DLabel", pInfoPanel)
+					spLbl:SetPos(0, 137)
+					spLbl:SetText("SP: ")
+					spLbl:SetColor(Color( 0, 200, 0, 255 ))
+					spLbl:SetFont("HudHintTextLarge")
+					spLbl:SizeToContents()
+				local spText = vgui.Create( "DTextEntry", pInfoPanel )
+					spText:SetPos( 60, 137 )
+					spText:SetSize( 50, 15 )
+					spText:SetText( res[2] )
+				local chemLbl = vgui.Create("DLabel", pInfoPanel)
+					chemLbl:SetPos(0, 155)
+					chemLbl:SetText("Chems: ")
+					chemLbl:SetColor(Color( 0, 200, 0, 255 ))
+					chemLbl:SetFont("HudHintTextLarge")
+					chemLbl:SizeToContents()
+				local chemTxt = vgui.Create( "DTextEntry", pInfoPanel )
+					chemTxt:SetPos( 60, 155 )
+					chemTxt:SetSize( 50, 15 )
+					chemTxt:SetText( res[3] )
+				local UpdateResBtn = vgui.Create("DButton", pInfoPanel )
+					UpdateResBtn:SetPos(110, 120)
+					UpdateResBtn:SetSize(75,15)
+					UpdateResBtn:SetText( "Update Res" )
+					UpdateResBtn.DoClick = function()
+						if playerOnline then 
+							openTradeToMenu(ply, targetPly, "admin_trade")
+							profileADM_frame:Remove()
+						else
+							local resStr = scrapTxt:GetValue()..","..spText:GetValue()..","..chemTxt:GetValue()
+							net.Start("SND_AdmEditPlayer")
+								net.WriteString("editRes")
+								net.WriteString(playerTBL["pid"])
+								net.WriteString(resStr)
+							net.SendToServer()
+						end
+					end
+					if playerOnline then
+						UpdateResBtn:SetText( "Admin Trade" )
+						scrapTxt:SetDisabled(true) 
+						spText:SetDisabled(true) 
+						chemTxt:SetDisabled(true) 
+					end
+					
+				local lastlogTxt = vgui.Create("DLabel", pInfoPanel)
+					lastlogTxt:SetPos(175, 40)
+					lastlogTxt:SetText("Last Logged On: "..playerTBL["lastlog"])
+					lastlogTxt:SetColor(Color( 0, 200, 0, 255 ))
+					lastlogTxt:SetFont("HudHintTextLarge")
+					lastlogTxt:SizeToContents()
+					
+				local SteamIDLbl = vgui.Create("DLabel", pInfoPanel)
+					SteamIDLbl:SetPos(235, 55)
+					SteamIDLbl:SetText("SteamID: ")
+					SteamIDLbl:SetColor(Color( 0, 200, 0, 255 ))
+					SteamIDLbl:SetFont("HudHintTextLarge")
+					SteamIDLbl:SizeToContents()
+				local SteamIDTxt = vgui.Create( "DTextEntry", pInfoPanel )
+					SteamIDTxt:SetPos( 300, 55 )
+					SteamIDTxt:SetSize( 125, 15 )
+					SteamIDTxt:SetDisabled(true) 
+					SteamIDTxt:SetText( playerTBL["steamid"] )
+				local ipTxt = vgui.Create("DLabel", pInfoPanel)
+					ipTxt:SetPos(235, 70)
+					ipTxt:SetText("IP: "..playerTBL["ip"])
+					ipTxt:SetColor(Color( 0, 200, 0, 255 ))
+					ipTxt:SetFont("HudHintTextLarge")
+					ipTxt:SizeToContents()
+				
+				local healthLbl = vgui.Create("DLabel", pInfoPanel)
+					healthLbl:SetPos(235, 105)
+					healthLbl:SetText("HP: "..tostring(playerTBL["health"]))
+					healthLbl:SetColor(Color( 0, 200, 0, 255 ))
+					healthLbl:SetFont("HudHintTextLarge")
+					healthLbl:SizeToContents()
+				local powerLbl = vgui.Create("DLabel", pInfoPanel)
+					powerLbl:SetPos(235, 120)
+					powerLbl:SetText("Power: "..tostring(playerTBL["armor"]))
+					powerLbl:SetColor(Color( 0, 200, 0, 255 ))
+					powerLbl:SetFont("HudHintTextLarge")
+					powerLbl:SizeToContents()
+				local endLbl = vgui.Create("DLabel", pInfoPanel)
+					endLbl:SetPos(235, 135)
+					endLbl:SetText("End: "..tostring(playerTBL["endurance"]))
+					endLbl:SetColor(Color( 0, 200, 0, 255 ))
+					endLbl:SetFont("HudHintTextLarge")
+					endLbl:SizeToContents()
+				local hungerLbl = vgui.Create("DLabel", pInfoPanel)
+					hungerLbl:SetPos(235, 150)
+					hungerLbl:SetText("Hunger: "..tostring(playerTBL["hunger"]))
+					hungerLbl:SetColor(Color( 0, 200, 0, 255 ))
+					hungerLbl:SetFont("HudHintTextLarge")
+					hungerLbl:SizeToContents()
+				
+				--Player Equipped Weapons
+				local EqWepTxt = vgui.Create("DLabel", pInfoPanel)
+					EqWepTxt:SetPos(5, 175)
+					EqWepTxt:SetText("Equiped Weapons:")
+					EqWepTxt:SetColor(Color( 0, 255, 0, 255 ))
+					EqWepTxt:SetFont("HudHintTextLarge")
+					EqWepTxt:SizeToContents()				
+				local wepList = vgui.Create("DPanelList", pInfoPanel)
+					wepList:SetPos(0, 190)
+					wepList:SetSize(200, 195)
+					wepList:EnableVerticalScrollbar(true) 
+					wepList:EnableHorizontal(false) 
+					wepList:SetSpacing(1)
+					wepList:SetPadding(10)
+					wepList.Paint = function()	end
+					
+					local weaponsTbl = string.Explode(",", playerTBL["weapons"])
+					if playerOnline then weaponsTbl = targetPly:GetWeapons() end
+					for _, v in pairs(weaponsTbl) do
+						if playerOnline then v = tostring(v:GetClass()) end
+						for itemname, item in pairs( PNRP.Items ) do
+							if v == item.Ent then
+								local pPanel = vgui.Create("DPanel")
+									pPanel:SetTall(40)
+									pPanel.Paint = function()
+									--	draw.RoundedBox( 6, 0, 0, pPanel:GetWide(), pPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+										draw.RoundedBox( 1, 0, 0, pPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+										draw.RoundedBox( 1, 0, pPanel:GetTall()-1, pPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+									end
+									wepList:AddItem(pPanel)
+									
+									pPanel.Icon = vgui.Create("SpawnIcon", pPanel)
+									pPanel.Icon:SetSize( 35, 35 )
+									pPanel.Icon:SetModel(item.Model)
+									pPanel.Icon:SetPos(10, 2)
+									pPanel.Icon:SetToolTip( nil )
+									pPanel.Icon.DoClick = function()
+									end
+									pPanel.Name = vgui.Create("DLabel", pPanel)
+									pPanel.Name:SetPos(55, 3)
+									pPanel.Name:SetText(item.Name)
+									pPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+									pPanel.Name:SizeToContents() 
+									pPanel.Name:SetContentAlignment( 5 )
+									pPanel.remWep = vgui.Create("DImageButton", pPanel )
+									pPanel.remWep:SetPos(150, 20)
+									pPanel.remWep:SetSize(16,16)
+									pPanel.remWep:SetImage( "gui/icons/delete.png" )
+									pPanel.remWep:SetToolTip("Remove")
+									pPanel.remWep.DoClick = function()
+										net.Start("SND_AdmEditPlayer")
+											net.WriteString("rem_weapon")
+											net.WriteString(playerTBL["pid"])
+											net.WriteString(v)
+										net.SendToServer()
+										profileADM_frame:Remove()
+									end
+							end
+						end
+					end
+				--Player Equipped Ammo
+				local EqAmmoTxt = vgui.Create("DLabel", pInfoPanel)
+					EqAmmoTxt:SetPos(210, 175)
+					EqAmmoTxt:SetText("Equiped Ammo:")
+					EqAmmoTxt:SetColor(Color( 0, 255, 0, 255 ))
+					EqAmmoTxt:SetFont("HudHintTextLarge")
+					EqAmmoTxt:SizeToContents()		
+				local ammoList = vgui.Create("DPanelList", pInfoPanel)
+					ammoList:SetPos(210, 190)
+					ammoList:SetSize(200, 195)
+					ammoList:EnableVerticalScrollbar(true) 
+					ammoList:EnableHorizontal(false) 
+					ammoList:SetSpacing(1)
+					ammoList:SetPadding(10)
+					ammoList.Paint = function() end
+					
+					local ammoTbl = string.Explode(" ", playerTBL["ammo"])
+					for _, v in pairs(ammoTbl) do
+						for itemname, item in pairs( PNRP.Items ) do
+							local ammoTbl2 = string.Explode(",", v)
+							local ammoname = "ammo_"..ammoTbl2[1]
+							
+							if ammoname == item.Ent then
+								local pPanel = vgui.Create("DPanel")
+									pPanel:SetTall(40)
+									pPanel.Paint = function()
+									--	draw.RoundedBox( 6, 0, 0, pPanel:GetWide(), pPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+										draw.RoundedBox( 1, 0, 0, pPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+										draw.RoundedBox( 1, 0, pPanel:GetTall()-1, pPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+									end
+									ammoList:AddItem(pPanel)
+									
+									pPanel.Icon = vgui.Create("SpawnIcon", pPanel)
+									pPanel.Icon:SetSize( 35, 35 )
+									pPanel.Icon:SetModel(item.Model)
+									pPanel.Icon:SetPos(10, 2)
+									pPanel.Icon:SetToolTip( nil )
+									pPanel.Icon.DoClick = function()
+									end
+									pPanel.Name = vgui.Create("DLabel", pPanel)
+									pPanel.Name:SetPos(55, 3)
+									pPanel.Name:SetText(item.Name)
+									pPanel.Name:SetColor(Color( 0, 255, 0, 255 ))
+									pPanel.Name:SizeToContents() 
+									pPanel.Name:SetContentAlignment( 5 )
+									
+									pPanel.Count = vgui.Create("DLabel", pPanel)
+									pPanel.Count:SetPos(55, 20)
+									pPanel.Count:SetText("Count: "..ammoTbl2[2])
+									pPanel.Count:SetColor(Color( 0, 255, 0, 255 ))
+									pPanel.Count:SizeToContents() 
+									pPanel.Count:SetContentAlignment( 5 )
+									pPanel.remAmmo = vgui.Create("DImageButton", pPanel )
+									pPanel.remAmmo:SetPos(150, 20)
+									pPanel.remAmmo:SetSize(16,16)
+									pPanel.remAmmo:SetImage( "gui/icons/delete.png" )
+									pPanel.remAmmo:SetToolTip("Remove")
+									pPanel.remAmmo.DoClick = function()
+										net.Start("SND_AdmEditPlayer")
+											net.WriteString("rem_ammo")
+											net.WriteString(playerTBL["pid"])
+											net.WriteString(ammoTbl2[1])
+										net.SendToServer()
+										profileADM_frame:Remove()
+									end
+							end
+						end
+					end
+		profileAdm_TabSheet:AddSheet( "Player Info", pInfoPanel, "gui/icons/user.png", false, false, "Player Info" )
+			
+			Inventory_DPanel = vgui.Create( "DPanel", profileAdm_TabSheet )
+				Inventory_DPanel:SetPos( 5, 5 )
+				Inventory_DPanel:SetSize( profileAdm_TabSheet:GetWide(), profileAdm_TabSheet:GetTall() - 5 )
+				Inventory_DPanel.Paint = function() -- Paint function
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+			Inventory_TabSheet = vgui.Create( "DPropertySheet" )
+				Inventory_TabSheet:SetParent( Inventory_DPanel )
+				Inventory_TabSheet:SetPos( 0, 0 )
+				Inventory_TabSheet:SetSize( Inventory_DPanel:GetWide() - 15, Inventory_DPanel:GetTall() - 25 )
+				Inventory_TabSheet.Paint = function() -- Paint function
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+				
+				--Player Invnetory
+				pnlUserInv_DPanel = vgui.Create( "DPanel", Inventory_TabSheet )
+					pnlUserInv_DPanel:SetPos( 0, 0 )
+					pnlUserInv_DPanel:SetSize( Inventory_TabSheet:GetWide(), Inventory_TabSheet:GetTall() - 5 )
+					pnlUserInv_DPanel.Paint = function() end
+					local AddItemBtn = vgui.Create("DButton", pnlUserInv_DPanel )
+						AddItemBtn:SetPos(0, 0)
+						AddItemBtn:SetSize(115,15)
+						AddItemBtn:SetText( "Add Item" )
+						AddItemBtn.DoClick = function()
+							openAddItem(playerTBL["pid"])
+						end
+					local warningLabel = vgui.Create("DLabel", pnlUserInv_DPanel)
+						warningLabel:SetPos(200, 0)
+						warningLabel:SetColor( Color( 255, 255, 0, 255 ) )
+						warningLabel:SetText( "Warning: Clicking Icon will delete item." )
+						warningLabel:SizeToContents()
+					
+				pnlUserInvList = vgui.Create("DPanelList", pnlUserInv_DPanel)
+					pnlUserInvList:SetPos(0, 15)
+					pnlUserInvList:SetSize(pnlUserInv_DPanel:GetWide()-15, pnlUserInv_DPanel:GetTall() -45 )
+					pnlUserInvList:EnableVerticalScrollbar(false) 
+					pnlUserInvList:EnableHorizontal(true) 
+					pnlUserInvList:SetSpacing(1)
+					pnlUserInvList:SetPadding(0)
+					
+					--Generates the user's inventory
+					if inventoryTBL != nil then
+						for k, v in pairs( inventoryTBL ) do
+							local item = PNRP.Items[v["itemid"]]
+							if item then
+								local pnlUserIPanel = vgui.Create("DPanel", pnlUserInvList)
+									pnlUserIPanel:SetSize( 75, 100 )
+									pnlUserIPanel.Paint = function()
+										draw.RoundedBox( 6, 0, 0, pnlUserIPanel:GetWide(), pnlUserIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+									end
+									
+									pnlUserInvList:AddItem(pnlUserIPanel)
+									
+									local countTxt = "Count: "..tostring(v["count"])
+									if v["status_table"] != "" then
+										local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+										if FuelLevel then countTxt = "Fuel: "..tostring(FuelLevel) end
+										local HPText = ""
+										local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
+										local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+										if HPLevel then HPText = "HP: "..HPLevel
+										elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+										pnlUserIPanel.HP = vgui.Create("DLabel", pnlUserIPanel)		
+										pnlUserIPanel.HP:SetPos( 10, 75 )
+										pnlUserIPanel.HP:SetText(HPText)
+										pnlUserIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
+										pnlUserIPanel.HP:SizeToContents() 
+										pnlUserIPanel.HP:SetContentAlignment( 5 )
+									else
+										pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
+										pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
+										pnlUserIPanel.NumberWang:SetMin( 1 )
+										pnlUserIPanel.NumberWang:SetMax( v["count"] )
+										pnlUserIPanel.NumberWang:SetDecimals( 0 )
+										pnlUserIPanel.NumberWang:SetValue( 1 )
+									end
+															
+									pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
+									pnlUserIPanel.Icon:SetModel(item.Model)
+									pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
+									
+									pnlUserIPanel.Icon:SetToolTip( item.Name.."\n"..countTxt.."\n Press Icon to move item." )
+									pnlUserIPanel.Icon.DoClick = function()
+										local count = v["count"]
+										local takeCount = 1
+										if v["iid"] == "" then
+											takeCount = math.Round(pnlUserIPanel.NumberWang:GetValue())
+										end
+										if tonumber(takeCount) > tonumber(count) then
+											takeCount = count
+										elseif tonumber(takeCount) < 1 then
+											takeCount = 1
+										end
+										net.Start("admDelInvItem")
+											net.WriteString("player")
+											net.WriteString("")
+											net.WriteString(item.ID)
+											net.WriteDouble(takeCount)
+											net.WriteString(v["iid"])
+											net.WriteString(tostring(playerTBL["pid"]))
+										net.SendToServer()
+									end								
+							end
+						end
+					end
+				Inventory_TabSheet:AddSheet( "Player Inventory", pnlUserInv_DPanel, "gui/icons/box.png", false, false, "Player Invnetory" )
+					--End User Inv
+
+				storageADM_frame = vgui.Create("DPanel", Inventory_TabSheet)
+					storageADM_frame:SetPos( 0, 0 )
+					storageADM_frame:SetSize(Inventory_TabSheet:GetWide(), Inventory_TabSheet:GetTall())
+					storageADM_frame.Paint = function() end
+					
+						local pnlUserStorList = vgui.Create("DPanelList", storageADM_frame)
+							pnlUserStorList:SetPos(5, 0)
+							pnlUserStorList:SetSize(storageADM_frame:GetWide(), storageADM_frame:GetTall())
+							pnlUserStorList:EnableVerticalScrollbar(true) 
+							pnlUserStorList:EnableHorizontal(false) 
+							pnlUserStorList:SetSpacing(1)
+							pnlUserStorList:SetPadding(10)
+							pnlUserStorList.Paint = function() end
+							
+							for k, v in pairs(storageTBL) do
+								local pnlPanel = vgui.Create("DPanel")
+									pnlPanel:SetTall(75)
+									pnlPanel.Paint = function()
+										draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+										draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+									end
+									pnlUserStorList:AddItem(pnlPanel)
+						
+									pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
+									pnlPanel.Icon:SetModel("models/props_c17/Lockers001a.mdl")
+									pnlPanel.Icon:SetPos(3, 5)
+									pnlPanel.Icon:SetToolTip( "Click to select this storage" )
+									pnlPanel.Icon.DoClick = function()
+										net.Start("SND_AdmSVSelID")
+											net.WriteString(storageTBL[k]["storageid"])
+											net.WriteString("storage")
+										net.SendToServer()
+									end	
+									pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
+									pnlPanel.Title:SetPos(90, 5)
+									pnlPanel.Title:SetText(storageTBL[k]["name"])
+									pnlPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+									pnlPanel.Title:SizeToContents() 
+									pnlPanel.Title:SetContentAlignment( 5 )
+									
+									local storageRes = storageTBL[k]["res"]
+									local vendScrap = 0
+									local vendSP = 0
+									local vendChems = 0
+									
+									if string.len(tostring(storageRes)) > 3 then
+										local resSplit = string.Explode( ",", storageRes )
+										if table.Count( resSplit ) > 1 then
+											vendScrap = resSplit[1]
+											vendSP = resSplit[2]
+											vendChems = resSplit[3]
+										end
+									end
+										
+									pnlPanel.Resources = vgui.Create("DLabel", pnlPanel)
+									pnlPanel.Resources:SetPos(90, 20)
+									pnlPanel.Resources:SetText("")
+									pnlPanel.Resources:SetColor(Color( 0, 0, 0, 255 ))
+									pnlPanel.Resources:SizeToContents() 
+									pnlPanel.Resources:SetContentAlignment( 5 )
+									local stoStatusTxt = ""
+									if storageTBL[k]["inventory"] != NULL and string.len(tostring(storageTBL[k]["inventory"])) > 4 then
+										stoStatusTxt = "Status: Has Inventory"
+									else
+										stoStatusTxt = "Status: Empty"
+									end
+									pnlPanel.Inventory = vgui.Create("DLabel", pnlPanel)
+									pnlPanel.Inventory:SetPos(90, 35)
+									pnlPanel.Inventory:SetText(stoStatusTxt)
+									pnlPanel.Inventory:SetColor(Color( 0, 255, 0, 255 ))
+									pnlPanel.Inventory:SizeToContents() 
+									pnlPanel.Inventory:SetContentAlignment( 5 )
+							end				
+							
+				Inventory_TabSheet:AddSheet( "Player Storage", storageADM_frame, "gui/icons/briefcase.png", false, false, "Player Storage" )
+				
+				vendorADM_frame = vgui.Create("DPanel", Inventory_TabSheet)
+					vendorADM_frame:SetPos( 0, 0 )
+					vendorADM_frame:SetSize(Inventory_TabSheet:GetWide(), Inventory_TabSheet:GetTall())
+					vendorADM_frame.Paint = function() end
+					
+						local pnlUserVendList = vgui.Create("DPanelList", vendorADM_frame)
+							pnlUserVendList:SetPos(5, 0)
+							pnlUserVendList:SetSize(vendorADM_frame:GetWide(), vendorADM_frame:GetTall())
+							pnlUserVendList:EnableVerticalScrollbar(true) 
+							pnlUserVendList:EnableHorizontal(false) 
+							pnlUserVendList:SetSpacing(1)
+							pnlUserVendList:SetPadding(10)
+							pnlUserVendList.Paint = function() end
+							
+							for k, v in pairs(vendorTBL) do
+								local pnlPanel = vgui.Create("DPanel")
+									pnlPanel:SetTall(75)
+									pnlPanel.Paint = function()
+										draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+										draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+									end
+									pnlUserVendList:AddItem(pnlPanel)
+									
+									pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
+									pnlPanel.Icon:SetModel( "models/props/cs_office/vending_machine.mdl")
+									pnlPanel.Icon:SetPos(3, 5)
+									pnlPanel.Icon:SetToolTip( "Click to select this vendor" )
+									pnlPanel.Icon.DoClick = function()
+										net.Start("SND_AdmSVSelID")
+											net.WriteString(vendorTBL[k]["vendorid"])
+											net.WriteString("vendor")
+										net.SendToServer()
+									end	
+									
+									pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
+									pnlPanel.Title:SetPos(90, 5)
+									pnlPanel.Title:SetText(vendorTBL[k]["name"])
+									pnlPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+									pnlPanel.Title:SizeToContents() 
+									pnlPanel.Title:SetContentAlignment( 5 )
+									
+									local vendorRes = vendorTBL[k]["res"]
+									local vendScrap = 0
+									local vendSP = 0
+									local vendChems = 0
+									
+									if string.len(tostring(vendorRes)) > 3 then
+										local resSplit = string.Explode( ",", vendorRes )
+										if table.Count( resSplit ) > 1 then
+											vendScrap = resSplit[1]
+											vendSP = resSplit[2]
+											vendChems = resSplit[3]
+										end
+									end
+										
+									pnlPanel.Resources = vgui.Create("DLabel", pnlPanel)
+									pnlPanel.Resources:SetPos(90, 20)
+									pnlPanel.Resources:SetText("Resources- Scrap: "..vendScrap.." Small Parts: "..vendSP.." Chemicals: "..vendChems)
+									pnlPanel.Resources:SetColor(Color( 0, 200, 0, 255 ))
+									pnlPanel.Resources:SizeToContents() 
+									pnlPanel.Resources:SetContentAlignment( 5 )
+
+									local vendStatusTxt = ""
+									if vendorTBL[k]["inventory"] != NULL and string.len(tostring(vendorTBL[k]["inventory"])) > 4 then
+										vendStatusTxt = "Status: Has Invnetory"
+									else
+										vendStatusTxt = "Status: Empty"
+									end
+									pnlPanel.Inventory = vgui.Create("DLabel", pnlPanel)
+									pnlPanel.Inventory:SetPos(90, 35)
+									pnlPanel.Inventory:SetText(vendStatusTxt)
+									pnlPanel.Inventory:SetColor(Color( 0, 255, 0, 255 ))
+									pnlPanel.Inventory:SizeToContents() 
+									pnlPanel.Inventory:SetContentAlignment( 5 )
+							end
+					
+				Inventory_TabSheet:AddSheet( "Player Vendor", vendorADM_frame, "gui/icons/cart.png", false, false, "Player Vendor" )
+			
+			profileAdm_TabSheet:AddSheet( "Inventory", Inventory_DPanel, "gui/icons/box.png", false, false, "Inventory" )	
+		
+			local Skills_DPanel = vgui.Create( "DPanel", profileAdm_TabSheet )
+				Skills_DPanel:SetPos( 5, 5 )
+				Skills_DPanel:SetSize( profileAdm_TabSheet:GetWide(), profileAdm_TabSheet:GetTall() - 70 )
+				Skills_DPanel.Paint = function() -- Paint function
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+				
+				Skills_DPanel.XP = vgui.Create("DLabel", Skills_DPanel)
+				Skills_DPanel.XP:SetPos(5, 10)
+				Skills_DPanel.XP:SetText("Current Experience: "..playerTBL["xp"])
+				Skills_DPanel.XP:SetColor( Color( 255, 255, 255, 255 ) )
+				Skills_DPanel.XP:SizeToContents() 
+				Skills_DPanel.XP:SetContentAlignment( 5 )
+											
+				local maxWeight
+				if playerTBL["class"] == TEAM_SCAVENGER then
+					maxWeight = GetConVar("pnrp_packCapScav"):GetInt() + (GetSkill("Backpacking")*10)
+				else
+					maxWeight = GetConVar("pnrp_packCap"):GetInt() + (GetSkill("Backpacking")*10)
+				end
+				Skills_DPanel.BackPk = vgui.Create("DLabel", Skills_DPanel)
+				Skills_DPanel.BackPk:SetPos(325, 20)
+				Skills_DPanel.BackPk:SetText("Backpack Size: "..maxWeight)
+				Skills_DPanel.BackPk:SetColor( Color( 255, 255, 255, 255 ) )
+				Skills_DPanel.BackPk:SizeToContents() 
+				Skills_DPanel.BackPk:SetContentAlignment( 5 )
+				
+				local SkillScrollPanel = vgui.Create( "DScrollPanel", Skills_DPanel)
+					SkillScrollPanel:SetSize( Skills_DPanel:GetWide()-20, Skills_DPanel:GetTall()-15 )
+					SkillScrollPanel:SetPos( 0, 50 )
+					
+				--Skills Section
+				local SkillsTblEx = string.Explode(" ", playerTBL["skills"])
+				local SkillsTbl = {}
+				for k, v in pairs(SkillsTblEx) do
+					local SkillsExp2 = string.Explode(",", v)
+					SkillsTbl[SkillsExp2[1]] = SkillsExp2[2]
+				end
+				
+				local skillYLoc = 5
+				SkillScrollPanel.SKBLabel = vgui.Create("DLabel", SkillScrollPanel)
+				SkillScrollPanel.SKBLabel:SetPos(10, skillYLoc)
+				SkillScrollPanel.SKBLabel:SetText("Base Skills:")
+				SkillScrollPanel.SKBLabel:SetColor( Color( 255, 255, 255, 255 ) )
+				SkillScrollPanel.SKBLabel:SizeToContents() 
+				SkillScrollPanel.SKBLabel:SetContentAlignment( 5 )
+				
+				skillYLoc = skillYLoc + 20
+				local btnXLoc = SkillScrollPanel:GetWide() - 118
+				
+				for skillname, skill in pairs( PNRP.Skills ) do
+					if skill.class == nil then
+						local skillLevel = SkillsTbl[skill.name]
+						if not skillLevel then skillLevel = 0 end
+						SkillScrollPanel.Skill = vgui.Create("DLabel", SkillScrollPanel)
+						SkillScrollPanel.Skill:SetPos(10, skillYLoc+2)
+						SkillScrollPanel.Skill:SetText(skill.name.." (Max Level "..skill.maxlvl..")")
+						SkillScrollPanel.Skill:SetColor( Color( 255, 255, 255, 255 ) )
+						SkillScrollPanel.Skill:SizeToContents() 
+						SkillScrollPanel.Skill:SetContentAlignment( 5 )
+					--	ProfileUpSkillBtn(skill.name, btnXLoc, skillYLoc, SkillScrollPanel, profile_frame)
+						SKlevel_Bar(skill.name, skillLevel, 10, skillYLoc+20, SkillScrollPanel)
+					
+						skillYLoc = skillYLoc + 40
+					end
+				end
+				
+				skillYLoc = skillYLoc + 10
+				SkillScrollPanel.ClsSKLabel = vgui.Create("DLabel", SkillScrollPanel)
+				SkillScrollPanel.ClsSKLabel:SetPos(10, skillYLoc)
+				SkillScrollPanel.ClsSKLabel:SetText("Class Skill:")
+				SkillScrollPanel.ClsSKLabel:SetColor( Color( 255, 255, 255, 255 ) )
+				SkillScrollPanel.ClsSKLabel:SizeToContents() 
+				SkillScrollPanel.ClsSKLabel:SetContentAlignment( 5 )
+				
+				skillYLoc = skillYLoc + 20 --Adjusts for the for loop
+				for skillname, skill in pairs( PNRP.Skills ) do
+					if skill.class != nil then
+						for classname, class in pairs( PNRP.Skills[skill.name].class ) do
+							if tostring(ply:Team()) == tostring(class) then
+								local skillLevel = SkillsTbl[skill.name]
+								if not skillLevel then skillLevel = 0 end
+								SkillScrollPanel.ClsSkill = vgui.Create("DLabel", SkillScrollPanel, profile_frame)
+								SkillScrollPanel.ClsSkill:SetPos(10, skillYLoc+2)
+								SkillScrollPanel.ClsSkill:SetText(skill.name.." (Max Level "..skill.maxlvl..")")
+								SkillScrollPanel.ClsSkill:SetColor( Color( 255, 255, 255, 255 ) )
+								SkillScrollPanel.ClsSkill:SizeToContents() 
+								SkillScrollPanel.ClsSkill:SetContentAlignment( 5 )
+							--	ProfileUpSkillBtn(skill.name, btnXLoc, skillYLoc, SkillScrollPanel)
+								SKlevel_Bar(skill.name, skillLevel, 10, skillYLoc+20, SkillScrollPanel)
+							
+								skillYLoc = skillYLoc + 40
+							end
+						end
+					else
+					
+						
+					end
+				end	
+
+		profileAdm_TabSheet:AddSheet( "Skills", Skills_DPanel, "gui/icons/wrench.png", false, false, "Skills" )
+--[[		
+			local pModelPanel = vgui.Create( "DPanel", profileAdm_TabSheet )
+				pModelPanel:SetPos( 5, 5 )
+				pModelPanel:SetSize( profileAdm_TabSheet:GetWide(), profileAdm_TabSheet:GetTall() )
+				pModelPanel.Paint = function() -- Paint function
+					surface.SetDrawColor( 50, 50, 50, 0 )
+				end
+				
+				local ModelChangeBtn = vgui.Create("DButton", pModelPanel )
+					ModelChangeBtn:SetPos(10, 10)
+					ModelChangeBtn:SetSize(150,25)
+					ModelChangeBtn:SetText( "Update Player Model" )
+					ModelChangeBtn.DoClick = function()
+					--	updateModel()
+					end
+					
+				local ModelScrollPanel = vgui.Create( "DScrollPanel", pModelPanel)
+					ModelScrollPanel:SetSize( pModelPanel:GetWide()-20, pModelPanel:GetTall()-100 )
+					ModelScrollPanel:SetPos( 0, 50 )
+					
+					local List	= vgui.Create( "DIconLayout", ModelScrollPanel )
+						List:SetSize( ModelScrollPanel:GetWide(), ModelScrollPanel:GetTall() )
+						List:SetPos( 0, 0 )
+						List:SetSpaceY( 5 )
+						List:SetSpaceX( 5 )
+						
+						local mdlList = player_manager.AllValidModels( )
+						for name, model in pairs( mdlList ) do
+							local ListItem = List:Add( "SpawnIcon" )
+							ListItem:SetSize( 64, 64 ) 
+							ListItem:SetModel( model )
+							ListItem:SetTooltip( name )
+							ListItem.DoClick = function()
+								mdl:SetModel( model )
+								newModel = model
+								function mdl.Entity:GetPlayerColor() return Vector( GetConVarString( "cl_playercolor" ) ) end
+								mdl.Entity:SetPos( Vector( -100, 0, -61 ) )
+							--	RunConsoleCommand( "cl_playermodel", tostring( model ) )
+							end 
+						end
+			
+		profileAdm_TabSheet:AddSheet( "Player Model", pModelPanel, "gui/icons/user_edit.png", false, false, "Player Model" )
+]]--		
+			
 end
---datastream.Hook( "pnrp_OpenPlyAdminLstWindow", GM.OpenPlyAdminLstWindow )
-net.Receive( "pnrp_OpenPlyAdminLstWindow", GM.OpenPlyAdminLstWindow )
+net.Receive("C_SND_PlyAdminProfileView", PlyAdminProfileView)
+
+function openAddItem( pid )
+	local admAddItem_frame = vgui.Create( "DFrame" )
+		admAddItem_frame:SetSize( 710, 510 ) --Set the size Extra 40 must be from the top bar
+		--Set the window in the middle of the players screen/game window
+		admAddItem_frame:SetPos(ScrW() / 2 - admAddItem_frame:GetWide() / 2, ScrH() / 2 - admAddItem_frame:GetTall() / 2) 
+		admAddItem_frame:SetTitle( "Player Info" ) --Set title
+		admAddItem_frame:SetVisible( true )
+		admAddItem_frame:SetDraggable( true )
+		admAddItem_frame:ShowCloseButton( true )
+		admAddItem_frame:MakePopup()
+		admAddItem_frame.Paint = function() 
+			surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+		local screenBG = vgui.Create("DImage", admAddItem_frame)
+			screenBG:SetImage( "VGUI/gfx/pnrp_screen_2b.png" )
+			screenBG:SetSize(admAddItem_frame:GetWide(), admAddItem_frame:GetTall())
+			
+		local admAddInv_DPanel = vgui.Create( "DPanel", admAddItem_frame )
+			admAddInv_DPanel:SetPos( 40, 40 )
+			admAddInv_DPanel:SetSize( admAddItem_frame:GetWide()-75, admAddItem_frame:GetTall() - 40 )
+			admAddInv_DPanel.Paint = function() end
+			
+			admAddInvList = vgui.Create("DPanelList", admAddInv_DPanel)
+				admAddInvList:SetPos(0, 0)
+				admAddInvList:SetSize(admAddInv_DPanel:GetWide()-15, admAddInv_DPanel:GetTall() -45 )
+				admAddInvList:EnableVerticalScrollbar(false) 
+				admAddInvList:EnableHorizontal(true) 
+				admAddInvList:SetSpacing(1)
+				admAddInvList:SetPadding(0)
+				
+				for k, item in pairs( PNRP.Items ) do
+					if item.Type ~= "junk" then
+						local pnlUserIPanel = vgui.Create("DPanel", admAddInvList)
+							pnlUserIPanel:SetSize( 75, 75 )
+							pnlUserIPanel.Paint = function()
+							--	draw.RoundedBox( 6, 0, 0, pnlUserIPanel:GetWide(), pnlUserIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+							end
+							
+							admAddInvList:AddItem(pnlUserIPanel)
+							
+							pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
+							pnlUserIPanel.Icon:SetModel(item.Model)
+							pnlUserIPanel.Icon:SetSize(pnlUserIPanel:GetWide(), pnlUserIPanel:GetTall())
+							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
+							pnlUserIPanel.Icon:SetToolTip( item.Name )
+							pnlUserIPanel.Icon.DoClick = function()
+								net.Start("admAddInvItem")
+									net.WriteString(tostring(pid))
+									net.WriteString(item.ID)
+								net.SendToServer()
+								admAddItem_frame:Remove()
+							end
+					end
+				end
+end
+
+function AdmViewRefreshPlyInv()
+	local ply = LocalPlayer()
+	local pid = net.ReadString()
+	local inventoryTBL = net.ReadTable()
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	if pnlUserInvList then pnlUserInvList:Remove() end
+	
+	pnlUserInvList = vgui.Create("DPanelList", pnlUserInv_DPanel)
+		pnlUserInvList:SetPos(0, 15)
+		pnlUserInvList:SetSize(pnlUserInv_DPanel:GetWide()-15, pnlUserInv_DPanel:GetTall() -45 )
+		pnlUserInvList:EnableVerticalScrollbar(false) 
+		pnlUserInvList:EnableHorizontal(true) 
+		pnlUserInvList:SetSpacing(1)
+		pnlUserInvList:SetPadding(0)
+		--Generates the user's inventory
+		if inventoryTBL != nil then
+			for k, v in pairs( inventoryTBL ) do
+				local item = PNRP.Items[v["itemid"]]
+				if item then
+					local pnlUserIPanel = vgui.Create("DPanel", pnlUserInvList)
+						pnlUserIPanel:SetSize( 75, 100 )
+						pnlUserIPanel.Paint = function()
+							draw.RoundedBox( 6, 0, 0, pnlUserIPanel:GetWide(), pnlUserIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+						end
+						
+						pnlUserInvList:AddItem(pnlUserIPanel)
+						
+						local countTxt = "Count: "..tostring(v["count"])
+						if v["status_table"] != "" then
+							local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+							if FuelLevel then countTxt = "Fuel: "..tostring(FuelLevel) end
+							local HPText = ""
+							local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
+							local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+							if HPLevel then HPText = "HP: "..HPLevel
+							elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+							pnlUserIPanel.HP = vgui.Create("DLabel", pnlUserIPanel)		
+							pnlUserIPanel.HP:SetPos( 10, 75 )
+							pnlUserIPanel.HP:SetText(HPText)
+							pnlUserIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
+							pnlUserIPanel.HP:SizeToContents() 
+							pnlUserIPanel.HP:SetContentAlignment( 5 )
+						else
+							pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
+							pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
+							pnlUserIPanel.NumberWang:SetMin( 1 )
+							pnlUserIPanel.NumberWang:SetMax( v["count"] )
+							pnlUserIPanel.NumberWang:SetDecimals( 0 )
+							pnlUserIPanel.NumberWang:SetValue( 1 )
+						end
+												
+						pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
+						pnlUserIPanel.Icon:SetModel(item.Model)
+						pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
+						
+						pnlUserIPanel.Icon:SetToolTip( item.Name.."\n"..countTxt.."\n Press Icon to move item." )
+						pnlUserIPanel.Icon.DoClick = function()
+							local count = v["count"]
+							local takeCount = 1
+							if v["iid"] == "" then
+								takeCount = math.Round(pnlUserIPanel.NumberWang:GetValue())
+							end
+							if tonumber(takeCount) > tonumber(count) then
+								takeCount = count
+							elseif tonumber(takeCount) < 1 then
+								takeCount = 1
+							end
+							net.Start("admDelInvItem")
+								net.WriteString("player")
+								net.WriteString("")
+								net.WriteString(item.ID)
+								net.WriteDouble(takeCount)
+								net.WriteString(v["iid"])
+								net.WriteString(tostring(pid))
+							net.SendToServer()
+						end								
+				end
+			end
+		end
+end
+net.Receive("C_SND_AdmViewRefreshPlyInv", AdmViewRefreshPlyInv)
+
+function AdmVewSV()
+	local id = net.ReadString()
+	local Tbl = net.ReadTable()
+	local option = net.ReadString()
+	local ply = LocalPlayer()
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	if not Inventory_DPanel then return end
+	if Inventory_TabSheet then Inventory_TabSheet:Hide() end
+	
+	local invTbl = {}
+	if option == "vendor" then
+		invTbl = Tbl["inv"]
+	else
+		invTbl = Tbl
+	end
+	
+	local resStr = ""
+	if string.len(tostring(Tbl["res"])) > 4 then
+		local resTbl = string.Explode(",", tostring(Tbl["res"]))
+		resStr = "Scrap: "..tostring(resTbl[1]).." | SP: "..tostring(resTbl[2]).." | Chems: "..tostring(resTbl[3])
+	end
+	
+	local showInv_DPanel = vgui.Create( "DPanel", Inventory_DPanel )
+		showInv_DPanel:SetPos( 0, 0 )
+		showInv_DPanel:SetSize( Inventory_DPanel:GetWide(), Inventory_DPanel:GetTall() - 5 )
+		showInv_DPanel.Paint = function() end
+		
+	local warningLabel = vgui.Create("DLabel", showInv_DPanel)
+		warningLabel:SetPos(200, 0)
+		warningLabel:SetColor( Color( 255, 255, 0, 255 ) )
+		warningLabel:SetText( "Warning: Clicking Icon will delete item." )
+		warningLabel:SizeToContents()
+		
+	local resLabel = vgui.Create("DLabel", showInv_DPanel)
+		resLabel:SetPos(0, 15)
+		resLabel:SetColor( Color( 0, 255, 0, 255 ) )
+		resLabel:SetText( resStr )
+		resLabel:SizeToContents()
+	
+	local BackBtn = vgui.Create("DButton", showInv_DPanel )
+		BackBtn:SetPos(0, 0)
+		BackBtn:SetSize(75,15)
+		BackBtn:SetText( "Back" )
+		BackBtn.DoClick = function()
+			Inventory_TabSheet:Show()
+			showInv_DPanel:Remove()
+		end
+	
+	local pnlLIList = vgui.Create("DPanelList", showInv_DPanel)
+		pnlLIList:SetPos(0, 25)
+		pnlLIList:SetSize( showInv_DPanel:GetWide() - 15, showInv_DPanel:GetTall() - 25 )
+		pnlLIList:EnableVerticalScrollbar(false) 
+		pnlLIList:EnableHorizontal(true) 
+		pnlLIList:SetSpacing(1)
+		pnlLIList:SetPadding(5)
+		
+		if invTbl == nil then
+			local EmptyLabel = vgui.Create( "DLabel", showInv_DPanel )
+				EmptyLabel:SetText("Storage Inventory is Empty")
+				EmptyLabel:SetPos(10, 10)
+				EmptyLabel:SetColor( Color( 0, 255, 0, 255 ) )
+				EmptyLabel:SizeToContents()
+		else
+		
+			for k, v in pairs( invTbl ) do
+				local item = PNRP.Items[v["itemid"]]
+				if item then
+					local count = v["count"]
+					local toolTip = item.Name.."\n".."Count: "..count
+					local pnlLIPanel = vgui.Create("DPanel", pnlLIList)
+						pnlLIPanel:SetSize( 75, 100 )
+						pnlLIPanel.Paint = function()
+							draw.RoundedBox( 6, 0, 0, pnlLIPanel:GetWide(), pnlLIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
+						end
+						
+						pnlLIList:AddItem(pnlLIPanel)
+						
+						local countTxt = "Count: "..tostring(v["count"])
+						if v["status_table"] != "" then
+							local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+							if FuelLevel then toolTip = toolTip.."\nFuel: "..tostring(FuelLevel) end
+							local HPText = ""
+							local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
+							local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+							if HPLevel then HPText = "HP: "..HPLevel
+							elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+							pnlLIPanel.HP = vgui.Create("DLabel", pnlLIPanel)		
+							pnlLIPanel.HP:SetPos( 10, 75 )
+							pnlLIPanel.HP:SetText(HPText)
+							pnlLIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
+							pnlLIPanel.HP:SizeToContents() 
+							pnlLIPanel.HP:SetContentAlignment( 5 )
+						else
+							pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
+							pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
+							pnlLIPanel.NumberWang:SetMin( 1 )
+							pnlLIPanel.NumberWang:SetMax( count )
+							pnlLIPanel.NumberWang:SetDecimals( 0 )
+							pnlLIPanel.NumberWang:SetValue( 1 )
+						end
+						
+						pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
+						pnlLIPanel.Icon:SetModel(item.Model)
+						pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
+						pnlLIPanel.Icon:SetToolTip( toolTip )
+						pnlLIPanel.Icon.DoClick = function()
+							local takeCount = 1
+							if v["iid"] == "" then
+								takeCount = math.Round(pnlLIPanel.NumberWang:GetValue())
+							end
+							if tonumber(takeCount) > tonumber(count) then
+								takeCount = count
+							elseif tonumber(takeCount) < 1 then
+								takeCount = 1
+							end
+							net.Start("admDelInvItem")
+								net.WriteString(option)
+								net.WriteString(id)
+								net.WriteString(item.ID)
+								net.WriteDouble(takeCount)
+								net.WriteString(v["iid"])
+							net.SendToServer()
+							Inventory_TabSheet:Show()
+							showInv_DPanel:Remove()
+						end	
+				end
+			end
+		end		
+end
+net.Receive("C_SND_AdmVewSV", AdmVewSV)
 
 local communityAdmin_frame
 function GM.communityAdminMenu()
@@ -1116,9 +2435,7 @@ function GM.communityAdminMenu()
 			comList:EnableHorizontal(false) 
 			comList:SetSpacing(1)
 			comList:SetPadding(10)
-			comList.Paint = function()
-			--	draw.RoundedBox( 8, 0, 0, cMemberList:GetWide(), cMemberList:GetTall(), Color( 50, 50, 50, 255 ) )
-			end
+			
 			for k, v in pairs( communityTable ) do
 				local comPanel = vgui.Create("DPanel")
 					comPanel:SetTall(75)
@@ -1156,7 +2473,6 @@ function GM.communityAdminMenu()
 					comPanel.DelteBtn:SetText( "Delete Community" )
 					comPanel.DelteBtn.DoClick = function() 
 						PNRP.OptionVerify( "pnrp_AdminDelCom", v["cid"], "pnrp_communityAdmin", communityAdmin_frame ) 
-					--	RunConsoleCommand( "pnrp_communityAdmin" ) 
 					end
 			end
 end
@@ -1244,11 +2560,8 @@ function GM.communityEdit_window( )
 					cMemberList:EnableHorizontal(false) 
 					cMemberList:SetSpacing(1)
 					cMemberList:SetPadding(10)
-					cMemberList.Paint = function()
-					--	draw.RoundedBox( 8, 0, 0, cMemberList:GetWide(), cMemberList:GetTall(), Color( 50, 50, 50, 255 ) )
-					end
+
 					if communityName != "none" then
-						--table.sort(communityUsers, function(a["rank"],b["rank"]) return a["rank"]>b["rank"] end)
 						for k, v in pairs( communityUsers ) do		
 								
 							local MemberPanel = vgui.Create("DPanel")
@@ -1573,7 +2886,6 @@ function GM.communityEdit_window( )
 						else
 							editStockBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 							editStockBtn.DoClick = function() 
-							--	RunConsoleCommand( "pnrp_placestock" ) 
 								communityEdit_frame:Close()
 							end
 							editStockBtn.Paint = function()
@@ -1600,7 +2912,6 @@ function GM.communityEdit_window( )
 						else
 							editLockerBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 							editLockerBtn.DoClick = function() 
-								--	RunConsoleCommand( "pnrp_placelocker" ) 
 									communityEdit_frame:Close()
 							end
 							editLockerBtn.Paint = function()
@@ -1660,6 +2971,6 @@ function GM.initPlyAdminLst(ply)
 	end
 
 end
---concommand.Add( "pnrp_playerAdminList",  GM.initPlyAdminLst )
+concommand.Add( "pnrp_playerAdminList",  GM.initPlyAdminLst )
 
 --EOF

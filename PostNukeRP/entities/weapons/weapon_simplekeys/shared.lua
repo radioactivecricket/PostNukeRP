@@ -1,7 +1,7 @@
 SWEP.Author		= "LostInTheWired"
 SWEP.Contact		= "lostinthewired@gmail.com"
 SWEP.Purpose		= "Keys for SimpleKeys"
-SWEP.Instructions	= "Left click to unlock.\nRight click to lock.\nR to enter door management or ownership."
+SWEP.Instructions	= "Just your hands or keys.\nLeft click to unlock.\nRight click to lock.\nR to enter door management or ownership."
 
 SWEP.ViewModel		= "models/weapons/v_hands.mdl"
 SWEP.WorldModel		= ""
@@ -67,7 +67,7 @@ function SWEP:Reload()
 	if !tr.Entity:IsValid() then return end
 	if not (tr.Entity:IsDoor() or tr.Entity:IsVehicle()) then return end
 	
-	local doorowner = doorEnt:GetNWEntity( "ownerent", nil )
+	local doorowner = doorEnt:GetNetVar( "ownerent", nil )
 	if !doorowner:IsValid() then
 		self.Owner:ConCommand("pnrp_setOwner")
 		-- self.Owner:ChatPrint("You have taken ownership of this door!")

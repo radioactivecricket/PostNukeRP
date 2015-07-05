@@ -34,9 +34,9 @@ function ITEM.Create( ply, class, pos )
 	ent:Activate()
 	
 	PNRP.SetOwner(ply, ent)
-	ent:SetNetworkedString("pid", ply.pid)
-	ent:SetNetworkedString("name", ply:Nick().."'s Vending Machine")
-	ent:SetNetworkedString("vendorid", nil)
+	ent:SetNetVar("pid", ply.pid)
+	ent:SetNetVar("name", ply:Nick().."'s Vending Machine")
+	ent:SetNetVar("vendorid", nil)
 	
 	ent:GetPhysicsObject():Wake()
 	

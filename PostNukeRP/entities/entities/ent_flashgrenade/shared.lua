@@ -50,11 +50,11 @@ if (CLIENT) then
 		return true
 	end
 	
-	function FlashEffect() if LocalPlayer():GetNetworkedFloat("FLASHED_END") > CurTime() then
+	function FlashEffect() if LocalPlayer():GetNetVar("FLASHED_END", 0) > CurTime() then
 
 		local pl 			= LocalPlayer();
-		local FlashedEnd 		= pl:GetNetworkedFloat("FLASHED_END")
-		local FlashedStart 	= pl:GetNetworkedFloat("FLASHED_START")
+		local FlashedEnd 		= pl:GetNetVar("FLASHED_END", 0)
+		local FlashedStart 	= pl:GetNetVar("FLASHED_START")
 		
 		local Alpha
 
@@ -74,8 +74,8 @@ if (CLIENT) then
 	
 		local function StunEffect()
 		local pl 			= LocalPlayer();
-		local FlashedEnd 		= pl:GetNetworkedFloat("FLASHED_END")
-		local FlashedStart 	= pl:GetNetworkedFloat("FLASHED_START")
+		local FlashedEnd 		= pl:GetNetVar("FLASHED_END", 0)
+		local FlashedStart 	= pl:GetNetVar("FLASHED_START")
 	
 		if (FlashedEnd > CurTime() and FlashedEnd - EFFECT_DELAY - CurTime() <= FLASHTIMER) then
 			local FlashAlpha = 1 - (CurTime() - (FlashedEnd - FLASHTIMER)) / (FLASHTIMER);

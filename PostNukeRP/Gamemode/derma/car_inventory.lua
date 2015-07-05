@@ -1,12 +1,9 @@
---Build Car Inventory Window
-
-local inventory_frame
-local carFrameCK = false
 
 function GM.car_inventory_window( )
-	--Stops the multi window exploit
-	if carFrameCK then return end 
-	carFrameCK = true
+	
+	inventory_frame = PNRP.PNRP_Frame()
+	if not inventory_frame then return end
+
 	PNRP.RMDerma()
 	
 	local MyCarInventory = net.ReadTable()
@@ -14,7 +11,6 @@ function GM.car_inventory_window( )
 	local CurCarInvWeight = net.ReadString()
 	
 	local ply = LocalPlayer()			 		
-	inventory_frame = vgui.Create( "DFrame" )
 		inventory_frame:SetSize( 710, 720 ) --Set the size
 		inventory_frame:SetPos(ScrW() / 2 - inventory_frame:GetWide() / 2, ScrH() / 2 - inventory_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
 		inventory_frame:SetTitle( "Car Inventory Menu" ) --Set title
@@ -83,12 +79,6 @@ function GM.car_inventory_window( )
 			InvWeight:SetText(invWeightText)
 			InvWeight:SetColor(whColor)
 			InvWeight:SizeToContents() 
-			
-	function inventory_frame:Close()                  
-		carFrameCK = false                  
-		self:SetVisible( false )                  
-		self:Remove()          
-	end 
 
 end
 
@@ -104,22 +94,19 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 		pnlList:EnableVerticalScrollbar(true) 
 		pnlList:EnableHorizontal(false) 
 		pnlList:SetSpacing(1)
-		pnlList:SetPadding(10)
-		pnlList.Paint = function()
-		--	draw.RoundedBox( 8, 0, 0, pnlList:GetWide(), pnlList:GetTall(), Color( 50, 50, 50, 255 ) )
-		end		
+		pnlList:SetPadding(10)	
 		
 		for itemname, item in pairs(PNRP.Items) do
 			if item.Type == tostring( itemtype ) or tostring( itemtype ) == "all" then
 				for k, v in pairs( MyCarInventory ) do
-					if v > 0 then
-						if k == itemname then
+					if v["count"] > 0 then
+						if string.lower(v["itemid"]) == string.lower(itemname) then
 							local pnlPanel = vgui.Create("DPanel")
 							pnlPanel:SetTall(75)
 							pnlPanel.Paint = function()
-							
-								draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
-						
+							--	draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+								draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+								draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
 							end
 							pnlList:AddItem(pnlPanel)
 							
@@ -128,14 +115,33 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 							pnlPanel.Icon:SetPos(3, 5)
 							pnlPanel.Icon:SetToolTip( nil )
 							pnlPanel.Icon.DoClick = function()
-									RunConsoleCommand("carinventory_drop", itemname)
+								if v["iid"] == "" then
+									if item.SaveState then
+										net.Start("pnrp_DropPersistItem")
+											net.WriteEntity(ply)
+											net.WriteString(v["itemid"])
+											net.WriteString(v["iid"])
+											net.WriteString("carInv")
+										net.SendToServer()
+									else
+										RunConsoleCommand("carinventory_drop", itemname)
+									end
 									parent_frame:Close()
+								else
+									net.Start("pnrp_DropPersistItem")
+										net.WriteEntity(ply)
+										net.WriteString(v["itemid"])
+										net.WriteString(v["iid"])
+									net.SendToServer()
+									
+									parent_frame:Close()
+								end
 							end	
 							
 							pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
 							pnlPanel.Title:SetPos(90, 5)
 							pnlPanel.Title:SetText(item.Name)
-							pnlPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
 							pnlPanel.Title:SizeToContents() 
 							pnlPanel.Title:SetContentAlignment( 5 )
 							
@@ -143,63 +149,93 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 							if item.SmallParts != nil then sp = item.SmallParts else sp = 0 end
 							if item.Chemicals != nil then ch = item.Chemicals else ch = 0 end
 							
+							local countTxt = "Count: "..tostring(v["count"])
+							if v["status_table"] != "" then
+								countTxt = ""
+								local HP = PNRP.GetFromStat(v["status_table"], "HP")
+								if HP then 	countTxt = "HP: "..HP end
+								local PowerLevel = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+								if PowerLevel then 	countTxt = countTxt.." Charge: "..tostring(math.Round(PowerLevel/100)).."% " end
+								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+								if FuelLevel then countTxt = countTxt.." Fuel: "..tostring(FuelLevel) end
+							end
 							pnlPanel.Count = vgui.Create("DLabel", pnlPanel)		
 							pnlPanel.Count:SetPos(90, 55)
-							pnlPanel.Count:SetText("Count: "..tostring(v))
-							pnlPanel.Count:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.Count:SetText(countTxt)
+							pnlPanel.Count:SetColor(Color( 0, 255, 0, 255 ))
 							pnlPanel.Count:SizeToContents() 
 							pnlPanel.Count:SetContentAlignment( 5 )	
 							
 							pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
 							pnlPanel.ClassBuild:SetPos(250, 5)
 							pnlPanel.ClassBuild:SetText("Required Class: "..item.ClassSpawn)
-							pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.ClassBuild:SetColor(Color( 0, 200, 0, 255 ))
 							pnlPanel.ClassBuild:SizeToContents() 
 							pnlPanel.ClassBuild:SetContentAlignment( 5 )
 							
-							pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
-							pnlPanel.ClassBuild:SetPos(90, 25)
-							pnlPanel.ClassBuild:SetText(item.Info)
-							pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
-							pnlPanel.ClassBuild:SetWide(300)
-							pnlPanel.ClassBuild:SetTall(25)
-							pnlPanel.ClassBuild:SetWrap(true) 
-							pnlPanel.ClassBuild:SetContentAlignment( 5 )	
+							pnlPanel.ItmInfo = vgui.Create("DLabel", pnlPanel)		
+							pnlPanel.ItmInfo:SetPos(90, 25)
+							pnlPanel.ItmInfo:SetText(item.Info)
+							pnlPanel.ItmInfo:SetColor(Color( 0, 200, 0, 255 ))
+							pnlPanel.ItmInfo:SetWide(300)
+							pnlPanel.ItmInfo:SetTall(25)
+							pnlPanel.ItmInfo:SetWrap(true) 
+							pnlPanel.ItmInfo:SetContentAlignment( 5 )	
 							
+							local weightTXT = "Weight: "..item.Weight
+							if item.Capacity then
+								weightTXT = weightTXT.." | Capacity: "..item.Capacity
+							end
 							pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
 							pnlPanel.ItemWeight:SetPos(340, 55)
-							pnlPanel.ItemWeight:SetText("Weight: "..item.Weight)
-							pnlPanel.ItemWeight:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.ItemWeight:SetText(weightTXT)
+							pnlPanel.ItemWeight:SetColor(Color( 0, 200, 0, 255 ))
 							pnlPanel.ItemWeight:SizeToContents() 
 							pnlPanel.ItemWeight:SetContentAlignment( 5 )
 							
 							pnlPanel.sendToInv = vgui.Create("DButton", pnlPanel )
-							pnlPanel.sendToInv:SetPos(400, 55)
-							pnlPanel.sendToInv:SetSize(80,18)
-							pnlPanel.sendToInv:SetText( "Send to To Inv" )
-	--				    	pnlPanel.sendToInv:SizeToContents() 
+							pnlPanel.sendToInv:SetPos(230, 55)
+							pnlPanel.sendToInv:SetSize(100,17)
+							pnlPanel.sendToInv:SetText( "Send to To Inv" ) 
 							pnlPanel.sendToInv.DoClick = function()
-							
-							--	RunConsoleCommand("pnrp_addtoinvfromcar",item.ID)
-								net.Start("pnrp_addtoinvfromcar")
-									net.WriteEntity(ply)
-									net.WriteString(itemname)
-								net.SendToServer()
+								if v["iid"] == "" then
+									if item.SaveState then
+										net.Start("pnrp_AddToInvFromCarPersist")
+											net.WriteEntity(ply)
+											net.WriteString(v["itemid"])
+											net.WriteString(v["iid"])
+											net.WriteString("carInv")
+										net.SendToServer()
+									else
+										net.Start("pnrp_addtoinvfromcar")
+											net.WriteEntity(ply)
+											net.WriteString(itemname)
+										net.SendToServer()
+									end
+								else
+									net.Start("pnrp_AddToInvFromCarPersist")
+										net.WriteEntity(ply)
+										net.WriteString(v["itemid"])
+										net.WriteString(v["iid"])
+									net.SendToServer()
+								end
+								
 								parent_frame:Close()
-								
 							end	
-								
-							pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
-							pnlPanel.bulkSlider:SetPos(400, 20) 
-							pnlPanel.bulkSlider:SetWide( 175 )
-							pnlPanel.bulkSlider:SetText( "" )
-							pnlPanel.bulkSlider:SetDecimals( 0 )
-							pnlPanel.bulkSlider:SetMin( 1 )
-							pnlPanel.bulkSlider:SetMax( v )
-							pnlPanel.bulkSlider:SetValue( 1 )
-							pnlPanel.bulkSlider.Label:SizeToContents()
 							
-							if item.Type == "tool" or item.Type == "junk" then
+							if v["iid"] == "" then
+								pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
+								pnlPanel.bulkSlider:SetPos(400, 20) 
+								pnlPanel.bulkSlider:SetWide( 175 )
+								pnlPanel.bulkSlider:SetText( "" )
+								pnlPanel.bulkSlider:SetDecimals( 0 )
+								pnlPanel.bulkSlider:SetMin( 1 )
+								pnlPanel.bulkSlider:SetMax( v["count"] )
+								pnlPanel.bulkSlider:SetValue( 1 )
+								pnlPanel.bulkSlider.Label:SizeToContents()
+							end
+							
+							if item.Type == "tool" or item.Type == "junk" or v["iid"] ~= "" then
 								--Since GMod does not like Not or's
 							else
 								pnlPanel.BulkBtn = vgui.Create("DButton", pnlPanel )
@@ -207,7 +243,6 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 								pnlPanel.BulkBtn:SetSize(80,17)
 								pnlPanel.BulkBtn:SetText( "Drop Bulk" )
 								pnlPanel.BulkBtn.DoClick = function() 
-									--datastream.StreamToServer( "DropBulkCrateCar", {itemname, pnlPanel.bulkSlider:GetValue() } )
 									net.Start("DropBulkCrateCar")
 										net.WriteEntity(ply)
 										net.WriteString(itemname)
@@ -222,17 +257,21 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 							pnlPanel.salvageItem:SetSize(80,17)
 							pnlPanel.salvageItem:SetText( "Salvage Item" )
 							pnlPanel.salvageItem.DoClick = function() 
-								local getBSalvageCount = pnlPanel.bulkSlider:GetValue()
-								if getBSalvageCount then
-									if getBSalvageCount < 0 then
-										getBSalvageCount = 0
+								if v["iid"] == "" then
+									local getBSalvageCount = pnlPanel.bulkSlider:GetValue()
+									if getBSalvageCount then
+										if getBSalvageCount < 0 then
+											getBSalvageCount = 0
+										end
+										if getBSalvageCount > v["count"] then
+											getBSalvageCount = v["count"]
+										end
+										local sndSTR = item.ID..","..tostring(math.Round(getBSalvageCount))
+										PNRP.OptionVerify( "pnrp_docarsalvage", sndSTR, nil, nil) 
+										parent_frame:Close() 
 									end
-									if getBSalvageCount > v then
-										getBSalvageCount = v
-									end
-									local sndSTR = item.ID..","..tostring(math.Round(getBSalvageCount))
-									PNRP.OptionVerify( "pnrp_docarsalvage", sndSTR, nil, nil) 
-									parent_frame:Close() 
+								else
+									PNRP.OptionVerify( "pnrp_dopersalvage", tostring(v["iid"]), nil, nil) parent_frame:Close()
 								end
 							end
 						end
@@ -245,7 +284,6 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 	return pnlList
 
 end
---datastream.Hook( "pnrp_OpenCarInvWindow", GM.car_inventory_window )
 net.Receive( "pnrp_OpenCarInvWindow", GM.car_inventory_window )
 
 function GM.initCarInventory(ply)
@@ -258,7 +296,7 @@ function GM.initCarInventory(ply)
 				ItemID = "vehicle_jeep"
 			end
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(car:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
+			if tostring(car:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
 				foundCar = true
 			end
 		end
@@ -266,7 +304,6 @@ function GM.initCarInventory(ply)
 	
 	if foundCar then
 		if CurCarMaxWeight != nil then
-		--	RunConsoleCommand("pnrp_OpenCarInventory")
 			net.Start("pnrp_OpenCarInventory")
 				net.WriteEntity(ply)
 			net.SendToServer()
@@ -279,7 +316,5 @@ function GM.initCarInventory(ply)
 
 end
 concommand.Add( "pnrp_carinv",  GM.initCarInventory )
-
---concommand.Add( "pnrp_carinv", GM.car_inventory_window )
 
 --EOF

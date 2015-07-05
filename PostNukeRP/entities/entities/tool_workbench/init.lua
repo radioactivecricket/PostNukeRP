@@ -16,7 +16,7 @@ function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
 		if activator:KeyPressed( IN_USE ) then
 			if activator:Team() == TEAM_ENGINEER then
-				local itemList = {"wep_scrapmp", "wep_smg", "wep_ump", "wep_badlands", "wep_ak-comp", "wep_flaregun", 
+				local itemList = {"wep_scrapmp", "wep_smg", "wep_ump", "wep_badlands", "wep_ak-comp", "wep_flaregun", "wep_knife", 
 					"intm_multitool", "intm_engine"}
 				 
 				net.Start("pnrp_OpenTShopInterface")

@@ -58,33 +58,13 @@ function ENT:Use( activator, caller )
 				activator:ChatPrint("This generator is currently being repaired.")
 			end
 		else
-			if activator:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1 then
+			if activator:IsAdmin() and getServerSetting("adminCreateAll") == 1 then
 				
 			end
 			
 			if self.entOwner == "none" then
 				self.entOwner = activator:Nick()
 			end
-			
-			-- if self.Status == "off" then
-				-- self.Status = "on"
-				-- self.PowerLevel = 500
-				
-				-- self:GetPhysicsObject():EnableMotion(false)
-				-- self.moveActive = false
-				-- self:UpdatePower()
-			-- elseif self.Status == "on" then
-				-- self.Status = "off"
-				-- self.PowerLevel = 0
-				
-				-- --self:GetPhysicsObject():EnableMotion(true)
-				-- self.moveActive = true
-				-- self:UpdatePower()
-			-- else
-				
-			-- end
-			
-			-- activator:ChatPrint("You switch the power to "..self.Status)
 			
 			local actInv = PNRP.Inventory( activator )
 			local availFuel = actInv["fuel_gas"]
@@ -96,6 +76,7 @@ function ENT:Use( activator, caller )
 				else
 					net.WriteDouble(self.PowerLevel)
 				end
+
 				net.WriteDouble(self.FuelLevel)
 				net.WriteDouble(self.UnitLeft or 0)
 				net.WriteDouble(availFuel or 0)
@@ -111,7 +92,7 @@ util.AddNetworkString("gasgen_menu")
 
 function ENT:OnTakeDamage(dmg)
 	self:SetHealth(self:Health() - dmg:GetDamage())
-	if self:Health() < 200 then self.BlockF2 = true end
+--	if self:Health() < 200 then self.BlockF2 = true end
 	if self:Health() <= 0 then --run on death
 		self:SetHealth( 0 )
 		
@@ -119,6 +100,8 @@ function ENT:OnTakeDamage(dmg)
 			self:TogglePower()
 		end
 	end
+	
+	PNRP.SaveState(nil, self, "world")
 end 
 
 function ENT:TogglePower()
@@ -166,7 +149,7 @@ function ENT.Repair()
 	local ply = net.ReadEntity()
 	local ent = net.ReadEntity()
 	
-	ply:SelectWeapon("gmod_rp_hands")
+	ply:SelectWeapon("weapon_simplekeys")
 	ply:SetMoveType(MOVETYPE_NONE)
 	ent.Repairing = ply
 	
@@ -175,7 +158,7 @@ function ENT.Repair()
 	net.Send(ply)
 	
 	timer.Create( ply:UniqueID().."_repair_"..tostring(ent), 0.25, ((200 - ent:Health())*4)/2, function()
-		ply:SelectWeapon("gmod_rp_hands")
+		ply:SelectWeapon("weapon_simplekeys")
 		if (not ent:IsValid()) or (not ply:Alive()) then
 			ply:SetMoveType(MOVETYPE_WALK)
 			net.Start("stopProgressBar")
@@ -183,6 +166,7 @@ function ENT.Repair()
 			ent.Repairing = nil
 			if ent:IsValid() then 
 				timer.Stop(ply:UniqueID().."_repair_"..tostring(ent))
+				PNRP.SaveState(nil, ent, "world")
 			end
 			return
 		end
@@ -195,9 +179,11 @@ function ENT.AddFuel()
 	local ply = net.ReadEntity()
 	local ent = net.ReadEntity()
 	
-	
 	local plyInv = PNRP.Inventory( ply )
 	local avail = plyInv["fuel_gas"]
+	
+	if amnt == nil or amnt == "" then amnt = 0 end
+	if avail == nil or avail == "" then avail = 0 end
 	
 	if amnt > avail then
 		ply:ChatPrint("You don't have that much fuel.")
@@ -207,7 +193,8 @@ function ENT.AddFuel()
 	ent.FuelLevel = ent.FuelLevel + amnt
 	PNRP.TakeFromInventoryBulk(ply, "fuel_gas", amnt)
 	
-	ply:ChatPrint("You have added "..tostring(amnt).." wafers of fuel.")
+	PNRP.SaveState(nil, ent, "world")
+	ply:ChatPrint("You have added "..tostring(amnt).." units of fuel.")
 end
 net.Receive( "loadgasgen_stream", ENT.AddFuel )
 
@@ -223,7 +210,8 @@ function ENT.RemFuel()
 	ent.FuelLevel = ent.FuelLevel - amnt
 	ply:AddToInventory("fuel_gas", amnt)
 	
-	ply:ChatPrint("You have removed "..tostring(amnt).." wafers of fuel.")
+	PNRP.SaveState(nil, ent, "world")
+	ply:ChatPrint("You have removed "..tostring(amnt).." units of fuel.")
 end
 net.Receive( "unloadgasgen_stream", ENT.RemFuel )
 
@@ -243,6 +231,8 @@ function ENT:Think()
 			end
 			self.Repairing = nil
 			self.BlockF2 = false
+			
+			PNRP.SaveState(nil, self, "world")
 		end
 	end
 	
@@ -254,6 +244,8 @@ function ENT:Think()
 				self.FuelLevel = self.FuelLevel - 1
 				self.UnitLeft = 900
 			end
+			
+			PNRP.SaveState(nil, self, "world")
 		else
 			self.UnitLeft = self.UnitLeft - 1
 		end

@@ -58,7 +58,7 @@ function StatCheck()
 							car.gas = 0 
 							car:Fire("turnoff", 1, 0)
 							--check Wire Adv Pod Controller 
-							for _,pod in pairs( ents.FindByClass( "gmod_wire_adv_pod" ) ) do
+							for _,pod in pairs( ents.FindByClass( "gmod_wire_pod" ) ) do
 								if (pod:HasPly() and pod:GetPly() == v) then
 									pod.Disable = true
 								end
@@ -69,7 +69,7 @@ function StatCheck()
 							car.gas = car.gas - (runModifier / 60)
 							car:Fire("turnon", 1, 0)
 							--check Wire Adv Pod Controller 
-							for _,pod in pairs( ents.FindByClass( "gmod_wire_adv_pod" ) ) do
+							for _,pod in pairs( ents.FindByClass( "gmod_wire_pod" ) ) do
 								if (pod:HasPly() and pod:GetPly() == v) then
 									pod.Disable = false
 								end
@@ -188,8 +188,8 @@ function EnterSleep ( ply )
 			ply.OldColGroup = ply:GetCollisionGroup()
 			ply:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
 			
-			if ply:HasWeapon( "gmod_rp_hands" ) then
-				ply:SelectWeapon( "gmod_rp_hands")
+			if ply:HasWeapon( "weapon_simplekeys" ) then
+				ply:SelectWeapon( "weapon_simplekeys")
 			end
 			-- ply:GetTable().WeaponsForSleep = {}
 			-- ply:GetTable().ClipsForSleep = {}

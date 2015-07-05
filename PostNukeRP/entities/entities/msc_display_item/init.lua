@@ -5,10 +5,10 @@ include('shared.lua')
 util.PrecacheModel ("models/props_junk/cardboard_box003b.mdl")
 
 function ENT:Initialize()
-	self.item = self:GetNWString("itemID")
-	self.vendorid = self:GetNWString("vendorid")
-	self.cost = self:GetNWString("cost")
-	self.open = self:GetNWString("open", "false")
+	self.item = self:GetNetVar("itemID")
+	self.vendorid = self:GetNetVar("vendorid")
+	self.cost = self:GetNetVar("cost")
+	self.open = self:GetNetVar("open", "false")
 		
 	self:PhysicsInit( SOLID_VPHYSICS )      -- Make us work with physics,
 	self:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
@@ -21,9 +21,10 @@ end
 function ENT:Use( activator, caller )
 	if ( activator:IsPlayer() ) then
 		if activator:KeyPressed( IN_USE ) then
-			local itemID = self:GetNWString("itemID")
+			local itemID = self:GetNetVar("itemID")
 			local item = PNRP.Items[itemID]
 			local vendorID = self.vendorid
+			local iid = self:GetNetVar("iid", "")
 			if self.open == "true" then
 				
 				local itemString = getItemInfo(itemID, vendorID)
@@ -32,11 +33,12 @@ function ENT:Use( activator, caller )
 					net.WriteEntity(self)
 					net.WriteString(itemID)
 					net.WriteString(itemString)
+					net.WriteString(iid)
 				net.Send(activator)
 				
 			else
-				if tostring(self:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( activator ) then
-					local itemString = getItemInfo(itemID, vendorID)
+				if tostring(self:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( activator ) then
+					local itemString = getItemInfo(itemID, vendorID, iid)
 					
 					if itemString == "0,0,0,0" then
 						activator:ChatPrint("Unable to find item in vendor.")
@@ -46,19 +48,15 @@ function ENT:Use( activator, caller )
 					self:boxRespawn( activator, item.Model )
 					
 					self.open = "true"
-					self:SetNWString("open", "true")
+					self:SetNetVar("open", "true")
 					
 					local render = {}
 					render["mode"] = 1
 					render["color"] = Color( 200, 200, 255, 100 )
 					render["fx"] = 16			
 					
-				--	self:SetColor( render["color"] )
-				--	self:SetRenderMode( render["mode"] ) 
-				--	self:SetRenderFX( render["fx"] ) 
-					
 					self.cost = itemString
-					self:SetNWString("cost", itemString)
+					self:SetNetVar("cost", itemString)
 				else
 					activator:ChatPrint("You do not own this.")
 				end
@@ -77,7 +75,8 @@ function BuyFromVendorDisp( )
 	local amount = tonumber(net.ReadString())
 	
 	local vendorID = ent.vendorid
-	local itemString = getItemInfo(item.ID, vendorID)
+	local iid = ent:GetNetVar("iid", "")
+	local itemString = getItemInfo(item.ID, vendorID, iid)
 	
 	if itemString == "0,0,0,0" then
 		ply:ChatPrint("Unable to find item in vendor.")
@@ -93,15 +92,18 @@ function BuyFromVendorDisp( )
 	
 	local Cost = {itemInfo["scrap"], itemInfo["sp"], itemInfo["chems"]}
 	
-	local itemSold = BuyFromVendor(ply, vendorID, item.ID, Cost, amount, "dispItem" )
+	local itemSold = BuyFromVendor(ply, vendorID, item.ID, Cost, amount, "dispItem", iid )
 	if itemSold then
 		itemInfo["count"] = itemInfo["count"] - 1
+	else
+		--If no item sold then dont continue
+		return
 	end
 	
 	local foundDispItems = ents.FindByClass(ent:GetClass())
 	local idCount = 0
 	for _, v in pairs(foundDispItems) do
-		if v.vendorid == vendorID and v.item == item.ID then
+		if v.vendorid == vendorID and v.item == item.ID and v.iid == iid then
 			if itemInfo["count"] == 0 then
 				v:Remove()
 			else
@@ -148,13 +150,13 @@ function ENT:boxRespawn( ply, model )
 end
 
 function ENT:F2Use(ply)
-	if tostring(self:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then
+	if tostring(self:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) then
 		local model = "models/props_junk/cardboard_box003b.mdl"
 
 		self:boxRespawn( ply, model )
 					
 		self.open = "false"
-		self:SetNWString("open", "false")
+		self:SetNetVar("open", "false")
 	else
 		ply:ChatPrint("You do not own this.")
 	end

@@ -31,7 +31,7 @@ function ENT:Use( activator, caller )
 	elseif activator.scavving then
 		return end
 	
-	activator:SelectWeapon("gmod_rp_hands")
+	activator:SelectWeapon("weapon_simplekeys")
 	activator:SetMoveType(MOVETYPE_NONE)
 	activator.scavving = self
 	
@@ -43,7 +43,7 @@ function ENT:Use( activator, caller )
 	
 	local respile = self
 	timer.Create( activator:UniqueID().."_respile_"..tostring(self:EntIndex()), 0.25, 12, function()
-			activator:SelectWeapon("gmod_rp_hands")
+			activator:SelectWeapon("weapon_simplekeys")
 			if (not respile:IsValid()) or (not activator:Alive()) then
 				activator:SetMoveType(MOVETYPE_WALK)
 				net.Start("stopProgressBar")

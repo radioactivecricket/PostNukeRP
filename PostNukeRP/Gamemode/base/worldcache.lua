@@ -2,12 +2,12 @@
 --	World Cache							--
 ------------------------------------------
 
-function PNRP.GetWorldCache( p )
+function PNRP.GetWorldCache( ply )
 	
-	local query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid)
+	local query = "SELECT * FROM world_cache WHERE pid="..tostring(ply.pid)
 	local result = querySQL(query)
 	
-	return result
+	return result 
 	
 end	
 --Adds item to WorldCache
@@ -49,8 +49,10 @@ function PNRP.TakeFromWorldCache( p, theitem )
 	end
 end
 		
---Returns the Iten to the player
+--Returns the Item to the player
 function PNRP.ReturnWorldCache( ply )
+	PNRP.ReturnPersistItems( ply )
+	
 	local worldCache = PNRP.GetWorldCache( ply )
 	if not worldCache then return end
 	
@@ -58,12 +60,13 @@ function PNRP.ReturnWorldCache( ply )
 		PNRP.AddToInventory( ply, v["item"], tonumber(v["count"]) )
 		PNRP.TakeAllFromWorldCache( ply, v["item"] )
 	end
-
+	
 	PNRP.CleanWorldAfterReturn( ply )
 end
+
 --Cleans up the world after player leaves (Only WorldCache Items are removed)
 function PNRP.CleanWorldAfterReturn( ply )
-	local plUID = tostring(ply:GetNetworkedString( "UID" , "None" ))
+	local plUID = tostring(ply:GetNetVar( "UID" , "None" ))
 	if plUID == "None" then
 		plUID = ply:UniqueID()
 	end
@@ -72,7 +75,7 @@ function PNRP.CleanWorldAfterReturn( ply )
 		local ItemID = PNRP.FindItemID( myClass )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == plUID then
+			if tostring(v:GetNetVar( "Owner_UID" , "None" )) == plUID then
 				if myType == "vehicle" or myType == "tool" or myType == "misc" then
 					v:Remove()
 				end

@@ -1,9 +1,20 @@
+--Netwrapper library
+--Author: Mista-Tea ([IJWTB] Thomas)
+print( "[NetWrapper] Initializing netwrapper library" )
+-- Server functions
+include( "netwrapper/sv_netwrapper.lua" )
+-- Shared functions
+include( "netwrapper/sh_netwrapper.lua" )
+-- Client functions
+AddCSLuaFile( "netwrapper/cl_netwrapper.lua" )
+--End Net Wrapper
+
 include( 'shared.lua' ) --Tell the server to load shared.lua
 include("itembase.lua")
 
 AddCSLuaFile( "cl_init.lua" ) --Tell the server that the client needs to download cl_init.lua
 AddCSLuaFile( "shared.lua" ) --Tell the server that the client needs to download shared.lua
-AddCSLuaFile("itembase.lua")
+AddCSLuaFile( "itembase.lua" )
 
 local PlayerMeta = FindMetaTable("Player")
 local EntityMeta = FindMetaTable("Entity")
@@ -11,9 +22,7 @@ local EntityMeta = FindMetaTable("Entity")
 local firstSpawn = true
 
 --Add required resources
-function AddDir(dir)
---	print("[Adding Content] From: "..dir)
-	
+function AddDir(dir)	
 	local files, directories = file.Find(PNRP_Path.."content/"..dir.."/*", "LUA")
 	
 	for _, fdir in pairs(directories) do
@@ -37,31 +46,6 @@ AddDir("models")
 AddDir("materials")
 AddDir("sound")
 AddDir("scripts")
-
---for k, v in pairs(file.Find(PNRP_Path.."gamemode/derma/*.lua", "GAME")) do
---	Msg("File(init) "..v.."\n")	
---end
-
---base include
-for k, v in pairs(file.Find(PNRP_Path.."gamemode/base/*.lua", "LUA" )) do
-	include("base/"..v)
-end
---plugins include
-for k, v in pairs(file.Find(PNRP_Path.."gamemode/sv_plugins/*.lua",  "LUA" )) do
-	include("sv_plugins/"..v)
-end
---derma download
-for k, v in pairs( file.Find(PNRP_Path.."gamemode/derma/*.lua",  "LUA" ) ) do
-	AddCSLuaFile("derma/"..v)	
-end
---vgui download
-for k, v in pairs( file.Find(PNRP_Path.."gamemode/vgui/*.lua",  "LUA" ) ) do
-	AddCSLuaFile("vgui/"..v)
-end
-
-for k, v in pairs( file.Find(PNRP_Path.."gamemode/items/*.lua",  "LUA" ) ) do
-	include("items/"..v)
-end
 
 --RunConsoleCommand( "sv_alltalk", tostring(0) )
 game.ConsoleCommand( "sv_alltalk 0\n" )
@@ -101,6 +85,79 @@ util.AddNetworkString("printUmsgTable")
 util.AddNetworkString("sendUmsgTable")
 util.AddNetworkString("sndComDipl")
 
+--Server settings will be initially written to the DB if not done yet.
+--Query string will be made with for loop.
+PNRP.PNRP_DefSpawnerSettings = 
+	{
+		MaxZombies = 30,
+		MaxFastZombies = 5,
+		MaxPoisonZombies = 2,
+		MaxAntlions = 10,
+		MaxAntGuards = 1,						
+		--Mound Spawning Vars
+		MaxMounds = 1,
+		MoundRate = 5,
+		MoundChance = 15,
+		MaxMoundAntlions = 10,
+		MoundAntlionsPerCycle = 5,
+		MaxMoundGuards = 1,
+		MoundMobRate = 5,
+		MoundGuardChance = 10,
+		--Res Spawner
+		MaxReproducedRes = 20
+	}
+PNRP.PNRP_DefServerSettings = 
+	{	
+		SpawnMobs = 1,
+		ReproduceRes = 1,
+		--Inventory Settings
+		packCap = 75,
+		packCapScav = 110,
+		--Prop Protection
+		propSpawnpointProtection = 1,
+		propBanning = 1,
+		propAllowing = 0,
+		AllowPunt = 0,
+		propPay = 0,
+		propCost = 10,
+		maxOwnDoors = 3,
+		--Admin Overides
+		adminCreateAll = 0,
+		adminTouchAll = 0,
+		adminNoCost = 0,
+		--Tool Settings
+		exp2Level = 4,
+		toolLevel = 4,
+		--Voice and chat settings
+		voiceLimit = 1,
+		voiceDist = 750,
+		--Player Class Change
+		classChangePay = 1,
+		classChangeCost = 20,
+		--Player Death
+		PlyDeathZombie = 1,
+		deathPay = 1,
+		deathCost = 1 
+	}
+
+function SQLStr2( str_in, bNoQuotes )
+	
+	local str = tostring( str_in )
+	
+	str = str:gsub( "'", "''" )
+	
+	local null_chr = string.find( str, "\0" )
+	if null_chr then
+		str = string.sub( str, 1, null_chr - 1 )
+	end
+	
+	if ( bNoQuotes ) then
+		return str
+	end
+	
+	return str
+end
+
 function querySQL(query)
 
 	result = sql.Query(query)
@@ -111,7 +168,129 @@ function querySQL(query)
 	return result
 end
 
-function SQLiteTableCheck ()
+function getServerSetting(setting)
+	local query
+	local result
+	
+	if sql.TableExists("PN_ServerSettings") then
+		query = "SELECT value FROM PN_ServerSettings WHERE variable='"..setting.."'"
+		result = querySQL(query)
+		result = result[1]["value"]
+	else
+		result = PNRP.PNRP_DefServerSettings[settings]
+	end
+	
+	return tonumber(result)
+end
+
+function getSpawnerSetting(setting)
+	local query
+	local result
+	
+	--If saved map then pull from DB, otherwise use default.
+	if sql.TableExists("PN_SpawnerSettings") then
+		query = "SELECT * FROM PN_SpawnerSettings WHERE map="..SQLStr(game.GetMap())
+		result = querySQL(query)
+		
+		if not result then
+			result = PNRP.PNRP_DefSpawnerSettings[setting]
+		else
+			query = "SELECT "..setting.." FROM PN_SpawnerSettings WHERE map="..SQLStr(game.GetMap())
+			result = querySQL(query)
+			
+			result = result[1][setting]	
+		end
+	else
+		result = PNRP.PNRP_DefSpawnerSettings[setting]
+	end
+	
+	return tonumber(result)
+end
+
+function setSpawnerSetting(setting, value)
+	local query
+	local result
+	
+	query = "SELECT * FROM PN_SpawnerSettings WHERE map="..SQLStr(game.GetMap())
+	result = querySQL(query)
+
+	if not result then
+		queryString = "INSERT INTO PN_SpawnerSettings VALUES( "..SQLStr(game.GetMap())
+		for k, v in pairs(PNRP.PNRP_DefSpawnerSettings) do
+			queryString = queryString..", "..v
+		end	
+		queryString = queryString..")"
+		result = querySQL(queryString)
+	end
+	
+	query = "UPDATE PN_SpawnerSettings SET "..setting.."="..value.." WHERE map="..SQLStr(game.GetMap())
+	result = querySQL(query)
+	
+	return result
+end
+
+function setServerSetting(setting, value)
+	local query
+	local result
+	
+	query = "UPDATE PN_ServerSettings SET value="..value.." WHERE variable='"..setting.."'"
+	result = querySQL(query)
+	
+	--Sets these Convars
+	if GetConVar("pnrp_"..setting) then
+		RunConsoleCommand("pnrp_"..setting,tostring(value))
+	end
+	
+	return result
+end
+
+--Quick debug, Uncomment command to enable
+function getSetting(ply, cmd, args)
+	if not args[1] then return end
+	local setting = getServerSetting(args[1])
+	
+	Msg(tostring(setting).."\n")
+end
+--concommand.Add( "pnrp_GetSetting", getSetting )
+
+-------------------------------------
+--Debug function. dissable on live
+-------------------------------------
+function pndb(ply, command, args)
+	if ply:IsAdmin() then
+		query = "DROP TABLE PN_ServerSettings"
+		result = querySQL(query)
+		query = "CREATE TABLE PN_ServerSettings ( variable varchar(125) NOT NULL PRIMARY KEY, value int ) "
+		result = querySQL(query)
+		for k, v in pairs(PNRP.PNRP_DefServerSettings) do
+			query = "INSERT INTO PN_ServerSettings VALUES ('"..k.."',"..v..")"
+			result = querySQL(query)
+		end	
+
+		
+		Msg(" PNDB: Done \n")
+	end
+end
+concommand.Add( "pndb", pndb )
+
+function pntb(ply, command, args)
+	if ply:IsAdmin() then
+		local query, result 
+		
+		query = "SELECT * FROM PN_ServerSettings"
+		result = querySQL(query)
+		
+		if result then
+			Msg(table.ToString(result).."\n")
+		else
+			Msg("Nil \n")
+		end
+	end
+end
+concommand.Add( "pntb", pntb )
+
+
+function SQLiteTableCheck()
 	local query
 	local result
 	
@@ -199,8 +378,66 @@ function SQLiteTableCheck ()
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  bounty_table\n")
 	end
+	
+	if not sql.TableExists("inventory_table") then
+		query = "CREATE TABLE inventory_table ( iid INTEGER PRIMARY KEY AUTOINCREMENT, itemid varchar(255), pid int, location varchar(25), locid varchar(25), locdata varchar(255), status_table varchar(255) )"
+		result = querySQL(query)
+	else
+		Msg(tostring(os.date()).." SQL TABLE EXISTS:  inventory_table\n")
+	end
+	
+	--PNRP.PNRP_DefServerSettings
+	if not sql.TableExists("PN_SpawnerSettings") then
+		query = "CREATE TABLE PN_SpawnerSettings ( map varchar(255)"
+		for k, v in pairs(PNRP.PNRP_DefSpawnerSettings) do
+			query = query..", "..k.." int"	
+		end	
+		query = query..")"
+		result = querySQL(query)
+	else
+		Msg(tostring(os.date()).." SQL TABLE EXISTS:  PN_ServerSettings\n")
+	end
+	
+	--PNRP.PNRP_DefServerSettings
+	if not sql.TableExists("PN_ServerSettings") then
+		query = "CREATE TABLE PN_ServerSettings ( variable varchar(125) NOT NULL PRIMARY KEY, value int ) "
+		result = querySQL(query)
+		for k, v in pairs(PNRP.PNRP_DefServerSettings) do
+			query = "INSERT INTO PN_ServerSettings VALUES ('"..k.."',"..v..")"
+			result = querySQL(query)
+		end	
+	else
+		Msg(tostring(os.date()).." SQL TABLE EXISTS:  PN_ServerSettings\n")
+	end
 end
 hook.Add( "InitPostEntity", "tableCheck", SQLiteTableCheck )
+
+--Includes Gamemode Folders
+--base include
+for k, v in pairs(file.Find(PNRP_Path.."gamemode/base/*.lua", "LUA" )) do
+	include("base/"..v)
+end
+--plugins include
+for k, v in pairs(file.Find(PNRP_Path.."gamemode/sv_plugins/*.lua",  "LUA" )) do
+	include("sv_plugins/"..v)
+end
+--derma download
+for k, v in pairs( file.Find(PNRP_Path.."gamemode/derma/*.lua",  "LUA" ) ) do
+	AddCSLuaFile("derma/"..v)	
+end
+--vgui download
+for k, v in pairs( file.Find(PNRP_Path.."gamemode/vgui/*.lua",  "LUA" ) ) do
+	AddCSLuaFile("vgui/"..v)
+end
+--[[ 
+--Item base
+for k, v in pairs( file.Find(PNRP_Path.."gamemode/items/*.lua",  "LUA" ) ) do
+	include("items/"..v)
+end
+]]--
+
+--Runs the cleanup code
+PNRP.CleanPersistItems()
 
 function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server and spawns" function
 	
@@ -246,10 +483,10 @@ function LoadingFunction( len )
 	end
 	if ply then
 		ply.HasLoaded = true
-		ply:SetNWBool( "HasLoaded", true )
+		ply:SetNetVar( "HasLoaded", true )
 		
 		--Sets the players Unique ID to them for faster access.
-		ply:SetNetworkedString("UID", ply:UniqueID())
+		ply:SetNetVar("UID", ply:UniqueID())
 		GM.LoadCharacter( ply, pid ) -- PID STILL NEEDED
 		ply.PropBuddyList = ply.PropBuddyList or {}
 			
@@ -264,6 +501,8 @@ function LoadingFunction( len )
 		ConVarExists("pnrp_classChangePay")
 		ConVarExists("pnrp_toolLevel")
 		ConVarExists("pnrp_exp2Level")
+		ConVarExists("pnrp_adminCreateAll")
+		ConVarExists("pnrp_adminTouchAll")
 		ConVarExists("pnrp_adminNoCost")
 		ConVarExists("pnrp_propPay")
 	
@@ -283,13 +522,14 @@ function LoadingFunction( len )
 		--Added this to fix issue where clients would not have the correct setting.
 		tbl = 
 		{
-			VoiceLimiter = GetConVar("pnrp_voiceLimit"):GetInt(),
-			PropPay = GetConVar("pnrp_propPay"):GetInt(),
-			PropCost = GetConVar("pnrp_propCost"):GetInt()
+			VoiceLimiter = getServerSetting("voiceLimit"),
+			PropPay = getServerSetting("propPay"),
+			PropCost = getServerSetting("propCost")
 		}
 		RunConsoleCommand("pnrp_voiceLimit",tostring(tbl.VoiceLimiter))
 		RunConsoleCommand("pnrp_propPay",tostring(tbl.PropPay))
 		RunConsoleCommand("pnrp_propCost",tostring(tbl.PropCost))
+
 	else
 		ErrorNoHalt("Load timer hit Null Entity (), retrying in 3 seconds.\n")
 	end
@@ -321,13 +561,15 @@ function GM:PlayerSetModel( ply )
 	
 	util.PrecacheModel( trueModel )
 	ply:SetModel(trueModel)
+	
 end
 
 function GM:PlayerSpawn( ply )
 	local GM = GAMEMODE
 	if not ply.HasLoaded then
 		ply:ConCommand( "pnrp_loadin" )
-				
+		
+		--Gets all the player spawn points.
 		local spawnPoints = ents.FindByClass("info_player_start")
 			table.Add(spawnPoints,ents.FindByClass("info_player_terrorist"))
 			table.Add(spawnPoints,ents.FindByClass("info_player_counterterrorist"))
@@ -367,7 +609,7 @@ function GM:PlayerSpawn( ply )
 		ply.LoadArmor = nil
 	end
 	
-    ply:SetNetworkedInt("MaxHealth", ply:GetMaxHealth())
+    ply:SetNetVar("MaxHealth", ply:GetMaxHealth())
     if ply:Team() == TEAM_SCAVENGER then
 		ply:SetRunSpeed( 325 + (ply:GetSkill("Athletics") * 10) ) 
 	else
@@ -399,7 +641,7 @@ end
 
 function GM:PlayerDisconnected(ply)
 	
-	local plUID = tostring(ply:GetNetworkedString( "UID" , "None" ))
+	local plUID = tostring(ply:GetNetVar( "UID" , "None" ))
 	if plUID == "None" then
 		plUID = ply:UniqueID()
 	end
@@ -412,8 +654,8 @@ function GM:PlayerDisconnected(ply)
 	
 	local DoorList = PNRP.ListDoors( ply )
 	for k, v in pairs(DoorList) do
-		v:SetNetworkedString("Owner", "World")
-		v:SetNetworkedString("Owner_UID", "None")
+		v:SetNetVar("Owner", "World")
+		v:SetNetVar("Owner_UID", "None")
 		v:Fire("unlock", "", 0)
 	end
 	SK_Srv.OnDisc_Doors( ply )
@@ -445,9 +687,9 @@ function GM:PlayerDisconnected(ply)
 						end
 					end
 					if not skip then
-						v:SetNetworkedString("Owner", "World")
-						v:SetNetworkedString("Owner_UID", "None")
-						v:SetNWEntity( "ownerent", nil )
+						v:SetNetVar("Owner", "World")
+						v:SetNetVar("Owner_UID", "None")
+						v:SetNetVar( "ownerent", nil )
 					end
 				end
 			end
@@ -562,10 +804,10 @@ end
 
 function classChangeCost(ply, Recource)
 	
-	if GetConVarNumber("pnrp_classChangePay") == 1 then
+	if getServerSetting("classChangePay") == 1 then
 	    local getRec
 	    local int
-	    local cost = GetConVarNumber("pnrp_classChangeCost") / 100
+	    local cost = getServerSetting("classChangeCost") / 100
   
 	    getRec = ply:GetResource(Recource)
 	    int = getRec * cost
@@ -655,7 +897,7 @@ function GM:ShowTeam( ply )
 	end
 	
 	if ent:GetClass() == "ent_weapon" then
-		myClass = ent:GetNWString("WepClass", nil)
+		myClass = ent:GetNetVar("WepClass", nil)
 	else
 		myClass = ent:GetClass()
 	end
@@ -666,36 +908,13 @@ function GM:ShowTeam( ply )
 		else
 			return
 		end
-		-- local myModel = ent:GetModel()
-		
-		-- for itemname, item in pairs( PNRP.Items ) do
-			-- if myModel == item.Model and item.Type != "junk" and item.Type != "build" then
-
-				-- local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[item.ID].Weight
-				-- local weightCap
-				
-				-- if team.GetName(ply:Team()) == "Scavenger" then
-					-- weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
-				-- else
-					-- weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
-				-- end
-				
-				-- if weight <= weightCap then
-					-- PNRP.AddToInventory( ply, item.ID, 1 )
-					-- ent:Remove()
-				-- else
-					-- ply:ChatPrint("You're pack is too full and cannot carry this.")
-				-- end
-			-- end
-		-- end
 	end
 	
 	local ItemID = PNRP.FindItemID( myClass )
---	print(tostring(ItemID))
 	if ItemID != nil then
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
-			if tonumber(ent:GetNetworkedString( "Type" , "0" )) == 1 then
+			if tonumber(ent:GetNetVar( "Type" , "0" )) == 1 then
 				if ent:GetModel() == "models/nova/jeep_seat.mdl" then
 					ItemID = "seat_jeep"
 				else
@@ -724,7 +943,7 @@ function GM:ShowTeam( ply )
 				local myModel = ent:GetModel()	
 				
 				
-				if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) ~= PNRP:GetUID( ply ) then
+				if tostring(ent:GetNetVar( "Owner_UID" , "None" )) ~= PNRP:GetUID( ply ) then
 					ply:ChatPrint("You do not own this!")
 					return
 				end
@@ -752,8 +971,8 @@ function GM:ShowTeam( ply )
 				
 				if weight <= weightCap then
 					PNRP.AddToInventory( ply, ItemID, 1 )
-					if tonumber(ent:GetNetworkedString("Ammo", 0)) > 0 and not ( ItemID == "wep_grenade" or ItemID == "wep_shapedcharge" )then
-						ply:GiveAmmo(tonumber(ent:GetNetworkedString("Ammo")), PNRP.FindAmmoType( ItemID, nil))
+					if tonumber(ent:GetNetVar("Ammo", 0)) > 0 and not ( ItemID == "wep_grenade" or ItemID == "wep_shapedcharge" )then
+						ply:GiveAmmo(tonumber(ent:GetNetVar("Ammo")), PNRP.FindAmmoType( ItemID, nil))
 					end
 					
 					ent:Remove()
@@ -761,8 +980,8 @@ function GM:ShowTeam( ply )
 					ply:ChatPrint("Your pack is too full and cannot carry this.")
 				end
 			elseif myType == "ammo" then
-				local boxes = math.floor( tonumber(ent:GetNWString("Ammo")) / tonumber(ent:GetNWString("NormalAmmo")) )
-				local ammoLeft = tonumber(ent:GetNWString("Ammo"))
+				local boxes = math.floor( tonumber(ent:GetNetVar("Ammo")) / tonumber(ent:GetNetVar("NormalAmmo")) )
+				local ammoLeft = tonumber(ent:GetNetVar("Ammo"))
 				local overweight = false
 				
 				local weightCap
@@ -779,7 +998,7 @@ function GM:ShowTeam( ply )
 						
 						if weight <= weightCap then
 							PNRP.AddToInventory( ply, ItemID, 1 )
-							ammoLeft = ammoLeft - tonumber(ent:GetNWString("NormalAmmo"))
+							ammoLeft = ammoLeft - tonumber(ent:GetNetVar("NormalAmmo"))
 						else
 							ply:ChatPrint("Your pack is too full and cannot carry all of this.")
 							overweight = true
@@ -799,7 +1018,7 @@ function GM:ShowTeam( ply )
 					ent:Remove()
 				elseif ammoLeft > 0 and boxes > 0 and overweight then
 					ply:ChatPrint("The rest stays on the ground.")
-					ent:SetNetworkedString("Ammo", tostring(ammoLeft))
+					ent:SetNetVar("Ammo", tostring(ammoLeft))
 				elseif ammoLeft > 0 then
 					ply:ChatPrint("This isn't enough to worry about.  Only "..tostring(ammoLeft).." rounds here.")
 				else
@@ -812,7 +1031,7 @@ function GM:ShowTeam( ply )
 				local weightCap
 				
 				if myType == "tool" or myType == "misc" then
-					if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) ~= PNRP:GetUID(ply) then
+					if tostring(ent:GetNetVar( "Owner_UID" , "None" )) ~= PNRP:GetUID(ply) then
 						ply:ChatPrint("You do not own this!")
 						return
 					end
@@ -825,7 +1044,7 @@ function GM:ShowTeam( ply )
 				end
 				
 				if weight <= weightCap then
-					PNRP.AddToInventory( ply, ItemID, 1 )
+					PNRP.AddToInventory( ply, ItemID, 1, ent )
 					if myType == "tool" then
 						PNRP.TakeFromWorldCache( ply, ItemID )
 					end
@@ -848,10 +1067,10 @@ function GM:ShowSpare1( ply )
 		local ItemID = PNRP.FindItemID( ent:GetClass() )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
 				local myModel = ent:GetModel()
 				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
-				ply:SendLua( "CurCarMaxWeight = "..tostring(PNRP.Items[ItemID].Weight) )
+				ply:SendLua( "CurCarMaxWeight = "..tostring(PNRP.Items[ItemID].Capacity) )
 				ply:ConCommand("pnrp_carinv")
 			else
 				--If not looking at the car, open normal inventory.
@@ -879,7 +1098,7 @@ function PNRP.GetAllTools( ply )
 		local ItemID = PNRP.FindItemID( myClass )
 		if ItemID != nil then		
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && (myType == "tool" or myType == "misc") then
+			if tostring(v:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && (myType == "tool" or myType == "misc") then
 				if not PNRP.Items[ItemID].Persistent then
 					Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
 					PNRP.AddToInventory( ply, ItemID, 1 )
@@ -897,7 +1116,7 @@ function PNRP.GetAllCars( ply )
 		local ItemID = PNRP.FindItemID( myClass )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) && myType == "vehicle" then
+			if tostring(v:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) && myType == "vehicle" then
 				
 				--Forces the player out of the vehicle (Nolcip exploit fix)
 				local driver = v:GetDriver( )
@@ -930,7 +1149,7 @@ function PNRP.GetCar( ply )
 		local ItemID = PNRP.FindItemID( myClass )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(ent:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
 				local myModel = ent:GetModel()
 								
 				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
@@ -957,8 +1176,8 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	if Victim:IsPlayer() and Attacker:IsPlayer() then
 		ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..Attacker:Nick().." ("..Attacker:SteamName()..") with "..infClass.."\n")
 	elseif Victim:IsPlayer() then
-		if Inflictor:GetNWString("Owner", nil) then
-			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by (Object Owner)"..tostring(Inflictor:GetNWString("Owner",nil)).." with "..infClass.."\n")
+		if Inflictor:GetNetVar("Owner", nil) then
+			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by (Object Owner)"..tostring(Inflictor:GetNetVar("Owner",nil)).." with "..infClass.."\n")
 		else
 			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..attClass.." with "..infClass.."\n")
 		end
@@ -976,33 +1195,19 @@ function GM:OnNPCKilled( victim, killer, weapon )
 	-- May do some stuff here later.
 end
 
---Hook for NPC damage
--- function scaleZombieDamage( npc, hitgroup, dmginfo )
-	-- if npc:GetClass() == "npc_littlezombie" then
-		-- if hitgroup == HITGROUP_HEAD then
-			-- dmginfo:ScaleDamage( 5 )
-		-- elseif hitgroup == HITGROUP_CHEST then
-			-- dmginfo:ScaleDamage( 1 )
-		-- else
-			-- dmginfo:ScaleDamage( 0.5 )
-		-- end
-	-- end
--- end
--- hook.Add("ScaleNPCDamage","ScaleZombieDamage",scaleZombieDamage)
-
 PNRP.ChatConCmd( "/setowner", "pnrp_setOwner" )
 
 function GM:CanProperty( ply, strProp, ent )
 	local IsOwned = PickupCheck( ply, ent )
 	
 	if strProp == "drive" then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			return true
 		else
 			return false
 		end
 	elseif strProp == "ignite" then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			return true
 		else
 			if IsOwned then
@@ -1012,7 +1217,7 @@ function GM:CanProperty( ply, strProp, ent )
 			end
 		end
 	elseif strProp == "extinguish" then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			return true
 		else
 			if IsOwned then
@@ -1022,7 +1227,7 @@ function GM:CanProperty( ply, strProp, ent )
 			end
 		end
 	elseif strProp == "remover" then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			return true
 		else
 			if IsOwned then
@@ -1032,7 +1237,7 @@ function GM:CanProperty( ply, strProp, ent )
 			end
 		end
 	elseif strProp == "keepupright" then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			return true
 		else
 			if IsOwned then
@@ -1042,7 +1247,7 @@ function GM:CanProperty( ply, strProp, ent )
 			end
 		end
 	elseif strProp == "collision" then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			return true
 		else
 			if IsOwned then
@@ -1052,7 +1257,7 @@ function GM:CanProperty( ply, strProp, ent )
 			end
 		end
 	elseif strProp == "gravity" then
-		if ply:IsAdmin() and GetConVarNumber("pnrp_adminTouchAll") == 1 then
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then
 			return true
 		else
 			if IsOwned then
@@ -1074,7 +1279,6 @@ function VehicleDamageFix( target, dmginfo )
 	end
 end
 hook.Add("EntityTakeDamage", "vehDamageFix", VehicleDamageFix )
-
 
 -- Debug, REMOVE LATER
 

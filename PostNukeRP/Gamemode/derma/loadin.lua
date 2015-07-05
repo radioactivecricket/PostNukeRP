@@ -5,7 +5,7 @@ local initialLoad = false
 
 local basicload_Frame
 function basicLoadWindow( ply )
-	local plyHasLoaded = ply:GetNetworkedBool( "HasLoaded" , false )
+	local plyHasLoaded = ply:GetNetVar( "HasLoaded" , false )
 	if plyHasLoaded then return end
 	
 	basicload_Frame = vgui.Create( "DFrame" )

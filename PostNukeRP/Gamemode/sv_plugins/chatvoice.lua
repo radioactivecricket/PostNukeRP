@@ -243,13 +243,13 @@ hook.Add("PlayerSay", "PNRPChatSounds", PNRP.ChatSounds)
 
 function GM:PlayerCanHearPlayersVoice( pListener, pTalker )
 	local curDistance = pListener:GetShootPos():Distance(pTalker:GetShootPos())
-	local maxDistance = GetConVarNumber("pnrp_voiceDist")
+	local maxDistance = getServerSetting("voiceDist")
 	local senderChnl = pTalker.Channel
 	local listenerChnl = pListener.Channel
 	local senderRdioOn = (pTalker.RdioPower and pTalker:HasWeapon("weapon_radio"))
 	local listenerRdioOn = (pListener.RdioPower and pListener:HasWeapon("weapon_radio"))
 	
-	if GetConVarNumber("pnrp_voiceLimit") == 1 then
+	if getServerSetting("voiceLimit") == 1 then
 		if curDistance < maxDistance then
 			return true, true
 		elseif senderRdioOn and listenerRdioOn and senderChnl == listenerChnl then
@@ -265,7 +265,7 @@ function GM:PlayerCanSeePlayersChat( strText, bTeamOnly, pListener, pTalker )
 	if not pTalker:IsPlayer() then return true end
 
 	local curDistance = pListener:GetShootPos():Distance(pTalker:GetShootPos())
-	local maxDistance = GetConVarNumber("pnrp_voiceDist")
+	local maxDistance = getServerSetting("voiceDist")
 	local senderChnl = pTalker.Channel
 	local listenerChnl = pListener.Channel
 	local senderRdioOn = (pTalker.RdioPower and pTalker:HasWeapon("weapon_radio"))
@@ -273,7 +273,7 @@ function GM:PlayerCanSeePlayersChat( strText, bTeamOnly, pListener, pTalker )
 	
 	if string.lower(string.sub(strText, 1, 4 )) == "/ooc" or string.lower(string.sub(strText, 1, 2 )) == "//" then return true end
 	
-	if GetConVarNumber("pnrp_voiceLimit") == 1 then
+	if getServerSetting("voiceLimit") == 1 then
 		if curDistance < maxDistance then
 			return true
 		elseif senderRdioOn and listenerRdioOn and senderChnl == listenerChnl then

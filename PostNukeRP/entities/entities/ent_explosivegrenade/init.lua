@@ -17,7 +17,7 @@ function ENT:Initialize()
 	
 	-- Don't collide with the player
 	self.Entity:SetCollisionGroup( COLLISION_GROUP_WEAPON )
-	self.Entity:SetNetworkedString("Owner", "World")
+	self.Entity:SetNetVar("Owner", "World")
 	
 	local phys = self.Entity:GetPhysicsObject()
 	

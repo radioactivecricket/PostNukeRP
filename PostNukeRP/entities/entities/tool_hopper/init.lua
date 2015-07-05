@@ -11,7 +11,7 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 
-	self.pid = self.Entity:GetNWString("Owner_UID")
+	self.pid = self.Entity:GetNetVar("Owner_UID")
 	self.entOwner = "none"
 	
 	self.inv = { }
@@ -156,7 +156,7 @@ function ENT:OnRemove()
 	local pos = self:GetPos() - Vector(0,0,15)
 	local plyList = player.GetAll()
 	local ply = nil
-	local pid = self:GetNWString("Owner_UID")
+	local pid = self:GetNetVar("Owner_UID")
 	
 	for _, pent in pairs(plyList) do
 		if pent and IsValid(pent) then

@@ -13,8 +13,8 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.Community = self.Entity:GetNWString("community_owner")
-	self.CommunityName = self.Entity:GetNWString("communityName")
+	self.Community = self.Entity:GetNetVar("community_owner")
+	self.CommunityName = self.Entity:GetNetVar("communityName")
 	self.Enabled = false
 	self.BreakInTimer = 60
 	self.BreakingIn = nil
@@ -31,10 +31,10 @@ function ENT:Initialize()
 		self.Entity:SetColor(Color(255, 255, 255, 255))
 		self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
 		self.Entity:GetPhysicsObject():EnableMotion(false)
-		self.Entity:SetMoveType(MOVETYPE_NONE)
-		self.Entity:SetNWString("Owner", "Unownable")
-		self.Entity:SetNWString("Owner_UID", "")
-		self.Entity:SetNWEntity( "ownerent", self.Entity )
+		self.Entity:SetMoveType(MOVETYPE_NONE) 
+		self.Entity:SetNetVar("Owner", "Unownable")
+		self.Entity:SetNetVar("Owner_UID", "")
+		self.Entity:SetNetVar( "ownerent", self.Entity )
 
 		--self.Entity:SetPos(position)
 		self.Enabled = true
@@ -52,21 +52,23 @@ function ENT:Use( activator, caller )
 				net.Start("locker_stoprepair")
 				net.Send(activator)
 			end
-			if activator.Community == self.Community then
-				local communityTbl = GetCommunityTbl(self.Community)
+			local cid = self:GetNetVar("community_owner", "None")
+			if activator.Community == cid then
+			--	local communityTbl = GetCommunityTbl(self.Community)
+				local communityTbl = getFullLockerInventory(cid)
 				if communityTbl == nil then return end
 				net.Start("locker_menu")
 					net.WriteEntity(activator)
 					net.WriteEntity(self)
+					net.WriteString(cid)
 					net.WriteDouble(math.Round((self.BreakInTimer / 60) * 100))
-					net.WriteTable(communityTbl["inv"])
-					net.WriteTable(PNRP.Inventory( activator ) or {})
+					net.WriteTable(communityTbl)
+					net.WriteTable(PNRP.GetFullInventory( activator ) or {})
 				net.Send(activator)
 				
 			else
-				print(tostring(self.Community))
 				-- Just a placeholder for breaking into these things.
-				activator:ActOfWar( self.Community )
+				activator:ActOfWar( cid )
 				net.Start("locker_breakin")
 					net.WriteEntity(self)
 					net.WriteDouble(self.BreakInTimer)
@@ -79,21 +81,38 @@ util.AddNetworkString( "locker_menu" )
 util.AddNetworkString("locker_stoprepair")
 util.AddNetworkString("locker_breakin")
 
+function getFullLockerInventory(cid)
+	local communityTbl = GetCommunityTbl(cid)
+	
+	if not communityTbl then return nil end
+
+	local invTbl = {}
+	for item, have in pairs( communityTbl["inv"] ) do
+		have = math.Round(tonumber(have) or 0)
+		if have > 0 and itemid != "" then
+			table.insert( invTbl, {itemid=item, status_table="", iid="", count=have} )
+		end
+	end
+	
+	local Inv2 = PNRP.PersistOtherInventory( "community", cid )
+
+	for k, v in pairs(Inv2) do
+		table.insert( invTbl, {itemid=v["itemid"], status_table=v["status_table"], iid=v["iid"], count=1} )
+	end
+
+	return invTbl
+end
+
 function TakeItems( )
 	local ply = net.ReadEntity()
 	local locker = net.ReadEntity()
 	local Item = net.ReadString()
 	local Amount =  math.Round(net.ReadDouble())
-	--local locker = decoded["locker"]
+	local iid = net.ReadString()
+	
 	if not locker then return end
-	--local Item = decoded["item"]
-	--local Amount = math.Round(decoded["amount"])
-	
-	local communityTbl = GetCommunityTbl(locker.Community)
-	
-	if Amount <= 0 or (not Amount) then return end
-	if Amount > communityTbl["inv"][Item] then Amount = communityTbl["inv"][Item] end
-	if Amount <= 0 or (not Amount) then return end
+	local cid = locker:GetNetVar("community_owner", "None")
+	local communityTbl = GetCommunityTbl(cid)
 	
 	local weight = PNRP.Items[Item].Weight
 	if PNRP.Items[Item].Type == "vehicle" then weight = 0 end
@@ -101,34 +120,42 @@ function TakeItems( )
 	
 	local weightCap
 	if team.GetName(ply:Team()) == "Scavenger" then
-		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCapScav") + (ply:GetSkill("Backpacking")*10)
 	else
-		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+		weightCap = getServerSetting("packCap") + (ply:GetSkill("Backpacking")*10)
 	end
 	
 	local weightCalc = PNRP.InventoryWeight( ply ) + sumWeight
-	if weightCalc <= weightCap then
-		ply:AddToInventory( Item, Amount )
-		ply:EmitSound(Sound("items/ammo_pickup.wav"))
-		
-		SubCommunityItem( locker.Community, Item, Amount )
-	else
-		local weightDiff = weightCalc - weightCap
-		local extra = math.ceil(weightDiff/weight)
-		
-		if extra >= Amount then
-			ply:ChatPrint("You can't carry any of these!")
-		else
-			local taken = Amount - extra
-			
-			ply:AddToInventory( Item, taken )
-			SubCommunityItem( locker.Community, Item, taken )
+
+	if iid == nil or iid == "" then
+		if weightCalc <= weightCap then
+			ply:AddToInventory( Item, Amount )
 			ply:EmitSound(Sound("items/ammo_pickup.wav"))
-			ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
+			
+			SubCommunityItem( cid, Item, Amount )
+		else
+			local weightDiff = weightCalc - weightCap
+			local extra = math.ceil(weightDiff/weight)
+			
+			if extra >= Amount then
+				ply:ChatPrint("You can't carry any of these!")
+			else
+				local taken = Amount - extra
+				
+				ply:AddToInventory( Item, taken )
+				SubCommunityItem( cid, Item, taken )
+				ply:EmitSound(Sound("items/ammo_pickup.wav"))
+				ply:ChatPrint("You were only able to carry "..tostring(taken).." of these!")
+			end
 		end
+	else
+		if weightCalc <= weightCap then
+			PNRP.PersistMoveTo( ply, iid, "player")			
+		else
+			ply:ChatPrint("Unable to take item from storage.")
+		end		
 	end
 end
---datastream.Hook( "locker_take", TakeItems )
 net.Receive( "locker_take", TakeItems )
 
 function PutItems( ply, handler, id, encoded, decoded )
@@ -139,12 +166,12 @@ function PutItems( ply, handler, id, encoded, decoded )
 	--local locker = decoded["locker"]
 	if not locker then return end
 	
-	--local Item = decoded["item"]
-	--local Amount = math.Round(decoded["amount"])
+	local cid = locker:GetNetVar("community_owner", "None")
 	
 	local Check = PNRP.TakeFromInventoryBulk( ply, Item, Amount )
 	if Check then
-		AddCommunityItem( locker.Community, Item, Amount )
+		AddCommunityItem( cid, Item, Amount )
+		ply:EmitSound(Sound("items/ammo_pickup.wav"))
 	else
 		ply:ChatPrint("You do not have enough of this")
 	end
@@ -174,21 +201,19 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 			net.Start("locker_stopbreakin")
 			net.Send(ply)
 			
---			local playerTbl = { }
---			local ILoc = PNRP.GetInventoryLocation( ply ) or { }
---			if file.Exists( ILoc ) then 
---				playerTbl = util.KeyValuesToTable(file.Read(ILoc))
---			end
+			local playerTbl = PNRP.GetFullInventory( ply ) or {}
 			
-			local playerTbl = PNRP.Inventory( ply ) or {}
+			local cid = locker:GetNetVar("community_owner", "None")
 			
-			local communityTbl = GetCommunityTbl(locker.Community)
-			--datastream.StreamToClients( ply, "locker_menu",{ ["locker"] = locker, ["health"] = math.Round((locker.BreakInTimer / 30) * 100), ["items"] = communityTbl["inv"], ["inventory"] = playerTbl } )
+			local communityTbl = getFullLockerInventory(cid)
+			if communityTbl == nil then return end
+			
 			net.Start("locker_menu")
 				net.WriteEntity(ply)
 				net.WriteEntity(locker)
+				net.WriteString(cid)
 				net.WriteDouble(math.Round((locker.BreakInTimer / 30) * 100))
-				net.WriteTable(communityTbl["inv"])
+				net.WriteTable(communityTbl)
 				net.WriteTable(playerTbl)
 			net.Send(ply)
 
@@ -197,7 +222,7 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 			ply:SetMoveType(MOVETYPE_NONE)
 			locker.BreakingIn = ply
 			timer.Create( ply:UniqueID()..tostring(locker:EntIndex()), 1, locker.BreakInTimer, function()
-				ply:SelectWeapon("gmod_rp_hands")
+				ply:SelectWeapon("weapon_simplekeys")
 				if (not locker:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
@@ -217,7 +242,7 @@ function LockerBreakIn( ply, handler, id, encoded, decoded )
 					ply:SetMoveType(MOVETYPE_WALK)
 					locker.BreakingIn = nil
 					
-					local communityTbl = GetCommunityTbl(locker.Community)
+					local communityTbl = GetCommunityTbl(cid)
 					if communityTbl == nil then return end
 					
 				--	local playerTbl = { }
@@ -267,7 +292,8 @@ net.Receive( "locker_breakin", LockerBreakIn )
 function LockerRepair( )
 	local ply = net.ReadEntity()
 	local locker = net.ReadEntity()
-	--local locker = decoded["locker"]
+	local cid = locker:GetNetVar("community_owner", "None")
+	
 	if locker.BreakInTimer >= 60 then
 		ply:ChatPrint("This locker is fully repaired!")
 		return
@@ -283,7 +309,7 @@ function LockerRepair( )
 			locker.Repairing = ply
 			locker:SetModel("models/props_forest/footlocker01_closed.mdl")
 			timer.Create( ply:UniqueID()..tostring(locker:EntIndex()), 1, locker.BreakInTimer, function()
-				ply:SelectWeapon("gmod_rp_hands")
+				ply:SelectWeapon("weapon_simplekeys")
 				if (not locker:IsValid()) or (not ply:Alive()) then
 					-- ply:Freeze(false)
 					ply:SetMoveType(MOVETYPE_WALK)
@@ -304,7 +330,7 @@ function LockerRepair( )
 					locker.Repairing = nil
 					locker.BreakInTimer = 60
 					
-					local communityTbl = GetCommunityTbl(locker.Community)
+					local communityTbl = GetCommunityTbl(cid)
 					if communityTbl == nil then return end
 					
 					local playerTbl = { }
@@ -345,6 +371,6 @@ net.Receive( "locker_repair", LockerRepair )
 
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value
-	self.Entity:SetNWString (key, value)
+	self.Entity:SetNetVar (key, value)
 	print ("["..key.." = "..value.."] ")
 end

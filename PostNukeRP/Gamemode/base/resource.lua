@@ -40,7 +40,7 @@ function PlayerMeta:DecResource(resource,int)
 	if !self.Resources[resource] then self.Resources[resource] = 0 return end
 	
 	int = math.Round(int)
-	if self:IsAdmin() and GetConVarNumber("pnrp_adminNoCost") == 1 then 
+	if self:IsAdmin() and getServerSetting("adminNoCost") == 1 then 
 		Msg("Admin No Cost\n")
 		return
 	end
@@ -295,7 +295,7 @@ function GM.ReproduceRes()
 	local GM = GAMEMODE
 	
 	spawnTbl = GM.spawnTbl
-	if GetConVarNumber("pnrp_ReproduceRes") == 1 then
+	if getServerSetting("ReproduceRes") == 1 then
 		local info = {}
 		
 		-- Get all my amounts.
@@ -304,7 +304,7 @@ function GM.ReproduceRes()
 		local spawnables = {}
 		
 		--  Check 'em against max amounts.
-		local resourcespawn = GetConVarNumber("pnrp_MaxReproducedRes") - #piles
+		local resourcespawn = getSpawnerSetting("MaxReproducedRes") - #piles
 		
 		if resourcespawn and resourcespawn > 0 then
 			-- We're gonna make sure we hold max all the time.
@@ -320,7 +320,7 @@ function GM.ReproduceRes()
 					
 					local doorEnt =  node["infLinked"]
 					if doorEnt then
-						if not (doorEnt:GetNetworkedString("Owner", "None") == "World" or doorEnt:GetNetworkedString("Owner", "None") == "None") then
+						if not (doorEnt:GetNetVar("Owner", "None") == "World" or doorEnt:GetNetVar("Owner", "None") == "None") then
 							isActive = false
 						end
 					end
@@ -447,7 +447,7 @@ function GM.ReproduceRes()
 								ent.resType = "Small_Parts"
 							end
 							ent.amount = math.random(5,15)
-							ent:SetNetworkedString("Owner", "Unownable")
+							ent:SetNetVar("Owner", "Unownable")
 							ent:GetPhysicsObject():EnableMotion(false)
 							ent:SetMoveType(MOVETYPE_NONE)
 							

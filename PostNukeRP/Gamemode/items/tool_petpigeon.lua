@@ -31,7 +31,7 @@ function ITEM.Create( ply, class, pos )
 	
 	PNRP.SetOwner(ply, ent)
 	
-	ent:SetNetworkedString("name", ply:Nick().."'s Pet Pigeon")
+	ent:SetNetVar("name", ply:Nick().."'s Pet Pigeon")
 	
 	ent:AddRelationship("npc_floor_turret D_LI 99")
 	ent:AddRelationship("npc_hdvermin D_LI 99")

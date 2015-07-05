@@ -749,8 +749,8 @@ function EntityMeta:UpdatePower()
 							end
 						end
 					end
-					if IsValid(v:GetNWEntity("ownerent")) then
-						v:AddEntityRelationship(v:GetNWEntity("ownerent"), D_LI, 99)
+					if IsValid(v:GetNetVar("ownerent")) then
+						v:AddEntityRelationship(v:GetNetVar("ownerent"), D_LI, 99)
 					end
 				end
 			else
@@ -789,8 +789,8 @@ function EntityMeta:UpdatePower()
 							end
 						end
 					end
-					if IsValid(v:GetNWEntity("ownerent")) then
-						v:AddEntityRelationship(v:GetNWEntity("ownerent"), D_LI, 99)
+					if IsValid(v:GetNetVar("ownerent")) then
+						v:AddEntityRelationship(v:GetNetVar("ownerent"), D_LI, 99)
 					end
 				end
 			end

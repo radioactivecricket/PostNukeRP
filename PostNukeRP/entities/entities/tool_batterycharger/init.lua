@@ -32,7 +32,7 @@ function ENT:Initialize()
 	
 	self.Entity:NextThink(CurTime() + 1.0)
 	
-	self.Entity:SetNWString("PowerUsage", self.PowerLevel)
+	self.Entity:SetNetVar("PowerUsage", self.PowerLevel)
 end
 
 function ENT:Use( activator, caller )
@@ -104,6 +104,8 @@ function ENT:HookBattery(bat)
 	self:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
 	
 	self.ChargeEnt = bat
+	
+	PNRP.SaveState(nil, bat)
 end
 
 function ENT:UnhookBattery(bat)
@@ -129,6 +131,8 @@ function ENT:UnhookBattery(bat)
 	self:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
 	
 	self.ChargeEnt = nil
+	
+	PNRP.SaveState(nil, bat)
 end
 
 function ENT:OnTakeDamage(dmg)

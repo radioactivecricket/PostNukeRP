@@ -129,7 +129,7 @@ function SWEP:Reload()
 		-- self.Weapon:DefaultReload(ACT_VM_RELOAD) 
 		-- self.Weapon:EmitSound("Weapon_Galil.Reload")
 		
-		if (self.Weapon:GetNWBool("reloading", false)) or ShotgunReloading then return end
+		if (self.Weapon:GetNetVar("reloading", false)) or ShotgunReloading then return end
 
 		if (self.Weapon:Clip1() < self.Primary.ClipSize and self.Owner:GetAmmoCount(self.Primary.Ammo) > 0) then
 			ShotgunReloading = true
@@ -138,8 +138,8 @@ function SWEP:Reload()
 			self.Weapon:SendWeaponAnim(ACT_SHOTGUN_RELOAD_START)
 			timer.Simple(0.3, function()
 				ShotgunReloading = false
-				self.Weapon:SetNetworkedBool("reloading", true)
-				self.Weapon:SetVar("reloadtimer", CurTime() + 1)
+				self.Weapon:SetNetVar("reloading", true)
+				self.Weapon:SetNetVar("reloadtimer", CurTime() + 1)
 				self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
 				self.Weapon:SetNextSecondaryFire(CurTime() + 0.5)
 			end)
@@ -155,7 +155,7 @@ function SWEP:Deploy()
 	self.Weapon:SetDTBool(1, false)
 	
 	ShotgunReloading = false
-	self.Weapon:SetNetworkedBool( "reloading", false)
+	self.Weapon:SetNetVar( "reloading", false)
 
 	self.Weapon:SetNextPrimaryFire(CurTime() + 1)
 	return true
@@ -166,27 +166,27 @@ function SWEP:Think()
 		self.Weapon:SetClip1(self.Primary.ClipSize)
 	end
 
-	if self.Weapon:GetNetworkedBool( "reloading") == true then
+	if self.Weapon:GetNetVar( "reloading", false ) == true then
 	
-		if self.Weapon:GetNetworkedInt( "reloadtimer") < CurTime() then
+		if self.Weapon:GetNetVar( "reloadtimer", CurTime() + 1) < CurTime() then
 			if self.unavailable then return end
 
 			if ( self.Weapon:Clip1() >= self.Primary.ClipSize || self.Owner:GetAmmoCount( self.Primary.Ammo ) <= 0 ) then
 				self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
 				self.Weapon:SetNextSecondaryFire(CurTime() + 0.5)
-				self.Weapon:SetNetworkedBool( "reloading", false)
+				self.Weapon:SetNetVar( "reloading", false)
 				self.Weapon:SendWeaponAnim(ACT_SHOTGUN_RELOAD_FINISH)
 				self.Weapon:SetWeaponHoldType("shotgun")
 				self.Owner:SetAnimation( PLAYER_RELOAD )
 			else
 			
-			self.Weapon:SetNetworkedInt( "reloadtimer", CurTime() + 0.7 )
+			self.Weapon:SetNetVar( "reloadtimer", CurTime() + 0.7 )
 			self.Weapon:SendWeaponAnim( ACT_VM_RELOAD )
-			self.Weapon:SetWeaponHoldType("ar2")
+			self.Weapon:SetWeaponHoldType("shotgun")
 			self.Owner:SetAnimation( PLAYER_RELOAD )
 			--self.Owner:SetAnimation(ACT_SHOTGUN_RELOAD_START)
 			self.Owner:RemoveAmmo( 1, self.Primary.Ammo, false )
-			self.Weapon:SetClip1(  self.Weapon:Clip1() + 1 )
+			self.Weapon:SetClip1( self.Weapon:Clip1() + 1 )
 			self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
 			self.Weapon:SetNextSecondaryFire(CurTime() + 0.5)
 
@@ -201,10 +201,10 @@ function SWEP:Think()
 		end
 	end
 
-	if self.Owner:KeyPressed(IN_ATTACK) and (self.Weapon:GetNWBool("reloading", true)) then
+	if self.Owner:KeyPressed(IN_ATTACK) and (self.Weapon:GetNetVar("reloading", true)) then
 		self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
 		self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
-		self.Weapon:SetNetworkedBool( "reloading", false)
+		self.Weapon:SetNetVar( "reloading", false)
 		self.Weapon:SendWeaponAnim(ACT_SHOTGUN_RELOAD_FINISH)
 	end
 end

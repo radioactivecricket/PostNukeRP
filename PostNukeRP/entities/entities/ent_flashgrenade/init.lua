@@ -18,7 +18,7 @@ function ENT:Initialize()
 	
 	-- Don't collide with the player
 	self.Entity:SetCollisionGroup( COLLISION_GROUP_WEAPON )
-	self.Entity:SetNetworkedString("Owner", "World")
+	self.Entity:SetNetVar("Owner", "World")
 	
 	local phys = self.Entity:GetPhysicsObject()
 	
@@ -68,10 +68,10 @@ function ENT:Explode()
 --			if (pl:GetNetworkedFloat("FLASHED_END") > CurTime()) then
 --				pl:SetNetworkedFloat("FLASHED_END", endtime + pl:GetNetworkedFloat("FLASHED_END") + CurTime() - pl:GetNetworkedFloat("FLASHED_START"));
 --			else
-				pl:SetNetworkedFloat("FLASHED_END", endtime + CurTime());
+				pl:SetNetVar("FLASHED_END", endtime + CurTime());
 --			end
 
-			pl:SetNetworkedFloat("FLASHED_END_START", CurTime());
+			pl:SetNetVar("FLASHED_END_START", CurTime());
 		end
 	end
 	self.Entity:Remove();

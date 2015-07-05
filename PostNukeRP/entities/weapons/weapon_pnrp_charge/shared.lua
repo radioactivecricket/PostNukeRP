@@ -44,14 +44,14 @@ function SWEP:Initialize()
 end
 
 function SWEP:Equip()
-	self.Weapon:SetNWBool("IronSights", false)
-	self.Weapon:SetNWBool("IsPassive", false)
+	self.Weapon:SetNetVar("IronSights", false)
+	self.Weapon:SetNetVar("IsPassive", false)
 end
 
 function SWEP:PrimaryAttack()
 
 	if not self:CanPrimaryAttack() or self.Owner:WaterLevel() > 2 then return end
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then return end
+	if self.Weapon:GetNetVar("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then return end
 	
 	local tr = {}
 	tr.start = self.Owner:GetShootPos()
@@ -107,9 +107,9 @@ function SWEP:PrimaryAttack()
 	Charge.Owner = self.Owner
 	Charge:Spawn()
 	
-	Charge:SetNWString("Owner", "Unownable")
-	Charge:SetNWEntity("ownerent", self.Owner)
-	Charge:SetNWEntity("door", trace.Entity)
+	Charge:SetNetVar("Owner", "Unownable")
+	Charge:SetNetVar("ownerent", self.Owner)
+	Charge:SetNetVar("door", trace.Entity)
 	table.insert(self.SetCharges, Charge)
 	
 	if trace.Entity and trace.Entity:IsValid() and (trace.Entity:GetClass() == "prop_door_rotating" or trace.Entity:GetClass() == "func_door_rotating" or trace.Entity:GetClass() == "func_door") then
@@ -123,8 +123,8 @@ end
 
 function SWEP:SecondaryAttack()
 	if self.Owner:KeyDown( IN_WALK ) then
-		local savedBool = (not self.Weapon:GetNWBool("IsPassive", false))
-		self.Weapon:SetNWBool("IsPassive", (not self.Weapon:GetNWBool("IsPassive", false)))
+		local savedBool = (not self.Weapon:GetNetVar("IsPassive", false))
+		self.Weapon:SetNetVar("IsPassive", (not self.Weapon:GetNetVar("IsPassive", false)))
 		self.Owner:EmitSound("npc/combine_soldier/gear4.wav")
 		
 		if savedBool then
@@ -135,7 +135,7 @@ function SWEP:SecondaryAttack()
 			self:SetWeaponHoldType("slam")
 		end
 	else
-		if self.Weapon:GetNWBool("IsPassive", false) then return end
+		if self.Weapon:GetNetVar("IsPassive", false) then return end
 		
 		if self.Owner:GetAmmoCount(self.Primary.Ammo) <= 0 then
 			self.Weapon:SendWeaponAnim( ACT_SLAM_DETONATOR_DETONATE )
@@ -187,7 +187,7 @@ end
 function SWEP:Deploy()
 
 	self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
-	self.Weapon:SetNWBool("IsPassive", false)
+	self.Weapon:SetNetVar("IsPassive", false)
 
 	self.Weapon:SetNextPrimaryFire(CurTime() + 1)
 	return true
@@ -209,7 +209,7 @@ local IRONSIGHT_TIME = 0.15
 
 function SWEP:GetViewModelPosition(pos, ang)
 	
-	if self.Weapon:GetNWBool("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then
+	if self.Weapon:GetNetVar("IsPassive", false) or self.Owner:KeyDown( IN_SPEED ) then
 		ang = ang * 1
 		ang:RotateAroundAxis(ang:Right(), 		-37.2258)
 		ang:RotateAroundAxis(ang:Up(), 		1.7237)

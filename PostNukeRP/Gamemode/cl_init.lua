@@ -1,20 +1,14 @@
+--Netwrapper library
+--Author: Mista-Tea ([IJWTB] Thomas)
+-- Shared functions
+include( "netwrapper/sh_netwrapper.lua" )
+-- Client functions
+include( "netwrapper/cl_netwrapper.lua" )
+
+
 include( 'shared.lua' ) --Tell the client to load shared.lua
+include("itembase.lua") --Loads itembase into client
 
---Msg("Ping \n")
---local files, directories = file.Find("postnukerp/gamemode/*", "LUA")
--- for k, v in pairs(file.Find("*", "GAME")) do
-	-- Msg("File "..v.."\n")	
--- end
-
---for k, v in pairs(files) do
---	Msg("Files "..v.."\n")
---end
-
---for k, v in pairs(directories) do
---	Msg("Dirs "..v.."\n")
---end
-
---Msg("Pong \n")
 for k, v in pairs(file.Find(PNRP_Path.."gamemode/vgui/*.lua", "LUA")) do
 	include("vgui/"..v)	
 end
@@ -51,9 +45,6 @@ function pmeta:Name()
 	else
 		return "Unknown"
 	end
-
-	--if not self or not self.IsValid or not IsValid(self) then return "" end
-	--return self.rpname or self:SteamName()
 end
 
 pmeta.GetName = pmeta.Name
@@ -291,7 +282,7 @@ end
 hook.Add( "RenderScreenspaceEffects", "RenderDamage", DamageBlur )
 
 function PNRP:GetUID( ply )
-	local plUID = tostring(ply:GetNetworkedString( "UID" , "None" ))
+	local plUID = tostring(ply:GetNetVar( "UID" , "None" ))
 	if plUID == "None" then
 		plUID = ply:UniqueID()
 	end
@@ -314,7 +305,6 @@ function PNRP.AddMenu(menu)
 end
 
 function PNRP.RMDerma()
---	ply = LocalPlayer()
 	if pnDerma then
 		for _, menu in pairs( pnDerma ) do
 			if IsValid(menu) then

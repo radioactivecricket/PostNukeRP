@@ -23,7 +23,7 @@ local EntityMeta = FindMetaTable("Entity")
 
 function SK_Srv.OnDisc_Doors( ply )
 	for k, v in pairs(ents.GetAll()) do
-		if v:IsDoor() and v:GetNWEntity( "ownerent" ) == ply then
+		if v:IsDoor() and v:GetNetVar( "ownerent" ) == ply then
 			v:SKRemoveOwner()
 			if v.Coowners and v.Coowners[1] then
 				local topCoowner = v.Coowners[1]
@@ -48,13 +48,13 @@ end
 --Entity Functions (Mostly ownership functions)
 function EntityMeta:SKSetOwner( ply )		
 	local plUID = PNRP:GetUID( ply )
-	self:SetNWEntity( "ownerent", ply )
-	self:SetNWString("Owner", ply:Nick())
-	self:SetNetworkedString("Owner_UID", plUID)
+	self:SetNetVar( "ownerent", ply )
+	self:SetNetVar("Owner", ply:Nick())
+	self:SetNetVar("Owner_UID", plUID)
 end
 
 function EntityMeta:SKRemoveOwner( ply )
-	self:SetNWEntity( "ownerent", nil )
+	self:SetNetVar( "ownerent", nil )
 end
 
 function EntityMeta:SKSetCoowner( ply )
@@ -97,12 +97,12 @@ function EntityMeta:SKRemoveCoowners()
 end
 
 function EntityMeta:SKRemoveOwners()
-	self:SetNWEntity( "ownerent", nil )
+	self:SetNetVar( "ownerent", nil )
 	self.Coowners = {}
 end
 
 function EntityMeta:SKHasOwner()
-	local myowner = self:GetNWEntity( "ownerent", nil )
+	local myowner = self:GetNetVar( "ownerent", nil )
 	
 	if IsValid(myowner) then
 		return true
@@ -112,7 +112,7 @@ function EntityMeta:SKHasOwner()
 end
 
 function PlayerMeta:SKIsOwner( ent )
-	local doorowner = ent:GetNWEntity( "ownerent", nil )
+	local doorowner = ent:GetNetVar( "ownerent", nil )
 	
 	if self == doorowner then
 		return true

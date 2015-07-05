@@ -2,15 +2,18 @@ GM.Name 	= "PostNukeRP" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://postnukerp.com" --Set the author website
-GM.Version  = "1.1.2"
+GM.Version  = "1.2.0"
 
 DeriveGamemode("sandbox") 
 
 PNRP = {}
 
+gamemode.Register( PNRP, "postnukerp", "sandbox" ) 
+
 PNRP_Path = "PostNukeRP/"
 
-PNRP_MOTDPath = "http://postnukerp.com/rules.php"
+--PNRP_MOTDPath = "http://postnukerp.com/rules.php"
+PNRP_MOTDPath = "http://tbuservers.net/?page_id=1499"
 PNRP_WIKIPath = "http://postnukerp.com/wiki"
 
 --Team Variables
@@ -43,7 +46,9 @@ PNRP.Skills["Animal Husbandry"] = {name = "Animal Husbandry", desc ="Like cattle
 PNRP.Skills["Mining"] 			= {name = "Mining", desc ="Get the most out of your sonic miners!", basecost = 150, maxlvl = 5, class = {TEAM_SCAVENGER}}
 PNRP.Skills["Farming"] 			= {name = "Farming", desc ="Take care of those plants less.  God yes...", basecost = 150, maxlvl = 5, class = {TEAM_CULTIVATOR}}
 PNRP.Skills["Salvaging"] 		= {name = "Salvaging", desc ="Lose less when taking stuff apart!", basecost = 100, maxlvl = 5, class = nil}
+PNRP.Skills["Strength"] 		= {name = "Strength", desc ="Make it hurt when you hit!", basecost = 150, maxlvl = 5, class = nil}
 
+--Drop rates
 PNRP.ScavItems = {}
 PNRP.ScavItems["fuel_h2pod"]		=	100
 PNRP.ScavItems["fuel_uranrods"]		=	150
@@ -60,6 +65,7 @@ PNRP.ScavItems["food_beans"]		=	1500
 
 local PlayerMeta = FindMetaTable("Player")
 
+--Resource models
 PNRP.JunkModels = { "models/props_junk/TrashCluster01a.mdl",
 	"models/Gibs/helicopter_brokenpiece_03.mdl"}
 PNRP.ChemicalModels = { "models/props_junk/garbage128_composite001c.mdl",
@@ -69,14 +75,15 @@ PNRP.SmallPartsModels = { "models/props_combine/combine_binocular01.mdl",
 	"models/Gibs/Scanner_gib01.mdl", 
 	"models/Gibs/Scanner_gib05.mdl" }
 
+--Default weapons
 PNRP.DefWeps = {"weapon_physcannon",
 				"weapon_physgun",
-				"gmod_rp_hands",
+				"weapon_pnrp_fists",
 				"weapon_simplekeys",
-				"weapon_pnrp_knife",
 				"gmod_camera",
 				"gmod_tool"}
-
+				
+--Friendly NPC Class names
 PNRP.friendlies = { "npc_floor_turret",
 					"npc_hdvermin", 
 					"npc_hdvermin_fast", 
@@ -84,7 +91,8 @@ PNRP.friendlies = { "npc_floor_turret",
 					"npc_petbird_crow", 
 					"npc_petbird_gull", 
 					"npc_petbird_pigeon" }
-														
+
+--[[					
 CreateConVar("pnrp_SpawnMobs","1",FCVAR_REPLICATED + FCVAR_NOTIFY)
 CreateConVar("pnrp_MaxZombies","30",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_MaxFastZombies","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
@@ -104,9 +112,6 @@ CreateConVar("pnrp_MaxMoundGuards","1",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_A
 CreateConVar("pnrp_MoundMobRate","5",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_MoundGuardChance","10",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_packCap","75",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_packCapScav","110",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-
 CreateConVar("pnrp_ReproduceRes","1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_MaxReproducedRes","20", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
@@ -115,26 +120,31 @@ CreateConVar("pnrp_propBanning", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_AR
 CreateConVar("pnrp_propAllowing", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_AllowPunt", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_propPay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_propCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-
-CreateConVar("pnrp_adminCreateAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_adminTouchAll", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_adminNoCost", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-
 CreateConVar("pnrp_exp2Level", "4", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_toolLevel", "4", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_voiceLimit", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_voiceDist", "750", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
-CreateConVar("pnrp_classChangePay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
-CreateConVar("pnrp_classChangeCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_voiceDist", "750", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_deathPay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 CreateConVar("pnrp_deathCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_maxOwnDoors", "3", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+]]--
+
+CreateConVar("pnrp_adminCreateAll", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_adminTouchAll", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_adminNoCost", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_classChangePay", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_classChangeCost", "20", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_voiceLimit", "1", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_propPay", "0", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_propCost", "10", FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+
+CreateConVar("pnrp_packCap","75",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
+CreateConVar("pnrp_packCapScav","110",FCVAR_REPLICATED + FCVAR_NOTIFY + FCVAR_ARCHIVE)
 
 CreateConVar("pnrp_debug", "0", 0)
 
@@ -144,20 +154,19 @@ function pmeta:IsOutside()
 
 	local trace = {}
 	trace.start = self:GetPos()
-	trace.endpos = trace.start + Vector( 0, 0, 350 )
+	trace.endpos = trace.start + Vector( 0, 0, 32768 )
 	trace.filter = self
 	local tr = util.TraceLine( trace )
-
-	if !tr.HitWorld && !tr.HitNonWorld then
 	
+	if tr.HitSky then
 		return true
-		
 	end
 	
 	return false
 
 end		
 
+--[[
 include("itembase.lua")
 if (SERVER) then
 	AddCSLuaFile("itembase.lua")
@@ -167,49 +176,15 @@ for k, v in pairs( file.Find(PNRP_Path.."gamemode/items/*.lua", "LUA" ) ) do
 	include("items/"..v)
 	if (SERVER) then AddCSLuaFile("items/"..v) end
 end
+]]--
 
 function PNRP:GetUID( ply )
-	local plUID = tostring(ply:GetNetworkedString( "UID" , "None" ))
+	local plUID = tostring(ply:GetNetVar( "UID" , "None" ))
 	if plUID == "None" then
 		plUID = ply:UniqueID()
 	end
 	
 	return plUID
-end
-
-function PNRP.FindItemID( class )
-	
-	for itemname, item in pairs( PNRP.Items ) do
-		if item.Ent == "prop_physics" and item.ID == class then
-			return item.ID
-		elseif class == item.Ent then
-			return item.ID
-		end
-		
-	end	
-	return nil
-	
-end
-
-function PNRP.FindWepItem( model )
-	local fixedModel
-	if string.find(model, "v_") then
-		fixedModel = string.sub( model, 1, string.find(model, "v_") - 1).."w"..string.sub( model, string.find(model, "v_") + 1 )
-	else
-		fixedModel = model
-	end
-	if model == "models/Weapons/V_hands.mdl" or model == "models/weapons/v_hands.mdl" then
-		fixedModel = "models/props_citizen_tech/transponder.mdl"
-	end
-	
-	for itemname, item in pairs( PNRP.Items ) do
-		if fixedModel == item.Model then
-			return item
-		end
-		
-	end	
-	return nil
-	
 end
 
 function GM:StartEntityDriving( ent, ply )
@@ -223,25 +198,6 @@ function PNRP.FindAmmoType( id, class )
 		if PNRP.Items[id].Type == "weapon" then
 			return PNRP.Weapons[id].AmmoType	
 		end
---		if id == "wep_deagle" or id == "wep_scout" then
---			return "357"
---		elseif id == "wep_p228" then
---			return "pistol"
---		elseif id == "wep_shotgun" then
---			return "buckshot"
---		else
---			return "smg1"
---		end
---	elseif class then
---		if class == "wep_deagle" or class == "wep_scout" then
---			return "357"
---		elseif class == "wep_p228" then
---			return "pistol"
---		elseif class == "wep_shotgun" then
---			return "buckshot"
---		else
---			return "smg1"
---		end
 	end
 end
 
@@ -265,7 +221,7 @@ end
 local RP_Default_Weapons = {}
 RP_Default_Weapons = { "weapon_pnrp_ak-comp", "weapon_pnrp_badlands", "weapon_pnrp_charge", "weapon_pnrp_knife", 
 		"weapon_pnrp_p228", "weapon_pnrp_precrifle", "weapon_pnrp_pumpshotgun", "weapon_pnrp_revolver", "weapon_pnrp_saw", 
-		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck", "weapon_pnrp_ump", "weapon_pnrp_m82", "weapon_pnrp_pulserifle",
+		"weapon_pnrp_scrapmp", "weapon_pnrp_smg", "weapon_pnrp_57luck", "weapon_pnrp_ump", "weapon_pnrp_pulserifle",
 		"weapon_pnrp_flaregun" }
 
 local function HoldTypeFix()
@@ -283,7 +239,7 @@ local function HoldTypeFix()
 			if wepFound and IsValid(myWep) then
 				if v:Crouching() then
 					myWep:SetWeaponHoldType(myWep.HoldType)
-				elseif myWep:GetNWBool("IsPassive", false) or myWep:GetDTBool(0) or v:KeyDown( IN_SPEED ) then
+				elseif myWep:GetNetVar("IsPassive", false) or myWep:GetDTBool(0) or v:KeyDown( IN_SPEED ) then
 					if myWep.HoldType == "pistol" or myWep.HoldType == "revolver" or myWep.HoldType == "knife" or myWep.HoldType == "slam" then
 						myWep:SetWeaponHoldType("normal")
 					else

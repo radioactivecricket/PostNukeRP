@@ -282,12 +282,15 @@ concommand.Add("SendVote", HandleVote)
 
 --Make sure you can start the vote.
 local function TryToMapVote()
-
+	
+	PNRP_MAPVOTE()
+	--[[ No longer uses txt file to build list
 	if file.Exists("PostNukeRP/votemap.txt","DATA") then
 		PNRP_MAPVOTE() //Call the main vote function.
 	else
 		timer.Simple(1, TryToMapVote)
 	end
+	--]]
 end
 
 --Separate function for the last part of the vote so I can call it elsewhere

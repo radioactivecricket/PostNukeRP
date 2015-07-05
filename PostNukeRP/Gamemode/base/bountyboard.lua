@@ -300,7 +300,7 @@ function postBounty()
 	local payment = tostring(scrap)..","..tostring(parts)..","..tostring(chems)
 	
 	--poster_id, posted_date, target_pid, payment, notes, hitmen_pid, completed, completion_date, completed_by_pid 
-	local query = "INSERT INTO bounty_table VALUES ( NULL,"..pid..", '"..os.time().."', '"..tpid.."', '"..payment.."', ' "..notes.."', NULL, '".."false".."', NULL, NULL )"
+	local query = "INSERT INTO bounty_table VALUES ( NULL,"..pid..", '"..os.time().."', '"..tpid.."', '"..payment.."', "..SQLStr(notes)..", NULL, '".."false".."', NULL, NULL )"
 	querySQL(query)
 	
 	ply:ChatPrint("Bounty Posted")
@@ -321,14 +321,14 @@ function takeBounty()
 		return
 	end
 	
-	local queryBB = "SELECT * FROM bounty_table WHERE completed != 'true' AND completed != 'expired' AND bid='"..bid.."' AND hitmen_pid LIKE '%"..pid.."%'"
+	local queryBB = "SELECT * FROM bounty_table WHERE completed != 'true' AND completed != 'expired' AND bid="..SQLStr(bid).." AND hitmen_pid LIKE '%"..pid.."%'"
 	local resultCHK = querySQL(queryBB)
 	
 	if resultCHK then
 		ply:ChatPrint("You have allready accepted this bounty.")
 		return
 	else
-		local queryGetBB = "SELECT * FROM bounty_table WHERE completed != 'true' AND completed != 'expired' AND bid='"..bid.."'"
+		local queryGetBB = "SELECT * FROM bounty_table WHERE completed != 'true' AND completed != 'expired' AND bid="..SQLStr(bid)
 		local result = querySQL(queryGetBB)
 
 		local hitmen = result[1]["hitmen_pid"]
@@ -429,7 +429,7 @@ function remBounty()
 	local ply = net.ReadEntity()
 	local bid = net.ReadString()
 	
-	local query = "SELECT * FROM bounty_table WHERE bid='"..bid.."'"
+	local query = "SELECT * FROM bounty_table WHERE bid="..SQLStr(bid)
 	local result = querySQL(query)
 	
 	if result then
@@ -444,7 +444,7 @@ function remBounty()
 			PNRP.refundRes(pid, resTbl[1], resTbl[2], resTbl[3])
 		end
 		
-		querySQL("DELETE FROM bounty_table WHERE bid='"..tonumber(bid).."'")
+		querySQL("DELETE FROM bounty_table WHERE bid="..SQLStr(tonumber(bid)))
 		
 		if tostring(ply.pid) == tostring(pid) then
 			ply:ChatPrint("Bounty Deleted")

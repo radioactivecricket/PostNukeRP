@@ -10,20 +10,20 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )   -- after all, gmod is a physics
 	self.Entity:SetSolid( SOLID_VPHYSICS )         -- Toolbox
 	
-	self.distance = self.Entity:GetNWInt("distance")
+	self.distance = self.Entity:GetNetVar("distance")
 	
-	self.spwnsRes = self.Entity:GetNWBool("spwnsRes")
-	self.spwnsAnt = self.Entity:GetNWBool("spwnsAnt")
-	self.spwnsZom = self.Entity:GetNWBool("spwnsZom")
+	self.spwnsRes = self.Entity:GetNetVar("spwnsRes")
+	self.spwnsAnt = self.Entity:GetNetVar("spwnsAnt")
+	self.spwnsZom = self.Entity:GetNetVar("spwnsZom")
 	
-	self.infMound = self.Entity:GetNWBool("infMound")
-	self.infIndoor = self.Entity:GetNWBool("infIndoor")
-	self.infLinked = self.Entity:GetNWEntity("infLinked")
+	self.infMound = self.Entity:GetNetVar("infMound")
+	self.infIndoor = self.Entity:GetNetVar("infIndoor")
+	self.infLinked = self.Entity:GetNetVar("infLinked")
 end
 	
 function ENT:KeyValue (key, value)
 	self[key] = tonumber(value) or value
-	self.Entity:SetNWString (key, value)
+	self.Entity:SetNetVar (key, value)
 	print ("["..key.." = "..value.."] ")
 end
 

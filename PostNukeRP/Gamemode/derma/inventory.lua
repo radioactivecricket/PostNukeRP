@@ -1,19 +1,20 @@
 --Build Inventory Window
 
 local CurCarInvWeight
-local inventory_frame
-local inventoryFrameCK = false
 
 function GM.inventory_window( len )
-	--Stops the multi window exploit
-	if inventoryFrameCK then return end 
-	inventoryFrameCK = true
+	
+	inventory_frame = PNRP.PNRP_Frame()
+	if not inventory_frame then return end
+
 	PNRP.RMDerma()
-	local MyInventory = net.ReadTable()		
+	local MyInventory = net.ReadTable()
 	local CurWeight = net.ReadString()	
 	CurCarInvWeight = net.ReadString()
+	local maxWeight = tonumber(net.ReadString())
+	
 	local ply = LocalPlayer()	
-	inventory_frame = vgui.Create( "DFrame" )
+--	inventory_frame = vgui.Create( "DFrame" )
 		inventory_frame:SetSize( 710, 720 ) --Set the size
 		--Set the window in the middle of the players screen/game window
 		inventory_frame:SetPos(ScrW() / 2 - inventory_frame:GetWide() / 2, ScrH() / 2 - inventory_frame:GetTall() / 2) 
@@ -68,12 +69,7 @@ function GM.inventory_window( len )
 			
 	local InvWeight = vgui.Create("DLabel", inventory_frame)		
 			InvWeight:SetPos(555, 38 )
-			local maxWeight
-			if ply:Team() == TEAM_SCAVENGER then
-				maxWeight = GetConVar("pnrp_packCapScav"):GetInt() + (GetSkill("Backpacking")*10)
-			else
-				maxWeight = GetConVar("pnrp_packCap"):GetInt() + (GetSkill("Backpacking")*10)
-			end
+			
 			InvWeight:SetText("Weight: "..tostring(CurWeight).."/"..tostring(maxWeight))
 			local whColor
 			if tonumber(CurWeight) >= tonumber(maxWeight) then
@@ -83,12 +79,6 @@ function GM.inventory_window( len )
 			end
 			InvWeight:SetColor(whColor)
 			InvWeight:SizeToContents() 
-			
-	function inventory_frame:Close()                  
-		inventoryFrameCK = false                  
-		self:SetVisible( false )                  
-		self:Remove()          
-	end 
 end
 
 function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInventory)
@@ -111,14 +101,14 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 		for itemname, item in pairs(PNRP.Items) do
 			if item.Type == tostring( itemtype ) or tostring( itemtype ) == "all" then
 				for k, v in pairs( MyInventory ) do
-					if v > 0 then
-						if string.lower(k) == string.lower(itemname) then
+					if v["count"] > 0 then
+						if string.lower(v["itemid"]) == string.lower(itemname) then
 							local pnlPanel = vgui.Create("DPanel")
 							pnlPanel:SetTall(75)
 							pnlPanel.Paint = function()
-							
-								draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
-						
+							--	draw.RoundedBox( 6, 0, 0, pnlPanel:GetWide(), pnlPanel:GetTall(), Color( 180, 180, 180, 80 ) )		
+								draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+								draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
 							end
 							pnlList:AddItem(pnlPanel)
 							
@@ -127,14 +117,33 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 							pnlPanel.Icon:SetPos(3, 5)
 							pnlPanel.Icon:SetToolTip( nil )
 							pnlPanel.Icon.DoClick = function()
-									RunConsoleCommand("inventory_drop", itemname)
+								if v["iid"] == "" then
+									if item.SaveState then
+										net.Start("pnrp_DropPersistItem")
+											net.WriteEntity(ply)
+											net.WriteString(v["itemid"])
+											net.WriteString(v["iid"])
+											net.WriteString("playerInv")
+										net.SendToServer()
+									else
+										RunConsoleCommand("inventory_drop", itemname)
+									end
 									parent_frame:Close()
+								else
+									net.Start("pnrp_DropPersistItem")
+										net.WriteEntity(ply)
+										net.WriteString(v["itemid"])
+										net.WriteString(v["iid"])
+									net.SendToServer()
+									
+									parent_frame:Close()
+								end
 							end	
 							
 							pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
 							pnlPanel.Title:SetPos(90, 5)
 							pnlPanel.Title:SetText(item.Name)
-							pnlPanel.Title:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
 							pnlPanel.Title:SizeToContents() 
 							pnlPanel.Title:SetContentAlignment( 5 )
 							
@@ -142,17 +151,27 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 							if item.SmallParts != nil then sp = item.SmallParts else sp = 0 end
 							if item.Chemicals != nil then ch = item.Chemicals else ch = 0 end
 							
+							local countTxt = "Count: "..tostring(v["count"])
+							if v["status_table"] != "" then
+								countTxt = ""
+								local HP = PNRP.GetFromStat(v["status_table"], "HP")
+								if HP then 	countTxt = "HP: "..HP end
+								local PowerLevel = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+								if PowerLevel then 	countTxt = countTxt.." Charge: "..tostring(math.Round(PowerLevel/100)).."% " end
+								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+								if FuelLevel then countTxt = countTxt.." Fuel: "..tostring(FuelLevel) end
+							end
 							pnlPanel.Count = vgui.Create("DLabel", pnlPanel)		
 							pnlPanel.Count:SetPos(90, 55)
-							pnlPanel.Count:SetText("Count: "..tostring(v))
-							pnlPanel.Count:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.Count:SetText(countTxt)
+							pnlPanel.Count:SetColor(Color( 0, 255, 0, 255 ))
 							pnlPanel.Count:SizeToContents() 
-							pnlPanel.Count:SetContentAlignment( 5 )	
+							pnlPanel.Count:SetContentAlignment( 5 )
 							
 							if item.Type == "food" or item.Type == "medical" or item.Type == "weapon" or item.Type == "ammo" then
 								pnlPanel.salvageItem = vgui.Create("DButton", pnlPanel )
-								pnlPanel.salvageItem:SetPos(200, 55)
-								pnlPanel.salvageItem:SetSize(100,17)
+								pnlPanel.salvageItem:SetPos(150, 55)
+								pnlPanel.salvageItem:SetSize(75,17)
 								pnlPanel.salvageItem:SetText( "Use Item" )
 								pnlPanel.salvageItem.DoClick = function() 
 									net.Start("UseFromInv")
@@ -167,35 +186,41 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 							pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
 							pnlPanel.ClassBuild:SetPos(250, 5)
 							pnlPanel.ClassBuild:SetText("Required Class: "..item.ClassSpawn)
-							pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.ClassBuild:SetColor(Color( 0, 200, 0, 255 ))
 							pnlPanel.ClassBuild:SizeToContents() 
 							pnlPanel.ClassBuild:SetContentAlignment( 5 )
 							
-							pnlPanel.ClassBuild = vgui.Create("DLabel", pnlPanel)		
-							pnlPanel.ClassBuild:SetPos(90, 25)
-							pnlPanel.ClassBuild:SetText(item.Info)
-							pnlPanel.ClassBuild:SetColor(Color( 0, 0, 0, 255 ))
-							pnlPanel.ClassBuild:SetWide(300)
-							pnlPanel.ClassBuild:SetTall(25)
-							pnlPanel.ClassBuild:SetWrap(true) 
-							pnlPanel.ClassBuild:SetContentAlignment( 5 )	
+							pnlPanel.ItmInfo = vgui.Create("DLabel", pnlPanel)		
+							pnlPanel.ItmInfo:SetPos(90, 25)
+							pnlPanel.ItmInfo:SetText(item.Info)
+							pnlPanel.ItmInfo:SetColor(Color( 0, 200, 0, 255 ))
+							pnlPanel.ItmInfo:SetWide(300)
+							pnlPanel.ItmInfo:SetTall(25)
+							pnlPanel.ItmInfo:SetWrap(true) 
+							pnlPanel.ItmInfo:SetContentAlignment( 5 )	
 							
+							local weightTXT = "Weight: "..item.Weight
+							if item.Capacity then
+								weightTXT = weightTXT.." | Capacity: "..item.Capacity
+							end
 							pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
 							pnlPanel.ItemWeight:SetPos(340, 55)
-							pnlPanel.ItemWeight:SetText("Weight: "..item.Weight)
-							pnlPanel.ItemWeight:SetColor(Color( 0, 0, 0, 255 ))
+							pnlPanel.ItemWeight:SetText(weightTXT)
+							pnlPanel.ItemWeight:SetColor(Color( 0, 200, 0, 255 ))
 							pnlPanel.ItemWeight:SizeToContents() 
 							pnlPanel.ItemWeight:SetContentAlignment( 5 )	
 							
-							pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
-							pnlPanel.bulkSlider:SetPos(400, 20) 
-							pnlPanel.bulkSlider:SetWide( 175 )
-							pnlPanel.bulkSlider:SetText( "" )
-							pnlPanel.bulkSlider:SetMin( 1 )
-							pnlPanel.bulkSlider:SetMax( v )
-							pnlPanel.bulkSlider:SetDecimals( 0 )
-							pnlPanel.bulkSlider:SetValue( 1 )
-							pnlPanel.bulkSlider.Label:SizeToContents()
+							if v["iid"] == "" then
+								pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
+								pnlPanel.bulkSlider:SetPos(400, 20) 
+								pnlPanel.bulkSlider:SetWide( 175 )
+								pnlPanel.bulkSlider:SetText( "" )
+								pnlPanel.bulkSlider:SetMin( 1 )
+								pnlPanel.bulkSlider:SetMax( v["count"] )
+								pnlPanel.bulkSlider:SetDecimals( 0 )
+								pnlPanel.bulkSlider:SetValue( 1 )
+								pnlPanel.bulkSlider.Label:SizeToContents()
+							end 
 							
 							if itemtype != "vehicle" then							
 								if item.Type == "tool" or item.Type == "junk" or item.Type == "misc" then
@@ -222,56 +247,72 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 											ItemID = "vehicle_jeep"
 										end
 										local myType = PNRP.Items[ItemID].Type
-										if tostring(car:GetNetworkedString( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
+										if tostring(car:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
 										
 											pnlPanel.sendCarInvBlk = vgui.Create("DButton", pnlPanel )
-											pnlPanel.sendCarInvBlk:SetPos(400, 55)
-											pnlPanel.sendCarInvBlk:SetSize(80,18)
+											pnlPanel.sendCarInvBlk:SetPos(230, 55)
+											pnlPanel.sendCarInvBlk:SetSize(100,17)
 											pnlPanel.sendCarInvBlk:SetText( "Send to Car Inv" )
 											pnlPanel.sendCarInvBlk.DoClick = function()
 												local weightCur = CurCarInvWeight + item.Weight
 												local weightBlk
 												local weightCapBlk
-												local amt = pnlPanel.bulkSlider:GetValue()
+												local amt = v["count"]
+												
+												if v["iid"] == "" then amt = pnlPanel.bulkSlider:GetValue() end
 												
 												--Idiot ammount check
 												if amt <= 0 then amt = 1 end
-												if amt >= v then amt = v end
+												if amt >= v["count"] then amt = v["count"] end
 
 												weightBlk = item.Weight * amt
 												
-												weightCap = PNRP.Items[ItemID].Weight
-												if weightCur <= weightCap then
-													net.Start( "pnrp_addtocarinentory" )
-														net.WriteEntity(ply)
-														net.WriteString("BlkCarInv")
-														net.WriteString(item.ID)
-														net.WriteDouble(math.Round(amt))
-													net.SendToServer()
+												weightCap = PNRP.Items[ItemID].Capacity
+												
+												if v["iid"] == "" then
+													if weightCur <= weightCap then
+														net.Start( "pnrp_addtocarinentory" )
+															net.WriteEntity(ply)
+															net.WriteString("BlkCarInv")
+															net.WriteString(item.ID)
+															net.WriteDouble(math.Round(amt))
+														net.SendToServer()
 
-													parent_frame:Close()
-												else
-													local RemainingW = weightCap - weightCur
-													if RemainingW >= 1 then
-														amt = RemainingW / item.Weight
-														amt = floor(amt)
-														if amt >= 1 then
-															net.Start( "pnrp_addtocarinentory" )
-																net.WriteEntity(ply)
-																net.WriteString("BlkCarInv")
-																net.WriteString(item.ID)
-																net.WriteDouble(math.Round(amt))
-															net.SendToServer()
-															parent_frame:Close()
+														parent_frame:Close()
+													else
+														local RemainingW = weightCap - weightCur
+														if RemainingW >= 1 then
+															amt = RemainingW / item.Weight
+															amt = floor(amt)
+															if amt >= 1 then
+																net.Start( "pnrp_addtocarinentory" )
+																	net.WriteEntity(ply)
+																	net.WriteString("BlkCarInv")
+																	net.WriteString(item.ID)
+																	net.WriteDouble(math.Round(amt))
+																net.SendToServer()
+																parent_frame:Close()
+															else
+																parent_frame:Close()
+																ply:ChatPrint("Your car trunk is full.")
+															end
 														else
 															parent_frame:Close()
 															ply:ChatPrint("Your car trunk is full.")
 														end
+													end
+												else
+													if weightCur <= weightCap then
+														net.Start( "pnrp_PersistMoveTo" )
+															net.WriteString(v["iid"])
+															net.WriteString("car")
+														net.SendToServer()
+														parent_frame:Close()
 													else
 														parent_frame:Close()
 														ply:ChatPrint("Your car trunk is full.")
-													end
-												end										
+													end												
+												end
 											end
 											
 										end
@@ -287,16 +328,20 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 							pnlPanel.salvageItem:SetSize(80,17)
 							pnlPanel.salvageItem:SetText( "Salvage Item" )
 							pnlPanel.salvageItem.DoClick = function() 
-								local getBSalvageCount = pnlPanel.bulkSlider:GetValue()
-								if getBSalvageCount then
-									if getBSalvageCount < 0 then
-										getBSalvageCount = 0
+								if v["iid"] == "" then
+									local getBSalvageCount = pnlPanel.bulkSlider:GetValue()
+									if getBSalvageCount then
+										if getBSalvageCount < 0 then
+											getBSalvageCount = 0
+										end
+										if getBSalvageCount > v["count"] then
+											getBSalvageCount = v["count"]
+										end
+										local sndSTR = item.ID..","..tostring(math.Round(getBSalvageCount))
+										PNRP.OptionVerify( "pnrp_dosalvage", sndSTR, nil, nil) parent_frame:Close() 
 									end
-									if getBSalvageCount > v then
-										getBSalvageCount = v
-									end
-									local sndSTR = item.ID..","..tostring(math.Round(getBSalvageCount))
-									PNRP.OptionVerify( "pnrp_dosalvage", sndSTR, nil, nil) parent_frame:Close() 
+								else
+									PNRP.OptionVerify( "pnrp_dopersalvage", tostring(v["iid"]), nil, nil) parent_frame:Close() 
 								end
 							end
 						end
