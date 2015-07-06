@@ -625,7 +625,7 @@ function GM:PlayerSpawn( ply )
 		ply:GodEnable()
 	
 		local timerID = tostring(math.random(1,9999999))
-		timer.Create( timerID.."god", 15, 1, function()
+		timer.Create( timerID.."god", 20, 1, function()
 			if IsValid(ply) then
 				if not ply.DevMode then
 					ply:GodDisable()
@@ -800,6 +800,7 @@ concommand.Add( "team_set_cultivator", team_set_cultivator )
 --May expand this function for other checks
 function classChangeCheck( ply )	
 	ply.LoadArmor = ply:Armor()
+	ply.LoadHealth = ply:Health()
 end
 
 function classChangeCost(ply, Recource)
@@ -1167,6 +1168,7 @@ end
 concommand.Add( "pnrp_GetCar", PNRP.GetCar )
 PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 
+local spawnLogZone = 400
 --This is an override to hide death notices.
 function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	local infClass = "unknown"
@@ -1175,6 +1177,33 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	if IsValid(Attacker) then attClass = Attacker:GetClass() end
 	if Victim:IsPlayer() and Attacker:IsPlayer() then
 		ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..Attacker:Nick().." ("..Attacker:SteamName()..") with "..infClass.."\n")
+		
+		if Victim ~= Attacker then
+			local victumFoundSpawn = false
+			local attackerFoundSpawn = false
+			local found_ents = ents.FindInSphere( Victim:GetPos(), spawnLogZone )
+			for i, ent in ipairs(found_ents) do
+				if ent:GetClass() == "info_player_start" or ent:GetClass() == "info_player_terrorist" or ent:GetClass() == "info_player_counterterrorist" then
+					victumFoundSpawn = true
+				end
+			end
+			if victumFoundSpawn then
+				Attacker:ChatPrint("Spawn Kill logged")
+				ErrorNoHalt("[SPAWN KILL] :"..Attacker:Nick().." ("..Attacker:SteamName()..") \n")
+			end
+			local found_ents = ents.FindInSphere( Attacker:GetPos(), spawnLogZone )
+			for i, ent in ipairs(found_ents) do
+				if ent:GetClass() == "info_player_start" or ent:GetClass() == "info_player_terrorist" or ent:GetClass() == "info_player_counterterrorist" then
+					attackerFoundSpawn = true
+				end
+			end
+			if attackerFoundSpawn and not victumFoundSpawn then
+				Attacker:ChatPrint("Spawn Camping logged")
+				ErrorNoHalt("[SPAWN KILL (Camping)] :"..Attacker:Nick().." ("..Attacker:SteamName()..") \n")
+			elseif victumFoundSpawn then
+				ErrorNoHalt("[SPAWN KILL] :"..Attacker:Nick().." ("..Attacker:SteamName()..") was in spawn \n")
+			end
+		end
 	elseif Victim:IsPlayer() then
 		if Inflictor:GetNetVar("Owner", nil) then
 			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by (Object Owner)"..tostring(Inflictor:GetNetVar("Owner",nil)).." with "..infClass.."\n")
@@ -1189,6 +1218,46 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	Victim.DeathTime = CurTime()
 
 end
+
+function EntTakeDamage( target, dmginfo )
+	if dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep_old" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_airboat" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep" then
+		if target:GetClass() == "npc_combine_s" then
+			dmginfo:SetDamage(0)
+		end
+	end
+	
+	local attacker = dmginfo:GetAttacker()
+	if attacker:IsPlayer() and target:IsPlayer() then
+		if target ~= attacker then
+			local victumFoundSpawn = false
+			local attackerFoundSpawn = false
+			local found_ents = ents.FindInSphere( target:GetPos(), spawnLogZone )
+			for i, ent in ipairs(found_ents) do
+				if ent:GetClass() == "info_player_start" or ent:GetClass() == "info_player_terrorist" or ent:GetClass() == "info_player_counterterrorist" then
+					victumFoundSpawn = true
+				end
+			end
+			if victumFoundSpawn then
+				local infClass = dmginfo:GetInflictor():GetClass()
+				attacker:ChatPrint("Warning: Attacking target near spawn.")
+				ErrorNoHalt("[SPAWN Attack] :"..attacker:Nick().." ("..attacker:SteamName()..") attacking "..target:Nick().." ("..target:SteamName()..") with "..tostring(infClass).." \n")
+			end
+			
+			local found_ents = ents.FindInSphere( attacker:GetPos(), spawnLogZone )
+			for i, ent in ipairs(found_ents) do
+				if ent:GetClass() == "info_player_start" or ent:GetClass() == "info_player_terrorist" or ent:GetClass() == "info_player_counterterrorist" then
+					attackerFoundSpawn = true
+				end
+			end
+			if attackerFoundSpawn and not victumFoundSpawn then
+				attacker:ChatPrint("Warning: Spawn camping detected")
+				ErrorNoHalt("[SPAWN Attack (Camping)] :"..attacker:Nick().." ("..attacker:SteamName()..") \n")
+			end
+			
+		end
+	end
+end
+hook.Add("EntityTakeDamage", "vehDamageFix", EntTakeDamage )
 
 --This is an override to hide NPC death notices.
 function GM:OnNPCKilled( victim, killer, weapon )
@@ -1270,15 +1339,6 @@ function GM:CanProperty( ply, strProp, ent )
 		return false	
 	end
 end
-
-function VehicleDamageFix( target, dmginfo )
-	if dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep_old" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_airboat" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep" then
-		if target:GetClass() == "npc_combine_s" then
-			dmginfo:SetDamage(0)
-		end
-	end
-end
-hook.Add("EntityTakeDamage", "vehDamageFix", VehicleDamageFix )
 
 -- Debug, REMOVE LATER
 
