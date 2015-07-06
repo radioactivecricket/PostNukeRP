@@ -11,19 +11,30 @@ function PNRP.GetWorldCache( ply )
 	
 end	
 --Adds item to WorldCache
-function PNRP.AddWorldCache( p, theitem )
+function PNRP.AddWorldCache( p, theitem, ent )
 	if PNRP.Items[theitem].Type == "tool" or PNRP.Items[theitem].Type == "misc" or PNRP.Items[theitem].Type == "vehicle" then
-		if PNRP.Items[theitem] != nil then
-			local query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
-			local result = querySQL(query)
-			if result then
-				local newCount = tonumber(result[1]["count"]) + 1
-				query = "UPDATE world_cache SET count="..newCount.." WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
-				result = querySQL(query)
-			else
-				query = "INSERT INTO world_cache VALUES ( '"..tostring(p.pid).."', '"..theitem.."', '1')"
-				result = querySQL(query)
-			end			
+		local isIID = false
+		if ent then
+			if ent.iid then
+				local iidResult = PNRP.GetPersistItem(tostring(ent.iid))
+				if iidResult then
+					if tostring(iidResult["location"]) == "world" then isIID = true end
+				end
+			end
+		end
+		if not isIID then
+			if PNRP.Items[theitem] != nil then
+				local query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
+				local result = querySQL(query)
+				if result then
+					local newCount = tonumber(result[1]["count"]) + 1
+					query = "UPDATE world_cache SET count="..newCount.." WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
+					result = querySQL(query)
+				else
+					query = "INSERT INTO world_cache VALUES ( '"..tostring(p.pid).."', '"..theitem.."', '1')"
+					result = querySQL(query)
+				end			
+			end
 		end
 	end
 end
@@ -54,11 +65,11 @@ function PNRP.ReturnWorldCache( ply )
 	PNRP.ReturnPersistItems( ply )
 	
 	local worldCache = PNRP.GetWorldCache( ply )
-	if not worldCache then return end
-	
-	for k, v in pairs(worldCache) do
-		PNRP.AddToInventory( ply, v["item"], tonumber(v["count"]) )
-		PNRP.TakeAllFromWorldCache( ply, v["item"] )
+	if worldCache then 
+		for k, v in pairs(worldCache) do
+			PNRP.AddToInventory( ply, v["item"], tonumber(v["count"]) )
+			PNRP.TakeAllFromWorldCache( ply, v["item"] )
+		end
 	end
 	
 	PNRP.CleanWorldAfterReturn( ply )

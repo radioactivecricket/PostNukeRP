@@ -532,7 +532,7 @@ net.Receive( "pnrp_addtoinvfromeq", PNRP.AddToInvFromEQ )
 util.AddNetworkString( "pnrp_addtoinvfromeq" )
 
 --Adds non persistent items to Car inventory
-function PNRP.AddToCarInentory( len, ply )
+function PNRP.AddToCarInentory( len, pl )
 	local query
 	local result
 	

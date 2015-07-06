@@ -271,17 +271,20 @@ function pndb(ply, command, args)
 		Msg(" PNDB: Done \n")
 	end
 end
-concommand.Add( "pndb", pndb )
+--concommand.Add( "pndb", pndb )
 
 function pntb(ply, command, args)
 	if ply:IsAdmin() then
-		local query, result 
+		local query, result
 		
-		query = "SELECT * FROM PN_ServerSettings"
+		for _, v in pairs( player.GetAll() ) do
+			PNRP.ReturnWorldCache( v )
+		end
+		query = "SELECT * FROM inventory_table WHERE location='world'"
 		result = querySQL(query)
 		
 		if result then
-			Msg(table.ToString(result).."\n")
+	--		Msg(table.ToString(result).."\n")
 		else
 			Msg("Nil \n")
 		end
