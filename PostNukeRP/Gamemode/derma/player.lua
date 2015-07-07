@@ -327,7 +327,7 @@ function playerProfileWindow()
 								SkillScrollPanel.ClsSkill:SetColor( Color( 255, 255, 255, 255 ) )
 								SkillScrollPanel.ClsSkill:SizeToContents() 
 								SkillScrollPanel.ClsSkill:SetContentAlignment( 5 )
-								ProfileUpSkillBtn(skill.name, btnXLoc, skillYLoc, SkillScrollPanel)
+								ProfileUpSkillBtn(skill.name, btnXLoc, skillYLoc, SkillScrollPanel, profile_frame)
 								SKlevel_Bar(skill.name, GetSkill(skill.name), 10, skillYLoc+20, SkillScrollPanel)
 							
 								skillYLoc = skillYLoc + 40
