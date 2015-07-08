@@ -9,7 +9,7 @@ PostNukeRP is a gamemode for Garry's Mod
 **Official PostNukeRP Live Server: postnukerp.net:27015**
 
 **Links:**
-- For more news and updates visit http://postnukerp.net
+- For more news and updates visit http://postnukerp.com
 - Development Forums: http://radioactivecricket.com/forums/index.php
 - Official PostNukeRP Wiki: http://postnukerp.com/wiki/
 - Official PostNukeRP Steam Group: http://steamcommunity.com/groups/PNRP
