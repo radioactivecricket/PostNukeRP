@@ -277,16 +277,18 @@ function pntb(ply, command, args)
 	if ply:IsAdmin() then
 		local query, result
 		
-		for _, v in pairs( player.GetAll() ) do
-			PNRP.ReturnWorldCache( v )
-		end
-		query = "SELECT * FROM inventory_table WHERE location='world'"
-		result = querySQL(query)
+--		local GM = GAMEMODE
+--		for k,v in pairs(ents.FindByClass("intm_car_hull")) do
+--			v:Remove()
+--		end
+--		GM.CarHullSpawner()
+--		query = "SELECT * FROM profiles WHERE pid='"..tostring(tg.pid).."'"
+--		result = querySQL(query)
 		
 		if result then
-	--		Msg(table.ToString(result).."\n")
+--			Msg(table.ToString(result).."\n")
 		else
-			Msg("Nil \n")
+--			Msg("Nil \n")
 		end
 	end
 end
@@ -918,6 +920,16 @@ function GM:ShowTeam( ply )
 	if ItemID != nil then
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
+			local Car_ItemID = PNRP.SearchItembase( ent )
+			if Car_ItemID then
+				ItemID = Car_ItemID["ID"]
+				PNRP.AddToInventory( ply, ItemID, 1 )
+				PNRP.TakeFromWorldCache( ply, ItemID )
+				ply:ChatPrint("You picked up your car.")
+				pickupGas( ply, ent )
+				ent:Remove()
+			end
+			--[[
 			if tonumber(ent:GetNetVar( "Type" , "0" )) == 1 then
 				if ent:GetModel() == "models/nova/jeep_seat.mdl" then
 					ItemID = "seat_jeep"
@@ -962,6 +974,7 @@ function GM:ShowTeam( ply )
 				ent:Remove()
 								
 			end
+			]]--
 		else
 			if myType == "weapon" then
 				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
@@ -1104,9 +1117,11 @@ function PNRP.GetAllTools( ply )
 			local myType = PNRP.Items[ItemID].Type
 			if tostring(v:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && (myType == "tool" or myType == "misc") then
 				if not PNRP.Items[ItemID].Persistent then
-					Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-					PNRP.AddToInventory( ply, ItemID, 1 )
-					PNRP.TakeFromWorldCache( ply, ItemID )
+					if not v.iid then
+						Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
+						PNRP.AddToInventory( ply, ItemID, 1 )
+						PNRP.TakeFromWorldCache( ply, ItemID )
+					end
 					v:Remove()
 				end
 			end
