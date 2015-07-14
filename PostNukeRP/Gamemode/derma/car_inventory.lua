@@ -110,8 +110,16 @@ function PNRP.build_car_inv_List(ply, itemtype, parent_frame, PropertySheet, MyC
 							end
 							pnlList:AddItem(pnlPanel)
 							
+							local model = item.Model
+							local skin = 0
+							if v["status_table"] != "" then
+								local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+								local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+								if newModel then model = newModel end
+								if newSkin then skin = tonumber(newSkin) end
+							end
 							pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
-							pnlPanel.Icon:SetModel(item.Model)
+							pnlPanel.Icon:SetModel(model, skin)
 							pnlPanel.Icon:SetPos(3, 5)
 							pnlPanel.Icon:SetToolTip( nil )
 							pnlPanel.Icon.DoClick = function()

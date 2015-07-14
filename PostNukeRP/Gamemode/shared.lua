@@ -63,6 +63,13 @@ PNRP.ScavItems["intm_fusioncore"]	=	20
 PNRP.ScavItems["intm_nukecore"]		=	50
 PNRP.ScavItems["food_beans"]		=	1500
 
+PNRP.CarParts = {}
+PNRP.CarParts["intm_car_tire"]		=	75
+PNRP.CarParts["intm_car_axle"]		=	60
+PNRP.CarParts["intm_car_door"]		=	50
+PNRP.CarParts["intm_car_muffler"]	=	40
+PNRP.CarParts["intm_engine"]		=	20
+
 local PlayerMeta = FindMetaTable("Player")
 
 --Resource models
@@ -74,7 +81,25 @@ PNRP.ChemicalModels = { "models/props_junk/garbage128_composite001c.mdl",
 PNRP.SmallPartsModels = { "models/props_combine/combine_binocular01.mdl",
 	"models/Gibs/Scanner_gib01.mdl", 
 	"models/Gibs/Scanner_gib05.mdl" }
-
+PNRP.HullList = {
+	"models/props_vehicles/car001a_hatchback.mdl",
+	"models/props_vehicles/car002a_physics.mdl",
+	"models/props_vehicles/car002b_physics.mdl",
+	"models/props_vehicles/car003a_physics.mdl",
+	"models/props_vehicles/car003b_physics.mdl",
+	"models/props_vehicles/car004a_physics.mdl",
+	"models/props_vehicles/car004b_physics.mdl",
+	"models/props_vehicles/car005a_physics.mdl",
+	"models/props_vehicles/car005b_physics.mdl",
+	"models/props_vehicles/truck001a.mdl",
+	"models/props_vehicles/truck002a_cab.mdl",
+	"models/props_vehicles/truck003a.mdl",
+	"models/props_vehicles/van001a.mdl",
+	"models/props_vehicles/van001a_nodoor.mdl",
+	"models/vehicles/vehicle_van.mdl",
+	"models/buggy.mdl",
+	"models/airboat.mdl",
+	"models/vehicle.mdl" }
 --Default weapons
 PNRP.DefWeps = {"weapon_physcannon",
 				"weapon_physgun",
@@ -290,6 +315,23 @@ function round(num, idp)
     return math.floor(num * mult + 0.5) / mult
   end
   return math.floor(num + 0.5)
+end
+
+function toangle( angleStr )
+	if isangle(angleStr) then return angleStr end
+	
+	if isstring(angleStr) then
+		local Tbl = string.Explode(" ", angleStr)
+		if #Tbl < 2 then
+			Tbl = string.Explode(",", angleStr)
+		end
+		if not Tbl[1] then Tbl[1] = 0 end
+		if not Tbl[2] then Tbl[2] = 0 end
+		if not Tbl[3] then Tbl[3] = 0 end
+		return Angle(Tbl[1], Tbl[2], Tbl[3])
+	end
+	
+	return Angle(0,0,0)
 end
 
 --EOF

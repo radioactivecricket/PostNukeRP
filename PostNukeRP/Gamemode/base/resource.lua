@@ -297,7 +297,7 @@ function GM.ReproduceRes()
 	spawnTbl = GM.spawnTbl
 	if getServerSetting("ReproduceRes") == 1 then
 		local info = {}
-		
+		GM.CarHullSpawner()
 		-- Get all my amounts.
 		local piles = ents.FindByClass( "ent_resource" )
 		
@@ -472,6 +472,11 @@ function GM.RemoveRes(ply,command,args)
 		ply:ChatPrint("Removing resources.")
 		for k,v in pairs(ents.FindByClass("ent_resource")) do
 			v:Remove()
+		end
+		for k,v in pairs(ents.FindByClass("intm_car_hull")) do
+			if v.resource then
+				v:Remove()
+			end
 		end
 --		self.ReproduceRes()
 	else

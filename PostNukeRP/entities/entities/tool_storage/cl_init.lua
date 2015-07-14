@@ -395,6 +395,8 @@ function StorageMenu()
 							
 							pnlLIList:AddItem(pnlLIPanel)
 							
+							local model = item.Model
+							local skin = 0
 							local countTxt = "Count: "..tostring(v["count"])
 							if v["status_table"] != "" then
 								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
@@ -410,6 +412,12 @@ function StorageMenu()
 								pnlLIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
 								pnlLIPanel.HP:SizeToContents() 
 								pnlLIPanel.HP:SetContentAlignment( 5 )
+								
+								local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+								local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+								if newModel then model = newModel end
+								if newSkin then skin = tonumber(newSkin) end
+								
 							else
 								pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
 								pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
@@ -420,7 +428,7 @@ function StorageMenu()
 							end
 							
 							pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
-							pnlLIPanel.Icon:SetModel(item.Model)
+							pnlLIPanel.Icon:SetModel(model, skin)
 							pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
 							pnlLIPanel.Icon:SetToolTip( toolTip )
 							pnlLIPanel.Icon.DoClick = function() 

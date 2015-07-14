@@ -6,37 +6,44 @@ PNRP.Weapons = {}
 
 --Gets the Item from the Item folder and adds it to the table
 function PNRP.AddItem( itemtable )
-
+	
 	PNRP.Items[itemtable.ID] =
 	{
-		ID = itemtable.ID,
-		Name = itemtable.Name,
-		ClassSpawn = itemtable.ClassSpawn,		
-		Scrap = itemtable.Scrap,
-		SmallParts = itemtable.Small_Parts,
-		Chemicals = itemtable.Chemicals,
-		Chance = itemtable.Chance,
-		Info = itemtable.Info,	
-		Type = itemtable.Type,
-		Energy = itemtable.Energy,
-		Ent = itemtable.Ent,
-		Model = itemtable.Model,
-		Spawn = itemtable.Spawn,
-		Use = itemtable.Use,
-		Remove = itemtable.Remove,
-		Script = itemtable.Script,
-		Weight = itemtable.Weight,
-		Create = itemtable.Create,
-		ToolCheck = itemtable.ToolCheck,
-		ShopHide = itemtable.ShopHide,
-		Capacity = itemtable.Capacity,
-		ProfileCost = itemtable.ProfileCost,
-		Persistent = itemtable.Persistent,
-		UnBlock = itemtable.UnBlock,
-		AllowPunt = itemtable.AllowPunt,
-		SaveState = itemtable.SaveState,
-		BuildState = itemtable.BuildState,
-		GearSlots = itemtable.GearSlots
+		ID = itemtable.ID,					--Itembase ID
+		Name = itemtable.Name,				--Item Name
+		ClassSpawn = itemtable.ClassSpawn,	--Class that can spawn item. All = All classes
+		Scrap = itemtable.Scrap,			--Scrap Cost
+		SmallParts = itemtable.Small_Parts,	--Small Parts Cost
+		Chemicals = itemtable.Chemicals,	--Chemicals Cost
+		Chance = itemtable.Chance,			--Chance of creation (Not really used much atm)
+		Info = itemtable.Info,				--Item Description
+		Type = itemtable.Type,				--Category of item
+		Energy = itemtable.Energy,			--Used for various things. Amount of ammo a ammo box has for example
+		Ent = itemtable.Ent,				--The Entity it points to
+		EntName = itemtable.EntName,		--Entity Name
+		Model = itemtable.Model,			--Model
+		Spawn = itemtable.Spawn,			--
+		Use = itemtable.Use,				--Use Function
+		Remove = itemtable.Remove,			--
+		Script = itemtable.Script,			--External script, mainly used for vehicles
+		Hull = itemtable.Hull,				--Hull Model allowed for vehicle
+		HullSkin = itemtable.HullSkin,		--Skin for the hull
+		SeatLoc = itemtable.SeatLoc,		--Seat Locations
+		SeatModel = itemtable.SeatModel,	--Seat Model
+		ShowSeat = itemtable.ShowSeat,
+		Weight = itemtable.Weight,			--How much weight the item takes in inventory
+		SeatLoc = itemtable.SeatLoc,		--Car seat locations
+		Create = itemtable.Create,			--Create Function
+		ToolCheck = itemtable.ToolCheck,	--Tool Check Function
+		ShopHide = itemtable.ShopHide,		--Hides item from shop if true
+		Capacity = itemtable.Capacity,		--How much storage capacity
+		ProfileCost = itemtable.ProfileCost,--
+		Persistent = itemtable.Persistent,	--
+		UnBlock = itemtable.UnBlock,		--Unblocks the item's model from prop protection
+		AllowPunt = itemtable.AllowPunt,	--Punt Block override
+		SaveState = itemtable.SaveState,	--If persistent item then set to true
+		BuildState = itemtable.BuildState,	--BuildState function
+		GearSlots = itemtable.GearSlots		--
 	}
 end	
 
@@ -119,6 +126,29 @@ for k, v in pairs( file.Find(PNRP_Path.."gamemode/items/*.lua", "LUA" ) ) do
 	if (SERVER) then AddCSLuaFile("items/"..v) end
 end
 
+--searches for itembase items spawned near the entity
+--and returns the items found.
+function PNRP.FindNearbyItems( ent )
+	local plUID = tostring(ent:GetNetVar( "Owner_UID" , "None" ))
+	
+	local foundItems = {}
+	local nearbyEnts = ents.FindInSphere(ent:GetPos(), 150)
+	for k, v in pairs(nearbyEnts) do
+		if plUID == tostring(v:GetNetVar( "Owner_UID" , "None" )) then
+			local vItem = PNRP.SearchItembase( v )
+			if vItem then
+				if foundItems[vItem.ID] then
+					foundItems[vItem.ID] = foundItems[vItem.ID] + 1
+				else
+					foundItems[vItem.ID] = 1
+				end
+			end
+		end
+	end
+	
+	return foundItems
+end
+
 --------------------------
 -- Persistent Item Code --
 --------------------------
@@ -139,6 +169,93 @@ end
 
 if (!SERVER) then return end
 
+--Uses parts that are near the entity.
+--Tbl is meant to be the return from ToolCheck. 
+--Ply is optional. items must have same owner as the entity
+function PNRP.UseNearbyParts( Tbl, ent, ply )
+	if not Tbl or not ent then return false end
+	
+	local plUID = tostring(ent:GetNetVar( "Owner_UID" , "None" ))
+	
+	local foundItems = PNRP.FindNearbyItems( ent )
+	for itemid, amount in pairs(Tbl) do
+		if PNRP.Items[itemid] then
+			if (not foundItems) or (not foundItems[itemid]) or foundItems[itemid] < amount then
+				if amount == 0 then
+					if ply then
+						ply:ChatPrint("You don't have a "..PNRP.Items[itemid].Name..", which is required to build this.")
+					end
+				else
+					if ply then
+						ply:ChatPrint("You don't have enough "..PNRP.Items[itemid].Name.."s.  You require "..tostring(amount).." to build this.")
+					end
+				end
+				return false
+			end
+		end
+	end
+	
+	local nearbyEnts = ents.FindInSphere(ent:GetPos(), 150)
+	for _, v in pairs(nearbyEnts) do
+		if plUID == tostring(v:GetNetVar( "Owner_UID" , "None" )) then
+			local item = PNRP.SearchItembase( v )
+			if item and Tbl[item["ID"]] then
+				if Tbl[item["ID"]] > 0 then
+					if v.iid then
+						PNRP.DelPersistItem(v.iid)
+					end
+					v:Remove()
+					Tbl[item.ID] = Tbl[item.ID] - 1
+				end
+			end
+		end
+	end
+	return true
+end
+
+--Uses parts from the player's inventory.
+--Tbl is meant to be the return from ToolCheck
+function PNRP.UsePlayerParts( Tbl, ply )
+	if not Tbl or not ply then return false end
+
+	local foundItems = PNRP.GetFullInventorySimple( ply )
+	for itemid, amount in pairs(Tbl) do
+		if PNRP.Items[itemid] then
+			if (not foundItems) or (not foundItems[itemid]) or foundItems[itemid] < amount then
+				if amount == 0 then
+					if ply then
+						ply:ChatPrint("You don't have a "..PNRP.Items[itemid].Name..", which is required to build this.")
+					end
+				else
+					if ply then
+						ply:ChatPrint("You don't have enough "..PNRP.Items[itemid].Name.."s.  You require "..tostring(amount).." to build this.")
+					end
+				end
+				return false
+			end
+		end
+	end
+	
+	local plyInv = PNRP.Inventory( ply )
+	for itemid, amount in pairs(Tbl) do
+		if amount ~= 0 then
+			if plyInv[itemid] then
+				PNRP.TakeFromInventoryBulk( ply, itemid, amount )
+			else
+				for i=1, amount do
+					local query = "SELECT * FROM inventory_table WHERE pid='"..tostring(ply.pid).."' AND itemid='"..itemid.."' AND location='player'"
+					local result = querySQL(query)
+					if result then
+						PNRP.DelPersistItem(result[1]["iid"])
+					end
+				end
+			end
+		end
+	end
+	
+	return true
+end
+
 --Gets the status table from the DB
 function PNRP.ReturnState(iid)
 	local query, result
@@ -151,6 +268,14 @@ function PNRP.ReturnState(iid)
 	else
 		return false
 	end
+end
+
+--Updates the locationdata of a persistent item
+function PNRP.UpdateLocData(iid, locData)
+	if (not iid) or (not locData) then return end
+	
+	query = "UPDATE inventory_table SET locdata='"..locData.."' WHERE iid="..tostring(iid)
+	result = querySQL(query)
 end
 
 --Sets the persist items HP

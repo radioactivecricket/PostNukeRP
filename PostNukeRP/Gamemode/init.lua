@@ -277,13 +277,8 @@ function pntb(ply, command, args)
 	if ply:IsAdmin() then
 		local query, result
 		
---		local GM = GAMEMODE
---		for k,v in pairs(ents.FindByClass("intm_car_hull")) do
---			v:Remove()
---		end
---		GM.CarHullSpawner()
---		query = "SELECT * FROM profiles WHERE pid='"..tostring(tg.pid).."'"
---		result = querySQL(query)
+		
+		PNRP.ReturnPersistItems(ply)
 		
 		if result then
 --			Msg(table.ToString(result).."\n")
@@ -293,7 +288,6 @@ function pntb(ply, command, args)
 	end
 end
 concommand.Add( "pntb", pntb )
-
 
 function SQLiteTableCheck()
 	local query
@@ -920,61 +914,24 @@ function GM:ShowTeam( ply )
 	if ItemID != nil then
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) ~= PNRP:GetUID( ply ) then
+				ply:ChatPrint("You do not own this!")
+				return
+			end
+			
 			local Car_ItemID = PNRP.SearchItembase( ent )
 			if Car_ItemID then
 				ItemID = Car_ItemID["ID"]
-				PNRP.AddToInventory( ply, ItemID, 1 )
+				PNRP.AddToInventory( ply, ItemID, 1, ent )
 				PNRP.TakeFromWorldCache( ply, ItemID )
-				ply:ChatPrint("You picked up your car.")
+				if Car_ItemID.ID == "intm_car_hull" then
+					ply:ChatPrint("You picked up the car body.")
+				else
+					ply:ChatPrint("You picked up your car.")
+				end
 				pickupGas( ply, ent )
 				ent:Remove()
 			end
-			--[[
-			if tonumber(ent:GetNetVar( "Type" , "0" )) == 1 then
-				if ent:GetModel() == "models/nova/jeep_seat.mdl" then
-					ItemID = "seat_jeep"
-				else
-					ItemID = "seat_airboat"
-				end
-				
-				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
-				local weightCap
-				
-				if team.GetName(ply:Team()) == "Scavenger" then
-					weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
-				else
-					weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
-				end
-				
-				if weight <= weightCap then
-					PNRP.AddToInventory( ply, ItemID, 1 )
-					PNRP.TakeFromWorldCache( ply, ItemID )
-					pickupGas( ply, ent )
-					ent:Remove()
-				else
-					ply:ChatPrint("Your pack is too full and cannot carry this.")
-				end
-				
-			else
-				local myModel = ent:GetModel()	
-				
-				
-				if tostring(ent:GetNetVar( "Owner_UID" , "None" )) ~= PNRP:GetUID( ply ) then
-					ply:ChatPrint("You do not own this!")
-					return
-				end
-						
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
-				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
-				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-				PNRP.AddToInventory( ply, ItemID, 1 )
-				PNRP.TakeFromWorldCache( ply, ItemID )
-				ply:ChatPrint("You picked up your car.")
-				pickupGas( ply, ent )
-				ent:Remove()
-								
-			end
-			]]--
 		else
 			if myType == "weapon" then
 				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
@@ -1085,10 +1042,11 @@ function GM:ShowSpare1( ply )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
 			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
-				local myModel = ent:GetModel()
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
-				ply:SendLua( "CurCarMaxWeight = "..tostring(PNRP.Items[ItemID].Capacity) )
-				ply:ConCommand("pnrp_carinv")
+				local item = PNRP.SearchItembase( ent )
+				if item then
+					ply:SendLua( "CurCarMaxWeight = "..tostring(item.Capacity) )
+					ply:ConCommand("pnrp_carinv")
+				end
 			else
 				--If not looking at the car, open normal inventory.
 				ply:ConCommand("pnrp_inv")

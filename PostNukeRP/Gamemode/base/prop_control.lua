@@ -412,14 +412,15 @@ end
 
 function PlayerUse(ply, ent)
 	if ( !IsValid( ent ) or !ent:IsVehicle() ) then return end
-
+	
 	if ( ply:GetEyeTrace().HitBox == 3 ) then
 		
 		if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) then
-			local myModel = ent:GetModel()
-			if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
-			ply:SendLua( "CurCarMaxWeight = "..tostring(PNRP.Items[ItemID].Capacity) )
-			ply:ConCommand("pnrp_carinv")
+			local item = PNRP.SearchItembase( ent )
+			if item then
+				ply:SendLua( "CurCarMaxWeight = "..tostring(item.Capacity) )
+				ply:ConCommand("pnrp_carinv")
+			end
 		end
 	
 		return false
@@ -856,5 +857,21 @@ function ToolCheck( ply, tr, toolmode )
 end
 hook.Add( "CanTool", "ToolCheck", ToolCheck )
 
+function PNRP.PlayerExitVehicle( ply, vehicle )
+	if vehicle.ExitAng then
+		local origin = vehicle:GetPos()
+		
+	end
+end
+hook.Add("PlayerLeaveVehicle", "PlayerExitVehicle", PNRP.PlayerExitVehicle )
 
+function PNRP.removeCarSeats( ent )
+	local seats = constraint.FindConstraints( ent, "Weld" )
+	for _, seat in pairs(seats) do
+		if seat.Entity[2].Entity.seat == 1 then
+			seat.Entity[2].Entity:Remove()
+		end
+	end
+end
+hook.Add( "EntityRemoved", "removeCarSeats", PNRP.removeCarSeats )
 --EOF

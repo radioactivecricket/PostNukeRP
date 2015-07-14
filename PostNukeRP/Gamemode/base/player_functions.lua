@@ -2631,15 +2631,22 @@ function PNRP.GetSpawnflags ( ply )
 --			return true
 --		end
 	end
-
+	
 --	ply:ChatPrint("Class: "..tostring(ent:GetClass()))
 	EntityKeyValueInfo( ent )
 --	Msg(EntityKeyValueInfo( ent, 0 ).."\n")
 	ply:ChatPrint("Handle Animation: "..tostring(ent:GetTable().HandleAnimation) )
 	ply:ChatPrint("Model: "..tostring(ent:GetModel()) )
 	ply:ChatPrint("Pos:  "..tostring(ent:GetPos()) )
+	local item = PNRP.SearchItembase( ent )
+	if item then
+		ply:ChatPrint("Item ID: "..tostring(item.ID))
+		ply:ChatPrint("Item Name: "..tostring(item.Name))
+		ply:ChatPrint("Item Hull: "..tostring(item.Hull))
+	end
 end
 concommand.Add( "pnrp_getinfo", PNRP.GetSpawnflags )
+PNRP.ChatConCmd( "/getinfo", "pnrp_getinfo" )
 
 function PNRP.GetRepelSpawnflags ( ply )
 
@@ -2682,59 +2689,6 @@ function PNRP.Unfreeze(ply)
 end
 concommand.Add( "pnrp_unfreeze", PNRP.Unfreeze )
 PNRP.ChatCmd( "/unfreeze", PNRP.Unfreeze )
-
-function seatSetup(ply, cmd, args)
-	for _, car in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
-		local ItemID = PNRP.FindItemID( car:GetClass() )
-		if ItemID != nil then
-			if ItemID == "vehicle_jalopy" and car:GetModel() == "models/buggy.mdl" then
-				ItemID = "vehicle_jeep"
-			end
-			local myType = PNRP.Items[ItemID].Type
-			if tostring(car:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
-				
-				local seatModel
-				local seatPos
-				if ItemID == "vehicle_jalopy" then
-					seatPos = util.LocalToWorld( car, Vector(20, -26, 20))
-					seatModel = "models/nova/jalopy_seat.mdl"
-				elseif ItemID == "vehicle_airboat" then
-					seatPos = util.LocalToWorld( car, Vector(0, -45, 65))
-					seatModel = "models/nova/airboat_seat.mdl"
-				else
-					seatPos = util.LocalToWorld( car, Vector(20, -35, 20))
-					seatModel = "models/nova/jeep_seat.mdl"
-				end
-				
-				local seats = constraint.FindConstraints( car, "Weld" )
-				for _, seat in pairs(seats) do
-					if seat.Entity[2].Entity.seat == 1 then
-						seat.Entity[2].Entity:Remove()
-					end
-				end
-				
-				local ent = ents.Create("prop_vehicle_prisoner_pod")
-				
-				ent:SetPos(seatPos)
-				ent:SetAngles(car:GetAngles()+Angle(0,0,0))
-				ent:SetModel(seatModel)
-				ent:SetKeyValue( "vehiclescript", "scripts/vehicles/prisoner_pod.txt" )
-				ent:SetKeyValue( "model", seatModel )
-				ent:Spawn()
-				ent:Activate()
-				ent.seat = 1
-				ent:SetNetVar( "hud" , false )
-				PNRP.SetOwner(ply, ent)
-				
-				constraint.Weld(car, ent, 0, 0, 0, true)
-				ent:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
-			end
-		end
-	end
-	
-end
-concommand.Add( "pnrp_seatSetup", seatSetup )
-PNRP.ChatConCmd( "/carseat", "pnrp_seatSetup" )
 
 function plyAFK(ply, cmd, args)
 	if ply:GetTable().IsAsleep then

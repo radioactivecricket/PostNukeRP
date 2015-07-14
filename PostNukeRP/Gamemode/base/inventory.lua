@@ -104,6 +104,26 @@ function PNRP.GetFullInventory( ply )
 	return invTbl
 end
 
+--Returns Table[ID] = count
+--Mainly used for tool checks and such
+function PNRP.GetFullInventorySimple( ply )
+	local invTbl = PNRP.Inventory( ply )
+	
+	if not invTbl then invTbl = {} end
+	
+	for _, v in pairs(PNRP.PersistInventory( ply )) do
+		if v["location"] == "player" then
+			if invTbl[v["itemid"]] then
+				invTbl[v["itemid"]] = invTbl[v["itemid"]] + 1
+			else
+				invTbl[v["itemid"]] = 1
+			end
+		end
+	end
+	
+	return invTbl
+end
+
 --Gets all the persist items owned by the player
 function PNRP.PersistInventory( ply )
 	local query
