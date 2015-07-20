@@ -19,6 +19,7 @@ function PNRP.AddItem( itemtable )
 		Info = itemtable.Info,				--Item Description
 		Type = itemtable.Type,				--Category of item
 		Energy = itemtable.Energy,			--Used for various things. Amount of ammo a ammo box has for example
+		HP = itemtable.HP,					--Items Max HP
 		Ent = itemtable.Ent,				--The Entity it points to
 		EntName = itemtable.EntName,		--Entity Name
 		Model = itemtable.Model,			--Model
@@ -35,8 +36,10 @@ function PNRP.AddItem( itemtable )
 		SeatLoc = itemtable.SeatLoc,		--Car seat locations
 		Create = itemtable.Create,			--Create Function
 		ToolCheck = itemtable.ToolCheck,	--Tool Check Function
+		HasStorage = itemtable.HasStorage,	--If the item will have storage
 		ShopHide = itemtable.ShopHide,		--Hides item from shop if true
 		Capacity = itemtable.Capacity,		--How much storage capacity
+		Tank = itemtable.Tank,				--Gas Tank Size
 		ProfileCost = itemtable.ProfileCost,--
 		Persistent = itemtable.Persistent,	--
 		UnBlock = itemtable.UnBlock,		--Unblocks the item's model from prop protection
@@ -326,6 +329,11 @@ function PNRP.AddStatusItem(ply, ent, location)
 		if iid then
 			query = "UPDATE inventory_table SET itemid='"..itemID.."' WHERE iid="..tostring(iid)
 			result = querySQL(query)
+			
+			if item.HasStorage then
+				query = "INSERT INTO inventory_storage ( iid ) VALUES ('"..tostring(iid).."')"
+				result = querySQL(query)
+			end
 		end
 		
 		return iid
@@ -375,6 +383,14 @@ function PNRP.SaveState(ply, ent, location)
 		else
 			PNRP.AddStatusItem(ply, ent)
 		end
+		
+		resultSID = querySQL("SELECT * FROM inventory_storage WHERE iid="..tostring(iid))
+		if not resultSID then
+			if item.HasStorage then
+				query = "INSERT INTO inventory_storage ( iid ) VALUES ('"..tostring(iid).."')"
+				result = querySQL(query)
+			end
+		end
 	else
 		iid = PNRP.AddStatusItem(ply, ent)
 		ent.iid = iid
@@ -384,8 +400,27 @@ end
 
 --Deletes persist item
 function PNRP.DelPersistItem(iid)
+	local query, result
+	
 	query = "DELETE FROM inventory_table WHERE iid="..tostring(iid)
 	result = querySQL(query)
+	
+	query = "DELETE * FROM inventory_storage WHERE iid="..tostring(iid)
+	result = querySQL(query)
+end
+
+--Checks for orphaned items in the inventory_storage system
+function PNRP.CheckPersistSIDs( sid )
+	
+	local query, result
+	query = "SELECT * FROM inventory_storage WHERE sid="..tostring(sid)
+	result = querySQL(query)
+	
+	if result then return end
+	
+	query = "DELETE FROM inventory_table WHERE location='inventory_storage' AND locid="..tostring(sid)
+	result = querySQL(query)
+	
 end
 
 --Called when a persistent item is built

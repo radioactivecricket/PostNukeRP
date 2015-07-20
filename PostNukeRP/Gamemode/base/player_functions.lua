@@ -2773,6 +2773,10 @@ function GasCar(ply, cmd, args)
 						if car.gas > car.tank then car.gas = car.tank end
 						ply:ChatPrint("You put gas in the vehicle.")
 						ent:Remove()
+						
+						if car.iid then
+							PNRP.SaveState(ply, ent)	
+						end
 					else
 						ply:ChatPrint("Tank is full.")
 					end
@@ -2784,6 +2788,11 @@ end
 concommand.Add( "pnrp_gascar", GasCar )
 
 function pickupGas( ply, ent )
+	if ent.iid then
+		local stateStr = PNRP.ReturnState(ent.iid)
+		local gas = PNRP.GetFromStat(stateStr, "Gas")
+		if gas then return end
+	end
 	if ent.gas then
 		if ent.gas >= 1 then
 			local gas = math.floor(ent.gas)

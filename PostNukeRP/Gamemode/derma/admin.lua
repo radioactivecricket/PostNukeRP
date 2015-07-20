@@ -50,7 +50,7 @@ function GM.open_admin()
 			plymenu:SetText( "Player Control >" ) -- set the button text
 			plymenu:SetPos(220, 25) -- set the button position in the frame
 			plymenu:SetSize( 100, 20 ) -- set the button size
-			plymenu.DoClick = function() RunConsoleCommand( "pnrp_playerAdminList" ) SCFrame=false admin_frame:Close() end 
+			plymenu.DoClick = function() RunConsoleCommand( "pnrp_playerAdminList" ) SCFrame=false admin_frame:Close() end
 		
 		local AdminTabSheet = vgui.Create( "DPropertySheet" )
 			AdminTabSheet:SetParent( admin_frame )
@@ -2973,4 +2973,85 @@ function GM.initPlyAdminLst(ply)
 end
 concommand.Add( "pnrp_playerAdminList",  GM.initPlyAdminLst )
 
+local sqlADM_frame
+local sqlADM_body
+local sqlADM_return
+local sqlReturnTxt
+function GM.SQLAdminWindow()
+	local ply = LocalPlayer()
+	if not ply:IsAdmin() then	
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	 
+	if sqlADM_frame then sqlADM_frame:Remove() end
+	
+	sqlADM_frame = vgui.Create( "DFrame" )
+		sqlADM_frame:SetSize( 710, 510 ) 
+		sqlADM_frame:SetPos(ScrW() / 2 - sqlADM_frame:GetWide() / 2, ScrH() / 2 - sqlADM_frame:GetTall() / 2) 
+		sqlADM_frame:SetTitle( "" ) 
+		sqlADM_frame:SetVisible( true )
+		sqlADM_frame:SetDraggable( true )
+		sqlADM_frame:ShowCloseButton( true )
+		sqlADM_frame:MakePopup()
+		sqlADM_frame.Paint = function() 
+			surface.SetDrawColor( 50, 50, 50, 0 )
+		end
+		
+		local screenBG = vgui.Create("DImage", sqlADM_frame)
+			screenBG:SetImage( "VGUI/gfx/pnrp_screen_2b.png" )
+			screenBG:SetSize(sqlADM_frame:GetWide(), sqlADM_frame:GetTall())
+		
+		local queryTxt = vgui.Create("DTextEntry", sqlADM_frame)
+				queryTxt:SetPos(60,55)
+				queryTxt:SetWide(sqlADM_frame:GetWide()-125)
+				queryTxt.OnEnter = function()
+					local queryStr = queryTxt:GetValue()
+					if queryStr == "" then return end
+					net.Start("pnrp_RecAdminSQL")
+						net.WriteString(queryStr)
+					net.SendToServer()
+				end
+		
+		local queryBtn = vgui.Create( "DButton", sqlADM_frame )
+			queryBtn:SetSize( 150, 15 )
+			queryBtn:SetPos( sqlADM_frame:GetWide()-215, 76 )
+			queryBtn:SetText( "Submit Query" )
+			queryBtn.DoClick = function( )
+				local queryStr = queryTxt:GetValue()
+				if queryStr == "" then return end
+				net.Start("pnrp_RecAdminSQL")
+					net.WriteString(queryStr)
+				net.SendToServer()
+				
+			end
+			
+		sqlADM_body = vgui.Create( "DPanel", sqlADM_frame )
+			sqlADM_body:SetPos( 60, 100 ) -- Set the position of the panel
+			sqlADM_body:SetSize( sqlADM_frame:GetWide() - 125, sqlADM_frame:GetTall() - 150)
+			sqlADM_body.Paint = function() end
+			
+			sqlReturnTxt = vgui.Create("DTextEntry", sqlADM_body)
+				sqlReturnTxt:SetMultiline(true)
+				sqlReturnTxt:SetVerticalScrollbarEnabled(true)
+				sqlReturnTxt:SetText("SQL Editor\nMake sure you know what you are doing before using this.")
+				sqlReturnTxt:SetPos(0,0)
+				sqlReturnTxt:SetSize(sqlADM_body:GetWide(),sqlADM_body:GetTall())	
+end
+concommand.Add( "pnrp_sqlWindow",  GM.SQLAdminWindow )
+
+function sqlAdmnReturnTxt( )
+	local ply = LocalPlayer()
+	local result = net.ReadString()
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	if not sqlADM_frame and sqlReturnTxt then return end
+		
+	sqlReturnTxt:SetText(tostring(result))
+end
+net.Receive("pnrp_sqlAdmnReturnTxt", sqlAdmnReturnTxt)
 --EOF

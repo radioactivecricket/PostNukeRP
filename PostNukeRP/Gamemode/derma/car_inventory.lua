@@ -295,33 +295,7 @@ end
 net.Receive( "pnrp_OpenCarInvWindow", GM.car_inventory_window )
 
 function GM.initCarInventory(ply)
-
-	local foundCar = false
-	for _, car in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
-		local ItemID = PNRP.FindItemID( car:GetClass() )
-		if ItemID != nil then
-			if ItemID == "vehicle_jalopy" and car:GetModel() == "models/buggy.mdl" then
-				ItemID = "vehicle_jeep"
-			end
-			local myType = PNRP.Items[ItemID].Type
-			if tostring(car:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
-				foundCar = true
-			end
-		end
-	end
-	
-	if foundCar then
-		if CurCarMaxWeight != nil then
-			net.Start("pnrp_OpenCarInventory")
-				net.WriteEntity(ply)
-			net.SendToServer()
-		else
-			ply:ChatPrint("You need to use F3 on your car.")
-		end
-	else
-		ply:ChatPrint("You are not near your car.")
-	end
-
+	ply:ChatPrint("Old system.")
 end
 concommand.Add( "pnrp_carinv",  GM.initCarInventory )
 

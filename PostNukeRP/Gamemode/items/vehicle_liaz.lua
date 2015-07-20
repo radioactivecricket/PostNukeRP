@@ -11,6 +11,7 @@ ITEM.Chance = 100
 ITEM.Info = "Don't stand in front of me."
 ITEM.Type = "vehicle"
 ITEM.Remove = true
+ITEM.HP = 275
 ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_jeep"
 ITEM.EntName = "truck002a_cab"
@@ -21,7 +22,22 @@ ITEM.SeatLoc = {{Pos = Vector(28,65,57), Ang = Angle(0,0,8)}}
 ITEM.SeatModel = "models/nova/jalopy_seat.mdl"
 ITEM.Weight = 40
 ITEM.Capacity = 100
+ITEM.Tank = 25
+ITEM.HasStorage = true
 ITEM.ShopHide = true
+ITEM.SaveState = true
+
+function ITEM.BuildState( ent )
+	local toolHP = ITEM.HP
+	local Gas = 0
+	if( IsValid(ent) ) then 
+		toolHP = ent:Health() 
+		Gas = ent.gas
+	end
+	
+	if Gas == "" or Gas == nil then Gas = 0 end
+	return "HP="..toolHP..",Gas="..Gas
+end
 
 function ITEM.ToolCheck( p )
 	return {
@@ -87,14 +103,23 @@ function ITEM.Create( ply, class, pos, iid, angle, model )
 		ent:Spawn()
 		ent:Activate()
 		PNRP.SetOwner(ply, ent)
-		PNRP.AddWorldCache( ply,ITEM.ID,ent )
-		
+				
 	end
 	
 	ent.IsGasSystem = true
 	ent.gas = 0
-	ent.tank = 8
+	ent.tank = ITEM.Tank
 	
+	if ITEM.SaveState then
+		if iid then
+			local stateStr = PNRP.ReturnState(iid)
+			ent.gas = tonumber(PNRP.GetFromStat(stateStr, "Gas"))
+		end
+		
+		PNRP.BuildPersistantItem(ply, ent, iid)
+	end
+	
+	PNRP.AddWorldCache( ply,ITEM.ID,ent )
 end
 
 PNRP.AddItem(ITEM)

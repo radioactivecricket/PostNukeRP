@@ -15,10 +15,14 @@ function PNRP.AddWorldCache( p, theitem, ent )
 	if PNRP.Items[theitem].Type == "tool" or PNRP.Items[theitem].Type == "misc" or PNRP.Items[theitem].Type == "vehicle" then
 		local isIID = false
 		if ent then
+			
 			if ent.iid then
 				local iidResult = PNRP.GetPersistItem(tostring(ent.iid))
 				if iidResult then
-					if tostring(iidResult["location"]) == "world" then isIID = true end
+					isIID = true 
+					if tostring(iidResult["location"]) ~= "world" then 
+						PNRP.SaveState(p, ent, "world")	 
+					end
 				end
 			end
 		end

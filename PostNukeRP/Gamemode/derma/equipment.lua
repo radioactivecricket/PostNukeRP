@@ -41,28 +41,11 @@ function GM.EquipmentWindow( )
 
 	local ply = net.ReadEntity() 
 	local MyWeight = tonumber(net.ReadString())
-	local CarWeight = net.ReadString()
 	local MyWeightCap = net.ReadFloat()
-	local foundCar = false
 	local CarItemID
 	local CarWeightCap
---	eqFrameOpen = true
 	local maxAmmo = 0	
 	PNRP.RMDerma()
-	
-	for n,c in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
-		CarItemID = PNRP.FindItemID( c:GetClass() )
-		if CarItemID != nil then
-			if CarItemID == "vehicle_jalopy" and c:GetModel() == "models/buggy.mdl" then
-				CarItemID = "vehicle_jeep"
-			end
-			local myCarType = PNRP.Items[CarItemID].Type
-			if tostring(c:GetNetVar( "Owner" , "None" )) == ply:Nick() && myCarType == "vehicle" then	
-				foundCar = true
-				CarWeightCap = PNRP.Items[CarItemID].Weight
-			end
-		end
-	end
 	
 --	eq_frame = vgui.Create( "DFrame" )
 		eq_frame:SetSize( 585, 289 ) --Set the size
@@ -236,35 +219,6 @@ function GM.EquipmentWindow( )
 								eq_frame:Close()
 								
 							end	
-							
-							
-							if foundCar then	
-								pnlPanel.sendCarInv = vgui.Create("DButton", pnlPanel )
-								pnlPanel.sendCarInv:SetPos(5, 120)
-								pnlPanel.sendCarInv:SetSize(pnlPanel:GetWide() - 10,18)
-								pnlPanel.sendCarInv:SetText( ">>Car Inv" )							    	 
-								pnlPanel.sendCarInv.DoClick = function()
-								
-									local weight = CarWeight + myItem.Weight
-									
-									if weight <= CarWeightCap then
-										net.Start( "pnrp_addtocarinentory" )
-											net.WriteEntity(ply)
-											net.WriteString("FromEQ")
-											net.WriteString(myItem.ID)
-											net.WriteDouble(1)
-										net.SendToServer()
-										RunConsoleCommand("pnrp_stripWep",v:GetClass())
-										eq_frame:Close()
-									else
-										eq_frame:Close()
-										ply:ChatPrint("Your car trunk is full.")
-									end	
-								end
-							end
-								
-							
-							
 							
 							Scroller:AddPanel(pnlPanel)
 					end

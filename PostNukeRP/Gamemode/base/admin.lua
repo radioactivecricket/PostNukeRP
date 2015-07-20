@@ -501,6 +501,41 @@ function PNRP.admAddInvItem(len, ply)
 end
 util.AddNetworkString("admAddInvItem")
 net.Receive("admAddInvItem", PNRP.admAddInvItem)
+
+
+function PNRP.RunAdminSQL(len, ply)
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	local result
+	local outString = ""
+	local query = net.ReadString()
+	
+	result = sql.Query(query)
+	
+	if sql.LastError( result ) != nil and result == false then
+		result = tostring(sql.LastError())
+	end
+	
+	if result then
+		if istable(result) then
+			outString = table.ToString(result)
+		else 
+			outString = tostring(result)
+		end
+	else
+		outString = "nil"
+	end
+
+	net.Start("pnrp_sqlAdmnReturnTxt")
+		net.WriteString(outString)
+	net.Send(ply)
+end
+util.AddNetworkString("pnrp_RecAdminSQL")
+util.AddNetworkString("pnrp_sqlAdmnReturnTxt")
+net.Receive("pnrp_RecAdminSQL", PNRP.RunAdminSQL)
 	
 --Exports the selected map's Node Grid
 function PNRP.ExportMapGrid(len, pl)

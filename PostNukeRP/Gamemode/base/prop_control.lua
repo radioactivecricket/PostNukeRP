@@ -419,7 +419,8 @@ function PlayerUse(ply, ent)
 			local item = PNRP.SearchItembase( ent )
 			if item then
 				ply:SendLua( "CurCarMaxWeight = "..tostring(item.Capacity) )
-				ply:ConCommand("pnrp_carinv")
+			--	ply:ConCommand("pnrp_carinv")
+				PNRP.OpenItemInventory( ent.iid, ply, item.ID )
 			end
 		end
 	

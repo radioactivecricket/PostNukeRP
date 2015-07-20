@@ -258,36 +258,92 @@ end
 -------------------------------------
 function pndb(ply, command, args)
 	if ply:IsAdmin() then
-		query = "DROP TABLE PN_ServerSettings"
+		query = "DROP TABLE inventory_storage"
 		result = querySQL(query)
-		query = "CREATE TABLE PN_ServerSettings ( variable varchar(125) NOT NULL PRIMARY KEY, value int ) "
+		query = "CREATE TABLE inventory_storage ( sid INTEGER PRIMARY KEY AUTOINCREMENT, iid int, inventory varchar(255), res varchar(255) )"
 		result = querySQL(query)
-		for k, v in pairs(PNRP.PNRP_DefServerSettings) do
-			query = "INSERT INTO PN_ServerSettings VALUES ('"..k.."',"..v..")"
-			result = querySQL(query)
-		end	
-
 		
 		Msg(" PNDB: Done \n")
 	end
 end
---concommand.Add( "pndb", pndb )
+concommand.Add( "pndb", pndb )
 
 function pntb(ply, command, args)
 	if ply:IsAdmin() then
 		local query, result
 		
-		
-		PNRP.ReturnPersistItems(ply)
-		
+	--	query = "SELECT * from inventory_storage"
+	--	result = querySQL(query)
+		PNRP.UpgradeCheck()
 		if result then
---			Msg(table.ToString(result).."\n")
+	--		Msg(table.ToString(result).."\n")
 		else
---			Msg("Nil \n")
+	--		Msg("Nil \n")
 		end
 	end
 end
 concommand.Add( "pntb", pntb )
+
+--Converts needed aspects of the database to newer upgrades as needed
+function PNRP.UpgradeCheck()
+	
+	local query, result
+	
+	query = "SELECT * FROM player_inv"
+	result = querySQL(query)
+	
+	for k, v in pairs(result) do
+		local pInvStr = v["inventory"]
+		local cInvStr = v["car_inventory"]
+		local pid = v["pid"]
+		
+		if cInvStr ~= "" then
+			local inv = {}
+			local pInvSplit = string.Explode(" ", pInvStr)
+			for _, pItem in pairs(pInvSplit) do
+				local pInvTmp = string.Explode(",", pItem)
+				inv[pInvTmp[1]] = pInvTmp[2]
+			end
+			
+			local cInvSplit = string.Explode(" ", cInvStr)
+			for _, cItem in pairs(cInvSplit) do
+				local cInvTmp = string.Explode(",", cItem)
+				if inv[cInvTmp[1]] then
+					inv[cInvTmp[1]] = inv[cInvTmp[1]] + tonumber(cInvTmp[2])
+				else
+					inv[cInvTmp[1]] = tonumber(cInvTmp[2])
+				end
+			end
+			
+			local InvStr = ""
+			for item, amount in pairs(inv) do
+				InvStr = InvStr..item..","..tostring(amount).." "
+			end
+			
+			InvStr = string.TrimRight(InvStr)
+			
+			querySQL("UPDATE player_inv SET inventory='"..InvStr.."',car_inventory=''  WHERE pid="..tostring(pid))
+		end
+		
+		querySQL("UPDATE inventory_table SET location='player' WHERE location='car' AND pid="..tostring(pid))
+		--Clean up
+		querySQL("DELETE FROM inventory_table WHERE location='none' AND pid="..tostring(pid)) 
+	end
+	
+end
+--Runs the upgrade check. 
+--This can be commented out after run once
+function runUpgradeCheck(ply, command, args)
+	if ply:IsAdmin() then
+		PNRP.UpgradeCheck()
+		
+		if ply then
+			ply:ChatPrint("Upgrade Check Run")			
+		end
+		ErrorNoHalt("Upgrade Check Run \n")
+	end
+end
+concommand.Add( "pnrp_runuc", runUpgradeCheck )
 
 function SQLiteTableCheck()
 	local query
@@ -385,6 +441,14 @@ function SQLiteTableCheck()
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  inventory_table\n")
 	end
 	
+	--Table for persistent items that have inventory
+	if not sql.TableExists("inventory_storage") then
+		query = "CREATE TABLE inventory_storage ( sid INTEGER PRIMARY KEY AUTOINCREMENT, iid int, inventory varchar(255), res varchar(255) )"
+		result = querySQL(query)
+	else
+		Msg(tostring(os.date()).." SQL TABLE EXISTS:  inventory_storage\n")
+	end
+	
 	--PNRP.PNRP_DefServerSettings
 	if not sql.TableExists("PN_SpawnerSettings") then
 		query = "CREATE TABLE PN_SpawnerSettings ( map varchar(255)"
@@ -408,6 +472,7 @@ function SQLiteTableCheck()
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  PN_ServerSettings\n")
 	end
+	
 end
 hook.Add( "InitPostEntity", "tableCheck", SQLiteTableCheck )
 
@@ -435,7 +500,7 @@ for k, v in pairs( file.Find(PNRP_Path.."gamemode/items/*.lua",  "LUA" ) ) do
 end
 ]]--
 
---Runs the cleanup code
+--Runs the clean up code
 PNRP.CleanPersistItems()
 
 function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server and spawns" function
@@ -924,11 +989,9 @@ function GM:ShowTeam( ply )
 				ItemID = Car_ItemID["ID"]
 				PNRP.AddToInventory( ply, ItemID, 1, ent )
 				PNRP.TakeFromWorldCache( ply, ItemID )
-				if Car_ItemID.ID == "intm_car_hull" then
-					ply:ChatPrint("You picked up the car body.")
-				else
-					ply:ChatPrint("You picked up your car.")
-				end
+
+				ply:ChatPrint("You picked up your "..Car_ItemID.Name)
+				
 				pickupGas( ply, ent )
 				ent:Remove()
 			end
@@ -1038,14 +1101,12 @@ function GM:ShowSpare1( ply )
 	local ent = tr.Entity
 	--Opens Car inventory when looking at a car owned by you.
 	if tostring(ent) != "[NULL Entity]" then
-		local ItemID = PNRP.FindItemID( ent:GetClass() )
-		if ItemID != nil then
-			local myType = PNRP.Items[ItemID].Type
-			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
-				local item = PNRP.SearchItembase( ent )
-				if item then
-					ply:SendLua( "CurCarMaxWeight = "..tostring(item.Capacity) )
-					ply:ConCommand("pnrp_carinv")
+		local item = PNRP.SearchItembase( ent )
+		if item != nil then
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && item.HasStorage then
+				if ent.iid then
+					ply:SendLua( "ItemCapacity = "..tostring(item.Capacity) )
+					PNRP.OpenItemInventory( ent.iid, ply, item.ID )
 				end
 			else
 				--If not looking at the car, open normal inventory.
@@ -1088,27 +1149,26 @@ function PNRP.GetAllTools( ply )
 end
 
 function PNRP.GetAllCars( ply )
-	for k,v in pairs(ents.GetAll()) do
-		local myClass = v:GetClass()
-		local ItemID = PNRP.FindItemID( myClass )
-		if ItemID != nil then
-			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) && myType == "vehicle" then
+	for _, car in pairs(ents.GetAll()) do
+		local item = PNRP.SearchItembase( car )
+		if item then
+			if tostring(car:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) && item.Type == "vehicle" then
 				
 				--Forces the player out of the vehicle (Nolcip exploit fix)
-				local driver = v:GetDriver( )
+				local driver = car:GetDriver( )
 				if IsValid(driver) then driver:ExitVehicle( ) end
-				
-				local myModel = v:GetModel()
 								
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
-				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
-				
+				local ItemID = item.ID
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-				PNRP.AddToInventory( ply, ItemID, 1 )
-				PNRP.TakeFromWorldCache( ply, ItemID )
-				pickupGas( ply, v )
-				v:Remove()
+				
+				if car.iid then
+					PNRP.SaveState(ply, car, "player")
+				else
+					PNRP.AddToInventory( ply, ItemID, 1 )
+					PNRP.TakeFromWorldCache( ply, ItemID )
+					pickupGas( ply, car )
+				end
+				car:Remove()
 				
 			end
 		end	
@@ -1118,23 +1178,24 @@ concommand.Add( "pnrp_GetAllCar", PNRP.GetAllCars )
 PNRP.ChatConCmd( "/getallcars", "pnrp_GetAllCar" )
 
 function PNRP.GetCar( ply )
-	
 	local tr = ply:TraceFromEyes(200)
-	local ent = tr.Entity
-	if tostring(ent) != "[NULL Entity]" then
-		local myClass = ent:GetClass()
-		local ItemID = PNRP.FindItemID( myClass )
+	local car = tr.Entity
+	if tostring(car) != "[NULL Entity]" then
+		local item = PNRP.SearchItembase( car )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
-				local myModel = ent:GetModel()
-								
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
-				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && item.Type == "vehicle" then
 				
+				local ItemID = item.ID
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-				PNRP.AddToInventory( ply, ItemID, 1 )
-				PNRP.TakeFromWorldCache( ply, ItemID )
+				
+				if car.iid then
+					PNRP.SaveState(ply, car, "player")
+				else
+					PNRP.AddToInventory( ply, ItemID, 1 )
+					PNRP.TakeFromWorldCache( ply, ItemID )
+					pickupGas( ply, car )
+				end
 				ent:Remove()
 				
 			end
