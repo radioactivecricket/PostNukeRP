@@ -397,15 +397,21 @@ function StorageMenu()
 							
 							local model = item.Model
 							local skin = 0
+							local infoExtra = ""
 							local countTxt = "Count: "..tostring(v["count"])
 							if v["status_table"] != "" then
-								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
-								if FuelLevel then toolTip = toolTip.."\nFuel: "..tostring(FuelLevel) end
 								local HPText = ""
 								local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
 								local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
 								if HPLevel then HPText = "HP: "..HPLevel
 								elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+								
+								if Charge then infoExtra = infoExtra.."Charge: "..tostring(Charge).."\n" end
+								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+								if FuelLevel then infoExtra = infoExtra.."Fuel: "..tostring(FuelLevel).."\n" end
+								local GasLevel = PNRP.GetFromStat(v["status_table"], "Gas")
+								if GasLevel then infoExtra = infoExtra.."Gas: "..tostring(math.Round(100-((item.Tank-GasLevel)/item.Tank)*100)).."% \n" end
+								
 								pnlLIPanel.HP = vgui.Create("DLabel", pnlLIPanel)		
 								pnlLIPanel.HP:SetPos( 10, 75 )
 								pnlLIPanel.HP:SetText(HPText)
@@ -430,7 +436,7 @@ function StorageMenu()
 							pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
 							pnlLIPanel.Icon:SetModel(model, skin)
 							pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
-							pnlLIPanel.Icon:SetToolTip( toolTip )
+							pnlLIPanel.Icon:SetToolTip( item.Name.."\n"..infoExtra..countTxt.."\n Press Icon to move item." )
 							pnlLIPanel.Icon.DoClick = function() 
 								--Remove item and place in inventory (Not Sell Item)
 								local takeCount = 1
@@ -482,15 +488,28 @@ function StorageMenu()
 							
 							pnlUserIList:AddItem(pnlUserIPanel)
 							
+							local model = item.Model
+							local skin = 0
+							local infoExtra = ""
 							local countTxt = "Count: "..tostring(v["count"])
 							if v["status_table"] != "" then
-								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
-								if FuelLevel then countTxt = "Fuel: "..tostring(FuelLevel) end
 								local HPText = ""
 								local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
 								local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
 								if HPLevel then HPText = "HP: "..HPLevel
 								elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
+								
+								if Charge then infoExtra = infoExtra.."Charge: "..tostring(Charge).."\n" end
+								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+								if FuelLevel then infoExtra = infoExtra.."Fuel: "..tostring(FuelLevel).."\n" end
+								local GasLevel = PNRP.GetFromStat(v["status_table"], "Gas")
+								if GasLevel then infoExtra = infoExtra.."Gas: "..tostring(math.Round(100-((item.Tank-GasLevel)/item.Tank)*100)).."% \n" end
+							
+								local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+								local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+								if newModel then model = newModel end
+								if newSkin then skin = tonumber(newSkin) end
+								
 								pnlUserIPanel.HP = vgui.Create("DLabel", pnlUserIPanel)		
 								pnlUserIPanel.HP:SetPos( 10, 75 )
 								pnlUserIPanel.HP:SetText(HPText)
@@ -507,10 +526,10 @@ function StorageMenu()
 							end
 													
 							pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
-							pnlUserIPanel.Icon:SetModel(item.Model)
+							pnlUserIPanel.Icon:SetModel(model, skin)
 							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
 							
-							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n"..countTxt.."\n Press Icon to move item." )
+							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n"..infoExtra..countTxt.."\n Press Icon to move item." )
 							pnlUserIPanel.Icon.DoClick = function()
 								if v["iid"] == "" then
 									local sendCount = math.Round(pnlUserIPanel.NumberWang:GetValue())
