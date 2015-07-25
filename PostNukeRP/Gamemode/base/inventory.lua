@@ -967,16 +967,10 @@ function PNRP.DropPersistItem( ply, itemID, iid, option )
 	
 end
 
-function NetDropPersistItem(len, pl)
-	ply = net.ReadEntity()
+function NetDropPersistItem(len, ply)
 	itemID = net.ReadString()
 	iid = net.ReadString()
 	option = net.ReadString()
-	
-	if pl ~= ply then 
-		ErrorNoHalt("[ALERT] NetDropPersistItem: "..tostring(pl).."\n")
-		return 
-	end
 	
 	local query, result
 	query = "SELECT * FROM inventory_table where pid='"..tostring(ply.pid).."'"
@@ -1068,14 +1062,8 @@ end
 concommand.Add( "carinventory_drop", PNRP.DropCarItem )
 
 --Use item from inventory (non persistent items)
-function PNRP.UseFromInv(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.UseFromInv(len, ply)
 	local ItemID = net.ReadString()
-	
-	if ply ~= pl then 
-		ErrorNoHalt( "[ALERT] Possible Lua Injection: UseFromInv by "..tostring(pl).."\n")
-		return 
-	end
 	
 	if PNRP.Items[ItemID] == nil then return end
 	local item = PNRP.Items[ItemID]

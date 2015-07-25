@@ -1,9 +1,8 @@
 
-function PNRP.SND_reopenComTab(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.SND_reopenComTab(len, ply)
 	local cid = net.ReadString()
 	local tab = net.ReadString()
-	if pl ~= ply then return end
+	
 	local PlayerCommunityName = ply:GetNetVar("community", "none")
 	
 	local tbl = GetCommunityTbl( cid )
@@ -51,8 +50,7 @@ util.AddNetworkString("SND_reopenComTab")
 util.AddNetworkString("C_SND_reopenComTab")
 net.Receive( "SND_reopenComTab", PNRP.SND_reopenComTab )
 
-function PNRP.SearchCommunities()
-	local ply = net.ReadEntity()
+function PNRP.SearchCommunities(len, ply)
 	local searchString = net.ReadString()
 	
 	local query = "SELECT * FROM community_table WHERE cname LIKE '%"..SQLStr2(searchString).."%'"
@@ -68,8 +66,7 @@ util.AddNetworkString("SND_CommSearch")
 util.AddNetworkString("C_SND_CommSearchResults")
 net.Receive( "SND_CommSearch", PNRP.SearchCommunities )
 
-function PNRP.CommSelID()
-	local ply = net.ReadEntity()
+function PNRP.CommSelID( len, ply )
 	local cid = tonumber(net.ReadString())
 
 	local tbl = GetCommunityTbl( cid )
@@ -108,9 +105,7 @@ util.AddNetworkString("SND_CommSelID")
 util.AddNetworkString("C_SND_CommSelResult")
 net.Receive( "SND_CommSelID", PNRP.CommSelID )
 
-function PNRP.SendPending(len, pl)
-	local ply = net.ReadEntity()
-	if pl ~= ply then return end 
+function PNRP.SendPending(len, ply)
 	
 	local queryPending = "SELECT * FROM community_pending, community_table WHERE community_pending.cid = community_table.cid"
 	local resultPending = querySQL(queryPending)
@@ -129,12 +124,10 @@ util.AddNetworkString("SND_CommViewPending")
 util.AddNetworkString("C_SND_CommSendPending")
 net.Receive( "SND_CommViewPending", PNRP.SendPending )
 
-function PNRP.SND_DelPending(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.SND_DelPending(len, ply)
 	local cid = tonumber(net.ReadString())
 	local pTime = net.ReadString()
 	local fromMenu = net.ReadString()
-	if pl ~= ply then return end
 	
 	local query = "DELETE FROM community_pending WHERE cid="..SQLStr(cid).." AND time="..SQLStr(pTime)
 	querySQL(query)
@@ -159,11 +152,9 @@ end
 util.AddNetworkString("SND_DelPending")
 net.Receive( "SND_DelPending", PNRP.SND_DelPending )
 
-function PNRP.SND_AdmDelComDep(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.SND_AdmDelComDep(len, ply)
 	local cid = tonumber(net.ReadString())
 	local ocid = tonumber(net.ReadString())
-	if pl ~= ply then return end
 	
 	if ply:IsAdmin() then
 		RemDiplomacy( cid, ocid )

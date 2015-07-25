@@ -9,6 +9,10 @@ include( "netwrapper/sh_netwrapper.lua" )
 AddCSLuaFile( "netwrapper/cl_netwrapper.lua" )
 --End Net Wrapper
 
+--Required Workshop Items
+resource.AddWorkshop( "486550571" ) --PostNukeRP Official Content Pack
+resource.AddWorkshop( "104648051" ) --Doc's Half-Life 2 Driveable Vehicles (Needed for the new vehicles)
+
 include( 'shared.lua' ) --Tell the server to load shared.lua
 include("itembase.lua")
 

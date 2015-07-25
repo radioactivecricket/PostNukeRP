@@ -58,8 +58,7 @@ function PNRP.GetAllowedPropsList( )
 end
 PNRP.GetAllowedPropsList( )
 
-function PNRP.Start_open_PropPprotection()
-	local ply = net.ReadEntity()
+function PNRP.Start_open_PropPprotection(len, ply)
 	local bannedtbl = { }
 	if !file.IsDir("PostNukeRP", "DATA") then file.CreateDir("PostNukeRP") end
 	if file.Exists("PostNukeRP/banned_props.txt", "DATA") then
@@ -87,8 +86,7 @@ end
 net.Receive( "Start_open_PropProtection", PNRP.Start_open_PropPprotection )
 util.AddNetworkString( "pnrp_OpenPropProtectWindow" )
 
-function PNRP.PropProtect_AddItem( )
-	local ply = net.ReadEntity()
+function PNRP.PropProtect_AddItem( len, ply )
 	local model = net.ReadString()
 	local switch = net.ReadDouble() --1 is add Prop Block, 2 is add Prop Allowed
 	local tbl = {}
@@ -137,8 +135,7 @@ end
 --datastream.Hook(  "PropProtect_AddItem", PNRP.PropProtect_AddItem )
 net.Receive(  "PropProtect_AddItem", PNRP.PropProtect_AddItem )
 
-function PNRP.PropProtect_RemoveItem( )
-	local ply = net.ReadEntity()
+function PNRP.PropProtect_RemoveItem( len, ply )
 	local model = net.ReadString()
 	local switch = net.ReadDouble() --1 is add Prop Block, 2 is add Prop Allowed
 	local tbl = { }

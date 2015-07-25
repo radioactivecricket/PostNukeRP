@@ -104,12 +104,9 @@ function PNRP.OpenMainAdmin(ply)
 end
 concommand.Add("pnrp_OpenAdmin", PNRP.OpenMainAdmin)
 
-function PNRP.UpdateFromAdminMenu( len, pl )
-	local ply = net.ReadEntity()
+function PNRP.UpdateFromAdminMenu( len, ply )
 	local GMSettings = net.ReadTable()
 	local SpawnSettings = net.ReadTable()
-	
-	if pl ~= ply then return end
 	
 	if ply:IsAdmin() then
 		setServerSetting("exp2Level", tonumber(GMSettings.E2Restrict))
@@ -538,11 +535,8 @@ util.AddNetworkString("pnrp_sqlAdmnReturnTxt")
 net.Receive("pnrp_RecAdminSQL", PNRP.RunAdminSQL)
 	
 --Exports the selected map's Node Grid
-function PNRP.ExportMapGrid(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.ExportMapGrid(len, ply)
 	local mapName = net.ReadString()
-	
-	if pl ~= ply then return end
 	
 	if not ply:IsAdmin() then
 		ply:ChatPrint("You do not have access to this command!")
@@ -560,11 +554,8 @@ end
 net.Receive( "exportMapGrid", PNRP.ExportMapGrid )
 
 --Import the map from the export file
-function PNRP.ImportMapGrid( len, pl )
-	local ply = net.ReadEntity()
+function PNRP.ImportMapGrid( len, ply )
 	local fileName = net.ReadString()
-	
-	if pl ~= ply then return end
 	
 	if not ply:IsAdmin() then
 		ply:ChatPrint("You do not have access to this command!")
@@ -598,8 +589,7 @@ end
 net.Receive( "importMapGrid", PNRP.ImportMapGrid )
 
 --Delete the selected map's Node Grid
-function PNRP.DeleteMapGrid(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.DeleteMapGrid(len, ply)
 	local mapName = net.ReadString()
 	
 	if pl ~= ply then return end

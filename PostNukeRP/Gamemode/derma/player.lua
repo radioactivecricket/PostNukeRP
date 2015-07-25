@@ -215,7 +215,6 @@ function playerProfileWindow()
 					
 				function chName(newName)
 					net.Start("PNRP_ChangeRPName")
-						net.WriteEntity(ply)
 						net.WriteString(TextName:GetValue())
 					net.SendToServer()
 				end

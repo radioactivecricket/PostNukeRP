@@ -125,7 +125,6 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 								if v["iid"] == "" then
 									if item.SaveState then
 										net.Start("pnrp_DropPersistItem")
-											net.WriteEntity(ply)
 											net.WriteString(v["itemid"])
 											net.WriteString(v["iid"])
 											net.WriteString("playerInv")
@@ -136,7 +135,6 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 									parent_frame:Close()
 								else
 									net.Start("pnrp_DropPersistItem")
-										net.WriteEntity(ply)
 										net.WriteString(v["itemid"])
 										net.WriteString(v["iid"])
 									net.SendToServer()
@@ -182,7 +180,6 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 								pnlPanel.salvageItem:SetText( "Use Item" )
 								pnlPanel.salvageItem.DoClick = function() 
 									net.Start("UseFromInv")
-										net.WriteEntity(ply)
 										net.WriteString(item.ID)
 										net.WriteString("1")
 									net.SendToServer()
@@ -239,7 +236,6 @@ function PNRP.build_inv_List(ply, itemtype, parent_frame, PropertySheet, MyInven
 									pnlPanel.BulkBtn:SetText( "Drop Bulk" )
 									pnlPanel.BulkBtn.DoClick = function() 
 										net.Start("DropBulkCrate")
-											net.WriteEntity(ply)
 											net.WriteString(itemname)
 											net.WriteDouble(math.Round(tonumber(pnlPanel.bulkSlider:GetValue())))
 										net.SendToServer()

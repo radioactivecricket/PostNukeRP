@@ -298,6 +298,11 @@ function PNRP.HullToCar(len, ply)
 	
 	local enough = false
 	
+	if not hull.iid then 
+		ply:ChatPrint("Hull ID Error, try picking up and replacing car hull.")
+		return
+	end
+	
 	if ply:GetSkill("Construction") > 0 then
 		for _, team in pairs(PNRP.Skills["Construction"].class) do
 			if ply:Team() == team then
@@ -358,6 +363,8 @@ function PNRP.HullToCar(len, ply)
 				
 				local pos = hull:GetPos()
 				local angle = hull:GetAngles()
+				
+				PNRP.DelPersistItem(hull.iid)
 				hull:Remove()
 				local myEnt = item.Create(ply, item.Ent, pos,nil, angle)
 				

@@ -129,8 +129,7 @@ net.Receive( "SpawnBulkCrate", PNRP.SpawnBulkCrate )
 util.AddNetworkString("startProgressBar")
 util.AddNetworkString("stopProgressBar")
 
-function PNRP.DropBulkCrate( )
-	local ply = net.ReadEntity()
+function PNRP.DropBulkCrate( len, ply )
 	local ItemID = net.ReadString()
 	local Count = math.Round(net.ReadDouble())
 	local tr = ply:TraceFromEyes(200)
@@ -173,6 +172,7 @@ function PNRP.DropCrate( ItemID, Count, pos )
 	end
 end
 
+--Delete later
 function PNRP.DropBulkCrateCar( ply, handler, id, encoded, decoded)
 	local ply = net.ReadEntity()
 	local ItemID = net.ReadString()

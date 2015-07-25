@@ -81,11 +81,8 @@ concommand.Add( "pnrp_setrpname", SetRPName )
 PNRP.ChatConCmd( "/rpname", "pnrp_setrpname" )
 util.AddNetworkString("RPNameChange")
 
-function PNRP.ChangeRPName(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.ChangeRPName(len, ply)
 	local name = net.ReadString()
-	
-	if pl ~= ply then return end
 	
 	if (not name) or name == "" or name == nil then
 		ply.rpname = ply:SteamName()
