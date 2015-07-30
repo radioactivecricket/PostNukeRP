@@ -26,6 +26,7 @@ ITEM.Weight = 40
 ITEM.Capacity = 75
 ITEM.Tank = 10
 ITEM.HasStorage = true
+ITEM.CanRepair = true
 ITEM.ShopHide = true
 ITEM.SaveState = true
 

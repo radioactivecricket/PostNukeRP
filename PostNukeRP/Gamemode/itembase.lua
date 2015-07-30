@@ -37,6 +37,7 @@ function PNRP.AddItem( itemtable )
 		Create = itemtable.Create,			--Create Function
 		ToolCheck = itemtable.ToolCheck,	--Tool Check Function
 		HasStorage = itemtable.HasStorage,	--If the item will have storage
+		CanRepair = itemtable.CanRepair,
 		ShopHide = itemtable.ShopHide,		--Hides item from shop if true
 		Capacity = itemtable.Capacity,		--How much storage capacity
 		Tank = itemtable.Tank,				--Gas Tank Size
@@ -334,6 +335,10 @@ function PNRP.AddStatusItem(ply, ent, location)
 				query = "INSERT INTO inventory_storage ( iid ) VALUES ('"..tostring(iid).."')"
 				result = querySQL(query)
 			end
+		end
+		
+		if item.HP then
+			ent:SetHealth(tonumber(item.HP))
 		end
 		
 		return iid

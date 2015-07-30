@@ -11,7 +11,7 @@ ITEM.Chance = 100
 ITEM.Info = "No job too big for me."
 ITEM.Type = "vehicle"
 ITEM.Remove = true
-ITEM.HP = 350
+ITEM.HP = 325
 ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_jeep"
 ITEM.EntName = "truck001c_02"
@@ -25,6 +25,7 @@ ITEM.Weight = 40
 ITEM.Capacity = 600
 ITEM.Tank = 20
 ITEM.HasStorage = true
+ITEM.CanRepair = true
 ITEM.ShopHide = true
 ITEM.SaveState = true
 

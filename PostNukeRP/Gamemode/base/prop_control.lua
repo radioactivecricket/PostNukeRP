@@ -320,6 +320,10 @@ function GM:PlayerSpawnedVehicle(ply, ent)
 	ent:SetNetVar( "Owner_UID", plUID )
 	ent:SetNetVar( "Owner", ply:Nick())
 	ent:SetNetVar( "ownerent", ply )
+	
+	local item = PNRP.SearchItembase( ent )
+	if not item then ent:SetHealth(tonumber(75))
+	elseif not item.HP then ent:SetHealth(tonumber(75)) end
 end
 
 function GM:PlayerSpawnRagdoll( p, model )
@@ -410,6 +414,20 @@ end
 function PlayerUse(ply, ent)
 	if ( !IsValid( ent ) or !ent:IsVehicle() ) then return end
 	
+	if ent.Repairing then
+		if ent.Repairing == ply then
+			
+			local item = PNRP.SearchItembase( ent )
+			local repTxt = ""
+			if item then repTxt = " the "..item.Name end
+			ply:ChatPrint("You stop repairing"..repTxt)
+			PNRP.EndRepairTimer(ply, ent)
+			
+		else
+			ply:ChatPrint("This is currently being repaired.")
+		end
+	end
+	
 	if ( ply:GetEyeTrace().HitBox == 3 ) then
 		
 		if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) then
@@ -466,6 +484,8 @@ function PickupCheck( ply, ent)
 	if ent:IsPlayer() then return false end
 	
 	if ent.moveActive == false then return false end
+
+	if ply:InVehicle() then return false end
 	
 	--local searchString = " "..ent:GetClass()
 	if string.find(ent:GetClass(), "unc_") == 2 then
@@ -653,6 +673,7 @@ function ToolCheck( ply, tr, toolmode )
 		if string.find(tostring(ent:GetClass()),"turret") then
 			if toolmode == "weld" or toolmode == "weld_ez" 
 			  or toolmode == "easy_precision" or toolmode == "nocollide" then
+				
 			else
 				return false
 			end
@@ -854,6 +875,23 @@ function ToolCheck( ply, tr, toolmode )
 	end
 end
 hook.Add( "CanTool", "ToolCheck", ToolCheck )
+
+function PNRP.CanPlayerEnterVehicle( ply, vehicle )
+	
+	if vehicle.seat == 1 then
+		Msg(tostring(vehicle).."\n")
+		ply:SetAllowWeaponsInVehicle( true ) 
+	else
+		ply:SetAllowWeaponsInVehicle( false ) 
+	end
+	
+end
+hook.Add("CanPlayerEnterVehicle", "CanPlayerEnterVehicle", PNRP.CanPlayerEnterVehicle )
+
+function PNRP.PlayerEnteredVehicle( ply, vehicle )
+
+end
+hook.Add("PlayerEnteredVehicle", "PlayerEnteredVehicle", PNRP.PlayerEnteredVehicle )
 
 function PNRP.PlayerExitVehicle( ply, vehicle )
 	if vehicle.ExitAng then

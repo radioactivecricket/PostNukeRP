@@ -154,7 +154,8 @@ function GM:HUDDrawTargetID()
 				end
 			end
 			if showdebug then
-				if PNRP.Items[ent:GetClass()] then
+				local item = PNRP.SearchItembase( ent )
+				if item then
 					local pos = ent:GetPos()
 					
 					local drawPos = ent:GetPos():ToScreen()
@@ -162,14 +163,12 @@ function GM:HUDDrawTargetID()
 					local distance = ply:GetShootPos():Distance( pos )
 					
 					local font = "TargetIDSmall"
-					local h = 24
+					local h = 48
 					
-					local text
-					
-					text = tostring(ent).." HP:"..ent:Health()
-					if ent.iid then
-						text = text.." IID: "..ent.iid
-					end
+					local text = ""
+					text = text..item.Name.." ["..item.ID.."]\n"
+					text = text..tostring(ent).." HP:"..ent:Health()
+					if ent.gas then text = text.." Gas:"..tostring(math.Round(ent.gas, 2)) end
 					
 					surface.SetFont( font )
 					local w = surface.GetTextSize( text ) + 32

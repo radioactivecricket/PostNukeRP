@@ -24,8 +24,9 @@ ITEM.SeatLoc = {{Pos = Vector(17,-5,11), Ang = Angle(0,0,8)},
 ITEM.SeatModel = "models/nova/jalopy_seat.mdl"
 ITEM.Weight = 40
 ITEM.Capacity = 75
-ITEM.Tank = 100
+ITEM.Tank = 10
 ITEM.HasStorage = true
+ITEM.CanRepair = true
 ITEM.ShopHide = true
 ITEM.SaveState = true
 

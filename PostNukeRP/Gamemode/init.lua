@@ -11,7 +11,7 @@ AddCSLuaFile( "netwrapper/cl_netwrapper.lua" )
 
 --Required Workshop Items
 resource.AddWorkshop( "486550571" ) --PostNukeRP Official Content Pack
-resource.AddWorkshop( "104648051" ) --Doc's Half-Life 2 Driveable Vehicles (Needed for the new vehicles)
+resource.AddWorkshop( "104648051" ) --Doc's Half-Life 2 Drivable Vehicles (Needed for the new vehicles)
 
 include( 'shared.lua' ) --Tell the server to load shared.lua
 include("itembase.lua")
@@ -273,12 +273,15 @@ end
 concommand.Add( "pndb", pndb )
 
 function pntb(ply, command, args)
+	local GM = GAMEMODE
 	if ply:IsAdmin() then
 		local query, result
 		
 	--	query = "SELECT * from inventory_storage"
 	--	result = querySQL(query)
-		PNRP.UpgradeCheck()
+		
+	--	GM.LoadCharacter( ply, ply.pid )
+		PNRP.SetBodyGroups( ply )
 		if result then
 	--		Msg(table.ToString(result).."\n")
 		else
@@ -368,10 +371,17 @@ function SQLiteTableCheck()
 	end
 	
 	if not sql.TableExists("profiles") then
-		query = "CREATE TABLE profiles ( pid INTEGER PRIMARY KEY AUTOINCREMENT, steamid varchar(255), model varchar(255), nick varchar(255), lastlog varchar(255), class int, xp int, skills varchar(255), health int, armor int, endurance int, hunger int, res varchar(255), weapons varchar(255), ammo varchar(255) )"
+		query = "CREATE TABLE profiles ( pid INTEGER PRIMARY KEY AUTOINCREMENT, steamid varchar(255), model varchar(255), skin int, bodygroups varchar(255), nick varchar(255), lastlog varchar(255), class int, xp int, skills varchar(255), health int, armor int, endurance int, hunger int, res varchar(255), weapons varchar(255), ammo varchar(255) )"
 		result = querySQL(query)
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  profiles\n")
+		
+		query = "SELECT skin FROM profiles"
+		result = sql.Query(query)
+		if sql.LastError( result ) != nil and result == false then
+			query = "ALTER TABLE profiles ADD COLUMN skin int, bodygroups varchar(255)"
+			querySQL(query)
+		end
 	end
 	
 	if not sql.TableExists("community_table") then
@@ -592,12 +602,20 @@ function LoadingFunction( len )
 		{
 			VoiceLimiter = getServerSetting("voiceLimit"),
 			PropPay = getServerSetting("propPay"),
-			PropCost = getServerSetting("propCost")
+			PropCost = getServerSetting("propCost"),
+			adminCreateAll = getServerSetting("adminCreateAll"),
+			adminTouchAll = getServerSetting("adminTouchAll"),
+			adminNoCost = getServerSetting("adminNoCost")
 		}
 		RunConsoleCommand("pnrp_voiceLimit",tostring(tbl.VoiceLimiter))
 		RunConsoleCommand("pnrp_propPay",tostring(tbl.PropPay))
 		RunConsoleCommand("pnrp_propCost",tostring(tbl.PropCost))
-
+		
+		RunConsoleCommand("pnrp_adminCreateAll",tostring(tbl.adminCreateAll))
+		RunConsoleCommand("pnrp_adminTouchAll",tostring(tbl.adminTouchAll))
+		RunConsoleCommand("pnrp_adminNoCost",tostring(tbl.adminNoCost))
+		
+		PNRP.SetBodyGroups( ply )
 	else
 		ErrorNoHalt("Load timer hit Null Entity (), retrying in 3 seconds.\n")
 	end
@@ -1261,13 +1279,38 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
 end
 
 function EntTakeDamage( target, dmginfo )
-	if dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep_old" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_airboat" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep" then
+	local attacker = dmginfo:GetAttacker()
+	--[[
+	print("Damage: "..tostring(dmginfo:GetDamage()))
+	print("Type: "..tostring(dmginfo:GetDamageType()))
+	print("Force: "..tostring(dmginfo:GetDamageForce()))
+	print("Max: "..tostring(dmginfo:GetMaxDamage()))
+	print("Target: "..tostring(target))
+	]]--
+	if attacker:IsVehicle() then
 		if target:GetClass() == "npc_combine_s" then
 			dmginfo:SetDamage(0)
 		end
 	end
 	
-	local attacker = dmginfo:GetAttacker()
+	local dmgEnt = target
+	if target:IsPlayer() then
+		if target:InVehicle() then
+			dmgEnt = target:GetVehicle()
+		end
+	end
+	
+	local targetItem = PNRP.SearchItembase( dmgEnt )
+	if targetItem then
+		if targetItem.CanRepair then
+			local damage = dmginfo:GetDamage()
+			dmgEnt:SetHealth(dmgEnt:Health() - damage)
+			if dmgEnt:Health() <= 0 then
+				dmgEnt:SetHealth( 0 )
+			end
+		end
+	end
+	
 	if attacker:IsPlayer() and target:IsPlayer() then
 		if target ~= attacker then
 			local victumFoundSpawn = false

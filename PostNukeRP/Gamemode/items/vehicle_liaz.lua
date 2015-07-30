@@ -11,7 +11,7 @@ ITEM.Chance = 100
 ITEM.Info = "Don't stand in front of me."
 ITEM.Type = "vehicle"
 ITEM.Remove = true
-ITEM.HP = 275
+ITEM.HP = 350
 ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_jeep"
 ITEM.EntName = "truck002a_cab"
@@ -24,6 +24,7 @@ ITEM.Weight = 40
 ITEM.Capacity = 100
 ITEM.Tank = 25
 ITEM.HasStorage = true
+ITEM.CanRepair = true
 ITEM.ShopHide = true
 ITEM.SaveState = true
 

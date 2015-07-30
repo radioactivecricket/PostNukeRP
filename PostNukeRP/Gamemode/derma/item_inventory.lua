@@ -57,9 +57,52 @@ function PNRP.ItemStorageWindow()
 				icon.DoClick = function() end
 			end
 			icon:SetPos(itemIncentory_frame:GetWide() - 185, 50)
+			
 	end
 	
 	buildInvStoragePanels(itemID, inventory_table,plyInventoryTble,PlayerInvWeight,CurInvWeight,weightCap,capacity,sid,origin_iid)	
+	
+		local btnHPos = 240
+		local btnWPos = 160
+		local btnHeight = 80
+		local lblColor = Color( 245, 218, 210, 180 )
+			
+		if PNRP.Items[itemID].CanRepair then
+			local tr = ply:TraceFromEyes(200)
+			local ent = tr.Entity
+			
+			if ent then
+				local hpLabel = vgui.Create("DLabel", itemIncentory_frame)
+					hpLabel:SetPos(itemIncentory_frame:GetWide()-155,175)
+					hpLabel:SetColor( Color( 0, 255, 0, 255 ) )
+					hpLabel:SetText( "HP: "..ent:Health().." / "..PNRP.Items[itemID].HP )
+					hpLabel:SizeToContents()
+				
+				local repairBtn = vgui.Create("DImageButton", itemIncentory_frame)
+					repairBtn:SetPos( itemIncentory_frame:GetWide()-btnWPos-50,btnHPos )
+					repairBtn:SetSize(30,30)
+					repairBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					repairBtn.DoClick = function() 
+						net.Start("PNRP_DoRepairItem")
+							net.WriteEntity(ent)
+						net.SendToServer()
+						itemIncentory_frame:Close()
+					end
+					repairBtn.Paint = function()
+						if repairBtn:IsDown() then 
+							repairBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+						else
+							repairBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+						end
+					end	
+				local repairBtnLbl = vgui.Create("DLabel", itemIncentory_frame)
+					repairBtnLbl:SetPos( itemIncentory_frame:GetWide()-btnWPos,btnHPos+2 )
+					repairBtnLbl:SetColor( lblColor )
+					repairBtnLbl:SetText( "Repair" )
+					repairBtnLbl:SetFont("Trebuchet24")
+					repairBtnLbl:SizeToContents()
+			end
+		end
 end
 net.Receive("pnrp_OpenItemStorageWindow", PNRP.ItemStorageWindow)
 
@@ -96,7 +139,7 @@ function buildInvStoragePanels(itemID, inventory_table,plyInventoryTble,PlayerIn
 			StorageInvLabel:SetColor( Color( 0, 255, 0, 255 ) )
 			StorageInvLabel:SizeToContents()
 		local InvWeight = vgui.Create("DLabel", itemIncentory_body)
-			InvWeight:SetPos(200, 40 )
+			InvWeight:SetPos(190, 40 )
 			InvWeight:SetText(invWeightText)
 			InvWeight:SetColor(invWeightColor)
 			InvWeight:SizeToContents()
@@ -381,5 +424,52 @@ function buildInvStoragePanels(itemID, inventory_table,plyInventoryTble,PlayerIn
 						end
 				end
 			end
-		end
+		end	
 end
+
+function PNRP.AskRepair()
+	local ply = LocalPlayer()
+	local ent = net.ReadEntity()
+	
+	local item = PNRP.SearchItembase( ent )
+	if not item then return end
+	
+	local opv_frame = vgui.Create( "DFrame" )
+			opv_frame:SetSize( 200, 85 ) 
+			opv_frame:SetPos(ScrW() / 2 - opv_frame:GetWide() / 2, ScrH() / 2 - opv_frame:GetTall() / 2) --Set the window in the middle of the players screen/game window
+			opv_frame:SetTitle( item.Name )
+			opv_frame:SetVisible( true )
+			opv_frame:SetDraggable( true )
+			opv_frame:ShowCloseButton( false )
+			opv_frame:MakePopup()
+			
+		local opvLabel = vgui.Create("DLabel", opv_frame)
+			opvLabel:SetColor( Color( 0, 255, 0, 255 ) )
+			opvLabel:SetText( "Do you want to repair this? HP: "..ent:Health().."/"..item.HP )
+			opvLabel:SizeToContents()
+			opvLabel:SetPos(opv_frame:GetWide() / 2 - opvLabel:GetWide() / 2, 30)
+			
+			local opv_yes = vgui.Create("DButton") 
+				opv_yes:SetParent( opv_frame ) 
+				opv_yes:SetText( "Yes" ) 
+				opv_yes:SetPos(opv_frame:GetWide() / 2 - 60, 50) 
+				opv_yes:SetSize( 50, 20 ) 
+				opv_yes.DoClick = function() 
+					
+					net.Start("PNRP_DoRepairItem")
+						net.WriteEntity(ent)
+					net.SendToServer()
+					
+					opv_frame:Close() 
+				end 
+			
+			local opv_no = vgui.Create("DButton") 
+				opv_no:SetParent( opv_frame )
+				opv_no:SetText( "No" )
+				opv_no:SetPos(opv_frame:GetWide() / 2 + 10, 50)
+				opv_no:SetSize( 50, 20 ) 
+				opv_no.DoClick = function() 
+					opv_frame:Close() 
+				end
+end
+net.Receive("PNRP_CL_AskRepair", PNRP.AskRepair)

@@ -175,10 +175,8 @@ function GM.EquipmentWindow( )
 										end
 										eq_frame:Close()
 									else
-										local curWepAmmo = v:Clip1()																
-										--datastream.StreamToServer("pnrp_dropWepFromEQ", {myItem.ID, curWepAmmo} )
+										local curWepAmmo = v:Clip1()
 										net.Start( "pnrp_dropWepFromEQ" )
-											net.WriteEntity(ply)
 											net.WriteString(myItem.ID)
 											net.WriteString(curWepAmmo)
 										net.SendToServer()

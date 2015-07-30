@@ -633,9 +633,19 @@ function PNRP_HUD:showGas(x,y,h,w,hudVar,colors)
 			local percent = 1 - ((tank - gas) / tank)
 			local barPos = gasW * percent
 			
-			surface.SetDrawColor( colors.bg.background )
+			local borderColor = colors.border
+			local bgColor = colors.bg.background
+			if car:Health() <= 0 then
+				borderColor = Color(255,0,0,200)
+				bgColor = Color( 125, 58, 51, 100 )
+			else
+				borderColor = colors.border
+				bgColor = colors.bg.background
+			end
+			
+			surface.SetDrawColor( bgColor )
 			surface.DrawRect(x+1, y+1, w, h )
-			surface.SetDrawColor( colors.border )
+			surface.SetDrawColor( borderColor )
 			surface.DrawOutlinedRect( x, y, w+1, h+1 )
 			
 			PNRP_HUD:PaintText( x+4, y+2, "E", hudVar.font, colors.text )
@@ -663,6 +673,26 @@ function PNRP_HUD:showGas(x,y,h,w,hudVar,colors)
 				surface.DrawRect( x-15, y+6, 1, 5 )
 				surface.DrawRect( x-15, y+6, 4, 1 )
 			end
+			
+			x = x + 110
+			y = y - 19
+			local tSize = 40
+			
+			if car:Health() <= 50 then
+				surface.SetDrawColor( 255, 0, 0, 255 )
+				local triangle = {
+					{ x = x+(tSize/2), y = y+tSize },
+					{ x = x+(tSize*0.75), y = y+(tSize/2) },
+					{ x = x+tSize, y = y+tSize }
+				}
+				draw.NoTexture()
+				surface.DrawPoly( triangle )
+				
+				surface.SetDrawColor( 255, 255, 0, 255 )
+				surface.DrawRect( x+29, y+25, 2, 7 )
+				surface.DrawRect( x+29, y+34, 2, 2 )
+			end
+			
 		end
 	end
 end

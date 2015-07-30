@@ -11,7 +11,7 @@ ITEM.Chance = 100
 ITEM.Info = "Sturdy, reliable transportation."
 ITEM.Type = "vehicle"
 ITEM.Remove = true
-ITEM.HP = 175
+ITEM.HP = 150
 ITEM.Energy = 0
 ITEM.Ent = "prop_vehicle_jeep"
 ITEM.EntName = "van001b_01"
@@ -27,6 +27,7 @@ ITEM.Weight = 40
 ITEM.Capacity = 250
 ITEM.Tank = 18
 ITEM.HasStorage = true
+ITEM.CanRepair = true
 ITEM.ShopHide = true
 ITEM.SaveState = true
 

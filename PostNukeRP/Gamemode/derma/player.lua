@@ -40,6 +40,14 @@ function viewPlayerInfoWindow()
 		mdl:SetModel( targetPly:GetModel() ) -- you can only change colors on playermodels
 		function mdl.Entity:GetPlayerColor() return targetPly:GetPlayerColor() end
 		
+		local numBG = mdl.Entity:GetNumBodyGroups()
+		local newSkin = mdl.Entity:GetSkin()
+		local bgString = ""
+		for i=0, numBG do
+			bgString = bgString..tostring(targetPly:GetBodygroup( i ))
+		end
+		mdl.Entity:SetSkin(targetPly:GetSkin())
+		mdl.Entity:SetBodyGroups( bgString )
 		mdl.Entity:SetPos( Vector( -100, 0, -61 ) )
 	
 		-- Hold to rotate
@@ -142,7 +150,7 @@ function playerProfileWindow()
 		
 		local mdl = vgui.Create( "DModelPanel", profile_frame )
 			mdl:SetSize( 350, 740 )
-			mdl:SetPos(-50,-125)
+			mdl:SetPos(-50,-140)
 			mdl.Angles = Angle( 0, 0, 0 )			
 			mdl:SetFOV( 36 )
 			mdl:SetCamPos( Vector( 0, 0, 0 ) )
@@ -155,8 +163,16 @@ function playerProfileWindow()
 			mdl:SetModel( ply:GetModel() ) -- you can only change colors on playermodels
 			function mdl.Entity:GetPlayerColor() return Vector( GetConVarString( "cl_playercolor" ) ) end
 			
+			local numBG = mdl.Entity:GetNumBodyGroups()
+			local newSkin = mdl.Entity:GetSkin()
+			local bgString = ""
+			for i=0, numBG do
+				bgString = bgString..tostring(ply:GetBodygroup( i ))
+			end
+			mdl.Entity:SetSkin(ply:GetSkin())
+			mdl.Entity:SetBodyGroups( bgString )
 			mdl.Entity:SetPos( Vector( -100, 0, -61 ) )
-	
+			
 			-- Hold to rotate
 			function mdl:DragMousePress()
 				self.PressX, self.PressY = gui.MousePos()
@@ -180,7 +196,7 @@ function playerProfileWindow()
 		local profile_TabSheet = vgui.Create( "DPropertySheet" )
 			profile_TabSheet:SetParent( profile_frame )
 			profile_TabSheet:SetPos( 200, 45 )
-			profile_TabSheet:SetSize( profile_frame:GetWide() - 250, profile_frame:GetTall() - 100 )
+			profile_TabSheet:SetSize( profile_frame:GetWide() - 250, profile_frame:GetTall() - 80 )
 			profile_TabSheet.Paint = function() -- Paint function
 				surface.SetDrawColor( 50, 50, 50, 0 )
 			end
@@ -347,17 +363,77 @@ function playerProfileWindow()
 					surface.SetDrawColor( 50, 50, 50, 0 )
 				end
 				
-				local ModelChangeBtn = vgui.Create("DButton", pModelPanel )
-					ModelChangeBtn:SetPos(10, 10)
-					ModelChangeBtn:SetSize(150,25)
-					ModelChangeBtn:SetText( "Update Player Model" )
-					ModelChangeBtn.DoClick = function()
-						updateModel()
-					end
-					
+				local BodyGroupScrollPanel = vgui.Create( "DScrollPanel", pModelPanel)
+					BodyGroupScrollPanel:SetSize( 155, pModelPanel:GetTall() - 50 )
+					BodyGroupScrollPanel:SetPos( 0, 5 )
+					BodyGroupScrollPanel:SetPadding(5)
+				
+				function skinBodyGroup( mdlEnt )
+					BodyGroupScrollPanel:Clear()
+					local layout = vgui.Create( "DListLayout", BodyGroupScrollPanel )
+						layout:SetSize(  BodyGroupScrollPanel:GetWide()-15, BodyGroupScrollPanel:GetTall()-15 )
+						layout:SetPos( 0, 0 )
+						
+						local Skins = mdlEnt:SkinCount()
+						if Skins > 1 then
+							local skinList = vgui.Create( "DListView", layout )
+								skinList:SetMultiSelect( false )
+								skinList:AddColumn( "Skins" )
+							for i=1, Skins do
+								skinList:AddLine( "Skin ("..tostring(i-1)..")", i-1 )
+							end
+							skinList:SetSize( layout:GetWide(), 70 )
+							
+							local oldSkin = mdlEnt:GetSkin()
+							skinList:SelectItem( skinList:GetLine(oldSkin+1) )
+							
+							layout:Add(skinList)
+							skinList.OnRowSelected = function( panel , index )
+								myVar = panel:GetLine(index):GetValue(2)
+								mdl.Entity:SetSkin( myVar ) 
+							end	
+						end
+						
+						local bodyGroups = mdlEnt:GetBodyGroups()
+						
+						local modelName = bodyGroups[1]["name"]
+						for _, v in pairs(bodyGroups) do
+							
+							if v["name"] ~= modelName then
+								local catList = vgui.Create( "DListView", layout )
+									catList:SetMultiSelect( false )
+									catList:AddColumn( v["name"] )
+									
+								local catHeight = 0
+									for mID, submodel in pairs(v["submodels"]) do
+										
+										submodel = string.gsub(submodel, ".smd", "")
+										submodel = string.gsub(submodel, modelName.."_", "")
+										submodel = string.gsub(submodel, "_", " ")
+										if submodel == "" then submodel = "None" end
+										
+										catList:AddLine( submodel, mID )
+										catHeight = catHeight + 25
+									end
+								if catHeight > 70 then catHeight = 70 end
+								if catHeight < 35 then catHeight = 35 end
+								catList:SetSize( layout:GetWide(), catHeight )
+								catList.OnRowSelected = function( panel , index )
+									myVar = panel:GetLine(index):GetValue(2)
+									mdl.Entity:SetBodygroup( v["id"], myVar ) 
+								end
+								layout:Add(catList)
+								local oldBG = mdl.Entity:GetBodygroup( v["id"] )
+								catList:SelectItem( catList:GetLine(oldBG+1) )
+							end
+						end
+				end
+				
+				skinBodyGroup( mdl.Entity )
+				
 				local ModelScrollPanel = vgui.Create( "DScrollPanel", pModelPanel)
-					ModelScrollPanel:SetSize( pModelPanel:GetWide()-20, pModelPanel:GetTall()-100 )
-					ModelScrollPanel:SetPos( 0, 50 )
+					ModelScrollPanel:SetSize( pModelPanel:GetWide()-175, pModelPanel:GetTall()-50 )
+					ModelScrollPanel:SetPos( 160, 5 )
 					
 					local List	= vgui.Create( "DIconLayout", ModelScrollPanel )
 						List:SetSize( ModelScrollPanel:GetWide(), ModelScrollPanel:GetTall() )
@@ -367,30 +443,41 @@ function playerProfileWindow()
 						
 						local mdlList = player_manager.AllValidModels( )
 						for name, model in pairs( mdlList ) do
-							local ListItem = List:Add( "SpawnIcon" )
-							ListItem:SetSize( 64, 64 ) 
-							ListItem:SetModel( model )
-							ListItem:SetTooltip( name )
-							ListItem.DoClick = function()
+							local ListItem = List:Add( "DPanel" )
+							ListItem:SetSize( 64, 64 )
+							ListItem.Paint = function() -- Paint function
+								if string.lower(ply:GetModel()) == string.lower(model) then
+									draw.RoundedBox( 6, 0, 0, ListItem:GetWide(), ListItem:GetTall(), Color( 0, 180, 0, 25 ) )
+								else
+									surface.SetDrawColor( 50, 50, 50, 0 )
+								end
+							end
+							local modelIcon = vgui.Create( "SpawnIcon", ListItem )
+							modelIcon:SetPos( 0, 0 )
+							modelIcon:SetSize( ListItem:GetWide(), ListItem:GetTall() ) 
+							modelIcon:SetModel( model )
+							modelIcon:SetTooltip( name )
+							modelIcon.DoClick = function()
 								mdl:SetModel( model )
 								newModel = model
 								function mdl.Entity:GetPlayerColor() return Vector( GetConVarString( "cl_playercolor" ) ) end
 								mdl.Entity:SetPos( Vector( -100, 0, -61 ) )
-							--	RunConsoleCommand( "cl_playermodel", tostring( model ) )
-							end 
+								
+								skinBodyGroup( mdl.Entity )
+							end
 						end
-			
+				
 		profile_TabSheet:AddSheet( "Player Model", pModelPanel, "gui/icons/user_edit.png", false, false, "Player Model" )
 			
 			local pColorPanel = vgui.Create( "DPanel", profile_TabSheet )
-				pColorPanel:SetPos( 5, 5 )
+				pColorPanel:SetPos( 5, 10 )
 				pColorPanel:SetSize( profile_TabSheet:GetWide(), profile_TabSheet:GetTall() )
 				pColorPanel.Paint = function() -- Paint function
 					surface.SetDrawColor( 50, 50, 50, 0 )
 				end
 									
 				local plyModelCol = vgui.Create( "DColorMixer", pColorPanel )
-					plyModelCol:Dock( BOTTOM )			--Make Mixer fill place of Frame
+					plyModelCol:Dock( FILL )			--Make Mixer fill place of Frame
 					plyModelCol:SetPalette( false ) 		--Show/hide the palette			DEF:true
 					plyModelCol:SetAlphaBar( false ) 		--Show/hide the alpha bar		DEF:true
 					plyModelCol:SetWangs( true )			--Show/hide the R G B A indicators 	DEF:true
@@ -401,14 +488,6 @@ function playerProfileWindow()
 						playerColor = plyModelCol:GetVector()
 					end
 					
-				local ColorChangeBtn = vgui.Create("DButton", pColorPanel )
-					ColorChangeBtn:SetPos(10, 10)
-					ColorChangeBtn:SetSize(150,25)
-					ColorChangeBtn:SetText( "Update Player Model" )
-					ColorChangeBtn.DoClick = function()
-						RunConsoleCommand( "cl_playercolor", tostring( plyModelCol:GetVector() ) )
-						updateModel()
-					end
 		profile_TabSheet:AddSheet( "Player Color", pColorPanel, "gui/icons/user_edit.png", false, false, "Player Color" )
 		
 			local pWColorPanel = vgui.Create( "DPanel", profile_TabSheet )
@@ -419,34 +498,46 @@ function playerProfileWindow()
 				end
 					
 				local plyWeaponCol = vgui.Create( "DColorMixer", pWColorPanel )
-					plyWeaponCol:Dock( BOTTOM )			--Make Mixer fill place of Frame
+					plyWeaponCol:Dock( FILL )			--Make Mixer fill place of Frame
 					plyWeaponCol:SetPalette( false ) 		--Show/hide the palette			DEF:true
 					plyWeaponCol:SetAlphaBar( false ) 		--Show/hide the alpha bar		DEF:true
 					plyWeaponCol:SetWangs( true )			--Show/hide the R G B A indicators 	DEF:true
 					plyWeaponCol:SetColor( Color( 30, 100, 160 ) )	--Set the default color
 					plyWeaponCol:SetVector( wepColor )
 					plyWeaponCol.ValueChanged = function()
-					--	function mdl.Entity:GetPlayerColor() return plyWeaponCol:GetVector() end
 						wepColor = plyWeaponCol:GetVector()
 					end
 					
-				local WColorChangeBtn = vgui.Create("DButton", pWColorPanel )
-					WColorChangeBtn:SetPos(10, 10)
-					WColorChangeBtn:SetSize(150,25)
-					WColorChangeBtn:SetText( "Update Player Model" )
-					WColorChangeBtn.DoClick = function()
-						RunConsoleCommand( "cl_weaponcolor", tostring( plyWeaponCol:GetVector() ) )
-						updateModel()
-					end
+				
 				
 		profile_TabSheet:AddSheet( "Weapon Color", pWColorPanel, "gui/icons/user_edit.png", false, false, "Weapon Color" )
 	
+	local WColorChangeBtn = vgui.Create("DButton", profile_frame )
+		WColorChangeBtn:SetPos(50, profile_frame:GetTall()-63)
+		WColorChangeBtn:SetSize(150,17)
+		WColorChangeBtn:SetText( "Update Player Model" )
+		WColorChangeBtn.DoClick = function()
+			RunConsoleCommand( "cl_playercolor", tostring( plyModelCol:GetVector() ) )
+			RunConsoleCommand( "cl_weaponcolor", tostring( plyWeaponCol:GetVector() ) )
+			updateModel()
+		end
+					
 	function updateModel()
+		
+		local numBG = mdl.Entity:GetNumBodyGroups()
+		local newSkin = mdl.Entity:GetSkin()
+		local bgString = ""
+		
+		for i=0, numBG do
+			bgString = bgString..tostring(mdl.Entity:GetBodygroup( i ))
+		end
+		
 		net.Start("PNRP_SetPlayerModel")
-			net.WriteEntity(ply)
 			net.WriteString(newModel)
 			net.WriteVector(playerColor)
 			net.WriteVector(wepColor)
+			net.WriteString(newSkin)
+			net.WriteString(bgString)
 		net.SendToServer()
 	end
 		

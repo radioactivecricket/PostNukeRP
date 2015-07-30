@@ -102,12 +102,12 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 			instStr = instStr.."\n"
 			instStr = instStr.."Every hull is unique and you will need the right one for the vehicle you want."
 			local instTxt = vgui.Create("DLabel", vehicleInfoPanel)
-			instTxt:SetPos(20, 150)
-			instTxt:SetText(instStr)
-			instTxt:SetFont("Trebuchet18")
-			instTxt:SizeToContents() 
-			instTxt:SetColor(Color( 0, 255, 0, 255 ))
-			instTxt:SetContentAlignment( 5 )
+				instTxt:SetPos(20, 150)
+				instTxt:SetText(instStr)
+				instTxt:SetFont("Trebuchet18")
+				instTxt:SizeToContents() 
+				instTxt:SetColor(Color( 0, 255, 0, 255 ))
+				instTxt:SetContentAlignment( 5 )
 			
 			local ToolScrollPanel = vgui.Create( "DPanel", vehicleInfoPanel )
 				ToolScrollPanel:SetPos( 20, 325 )
@@ -140,6 +140,25 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 						toolIcon.DoClick = function() end
 					ToolScroller:AddPanel(pnlTPanel)
 				end
+			
+			local repLblTxt = vgui.Create("DLabel", vehicleInfoPanel)
+				repLblTxt:SetPos(20, 420)
+				repLblTxt:SetText("Vehicle Repair")
+				repLblTxt:SetFont("Trebuchet18")
+				repLblTxt:SizeToContents() 
+				repLblTxt:SetColor(Color( 0, 255, 0, 255 ))
+				repLblTxt:SetContentAlignment( 5 )
+				
+			local repStr = "Only Engineers with a toolbox can repair vehicles.\n"
+			repStr = repStr.."Cost of repair is 1 Scrap per second while repairing, and can be stopped by pressing E on the vehicle.\n"
+			repStr = repStr.."Repair rate is affected by your Construction Skill.\n\n"
+			repStr = repStr.."Vehicles with a HP below 50 will consume more gas. The lower the HP the more it will consume."
+			local repTxt = vgui.Create("DLabel", vehicleInfoPanel)
+				repTxt:SetPos(20, 435)
+				repTxt:SetText(repStr)
+				repTxt:SizeToContents() 
+				repTxt:SetColor(Color( 0, 255, 0, 255 ))
+				repTxt:SetContentAlignment( 5 )
 		
 		return vehicleInfoPanel
 	end
@@ -242,6 +261,9 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 					local weightTXT = "Weight: "..item.Weight
 					if item.Capacity then
 						weightTXT = weightTXT.." | Capacity: "..item.Capacity
+					end
+					if item.HP then
+						weightTXT = weightTXT.." | HP: "..item.HP
 					end
 					pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
 					pnlPanel.ItemWeight:SetPos(340, 55)

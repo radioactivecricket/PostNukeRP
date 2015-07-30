@@ -49,12 +49,21 @@ local textColor =
 local function ManageDoor( )
 	local door = net.ReadEntity()
 	local doorCoowners = net.ReadTable()
-
+	
+	local item = PNRP.SearchItembase( door )
+	local Title = "Door Management"
+	local canRepair = false
+	
+	if item then 
+		Title = item.Name.." Management"
+		if item.CanRepair then canRepair = true end
+	end
+	
 	local ply = LocalPlayer()
 	local manage_frame = vgui.Create( "DFrame" )
 	manage_frame:SetSize( 400, 300 )
 	manage_frame:Center()
-	manage_frame:SetTitle( "Door Management" )
+	manage_frame:SetTitle( Title )
 	manage_frame:SetVisible( true )
 	manage_frame:SetDraggable( true )
 	manage_frame:ShowCloseButton( true )
@@ -170,6 +179,20 @@ local function ManageDoor( )
 			net.SendToServer()
 			manage_frame:Close()
 		end
+			
+	if canRepair then
+		local repairBTN = vgui.Create("DButton", manage_frame )
+			repairBTN:SetText( "Repair" )
+			repairBTN:SetPos( 150, 120 )
+			repairBTN:SetSize(100, 25)
+			repairBTN.DoClick = function()
+				net.Start("PNRP_DoRepairItem")
+					net.WriteEntity(door)
+				net.SendToServer()
+				manage_frame:Close()
+			end
+	end
+	
 end
 net.Receive( "manageDoor", ManageDoor );
 
