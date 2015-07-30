@@ -379,7 +379,9 @@ function SQLiteTableCheck()
 		query = "SELECT skin FROM profiles"
 		result = sql.Query(query)
 		if sql.LastError( result ) != nil and result == false then
-			query = "ALTER TABLE profiles ADD COLUMN skin int, bodygroups varchar(255)"
+			query = "ALTER TABLE profiles ADD COLUMN skin int"
+			querySQL(query)
+			query = "ALTER TABLE profiles ADD COLUMN bodygroups varchar(255)"
 			querySQL(query)
 		end
 	end
