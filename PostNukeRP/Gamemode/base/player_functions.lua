@@ -164,10 +164,10 @@ function PNRP.SetBodyGroups( ply )
 	if not bodygroups then bodygroups = "" end
 	ply:SetBodyGroups(tostring(bodygroups))	
 	
-	local skin = result["skin"]
+	local skin = tonumber(result["skin"])
 	if not skin or skin == nil or not isnumber(skin) then skin = 0 end
-	
-	ply:SetSkin(tonumber(skin))
+
+	ply:SetSkin(skin)
 end
 
 /*---------------------------------------------------------
