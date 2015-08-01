@@ -270,7 +270,7 @@ function pndb(ply, command, args)
 		Msg(" PNDB: Done \n")
 	end
 end
-concommand.Add( "pndb", pndb )
+--concommand.Add( "pndb", pndb )
 
 function pntb(ply, command, args)
 	local GM = GAMEMODE

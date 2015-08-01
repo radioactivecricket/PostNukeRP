@@ -165,7 +165,7 @@ function PNRP.SetBodyGroups( ply )
 	ply:SetBodyGroups(tostring(bodygroups))	
 	
 	local skin = result["skin"]
-	if not skin or skin == nil then skin = 0 end
+	if not skin or skin == nil or not isnumber(skin) then skin = 0 end
 	
 	ply:SetSkin(tonumber(skin))
 end
@@ -242,11 +242,15 @@ function GM.CreateCharacter( ply, plyModel, plyClass )
 	result = querySQL(query)
 
 	if not result then
-		query = "INSERT INTO player_table VALUES ( '"..ply:SteamID().."', '"..tostring(ply:UniqueID()).."', '"..ply:IPAddress().."', "..SQLStr(ply:SteamName())..", '"..tostring(os.date()).."', '"..tostring(os.date()).."' )"
+		query = "INSERT INTO player_table "
+		query = query.."( 'steamid', 'uid', 'ip', 'name', 'first_joined', 'last_joined' ) VALUES "
+		query = query.."( '"..ply:SteamID().."', '"..tostring(ply:UniqueID()).."', '"..ply:IPAddress().."', "..SQLStr(ply:SteamName())..", '"..tostring(os.date()).."', '"..tostring(os.date()).."' )"
 		result = querySQL(query)
 	end
 
-	query = "INSERT INTO profiles VALUES ( NULL, '"..ply:SteamID().."', "..SQLStr(plyModel)..", "..SQLStr(ply:Name())..", "..SQLStr(os.date())..", "..tonumber(plyClass)..", 0, ' ', 150, 0, 100, 100, '0,0,0', ' ', ' ' )"
+	query = "INSERT INTO profiles "
+	query = query.."('steamid', 'model', 'nick', 'lastlog', 'class', 'xp', 'skills', 'health', 'armor', 'endurance', 'hunger', 'res', 'weapons', 'ammo' ) VALUES "
+	query = query.."('"..ply:SteamID().."', "..SQLStr(plyModel)..", "..SQLStr(ply:Name())..", "..SQLStr(os.date())..", "..tonumber(plyClass)..", 0, ' ', 150, 0, 100, 100, '0,0,0', ' ', ' ' )"
 	result = querySQL(query)
 
 	print("Created new character for "..ply:SteamName())
