@@ -229,10 +229,10 @@ local function DynaEyeTilt()
 		if ( person:KeyDown( IN_MOVERIGHT ) ) then sideways = sideways + 3 end
 		
 		if ( person:KeyDown( IN_FORWARD  ) ) then 
-			towards = 5 
+			towards = 5
 			running = 1
 		elseif ( person:KeyDown( IN_BACK  ) ) then 
-			towards = -5 
+			towards = -5
 			running = 1
 		else
 			runnning = 0
@@ -250,8 +250,8 @@ local function DynaEyeTilt()
 		local bottom = (0.5/7*towards*sprint)*isonground + sideways --math.sin(RealTime()*3*towards*sprint)
 		dynaset.newroll = bottom + (top-bottom)*0.7
 		dynaset.prevyaw = val.yaw
-
-		if (person:Alive() ) then person:SetEyeAngles(Angle(val.pitch+(math.sin(RealTime()*8*running*sprint*isonground)/(8-(sprint-1)*4)),val.yaw,dynaset.newroll)) end
+		
+		if (person:Alive() ) then person:SetEyeAngles(Angle(val.pitch+(math.sin(RealTime()*8*running*sprint*isonground)/(32-(sprint-1)*4)),val.yaw,dynaset.newroll)) end
 	end
 end
 

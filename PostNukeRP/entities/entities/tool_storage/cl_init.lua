@@ -323,399 +323,512 @@ function StorageNewMenu( storageENT )
 end
 net.Receive("storage_new_menu", OpenStorageNewMenu)
 
+local storagemenu_frame
+local storagemenu_body
 function StorageMenu()
 	local ply = LocalPlayer()
 	
 	local storageENT = net:ReadEntity()
 	local storageID = net.ReadString()
-	local storage_table = net.ReadTable()
-	local inventoryTble = net.ReadTable()
-	local avModels = net.ReadTable()	
+	local inventory_table = net.ReadTable()
+	local plyInventoryTble = net.ReadTable()
+	local avModels = net.ReadTable()
 	local storageHealth = net.ReadDouble()
-	local Capacity = net.ReadString()
+	local PlayerInvWeight = net.ReadString()
+	local CurInvWeight = net.ReadString()
+	local weightCap = net.ReadString()
+	local capacity = net.ReadString()
 	
-	local w = 810
-	local h = 520
-	local title = "Storage Menu"
+	if not storagemenu_frame or tostring(storagemenu_frame) == "[NULL Panel]" then
+		storagemenu_frame = PNRP.PNRP_Frame()
+		if not storagemenu_frame then return end
 		
-	local storagemenu_frame = vgui.Create( "DFrame" )
+		local w = 810
+		local h = 520
+		
 		storagemenu_frame:SetSize( w, h ) 
-		storagemenu_frame:SetPos( ScrW() / 2 - storagemenu_frame:GetWide() / 2, ScrH() / 2 - storagemenu_frame:GetTall() / 2 )
-		storagemenu_frame:SetTitle( "" )
-		storagemenu_frame:SetVisible( true )
-		storagemenu_frame:SetDraggable( false )
-		storagemenu_frame:ShowCloseButton( true )
-		storagemenu_frame:MakePopup()
-		storagemenu_frame.Paint = function() 
-			surface.SetDrawColor( 50, 50, 50, 0 )
-		end
-	
-		local screenBG = vgui.Create("DImage", storagemenu_frame)
-		local screenBG = vgui.Create("DImage", storagemenu_frame)
-			screenBG:SetImage( "VGUI/gfx/pnrp_screen_5b.png" )
-			screenBG:SetKeepAspect()
-			screenBG:SizeToContents()
-			screenBG:SetSize(storagemenu_frame:GetWide(), storagemenu_frame:GetTall())
+			storagemenu_frame:SetPos( ScrW() / 2 - storagemenu_frame:GetWide() / 2, ScrH() / 2 - storagemenu_frame:GetTall() / 2 )
+			storagemenu_frame:SetTitle( "" )
+			storagemenu_frame:SetVisible( true )
+			storagemenu_frame:SetDraggable( false )
+			storagemenu_frame:ShowCloseButton( true )
+			storagemenu_frame:MakePopup()
+			storagemenu_frame.Paint = function() 
+				surface.SetDrawColor( 50, 50, 50, 0 )
+			end
 			
+			local screenBG = vgui.Create("DImage", storagemenu_frame)
+				screenBG:SetImage( "VGUI/gfx/pnrp_screen_5b.png" )
+				screenBG:SetKeepAspect()
+				screenBG:SizeToContents()
+				screenBG:SetSize(storagemenu_frame:GetWide(), storagemenu_frame:GetTall())			
+	end
+	
+	buildPlyStoragePanels(storageENT, storageID, inventory_table,plyInventoryTble,PlayerInvWeight,CurInvWeight,weightCap,capacity)	
+	
+	--//Storage Status			
+	local lMenuList = vgui.Create( "DPanelList", storagemenu_frame )
+		lMenuList:SetPos( 610,45 )
+		lMenuList:SetSize( 150, 175 )
+		lMenuList:SetSpacing( 5 )
+		lMenuList:SetPadding(3)
+		lMenuList:EnableHorizontal( false ) 
+		lMenuList:EnableVerticalScrollbar( true ) 
+
+		local storagemenuLabel = vgui.Create("DLabel", storagemenu_frame)
+			storagemenuLabel:SetColor( Color( 255, 255, 255, 255 ) )
+			storagemenuLabel:SetText( "Storage Menu" )
+			storagemenuLabel:SetFont("Trebuchet24")
+			storagemenuLabel:SizeToContents()
+			lMenuList:AddItem( storagemenuLabel )
+
+		local NameLabel = vgui.Create("DLabel")
+			NameLabel:SetColor( Color( 255, 255, 255, 255 ) )
+			NameLabel:SetText( " Storage Status" )
+			NameLabel:SizeToContents()
+			lMenuList:AddItem( NameLabel )
+		local LDevide = vgui.Create("DShape") 
+			LDevide:SetParent( stockStatusList ) 
+			LDevide:SetType("Rect")
+			LDevide:SetSize( 100, 2 ) 	
+			lMenuList:AddItem( LDevide )
+			
+		local hpCVar = 255
+		hpCVar = 255-(((100 - storageHealth)/storageHealth)*255)
+		
+		local hpColor = Color( 255, hpCVar, hpCVar, 255 )
+		
+		local LHPLabel = vgui.Create("DLabel")
+			LHPLabel:SetColor( hpColor )
+			LHPLabel:SetText( " Health: "..storageHealth.."%" )
+			LHPLabel:SizeToContents()
+			lMenuList:AddItem( LHPLabel )
+		local LCPLabel = vgui.Create("DLabel")
+			LCPLabel:SetColor( Color( 255, 255, 255, 255 ) )
+			LCPLabel:SetText( " Capacity: "..capacity )
+			LCPLabel:SizeToContents()
+			lMenuList:AddItem( LCPLabel )
+		
+		--//Storage Owner Menu Menu	
+		local btnHPos = 250
+		local btnWPos = storagemenu_frame:GetWide()-220
+		local btnHeight = 40
+		local lblColor = Color( 245, 218, 210, 180 )
+						
+		local vendRenameBtn = vgui.Create("DImageButton", storagemenu_frame)
+			vendRenameBtn:SetPos( btnWPos,btnHPos )
+			vendRenameBtn:SetSize(30,30)
+			vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			vendRenameBtn.DoClick = function() 
+				renameStorage( storageENT, storage_table[1]["storageid"], storage_table[1]["name"] )
+				storagemenu_frame:Close()
+			end
+			vendRenameBtn.Paint = function()
+				if vendRenameBtn:IsDown() then 
+					vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local vendRenameBtnLbl = vgui.Create("DLabel", storagemenu_frame)
+			vendRenameBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
+			vendRenameBtnLbl:SetColor( lblColor )
+			vendRenameBtnLbl:SetText( "Rename Storage" )
+			vendRenameBtnLbl:SetFont("Trebuchet24")
+			vendRenameBtnLbl:SizeToContents()
+		
+		btnHPos = btnHPos + btnHeight			
+		local chModelBtn = vgui.Create("DImageButton", storagemenu_frame)
+			chModelBtn:SetPos( btnWPos,btnHPos )
+			chModelBtn:SetSize(30,30)
+			chModelBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			chModelBtn.DoClick = function() 
+				changeStorageModelMenu(storageENT, avModels)
+				storagemenu_frame:Close()
+			end
+			chModelBtn.Paint = function()
+				if chModelBtn:IsDown() then 
+					chModelBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					chModelBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local chModelBtnLbl = vgui.Create("DLabel", storagemenu_frame)
+			chModelBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
+			chModelBtnLbl:SetColor( lblColor )
+			chModelBtnLbl:SetText( "Change Model" )
+			chModelBtnLbl:SetFont("Trebuchet24")
+			chModelBtnLbl:SizeToContents()
+		
+		btnHPos = btnHPos + btnHeight			
+		local repBtn = vgui.Create("DImageButton", storagemenu_frame)
+			repBtn:SetPos( btnWPos,btnHPos )
+			repBtn:SetSize(30,30)
+			if storageHealth < 100 then
+				repBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				repBtn.DoClick = function() 
+					net.Start("StorageRepair")
+						net.WriteEntity(ply)
+						net.WriteEntity(storageENT)
+					net.SendToServer()
+					storagemenu_frame:Close()
+				end
+		
+				repBtn.Paint = function()
+					if repBtn:IsDown() then 
+						repBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+					else
+						repBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+					end
+				end	
+			else
+				repBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+			end	
+		local repBtnLbl = vgui.Create("DLabel", storagemenu_frame)
+			repBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
+			repBtnLbl:SetColor( lblColor )
+			repBtnLbl:SetText( "Repair Storage" )
+			repBtnLbl:SetFont("Trebuchet24")
+			repBtnLbl:SizeToContents()
+		
+		btnHPos = btnHPos + btnHeight			
+		local remBtn = vgui.Create("DImageButton", storagemenu_frame)
+			remBtn:SetPos( btnWPos,btnHPos )
+			remBtn:SetSize(30,30)
+			remBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+			remBtn.DoClick = function() 
+				PNRP.OptionVerify( "pnrp_remstorage", tostring(storageENT:GetNetVar("storageid")), nil ) 
+				storagemenu_frame:Close()
+			end
+			remBtn.Paint = function()
+				if remBtn:IsDown() then 
+					remBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
+				else
+					remBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
+				end
+			end	
+		local remBtnLbl = vgui.Create("DLabel", storagemenu_frame)
+			remBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
+			remBtnLbl:SetColor( lblColor )
+			remBtnLbl:SetText( "Remove Storage" )
+			remBtnLbl:SetFont("Trebuchet24")
+			remBtnLbl:SizeToContents()
+end
+
+function buildPlyStoragePanels(storageENT, storageID, inventory_table,plyInventoryTble,PlayerInvWeight,CurInvWeight,weightCap,capacity)	
+		if not storagemenu_frame then return end
+		if storagemenu_body then storagemenu_body:Remove() end
+		
+		local stoItem = PNRP.Items[itemID]
+		
+		storagemenu_body = vgui.Create( "DPanel", storagemenu_frame )
+			storagemenu_body:SetPos( 0, 0 ) -- Set the position of the panel
+			storagemenu_body:SetSize( storagemenu_frame:GetWide()-50, storagemenu_frame:GetTall())
+			storagemenu_body.Paint = function() end
+		
+		local invWeightText = "Weight: "..tostring(CurInvWeight).."/"..tostring(capacity).."\n"
+		local yourWeightText = "Weight:"..tostring(PlayerInvWeight).."/"..tostring(weightCap)
+		local invWeightColor = Color( 0, 255, 0, 255 )
+		local yourWeightColor = Color( 0, 255, 0, 255 )
+		
+		if tonumber(CurInvWeight) >= tonumber(capacity) then
+			invWeightColor = Color( 255, 0, 0, 255 )
+		end
+		if tonumber(PlayerInvWeight) >= tonumber(weightCap) then
+			yourWeightColor = Color( 255, 0, 0, 255 )
+		end
+					
 		local paneWidth = 255
 		
 		--//Storage Inventory
-		local StorageInvLabel = vgui.Create( "DLabel", storagemenu_frame )
+		local StorageInvLabel = vgui.Create( "DLabel", storagemenu_body )
 			StorageInvLabel:SetText("Storage Inventory")
 			StorageInvLabel:SetPos(35, 40)
 			StorageInvLabel:SetColor( Color( 0, 255, 0, 255 ) )
 			StorageInvLabel:SizeToContents()
-			
-		local pnlLIList = vgui.Create("DPanelList", storagemenu_frame)
+		local InvWeight = vgui.Create("DLabel", storagemenu_body)
+			InvWeight:SetPos(190, 40 )
+			InvWeight:SetText(invWeightText)
+			InvWeight:SetColor(invWeightColor)
+			InvWeight:SizeToContents()
+		local pnlLIList = vgui.Create("DPanelList", storagemenu_body)
 			pnlLIList:SetPos(30, 55)
-			pnlLIList:SetSize(paneWidth, storagemenu_frame:GetTall() - 111)
-			pnlLIList:EnableVerticalScrollbar(false) 
-			pnlLIList:EnableHorizontal(true) 
+			pnlLIList:SetSize(paneWidth, storagemenu_body:GetTall() - 111)
+			pnlLIList:EnableVerticalScrollbar(true) 
+			pnlLIList:EnableHorizontal(false) 
 			pnlLIList:SetSpacing(1)
 			pnlLIList:SetPadding(5)
-			--Generates the Storage's inventory
-			if storage_table == nil then
-				local EmptyLabel = vgui.Create( "DLabel", storagemenu_frame )
-					EmptyLabel:SetText("Storage Inventory is Empty")
-					EmptyLabel:SetPos(40, 70)
-					EmptyLabel:SetColor( Color( 0, 255, 0, 255 ) )
-					EmptyLabel:SizeToContents()
-			else
 			
-				for k, v in pairs( storage_table ) do
-					local item = PNRP.Items[v["itemid"]]
-					if item then
-						local count = v["count"]
-						local toolTip = item.Name.."\n".."Count: "..count
-						local pnlLIPanel = vgui.Create("DPanel", pnlLIList)
-							pnlLIPanel:SetSize( 75, 100 )
-							pnlLIPanel.Paint = function()
-								draw.RoundedBox( 6, 0, 0, pnlLIPanel:GetWide(), pnlLIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
-							end
+		--Generates the Storage's inventory
+		if inventory_table == nil then
+			local EmptyLabel = vgui.Create( "DLabel" )
+				EmptyLabel:SetText("Storage Inventory is Empty")
+				EmptyLabel:SetColor( Color( 0, 255, 0, 255 ) )
+				EmptyLabel:SizeToContents()
+				
+				pnlLIList:AddItem(EmptyLabel)
+		else
+			for k, v in pairs( inventory_table ) do
+				local item = PNRP.Items[v["itemid"]]
+				if item then
+					local pnlPanel = vgui.Create("DPanel")
+						pnlPanel:SetTall(75)
+						pnlPanel.Paint = function()
+							draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+							draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+						end
+						pnlLIList:AddItem(pnlPanel)
+						
+						local model = item.Model
+						local skin = 0
+						local Info = item.Info
+						local countTxt = "Count: "..tostring(v["count"])
+						if v["status_table"] != "" then
+							countTxt = ""
+							local HP = PNRP.GetFromStat(v["status_table"], "HP")
+							if HP then 	countTxt = "HP: "..HP end
+							local PowerLevel = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+							if PowerLevel then 	countTxt = countTxt.." Charge: "..tostring(math.Round(PowerLevel/100)).."% " end
+							local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+							if FuelLevel then countTxt = countTxt.." Fuel: "..tostring(FuelLevel) end
+							local GasLevel = PNRP.GetFromStat(v["status_table"], "Gas")
+							if GasLevel then countTxt = countTxt.." Gas: "..tostring(math.Round(100-((item.Tank-GasLevel)/item.Tank)*100)).."% " end
 							
-							pnlLIList:AddItem(pnlLIPanel)
-							
-							local model = item.Model
-							local skin = 0
-							local infoExtra = ""
-							local countTxt = "Count: "..tostring(v["count"])
-							if v["status_table"] != "" then
-								local HPText = ""
-								local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
-								local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
-								if HPLevel then HPText = "HP: "..HPLevel
-								elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
-								
-								if Charge then infoExtra = infoExtra.."Charge: "..tostring(Charge).."\n" end
-								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
-								if FuelLevel then infoExtra = infoExtra.."Fuel: "..tostring(FuelLevel).."\n" end
-								local GasLevel = PNRP.GetFromStat(v["status_table"], "Gas")
-								if GasLevel then infoExtra = infoExtra.."Gas: "..tostring(math.Round(100-((item.Tank-GasLevel)/item.Tank)*100)).."% \n" end
-								
-								pnlLIPanel.HP = vgui.Create("DLabel", pnlLIPanel)		
-								pnlLIPanel.HP:SetPos( 10, 75 )
-								pnlLIPanel.HP:SetText(HPText)
-								pnlLIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
-								pnlLIPanel.HP:SizeToContents() 
-								pnlLIPanel.HP:SetContentAlignment( 5 )
-								
-								local newModel = PNRP.GetFromStat(v["status_table"], "Model")
-								local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
-								if newModel then model = newModel end
-								if newSkin then skin = tonumber(newSkin) end
-								
-							else
-								pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
-								pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
-								pnlLIPanel.NumberWang:SetMin( 1 )
-								pnlLIPanel.NumberWang:SetMax( count )
-								pnlLIPanel.NumberWang:SetDecimals( 0 )
-								pnlLIPanel.NumberWang:SetValue( 1 )
-							end
-							
-							pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
-							pnlLIPanel.Icon:SetModel(model, skin)
-							pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
-							pnlLIPanel.Icon:SetToolTip( item.Name.."\n"..infoExtra..countTxt.."\n Press Icon to move item." )
-							pnlLIPanel.Icon.DoClick = function() 
-								--Remove item and place in inventory (Not Sell Item)
-								local takeCount = 1
-								if v["iid"] == "" then
-									takeCount = math.Round(pnlLIPanel.NumberWang:GetValue())
+							local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+							local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+							if newModel then model = newModel end
+							if newSkin then skin = tonumber(newSkin) end
+						end
+													
+						pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
+						pnlPanel.Title:SetPos(70, 5)
+						pnlPanel.Title:SetText(item.Name)
+						pnlPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+						pnlPanel.Title:SizeToContents() 
+						pnlPanel.Title:SetContentAlignment( 5 )
+						
+						local weightTXT = "Weight: "..item.Weight
+						if item.Capacity then
+							weightTXT = weightTXT.." | Capacity: "..item.Capacity
+						end
+						pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.ItemWeight:SetPos(70, 55)
+						pnlPanel.ItemWeight:SetText(weightTXT)
+						pnlPanel.ItemWeight:SetColor(Color( 0, 200, 0, 255 ))
+						pnlPanel.ItemWeight:SizeToContents() 
+						pnlPanel.ItemWeight:SetContentAlignment( 5 )
+						
+						pnlPanel.Count = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.Count:SetPos(70, 40)
+						pnlPanel.Count:SetText(countTxt)
+						pnlPanel.Count:SetColor(Color( 0, 255, 0, 255 ))
+						pnlPanel.Count:SizeToContents() 
+						pnlPanel.Count:SetContentAlignment( 5 )
+						
+						pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
+						pnlPanel.bulkSlider:SetPos(5, 15) 
+						pnlPanel.bulkSlider:SetWide( 240 )
+						pnlPanel.bulkSlider:SetText( "" )
+						pnlPanel.bulkSlider:SetMin( 1 )
+						pnlPanel.bulkSlider:SetMax( v["count"] )
+						pnlPanel.bulkSlider:SetDecimals( 0 )
+						pnlPanel.bulkSlider:SetValue( 1 )
+						pnlPanel.bulkSlider:Hide()
+						pnlPanel.bulkSlider.Label:SizeToContents()
+						
+						if item.Type == "food" or item.Type == "medical" or item.Type == "weapon" or item.Type == "ammo" then
+							local useBtn = vgui.Create("DButton", pnlPanel )
+								useBtn:SetPos(70, 20)
+								useBtn:SetSize(35,17)
+								useBtn:SetText( "Use" )
+								useBtn.DoClick = function() 
+									net.Start("UseFromPlyStoreage")
+										net.WriteEntity(storageENT)
+										net.WriteString("storage")
+										net.WriteString(item.ID)
+									net.SendToServer() 
 								end
-								if tonumber(takeCount) > tonumber(count) then
-									takeCount = count
-								elseif tonumber(takeCount) < 1 then
-									takeCount = 1
-								end
+						end
+						
+						if v["iid"] == "" and v["count"] > 1 then
+							pnlPanel.bulkSlider:Show()
+						end 
+						
+						local toolTip = nil
+						if tostring(item.Info) ~= "" then toolTip = tostring(item.Info) end
+						pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
+						pnlPanel.Icon:SetModel(model, skin)
+						pnlPanel.Icon:SetPos(3, 5)
+						pnlPanel.Icon:SetToolTip( toolTip )
+						pnlPanel.Icon.DoClick = function()
+							local weightCur = CurInvWeight + item.Weight
+							local weightBlk
+							local weightCapBlk
+							local amt = pnlPanel.bulkSlider:GetValue()
+							
+							--Idiot ammount check
+							if amt <= 0 then amt = 1 end
+							if amt >= v["count"] then amt = v["count"] end
+							
+							if amt >= 1 then								
 								net.Start("storage_take")
-									net.WriteEntity(ply)
 									net.WriteEntity(storageENT)
 									net.WriteString(item.ID)
-									net.WriteDouble(takeCount)
+									net.WriteDouble(amt)
 									net.WriteString(v["iid"])
 								net.SendToServer()
-								storagemenu_frame:Close()
-							end	
-					end
+							else
+								ply:ChatPrint("Your pack is to full.")
+							end
+						end
 				end
-			end		
-
+			end
+		end
+			
 		--//Player Inventory
-		local PlayerInvLabel = vgui.Create( "DLabel", storagemenu_frame )
+		local PlayerInvLabel = vgui.Create( "DLabel", storagemenu_body )
 			PlayerInvLabel:SetText("Player  Inventory")
 			PlayerInvLabel:SetPos(320, 40)
 			PlayerInvLabel:SetColor( Color( 0, 255, 0, 255 ) )
 			PlayerInvLabel:SizeToContents()
+		local yourWeight = vgui.Create("DLabel", storagemenu_body)
+			yourWeight:SetPos(475, 40 )
+			yourWeight:SetText(yourWeightText)
+			yourWeight:SetColor(yourWeightColor)
+			yourWeight:SizeToContents() 
 			
-		local pnlUserIList = vgui.Create("DPanelList", storagemenu_frame)
+		local pnlUserIList = vgui.Create("DPanelList", storagemenu_body)
 			pnlUserIList:SetPos(315, 55)
-			pnlUserIList:SetSize(paneWidth, storagemenu_frame:GetTall() - 111)
-			pnlUserIList:EnableVerticalScrollbar(false) 
-			pnlUserIList:EnableHorizontal(true) 
+			pnlUserIList:SetSize(paneWidth, storagemenu_body:GetTall() - 111)
+			pnlUserIList:EnableVerticalScrollbar(true) 
+			pnlUserIList:EnableHorizontal(false) 
 			pnlUserIList:SetSpacing(1)
 			pnlUserIList:SetPadding(5)
-			--Generates the user's inventory
-			if inventoryTble != nil then
-				for k, v in pairs( inventoryTble ) do
-					local item = PNRP.Items[v["itemid"]]
-					if item then
-						local pnlUserIPanel = vgui.Create("DPanel", pnlUserIList)
-							pnlUserIPanel:SetSize( 75, 100 )
-							pnlUserIPanel.Paint = function()
-								draw.RoundedBox( 6, 0, 0, pnlUserIPanel:GetWide(), pnlUserIPanel:GetTall(), Color( 180, 180, 180, 255 ) )		
-							end
+		--Generates the user's inventory
+		if plyInventoryTble == nil then
+			local EmptyLabel = vgui.Create( "DLabel", storagemenu_body )
+				EmptyLabel:SetText("Player Inventory is Empty")
+				EmptyLabel:SetColor( Color( 0, 255, 0, 255 ) )
+				EmptyLabel:SizeToContents()
+				
+				pnlUserIList:AddItem(EmptyLabel)
+		else
+			for k, v in pairs( plyInventoryTble ) do
+				local item = PNRP.Items[v["itemid"]]
+				if item then
+					local pnlPanel = vgui.Create("DPanel")
+						pnlPanel:SetTall(75)
+						pnlPanel.Paint = function()
+							draw.RoundedBox( 1, 0, 0, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+							draw.RoundedBox( 1, 0, pnlPanel:GetTall()-1, pnlPanel:GetWide(), 1, Color( 0, 255, 0, 80 ) )
+						end
+						pnlUserIList:AddItem(pnlPanel)
+						
+						local model = item.Model
+						local skin = 0
+						local Info = item.Info
+						local countTxt = "Count: "..tostring(v["count"])
+						if v["status_table"] != "" then
+							countTxt = ""
+							local HP = PNRP.GetFromStat(v["status_table"], "HP")
+							if HP then 	countTxt = "HP: "..HP end
+							local PowerLevel = PNRP.GetFromStat(v["status_table"], "PowerLevel")
+							if PowerLevel then 	countTxt = countTxt.." Charge: "..tostring(math.Round(PowerLevel/100)).."% " end
+							local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
+							if FuelLevel then countTxt = countTxt.." Fuel: "..tostring(FuelLevel) end
+							local GasLevel = PNRP.GetFromStat(v["status_table"], "Gas")
+							if GasLevel then countTxt = countTxt.." Gas: "..tostring(math.Round(100-((item.Tank-GasLevel)/item.Tank)*100)).."% " end
 							
-							pnlUserIList:AddItem(pnlUserIPanel)
-							
-							local model = item.Model
-							local skin = 0
-							local infoExtra = ""
-							local countTxt = "Count: "..tostring(v["count"])
-							if v["status_table"] != "" then
-								local HPText = ""
-								local HPLevel = PNRP.GetFromStat(v["status_table"], "HP")
-								local Charge = PNRP.GetFromStat(v["status_table"], "PowerLevel")
-								if HPLevel then HPText = "HP: "..HPLevel
-								elseif Charge then HPText = "Charge: "..tostring(math.Round(Charge/100)).."% " end
-								
-								if Charge then infoExtra = infoExtra.."Charge: "..tostring(Charge).."\n" end
-								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
-								if FuelLevel then infoExtra = infoExtra.."Fuel: "..tostring(FuelLevel).."\n" end
-								local GasLevel = PNRP.GetFromStat(v["status_table"], "Gas")
-								if GasLevel then infoExtra = infoExtra.."Gas: "..tostring(math.Round(100-((item.Tank-GasLevel)/item.Tank)*100)).."% \n" end
-							
-								local newModel = PNRP.GetFromStat(v["status_table"], "Model")
-								local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
-								if newModel then model = newModel end
-								if newSkin then skin = tonumber(newSkin) end
-								
-								pnlUserIPanel.HP = vgui.Create("DLabel", pnlUserIPanel)		
-								pnlUserIPanel.HP:SetPos( 10, 75 )
-								pnlUserIPanel.HP:SetText(HPText)
-								pnlUserIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
-								pnlUserIPanel.HP:SizeToContents() 
-								pnlUserIPanel.HP:SetContentAlignment( 5 )
-							else
-								pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
-								pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
-								pnlUserIPanel.NumberWang:SetMin( 1 )
-								pnlUserIPanel.NumberWang:SetMax( v["count"] )
-								pnlUserIPanel.NumberWang:SetDecimals( 0 )
-								pnlUserIPanel.NumberWang:SetValue( 1 )
-							end
+							local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+							local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+							if newModel then model = newModel end
+							if newSkin then skin = tonumber(newSkin) end
+						end
 													
-							pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
-							pnlUserIPanel.Icon:SetModel(model, skin)
-							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
-							
-							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n"..infoExtra..countTxt.."\n Press Icon to move item." )
-							pnlUserIPanel.Icon.DoClick = function()
-								if v["iid"] == "" then
-									local sendCount = math.Round(pnlUserIPanel.NumberWang:GetValue())
-									if sendCount > v["count"] then
-										sendCount = v["count"]
-									end
-									if pnlUserIPanel.NumberWang:GetValue() < 1 then
-										LocalPlayer():ChatPrint("Not enough to store.")
-										return
-									end
-									net.Start("storage_give")
-										net.WriteEntity(ply)
+						pnlPanel.Title = vgui.Create("DLabel", pnlPanel)
+						pnlPanel.Title:SetPos(70, 5)
+						pnlPanel.Title:SetText(item.Name)
+						pnlPanel.Title:SetColor(Color( 0, 255, 0, 255 ))
+						pnlPanel.Title:SizeToContents() 
+						pnlPanel.Title:SetContentAlignment( 5 )
+						
+						local weightTXT = "Weight: "..item.Weight
+						if item.Capacity then
+							weightTXT = weightTXT.." | Capacity: "..item.Capacity
+						end
+						pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.ItemWeight:SetPos(70, 55)
+						pnlPanel.ItemWeight:SetText(weightTXT)
+						pnlPanel.ItemWeight:SetColor(Color( 0, 200, 0, 255 ))
+						pnlPanel.ItemWeight:SizeToContents() 
+						pnlPanel.ItemWeight:SetContentAlignment( 5 )
+						
+						pnlPanel.Count = vgui.Create("DLabel", pnlPanel)		
+						pnlPanel.Count:SetPos(70, 40)
+						pnlPanel.Count:SetText(countTxt)
+						pnlPanel.Count:SetColor(Color( 0, 255, 0, 255 ))
+						pnlPanel.Count:SizeToContents() 
+						pnlPanel.Count:SetContentAlignment( 5 )
+						
+						pnlPanel.bulkSlider = vgui.Create( "DNumSlider", pnlPanel )
+						pnlPanel.bulkSlider:SetPos(0, 15) 
+						pnlPanel.bulkSlider:SetWide( 250 )
+						pnlPanel.bulkSlider:SetText( "" )
+						pnlPanel.bulkSlider:SetMin( 1 )
+						pnlPanel.bulkSlider:SetMax( v["count"] )
+						pnlPanel.bulkSlider:SetDecimals( 0 )
+						pnlPanel.bulkSlider:SetValue( 1 )
+						pnlPanel.bulkSlider:Hide()
+						pnlPanel.bulkSlider.Label:SizeToContents()
+						
+						if item.Type == "food" or item.Type == "medical" or item.Type == "weapon" or item.Type == "ammo" then
+							local useBtn = vgui.Create("DButton", pnlPanel )
+								useBtn:SetPos(70, 20)
+								useBtn:SetSize(35,17)
+								useBtn:SetText( "Use" )
+								useBtn.DoClick = function() 
+									net.Start("UseFromPlyStoreage")
 										net.WriteEntity(storageENT)
+										net.WriteString("player")
 										net.WriteString(item.ID)
-										net.WriteDouble(sendCount)
-									net.SendToServer()
-									
-								else
-									local curWeightTbl = string.Explode("/", Capacity)
-									local curWeight = tonumber(curWeightTbl[1])
-									local maxWeight = tonumber(curWeightTbl[2])
-									
-									curWeight = curWeight + tonumber(item.Weight)
-									if curWeight <= maxWeight then
-										net.Start( "pnrp_PersistMoveTo" )
-											net.WriteString(v["iid"])
-											net.WriteString("storage")
-											net.WriteString(storageID)
-										net.SendToServer()
-									else
-										ply:ChatPrint("Your storage is full.")
-									end
+									net.SendToServer() 
 								end
-								storagemenu_frame:Close()
-							end								
-					end
+						end
+						
+						if v["iid"] == "" and v["count"] > 1 then
+							pnlPanel.bulkSlider:Show()
+						end 
+						
+						local toolTip = nil
+						if tostring(item.Info) ~= "" then toolTip = tostring(item.Info) end
+						pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
+						pnlPanel.Icon:SetModel(model, skin)
+						pnlPanel.Icon:SetPos(3, 5)
+						pnlPanel.Icon:SetToolTip( toolTip )
+						pnlPanel.Icon.DoClick = function()
+							local weightCur = CurInvWeight + item.Weight
+							local weightBlk
+							local weightCapBlk
+							local amt = pnlPanel.bulkSlider:GetValue()
+							
+							--Idiot ammount check
+							if amt <= 0 then amt = 1 end
+							if amt >= v["count"] then amt = v["count"] end
+														
+							if amt >= 1 then
+								net.Start("storage_give")
+									net.WriteEntity(storageENT)
+									net.WriteString(item.ID)
+									net.WriteDouble(amt)
+									net.WriteString(v["iid"])
+								net.SendToServer()
+							else
+								ply:ChatPrint("Not enough storage space.")
+							end
+						end
 				end
 			end
-			
-		--//Storage Status			
-		local lMenuList = vgui.Create( "DPanelList", storagemenu_frame )
-			lMenuList:SetPos( 610,45 )
-			lMenuList:SetSize( 150, 175 )
-			lMenuList:SetSpacing( 5 )
-			lMenuList:SetPadding(3)
-			lMenuList:EnableHorizontal( false ) 
-			lMenuList:EnableVerticalScrollbar( true ) 
-
-			local storagemenuLabel = vgui.Create("DLabel", storagemenu_frame)
-				storagemenuLabel:SetColor( Color( 255, 255, 255, 255 ) )
-				storagemenuLabel:SetText( "Storage Menu" )
-				storagemenuLabel:SetFont("Trebuchet24")
-				storagemenuLabel:SizeToContents()
-				lMenuList:AddItem( storagemenuLabel )
-
-			local NameLabel = vgui.Create("DLabel")
-				NameLabel:SetColor( Color( 255, 255, 255, 255 ) )
-				NameLabel:SetText( " Storage Status" )
-				NameLabel:SizeToContents()
-				lMenuList:AddItem( NameLabel )
-			local LDevide = vgui.Create("DShape") 
-				LDevide:SetParent( stockStatusList ) 
-				LDevide:SetType("Rect")
-				LDevide:SetSize( 100, 2 ) 	
-				lMenuList:AddItem( LDevide )
-				
-			local hpCVar = 255
-			hpCVar = 255-(((100 - storageHealth)/storageHealth)*255)
-			
-			local hpColor = Color( 255, hpCVar, hpCVar, 255 )
-			
-			local LHPLabel = vgui.Create("DLabel")
-				LHPLabel:SetColor( hpColor )
-				LHPLabel:SetText( " Health: "..storageHealth.."%" )
-				LHPLabel:SizeToContents()
-				lMenuList:AddItem( LHPLabel )
-			local LCPLabel = vgui.Create("DLabel")
-				LCPLabel:SetColor( Color( 255, 255, 255, 255 ) )
-				LCPLabel:SetText( " Capacity: "..Capacity )
-				LCPLabel:SizeToContents()
-				lMenuList:AddItem( LCPLabel )
-			
-			--//Storage Owner Menu Menu	
-			local btnHPos = 250
-			local btnWPos = storagemenu_frame:GetWide()-220
-			local btnHeight = 40
-			local lblColor = Color( 245, 218, 210, 180 )
-							
-			local vendRenameBtn = vgui.Create("DImageButton", storagemenu_frame)
-				vendRenameBtn:SetPos( btnWPos,btnHPos )
-				vendRenameBtn:SetSize(30,30)
-				vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-				vendRenameBtn.DoClick = function() 
-					renameStorage( storageENT, storage_table[1]["storageid"], storage_table[1]["name"] )
-					storagemenu_frame:Close()
-				end
-				vendRenameBtn.Paint = function()
-					if vendRenameBtn:IsDown() then 
-						vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-					else
-						vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-					end
-				end	
-			local vendRenameBtnLbl = vgui.Create("DLabel", storagemenu_frame)
-				vendRenameBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
-				vendRenameBtnLbl:SetColor( lblColor )
-				vendRenameBtnLbl:SetText( "Rename Storage" )
-				vendRenameBtnLbl:SetFont("Trebuchet24")
-				vendRenameBtnLbl:SizeToContents()
-			
-			btnHPos = btnHPos + btnHeight			
-			local chModelBtn = vgui.Create("DImageButton", storagemenu_frame)
-				chModelBtn:SetPos( btnWPos,btnHPos )
-				chModelBtn:SetSize(30,30)
-				chModelBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-				chModelBtn.DoClick = function() 
-					changeStorageModelMenu(storageENT, avModels)
-					storagemenu_frame:Close()
-				end
-				chModelBtn.Paint = function()
-					if chModelBtn:IsDown() then 
-						chModelBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-					else
-						chModelBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-					end
-				end	
-			local chModelBtnLbl = vgui.Create("DLabel", storagemenu_frame)
-				chModelBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
-				chModelBtnLbl:SetColor( lblColor )
-				chModelBtnLbl:SetText( "Change Model" )
-				chModelBtnLbl:SetFont("Trebuchet24")
-				chModelBtnLbl:SizeToContents()
-			
-			btnHPos = btnHPos + btnHeight			
-			local repBtn = vgui.Create("DImageButton", storagemenu_frame)
-				repBtn:SetPos( btnWPos,btnHPos )
-				repBtn:SetSize(30,30)
-				if storageHealth < 100 then
-					repBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-					repBtn.DoClick = function() 
-						net.Start("StorageRepair")
-							net.WriteEntity(ply)
-							net.WriteEntity(storageENT)
-						net.SendToServer()
-						storagemenu_frame:Close()
-					end
-			
-					repBtn.Paint = function()
-						if repBtn:IsDown() then 
-							repBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-						else
-							repBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-						end
-					end	
-				else
-					repBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-				end	
-			local repBtnLbl = vgui.Create("DLabel", storagemenu_frame)
-				repBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
-				repBtnLbl:SetColor( lblColor )
-				repBtnLbl:SetText( "Repair Storage" )
-				repBtnLbl:SetFont("Trebuchet24")
-				repBtnLbl:SizeToContents()
-			
-			btnHPos = btnHPos + btnHeight			
-			local remBtn = vgui.Create("DImageButton", storagemenu_frame)
-				remBtn:SetPos( btnWPos,btnHPos )
-				remBtn:SetSize(30,30)
-				remBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-				remBtn.DoClick = function() 
-					PNRP.OptionVerify( "pnrp_remstorage", tostring(storageENT:GetNetVar("storageid")), nil ) 
-					storagemenu_frame:Close()
-				end
-				remBtn.Paint = function()
-					if remBtn:IsDown() then 
-						remBtn:SetImage( "VGUI/gfx/pnrp_button_down.png" )
-					else
-						remBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
-					end
-				end	
-			local remBtnLbl = vgui.Create("DLabel", storagemenu_frame)
-				remBtnLbl:SetPos( btnWPos+40,btnHPos+2 )
-				remBtnLbl:SetColor( lblColor )
-				remBtnLbl:SetText( "Remove Storage" )
-				remBtnLbl:SetFont("Trebuchet24")
-				remBtnLbl:SizeToContents()
+		end	
 end
 net.Receive("storage_menu", StorageMenu)
 
