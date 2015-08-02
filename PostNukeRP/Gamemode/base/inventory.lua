@@ -124,6 +124,8 @@ function PNRP.GetFullInventorySimple( ply )
 	return invTbl
 end
 
+
+
 function PNRP.GetFullInvStorageSimple( sid )
 	local invStorageTbl = PNRP.GetStorageInventory( sid )
 	local invTbl = invStorageTbl["inv"]
@@ -198,56 +200,6 @@ function PlayerMeta:HasInInventory( theitem )
 	
 end
 
---Gets the player's car inventory (Non Persistent items)
-function PNRP.CarInventory( ply )
-	local query
-	local result
-	
-	query = "SELECT car_inventory FROM player_inv WHERE pid="..tostring(ply.pid)
-	result = querySQL(query)
-	
-	if not result then return nil end
-	
-	local invTbl = {}
-	local invLongStr = string.Explode( " ", result[1]["car_inventory"] )
-	for _, invStr in pairs( invLongStr ) do
-		local invSplit = string.Explode( ",", invStr )
-		invTbl[invSplit[1]] =  math.Round(tonumber(invSplit[2]) or 0)
-	end
-	
-	return invTbl
-end	
-
---Gets the car's full inventory including persistent items
-function PNRP.GetFullCarInventory( ply )
-	local query
-	local result
-
-	query = "SELECT car_inventory FROM player_inv WHERE pid="..tostring(ply.pid)
-	result = querySQL(query)
-
-	if not result then return nil end
-	
-	local invTbl = {}
-	
-	local invLongStr = string.Explode( " ", result[1]["car_inventory"] )
-	for i, invStr in pairs( invLongStr ) do
-		local invSplit = string.Explode( ",", invStr )
-		local have = math.Round(tonumber(invSplit[2]) or 0)
-		if have > 0 and itemid != "" then
-			table.insert( invTbl, {itemid=invSplit[1], status_table="", iid="", count=have} )
-		end
-	end
-
-	for k, v in pairs(PNRP.PersistInventory( ply )) do
-		if v["location"] == "car" then
-			table.insert( invTbl, {itemid=v["itemid"], status_table=v["status_table"], iid=v["iid"], count=1} )
-		end
-	end
-
-	return invTbl
-end
-
 --Gets a persistent items inventory if it exists
 function PNRP.GetIIDtoSIDInvnetory( iid )
 	local query, result
@@ -268,7 +220,7 @@ end
 --This gets the inventory of a storage item (something flagged as HasStorage in itembase)
 --This is not currently used in player storage but it may get migrated to this later.
 --Persistent Item System
-function PNRP.GetStorageInventory( sid )
+function PNRP.GetNPStorageInventory( sid )
 	local result, query
 	
 	query = "SELECT * FROM inventory_storage WHERE sid="..tostring(sid)
@@ -277,11 +229,11 @@ function PNRP.GetStorageInventory( sid )
 	--if no sid then there should not be any related items stored in it
 	if not result then 
 		PNRP.CheckPersistSIDs( sid )
-		return nil 
+		return {} 
 	end
 	
 	local invTbl = {}
-
+	
 	local invLongStr = string.Explode(" ", result[1]["inventory"] )
 	for _, invStr in pairs( invLongStr ) do
 		local invSplit = string.Explode( ",", invStr )
@@ -291,13 +243,19 @@ function PNRP.GetStorageInventory( sid )
 		end
 	end
 	
-	local query2, result2
+	return invTbl
+end
+function PNRP.GetStorageInventory( sid )
+		
+	local invTbl = PNRP.GetNPStorageInventory( sid )
 	
-	query2 = "SELECT * FROM inventory_table WHERE location='inventory_storage' AND locid="..tostring(sid)
-	result2 = querySQL(query2)
+	local query, result
 	
-	if not result2 then result2 = {} end
-	for k, v in pairs(result2) do
+	query = "SELECT * FROM inventory_table WHERE location='inventory_storage' AND locid="..tostring(sid)
+	result = querySQL(query)
+	
+	if not result then result = {} end
+	for k, v in pairs(result) do
 		if v["location"] == "inventory_storage" then
 			table.insert( invTbl, {itemid=v["itemid"], status_table=v["status_table"], iid=v["iid"], count=1, sid=sid} )
 		end
@@ -658,8 +616,7 @@ util.AddNetworkString( "pnrp_addtoinvfromeq" )
 function PNRP.TakeFromItemStorage(sid, theitem, amount)
 	local query, result
 	
-	local invTbl = PNRP.GetStorageInventory( sid )
-	local AdvInv = invTbl["inv"]
+	local AdvInv = PNRP.GetNPStorageInventory( sid )
 	
 	if not AdvInv then
 		AdvInv = {}
@@ -671,19 +628,12 @@ function PNRP.TakeFromItemStorage(sid, theitem, amount)
 	end
 	
 	if inv[theitem] ~= nil then
-		if inv[theitem]-amount > 0 then
+		if inv[theitem] < amount then
+			amount = 0
+		elseif inv[theitem]-amount > 0 then
 			inv[theitem] = inv[theitem] - amount
 		else 
 			inv[theitem] = nil
-		end
-		
-		local invSimpleTbl = PNRP.GetFullInvStorageSimple( sid )
-		if not invSimpleTbl then 
-			amount = 0
-		end
-		
-		if  invSimpleTbl[theitem] < amount then
-			amount = 0
 		end
 		
 		local InvStr = ""
@@ -692,7 +642,7 @@ function PNRP.TakeFromItemStorage(sid, theitem, amount)
 		end
 		
 		InvStr = string.TrimRight(InvStr)
-		
+		print(InvStr)
 		query = "UPDATE inventory_storage SET inventory='"..InvStr.."' WHERE sid="..tostring(sid)
 		result = querySQL(query)
 	else
@@ -711,9 +661,8 @@ function PNRP.AddToItemStorage(sid, itemID, amount, iid)
 	
 	if iid and iid ~= "" and tostring(iid) ~= "nil"  then
 		PNRP.PersistMoveTo( nil, iid, "inventory_storage", sid )
-	else		
-		local invTbl = PNRP.GetStorageInventory( sid )
-		local AdvInv = invTbl["inv"]
+	else
+		local AdvInv = PNRP.GetNPStorageInventory( sid )
 		
 		if not AdvInv then
 			AdvInv = {}
@@ -774,7 +723,9 @@ function PNRP.PlyInvAddToItemStorage(len, ply)
 	if iid and iid ~= "" and tostring(iid) ~= "nil"  then
 		if not PNRP.AddToItemStorage(sid, itemID, amount, iid) then return end
 		ply:EmitSound(Sound("items/ammo_pickup.wav"))
+		
 	else
+		
 		--Makes sure the player has enough of this item
 		local pInv = PNRP.Inventory( tostring(ply.pid) )
 		if not pInv then haveItem = false end

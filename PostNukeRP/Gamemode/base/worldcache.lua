@@ -51,6 +51,7 @@ function PNRP.TakeAllFromWorldCache( p, theitem )
 end
 --Removes Item from WorldCache
 function PNRP.TakeFromWorldCache( p, theitem )
+	print(theitem)
 	local query = "SELECT * FROM world_cache WHERE pid="..tostring(p.pid).." AND item='"..theitem.."'"
 	local result = querySQL(query)
 	

@@ -275,18 +275,10 @@ end
 function pntb(ply, command, args)
 	local GM = GAMEMODE
 	if ply:IsAdmin() then
-		local query, result
 		
-	--	query = "SELECT * from inventory_storage"
-	--	result = querySQL(query)
+		GM:PlayerDisconnected(ply)
+		PNRP.ReturnWorldCache( ply )
 		
-	--	GM.LoadCharacter( ply, ply.pid )
-		PNRP.SetBodyGroups( ply )
-		if result then
-	--		Msg(table.ToString(result).."\n")
-		else
-	--		Msg("Nil \n")
-		end
 	end
 end
 concommand.Add( "pntb", pntb )
@@ -1106,7 +1098,7 @@ function GM:ShowTeam( ply )
 				
 				if weight <= weightCap then
 					PNRP.AddToInventory( ply, ItemID, 1, ent )
-					if myType == "tool" then
+					if myType == "tool" or myType == "misc" then
 						PNRP.TakeFromWorldCache( ply, ItemID )
 					end
 					ent:Remove()
