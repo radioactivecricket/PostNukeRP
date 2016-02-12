@@ -89,6 +89,8 @@ util.AddNetworkString("printUmsgTable")
 util.AddNetworkString("sendUmsgTable")
 util.AddNetworkString("sndComDipl")
 
+util.AddNetworkString( "repairMenu" )
+
 --Server settings will be initially written to the DB if not done yet.
 --Query string will be made with for loop.
 PNRP.PNRP_DefSpawnerSettings = 
@@ -1284,6 +1286,23 @@ function EntTakeDamage( target, dmginfo )
 	if attacker:IsVehicle() then
 		if target:GetClass() == "npc_combine_s" then
 			dmginfo:SetDamage(0)
+		end
+	end
+	
+	--Prevents player from damaging own vehicle
+	if attacker:IsPlayer() then
+		if attacker:InVehicle() then			
+			local conEnts = constraint.GetTable( target )
+			for _, seat in pairs(conEnts) do
+				if seat.Entity[2].Entity == attacker:GetVehicle() then
+					dmginfo:SetDamage(0)
+				end
+			end
+			
+			if inTable(conEnts, target) then ply:ChatPrint("ping") end
+			if target == ply:GetVehicle() then
+				dmginfo:SetDamage(0)
+			end
 		end
 	end
 	

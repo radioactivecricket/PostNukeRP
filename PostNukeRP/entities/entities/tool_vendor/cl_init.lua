@@ -715,7 +715,7 @@ function VendorMenu()
 				vendRenameBtn:SetSize(30,30)
 				vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 				vendRenameBtn.DoClick = function() 
-					renameVendor( vendorENT, vendor_table["vendorid"], vendor_table[1]["name"] )
+					renameVendor( vendorENT, vendor_table["vendorid"], vendor_table["name"] )
 					vendmenu_frame:Close()
 				end
 				vendRenameBtn.Paint = function()

@@ -25,6 +25,8 @@ ITEM.Capacity = 600
 ITEM.Tank = 20
 ITEM.HasStorage = true
 ITEM.CanRepair = true
+ITEM.RepairClass = {TEAM_ENGINEER}
+ITEM.Keys = true
 ITEM.ShopHide = true
 ITEM.SaveState = true
 

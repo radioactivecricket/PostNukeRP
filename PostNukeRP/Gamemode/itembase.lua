@@ -37,7 +37,9 @@ function PNRP.AddItem( itemtable )
 		Create = itemtable.Create,			--Create Function
 		ToolCheck = itemtable.ToolCheck,	--Tool Check Function
 		HasStorage = itemtable.HasStorage,	--If the item will have storage
-		CanRepair = itemtable.CanRepair,
+		CanRepair = itemtable.CanRepair,	--If item is repairable
+		RepairClass = itemtable.RepairClass,--Classes that are able to repair the item
+		Keys = itemtable.Keys,				--If the item can use Keys
 		ShopHide = itemtable.ShopHide,		--Hides item from shop if true
 		Capacity = itemtable.Capacity,		--How much storage capacity
 		Tank = itemtable.Tank,				--Gas Tank Size

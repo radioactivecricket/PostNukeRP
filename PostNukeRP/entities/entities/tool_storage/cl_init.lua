@@ -420,7 +420,7 @@ function StorageMenu()
 			vendRenameBtn:SetSize(30,30)
 			vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 			vendRenameBtn.DoClick = function() 
-				renameStorage( storageENT, storage_table[1]["storageid"], storage_table[1]["name"] )
+				renameStorage( storageENT, storageID, storageENT:GetNetVar("name", "none") )
 				storagemenu_frame:Close()
 			end
 			vendRenameBtn.Paint = function()

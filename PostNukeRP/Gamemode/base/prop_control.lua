@@ -475,6 +475,40 @@ function isPlayerAndAdmin( ent )
 	end
 end
 
+function PlayerPickupObject( ply, ent )
+	local doPickup = false
+	if ply:KeyPressed( IN_USE ) then
+		doPickup = true
+	end
+	
+	if doPickup then
+		if ( ent:IsPlayerHolding() ) then 
+			ply:DropObject()  
+			return
+		end
+
+		local canPickup = false
+		
+		local plUID = PNRP:GetUID( ply )
+		local owner = ent:GetNetVar( "Owner", "None" )
+		local ownerUID = ent:GetNetVar( "Owner_UID", "None" )
+		
+		--Unownable should be un-pickupable, so we check that next
+		if owner == "Unownable" then canPickup = true end
+		
+		--If player owns the prop
+		if ownerUID == plUID then canPickup = true end
+		
+		if owner == "World" then canPickup = true end
+		
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then canPickup = true end
+		
+		if canPickup then
+			ply:PickupObject( ent )
+		end
+	end
+end
+
 function PickupCheck( ply, ent)
 	--admin can do whatever they want
 	if ply:IsSuperAdmin() and getServerSetting("adminTouchAll") == 1 then return true end

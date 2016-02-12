@@ -2940,8 +2940,23 @@ function PNRP.RepairItem(ply, ent)
 		ply:ChatPrint("You can not repair while in a vehicle.")
 		return
 	end	
-	if ply:Team() ~= TEAM_ENGINEER then
-		ply:ChatPrint("You have to be a Engineer to fix this.")
+	
+	local canRepair = false
+	if table.getn(item.RepairClass) == 0 then
+		canRepair = true
+	elseif inTable(item.RepairClass, ply:Team()) then
+		canRepair = true
+	end
+	
+	if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then canRepair = true end
+	
+	if !canRepair then
+		local teamString = ""
+		for v, teamNum in pairs(item.RepairClass) do
+			teamString = teamString.." "..team.GetName(teamNum)
+			if v < table.getn(item.RepairClass) then teamString = teamString.."," end
+		end
+		ply:ChatPrint("You must be one the following class to fix this: "..teamString)
 		return
 	end
 	if not ply:HasInInventory("tool_toolbox") then

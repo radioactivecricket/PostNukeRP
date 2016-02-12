@@ -17,6 +17,7 @@ ITEM.Ent = "tool_miner"
 ITEM.Model = "models/props_combine/combinethumper002.mdl"
 ITEM.Script = ""
 ITEM.Weight = 20
+ITEM.RepairClass = {}
 ITEM.SaveState = true
 
 function ITEM.BuildState( ent )

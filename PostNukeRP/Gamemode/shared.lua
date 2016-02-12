@@ -334,4 +334,11 @@ function toangle( angleStr )
 	return Angle(0,0,0)
 end
 
+function inTable(tbl, item)
+    for key, value in pairs(tbl) do
+        if value == item then return key end
+    end
+    return false
+end
+
 --EOF

@@ -43,7 +43,7 @@ function GM:HUDDrawTargetID()
 	local ents = ents.FindInSphere(ply:GetPos(), 1024)
 	for _, ent in ipairs( ents ) do
 		if IsValid(ent) then
-			--ent:SetNWString("Pet", true)
+						
 			if ( ent != ply and ent:Health() > 0 and ent:GetNetVar("Pet", "no")=="yes" ) then
 				PetHUDLabel(ent)
 			elseif ( ent != ply and ent:Health() > 0 and ent:IsPlayer() ) then

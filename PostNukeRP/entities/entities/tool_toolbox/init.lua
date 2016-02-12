@@ -13,7 +13,7 @@ function ENT:Initialize()
 end
 
 function ENT:Use( activator, caller )
- 
+	PlayerPickupObject( activator, self )
 end
 
 function ENT:PostEntityPaste(pl, Ent, CreatedEntities)
