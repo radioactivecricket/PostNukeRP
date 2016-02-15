@@ -333,7 +333,7 @@ function PNRP.HullToCar(len, ply)
 					return
 				end
 			else
-				if not PNRP.UseNearbyParts( toolcheck, ent, ply ) then
+				if not PNRP.UseNearbyParts( toolcheck, hull, ply ) then
 					ply:ChatPrint("Missing Parts")
 					return
 				end

@@ -378,11 +378,12 @@ function PNRP.SaveState(ply, ent, location)
 					pid = tostring(ply.pid)
 				end
 			end
-		else pid = result[1]["pid"] end
-		
-		if not location or location == "" then location = result[1]["location"] end
+		end
 		
 		if result then
+			if pid == -1 then pid = result[1]["pid"] end
+			if not location or location == "" then location = result[1]["location"] end
+			
 			local stateTable = item.BuildState( ent )
 			
 			query = "UPDATE inventory_table SET pid='"..pid.."', location='"..location.."', status_table='"..stateTable.."' WHERE iid="..tostring(iid)
@@ -412,7 +413,7 @@ function PNRP.DelPersistItem(iid)
 	query = "DELETE FROM inventory_table WHERE iid="..tostring(iid)
 	result = querySQL(query)
 	
-	query = "DELETE * FROM inventory_storage WHERE iid="..tostring(iid)
+	query = "DELETE FROM inventory_storage WHERE iid="..tostring(iid)
 	result = querySQL(query)
 end
 
