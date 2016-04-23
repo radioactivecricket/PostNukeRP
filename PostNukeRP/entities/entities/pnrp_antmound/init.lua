@@ -217,19 +217,9 @@ function ENT:MoundUpdate()
 		local spawnPos
 		spawnPos = self:GetPos() + Vector(  math.random(-150,150), math.random(-150,150), 400 )
 		
-		repeat
-			spawnPos = self:GetPos() + Vector(  math.random(-150,150), math.random(-150,150), 400 )
-			
-			local trace = {}
-			trace.start = spawnPos
-			trace.endpos = trace.start + Vector(0, 0, -1000)
-
-			local clearTrace = util.TraceLine(trace)
-			if clearTrace.Entity and clearTrace.Entity:GetClass() ~= "pnrp_antmound" then
-				clearFromMound = true
-				spawnPos = clearTrace.HitPos
-			end
-		until clearFromMound
+		local ang = Angle(0,(i * 360 / spawnSize),0) -- we divide 360 by the amount of antlions so that we always get a perfect circle
+		ang:Normalize()
+		spawnPos = self:GetPos() + ang:Forward() * (math.random(256,300)) -- this will make the npc spawn at a distance of 256 - 300 from the mound at the angle specified
 		
 		local antlion = ents.Create("npc_antlion")
 		antlion:SetPos(spawnPos+Vector(0,0,400))
