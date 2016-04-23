@@ -50,19 +50,18 @@ PNRP.Skills["Strength"] 		= {name = "Strength", desc ="Make it hurt when you hit
 
 --Drop rates
 PNRP.ScavItems = {}
-PNRP.ScavItems["fuel_h2pod"]		=	5
-PNRP.ScavItems["fuel_uranrods"]		=	5
-PNRP.ScavItems["intm_sensorpod"]	=	20
-PNRP.ScavItems["intm_seeds"]		=	15
-PNRP.ScavItems["intm_pulsecore"]	=	15
-PNRP.ScavItems["intm_servo"]		=	20
-PNRP.ScavItems["intm_diamsaw"]		=	30
-PNRP.ScavItems["intm_waterjet"]		=	10
-PNRP.ScavItems["intm_solarthinfilm"]	=	5
-PNRP.ScavItems["intm_fusioncore"]	=	1
-PNRP.ScavItems["intm_nukecore"]		=	2
-PNRP.ScavItems["food_beans"]		=	10
-
+PNRP.ScavItems["fuel_h2pod"]		=	100
+PNRP.ScavItems["fuel_uranrods"]		=	150
+PNRP.ScavItems["intm_sensorpod"]	=	350
+PNRP.ScavItems["intm_seeds"]		=	500
+PNRP.ScavItems["intm_pulsecore"]	=	275
+PNRP.ScavItems["intm_servo"]		=	350
+PNRP.ScavItems["intm_diamsaw"]		=	150
+PNRP.ScavItems["intm_waterjet"]		=	60
+PNRP.ScavItems["intm_solarthinfilm"]=	80
+PNRP.ScavItems["intm_fusioncore"]	=	20
+PNRP.ScavItems["intm_nukecore"]		=	50
+PNRP.ScavItems["food_beans"]		=	1500
 
 PNRP.CarParts = {}
 PNRP.CarParts["intm_car_tire"]		=	75

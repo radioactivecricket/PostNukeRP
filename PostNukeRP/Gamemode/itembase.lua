@@ -100,8 +100,7 @@ function PNRP.AddWeapon( weptable )
 		AmmoType = weptable.AmmoType,
 		MagLoadTime = weptable.MagLoadTime,
 		MagType = weptable.MagType,
-		MagSize = weptable.MagSize,
-		EqSize = weptable.EqSize
+		MagSize = weptable.MagSize
 	}
 	
 end
@@ -382,11 +381,11 @@ function PNRP.SaveState(ply, ent, location)
 		end
 		
 		if result then
-			if pid == -1 or pid == nil then pid = result[1]["pid"] end
+			if pid == -1 then pid = result[1]["pid"] end
 			if not location or location == "" then location = result[1]["location"] end
 			
 			local stateTable = item.BuildState( ent )
-			print("PID: "..tostring(pid))
+			
 			query = "UPDATE inventory_table SET pid='"..pid.."', location='"..location.."', status_table='"..stateTable.."' WHERE iid="..tostring(iid)
 			result = querySQL(query)
 		else
