@@ -386,7 +386,6 @@ function PNRP.SaveState(ply, ent, location)
 			if not location or location == "" then location = result[1]["location"] end
 			
 			local stateTable = item.BuildState( ent )
-			print("PID: "..tostring(pid))
 			query = "UPDATE inventory_table SET pid='"..pid.."', location='"..location.."', status_table='"..stateTable.."' WHERE iid="..tostring(iid)
 			result = querySQL(query)
 		else
