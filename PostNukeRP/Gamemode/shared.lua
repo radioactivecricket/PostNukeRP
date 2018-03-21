@@ -2,7 +2,7 @@ GM.Name 	= "PostNukeRP" --Set the gamemode name
 GM.Author 	= "EldarStorm LostInTheWird MainError" --Set the author name
 GM.Email 	= "N/A" --Set the author email
 GM.Website 	= "http://postnukerp.com" --Set the author website
-GM.Version  = "1.2.0"
+GM.Version  = "1.3.0"
 
 DeriveGamemode("sandbox") 
 
