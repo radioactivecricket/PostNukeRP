@@ -21,6 +21,9 @@ ITEM.ShopHide = true
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "smg1"
+WEAPON.MagLoadTime = 15
+WEAPON.MagType = "normal"
+WEAPON.MagSize = "large"
 
 function ITEM.ToolCheck( p )
 	return true

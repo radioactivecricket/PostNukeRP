@@ -104,12 +104,9 @@ function PNRP.OpenMainAdmin(ply)
 end
 concommand.Add("pnrp_OpenAdmin", PNRP.OpenMainAdmin)
 
-function PNRP.UpdateFromAdminMenu( len, pl )
-	local ply = net.ReadEntity()
+function PNRP.UpdateFromAdminMenu( len, ply )
 	local GMSettings = net.ReadTable()
 	local SpawnSettings = net.ReadTable()
-	
-	if pl ~= ply then return end
 	
 	if ply:IsAdmin() then
 		setServerSetting("exp2Level", tonumber(GMSettings.E2Restrict))
@@ -243,12 +240,303 @@ util.AddNetworkString("SND_plyADMSelSID")
 util.AddNetworkString("C_SND_PlyAdminSelResult")
 net.Receive( "SND_plyADMSelSID", PNRP.plyADMSelSID )
 
---Exports the selected map's Node Grid
-function PNRP.ExportMapGrid(len, pl)
-	local ply = net.ReadEntity()
-	local mapName = net.ReadString()
+function PNRP.plyADMSelProfile(len, ply)
 	
-	if pl ~= ply then return end
+	local GM = GAMEMODE
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	local pid = net.ReadString()
+
+	for _, p in pairs(player.GetAll()) do
+		if tostring(p.pid) == tostring(pid) then
+			GM.SaveCharacter(p)
+		end
+	end
+	
+	local profResult, plyResult
+	local plyTbl = {}
+	local CommunityTbl = {}
+	
+	profResult = querySQL("SELECT * FROM profiles WHERE pid='"..tostring(pid).."'")
+	if not profResult then
+		ply:ChatPrint("Error in getting profile: "..tostring(pid))
+		return
+	end
+	table.Merge(plyTbl, profResult[1])
+	
+	local steamid =  profResult[1]["steamid"]
+	plyResult = querySQL("SELECT * FROM player_table WHERE steamid='"..tostring(steamid).."'")
+	table.Merge(plyTbl, plyResult[1])
+	
+	local cQuery = "SELECT * FROM community_members WHERE pid='"..tostring(pid).."'"
+	local cResult = querySQL(cQuery)
+	if cResult then
+		local comResult = querySQL("SELECT * FROM community_table WHERE cid='"..tostring(cResult[1]["cid"]).."'")
+		CommunityTbl = {cname=comResult[1]["cname"], rank=cResult[1]["rank"], title=cResult[1]["title"]}
+	end	
+	
+	local storageTbl = querySQL("SELECT * FROM player_storage WHERE pid="..tostring(pid))
+	if not storageTbl then storageTbl = {} end
+	
+	local vendorTbl = querySQL("SELECT * FROM vending_table WHERE pid="..tostring(pid))
+	if not vendorTbl then vendorTbl = {} end
+	
+	net.Start("C_SND_PlyAdminProfileView")
+		net.WriteTable(plyTbl)
+		net.WriteTable(PNRP.GetFullInventoryPID( pid ))
+		net.WriteTable(CommunityTbl)
+		net.WriteTable(storageTbl)
+		net.WriteTable(vendorTbl)
+	net.Send(ply)
+end
+util.AddNetworkString("SND_plyADMSelProfile")
+util.AddNetworkString("C_SND_PlyAdminProfileView")
+net.Receive( "SND_plyADMSelProfile", PNRP.plyADMSelProfile )
+
+function PNRP.AdmEditPlayer(len, ply)
+	local GM = GAMEMODE
+	local option = net.ReadString()
+	local pid = net.ReadString()
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	local isOnline
+	local targetPly
+	local result
+	local weaponStr = ""
+	local ammoStr = ""
+
+	for _, p in pairs(player.GetAll()) do
+		if tostring(p.pid) == tostring(pid) then
+			isOnline = true
+			targetPly = p
+		end
+	end
+	result = querySQL("SELECT * FROM profiles WHERE pid='"..tostring(pid).."'")
+	weaponStr = result[1]["weapons"]
+	ammoStr = result[1]["ammo"]
+	
+	if option == "rem_weapon" then
+		local weapon = net.ReadString()
+		
+		if isOnline then
+			targetPly:StripWeapon( weapon )
+			targetPly:EmitSound(Sound("items/ammo_pickup.wav"))
+		end 
+		
+		local weaponTbl = string.Explode(",", weaponStr)
+		weaponStr = ""
+		for _, v in pairs(weaponTbl) do
+			if tostring(v) ~= weapon and tostring(v) ~= "" then
+				weaponStr = weaponStr..v..","
+			end
+		end
+		string.TrimRight(weaponStr, ",")
+		if weapon == "weapon_frag" or weapon == "weapon_pnrp_charge" then
+			local ammoExpTbl = string.Explode(" ", ammoStr)
+			local ammoTbl = {}
+			for _, v in pairs(ammoExpTbl) do
+				local Tbl = string.Explode(",", v)
+				if (weapon == "weapon_frag" and Tbl[1] == "grenade") or (weapon == "weapon_pnrp_charge" and Tbl[1] == "slam") then
+					--Do nothing
+				else
+					ammoTbl[Tbl[1]] = Tbl[2]
+				end
+			end
+			ammoStr = ""
+			for ammo, amount in pairs(ammoTbl) do
+				ammoStr = ammoStr..ammo..","..tostring(amount).." "
+			end
+			string.TrimRight(ammoStr)
+		end
+	
+		querySQL("UPDATE profiles SET weapons='"..weaponStr.."', ammo='"..ammoStr.."' WHERE pid="..tostring(pid))
+		
+	elseif option == "rem_ammo" then
+		local ammo = net.ReadString()
+		if isOnline then
+			local ammoCount = targetPly:GetAmmoCount( ammo )
+			targetPly:RemoveAmmo( ammoCount, ammo )
+			targetPly:EmitSound(Sound("items/ammo_pickup.wav"))
+		end
+		
+		local ammoExpTbl = string.Explode(" ", ammoStr)
+		local ammoTbl = {}
+		for _, v in pairs(ammoExpTbl) do
+			local Tbl = string.Explode(",", v)
+			
+			if Tbl[1] ~= ammo then
+				ammoTbl[Tbl[1]] = Tbl[2]
+			end
+		end
+		ammoStr = ""
+		for ammo, amount in pairs(ammoTbl) do
+			ammoStr = ammoStr..ammo..","..tostring(amount).." "
+		end
+		string.TrimRight(ammoStr)
+		
+		querySQL("UPDATE profiles SET ammo='"..ammoStr.."' WHERE pid="..tostring(pid))
+	elseif option == "editRes" then
+		local res = net.ReadString()
+		querySQL("UPDATE profiles SET res='"..tostring(res).."' WHERE pid="..tostring(pid))
+	elseif option == "changeName" then
+		local name = net.ReadString()
+		if isOnline then
+			if (not name) or name == "" or name == nil then
+				targetPly.rpname = targetPly:SteamName()
+			else
+				if string.len(name) > 40 then
+					ply:ChatPrint("Name too long! Must be under 40 characters.")
+					return
+				end
+
+				targetPly.rpname = name
+			end
+			
+			net.Start("RPNameChange")
+				net.WriteEntity(targetPly)
+				net.WriteString(targetPly.rpname)
+				net.WriteBit(false)
+			net.Broadcast()
+		else
+			querySQL("UPDATE profiles SET nick='"..tostring(name).."' WHERE pid="..tostring(pid))
+		end
+	end
+	
+	if isOnline then GM.SaveCharacter( targetPly ) end
+end
+util.AddNetworkString("SND_AdmEditPlayer")
+net.Receive( "SND_AdmEditPlayer", PNRP.AdmEditPlayer )
+
+function PNRP.AdmSVSelID(len, ply)
+	local id = net.ReadString()
+	local option = net.ReadString()
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	local query, result
+	local inmvTbl = {}
+	if option == "storage" then
+		inmvTbl = GetFullStorageInventory( ply, id )
+	elseif option == "vendor" then
+		inmvTbl = getFullVendorInventory(id)
+	else
+		return
+	end
+	
+	net.Start("C_SND_AdmVewSV")
+		net.WriteString(id)
+		net.WriteTable(inmvTbl)
+		net.WriteString(option)
+	net.Send(ply)
+	
+end
+util.AddNetworkString("SND_AdmSVSelID")
+util.AddNetworkString("C_SND_AdmVewSV")
+net.Receive("SND_AdmSVSelID", PNRP.AdmSVSelID)
+
+function PNRP.admDelInvItem(len, ply)
+	local option = net.ReadString()
+	local id = net.ReadString()
+	local itemID = net.ReadString()
+	local count = net.ReadDouble()
+	local iid = net.ReadString()
+	local pid = net.ReadString()
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	local query, result
+	if iid == nil or iid == "" then
+		if option == "player" then
+			PNRP.PlyDelItem( pid, itemID, count )
+		elseif option == "storage" then
+			remStorageItem( id, itemID, count )
+		elseif option == "vendor" then
+			remVendorItem( id, itemID, count )
+		end
+	else
+		PNRP.DelPersistItem(iid)
+	end
+	
+	if option == "player" then
+		net.Start("C_SND_AdmViewRefreshPlyInv")
+			net.WriteString( pid )
+			net.WriteTable(PNRP.GetFullInventoryPID( pid ))
+		net.Send(ply)
+	end
+	
+end
+util.AddNetworkString("admDelInvItem")
+util.AddNetworkString("C_SND_AdmViewRefreshPlyInv")
+net.Receive("admDelInvItem", PNRP.admDelInvItem)
+
+function PNRP.admAddInvItem(len, ply)
+	local pid = net.ReadString()
+	local itemID = net.ReadString()
+	
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	PNRP.AddToInventory( pid, itemID, 1 )
+	
+	net.Start("C_SND_AdmViewRefreshPlyInv")
+		net.WriteString( pid )
+		net.WriteTable(PNRP.GetFullInventoryPID( pid ))
+	net.Send(ply)
+end
+util.AddNetworkString("admAddInvItem")
+net.Receive("admAddInvItem", PNRP.admAddInvItem)
+
+
+function PNRP.RunAdminSQL(len, ply)
+	if !ply:IsAdmin() then
+		ply:ChatPrint("You are not an admin on this server!")
+		return
+	end
+	
+	local result
+	local outString = ""
+	local query = net.ReadString()
+	
+	result = sql.Query(query)
+	
+	if sql.LastError( result ) != nil and result == false then
+		result = tostring(sql.LastError())
+	end
+	
+	if result then
+		if istable(result) then
+			outString = table.ToString(result)
+		else 
+			outString = tostring(result)
+		end
+	else
+		outString = "nil"
+	end
+
+	net.Start("pnrp_sqlAdmnReturnTxt")
+		net.WriteString(outString)
+	net.Send(ply)
+end
+util.AddNetworkString("pnrp_RecAdminSQL")
+util.AddNetworkString("pnrp_sqlAdmnReturnTxt")
+net.Receive("pnrp_RecAdminSQL", PNRP.RunAdminSQL)
+	
+--Exports the selected map's Node Grid
+function PNRP.ExportMapGrid(len, ply)
+	local mapName = net.ReadString()
 	
 	if not ply:IsAdmin() then
 		ply:ChatPrint("You do not have access to this command!")
@@ -266,11 +554,8 @@ end
 net.Receive( "exportMapGrid", PNRP.ExportMapGrid )
 
 --Import the map from the export file
-function PNRP.ImportMapGrid( len, pl )
-	local ply = net.ReadEntity()
+function PNRP.ImportMapGrid( len, ply )
 	local fileName = net.ReadString()
-	
-	if pl ~= ply then return end
 	
 	if not ply:IsAdmin() then
 		ply:ChatPrint("You do not have access to this command!")
@@ -304,8 +589,7 @@ end
 net.Receive( "importMapGrid", PNRP.ImportMapGrid )
 
 --Delete the selected map's Node Grid
-function PNRP.DeleteMapGrid(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.DeleteMapGrid(len, ply)
 	local mapName = net.ReadString()
 	
 	if pl ~= ply then return end

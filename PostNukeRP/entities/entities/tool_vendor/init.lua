@@ -477,7 +477,7 @@ function setVendorSellItem( l, p )
 	local costTbl = net.ReadTable()
 	local option = net.ReadString()
 	local iid = net.ReadString()
-	
+
 	local count = tonumber(costTbl["count"])
 	local scrap = costTbl["scrap"]
 	local SP = costTbl["sp"]
@@ -487,7 +487,7 @@ function setVendorSellItem( l, p )
 	
 	local query
 	local result
-	
+
 	if option == "new" then
 		local itmWeight = PNRP.Items[itemID].Weight
 		local totalStCap = itmWeight * count + getVendorCapacity(vendorID)
@@ -510,72 +510,81 @@ function setVendorSellItem( l, p )
 		end
 	end
 	
-	query = "SELECT inventory FROM vending_table WHERE vendorid="..SQLStr(vendorID)
-	result = querySQL(query)
-
-	-- Inventory string design:  itemID, count scrap smallpats chems
-	if result then
-		local getInvTable = result[1]["inventory"]
-		local foundItem = false
-
-		local invTbl = {}
-		if getInvTable == nil or getInvTable == "" or tostring(getInvTable) == "NULL" then
-			foundItem = false
-		else
-			local invLongStr = string.Explode( " ", getInvTable )
-			for _, invStr in pairs( invLongStr ) do
-				local invSplit = string.Explode( ",", invStr )
-				
-				invTbl[invSplit[1]] = tostring(invSplit[2]..","..invSplit[3]..","..invSplit[4]..","..invSplit[5])
-			end
+	if iid == nil or iid == "" then
 	
-			for k, v in pairs(invTbl) do
-				if k == itemID then
-					local stringSplit = string.Explode(",", v)
-					local totalCount
-					if iid == nil or iid == "" then
-						totalCount = tonumber(stringSplit[1]) + tonumber(count)
-					else
-						totalCount = 1
+		query = "SELECT inventory FROM vending_table WHERE vendorid="..SQLStr(vendorID)
+		result = querySQL(query)
+		-- Inventory string design:  itemID, count scrap smallpats chems
+		if result then
+			local getInvTable = result[1]["inventory"]
+			local foundItem = false
+
+			local invTbl = {}
+			if getInvTable == nil or getInvTable == "" or tostring(getInvTable) == "NULL" then
+				foundItem = false
+			else
+				local invLongStr = string.Explode( " ", getInvTable )
+				for _, invStr in pairs( invLongStr ) do
+					local invSplit = string.Explode( ",", invStr )
+					
+					invTbl[invSplit[1]] = tostring(invSplit[2]..","..invSplit[3]..","..invSplit[4]..","..invSplit[5])
+				end
+		
+				for k, v in pairs(invTbl) do
+					if k == itemID then
+						local stringSplit = string.Explode(",", v)
+						local totalCount
+						if iid == nil or iid == "" then
+							totalCount = tonumber(stringSplit[1]) + tonumber(count)
+						else
+							totalCount = 1
+						end
+						local newCostString = tostring(totalCount)..","..scrap..","..SP..","..chems
+						invTbl[itemID] = tostring(newCostString)
+						foundItem = true
 					end
-					local newCostString = tostring(totalCount)..","..scrap..","..SP..","..chems
-					invTbl[itemID] = tostring(newCostString)
-					foundItem = true
 				end
 			end
-		end
 
-		if not foundItem then
-			if option ~= "new" then
-				p:ChatPrint("Item was removed or sold.")
-				return
+			if not foundItem then
+				if option ~= "new" then
+					p:ChatPrint("Item was removed or sold.")
+					return
+				end
+				local costString = count..","..scrap..","..SP..","..chems
+				invTbl[itemID] = tostring(costString)
 			end
-			local costString = count..","..scrap..","..SP..","..chems
-			invTbl[itemID] = tostring(costString)
+			
+			local newInvString = ""
+			for k, v in pairs(invTbl) do
+				newInvString = newInvString.." "..tostring(k)..","..tostring(v)
+			end
+			newInvString = string.Trim(newInvString)
+			query = "UPDATE vending_table SET inventory='"..newInvString.."' WHERE vendorid="..SQLStr(vendorID)
+			result = querySQL(query)
+			updateDispItemCost(vendorID, itemID, costTbl)
+			p:EmitSound(Sound("items/ammo_pickup.wav"))
+		else
+			ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No Vendor match in vending_table! ["..tostring(vendorID).."] \n")
 		end
-		
-		local newInvString = ""
-		for k, v in pairs(invTbl) do
-			newInvString = newInvString.." "..tostring(k)..","..tostring(v)
-		end
-		newInvString = string.Trim(newInvString)
-		query = "UPDATE vending_table SET inventory='"..newInvString.."' WHERE vendorid="..SQLStr(vendorID)
-		result = querySQL(query)
-		updateDispItemCost(vendorID, itemID, costTbl)
-		p:EmitSound(Sound("items/ammo_pickup.wav"))
 	else
-		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No Vendor match in vending_table! ["..tostring(vendorID).."] \n")
+		local perstCostString = tostring(1)..","..scrap..","..SP..","..chems
+		PNRP.UpdateLocData( iid, perstCostString )
+		p:EmitSound(Sound("items/ammo_pickup.wav"))
+		updateDispItemCost(vendorID, itemID, costTbl, iid)
 	end
 end
 net.Receive( "setVendorSellItem", setVendorSellItem )
 util.AddNetworkString("setVendorSellItem")
 
-function updateDispItemCost(vendorID, itemID, costTable)
+function updateDispItemCost(vendorID, itemID, costTable, iid)
 	vendorID = tonumber(vendorID)
+	if not iid then iid = "" end
 	local costString = costTable["count"]..","..costTable["scrap"]..","..costTable["sp"]..","..costTable["chems"]
 	local foundDispItems = ents.FindByClass("msc_display_item")
 	for _, v in pairs(foundDispItems) do
-		if v.vendorid == vendorID and v.item == itemID then
+		local gIID = v:GetNetVar("iid", "")
+		if v.vendorid == vendorID and v.item == itemID and gIID == iid then
 			v.cost = costString
 			v:SetNetVar("cost", costString)
 		end
@@ -836,8 +845,12 @@ function VendorCreateDisplayItem()
 	local item = PNRP.Items[itemID]
 	local plUID = PNRP:GetUID( ply )
 	local iid = net.ReadString()
-	local status = net.ReadString()
-
+	local status = ""
+	
+	if iid then
+		status = PNRP.ReturnState(iid)
+	end
+	
 	local pos = ply:GetPos()
 	
 	local infoString = getItemInfo(itemID, vendorID, iid)

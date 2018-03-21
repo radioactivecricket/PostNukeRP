@@ -416,6 +416,8 @@ function VendorMenu()
 							
 							pnlLIList:AddItem(pnlLIPanel)
 							
+							local model = item.Model
+							local skin = 0
 							local countTxt = "Count: "..tostring(v["count"])
 							if v["status_table"] == "" then								
 								pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
@@ -438,10 +440,15 @@ function VendorMenu()
 								pnlLIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
 								pnlLIPanel.HP:SizeToContents() 
 								pnlLIPanel.HP:SetContentAlignment( 5 )
+								
+								local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+								local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+								if newModel then model = newModel end
+								if newSkin then skin = tonumber(newSkin) end
 							end
 							local toolTip = item.Name.."\n"..countTxt.."\n".."Cost \n Scrap: "..scrap.."\n Small Parts: "..small_parts.."\n Chems: "..chems
 							pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
-							pnlLIPanel.Icon:SetModel(item.Model)
+							pnlLIPanel.Icon:SetModel(model, skin)
 							pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
 							pnlLIPanel.Icon:SetToolTip( toolTip )
 							pnlLIPanel.Icon.DoClick = function() 
@@ -472,7 +479,7 @@ function VendorMenu()
 							pnlLIPanel.editBtn:SetText( "Edit" )
 							pnlLIPanel.editBtn:SetSize(pnlLIPanel:GetWide() - 8,17)
 							pnlLIPanel.editBtn.DoClick = function()
-								setSellItem(vendorENT, item, 0, "edit")
+								setSellItem(vendorENT, item, 0, "edit", v["iid"], v["status_table"])
 								vendmenu_frame:Close()
 							end
 							
@@ -521,6 +528,8 @@ function VendorMenu()
 							
 							pnlUserIList:AddItem(pnlUserIPanel)
 							
+							local model = item.Model
+							local skin = 0
 							local countTxt = "Count: "..tostring(v["count"])
 							if v["status_table"] != "" then
 								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
@@ -536,6 +545,11 @@ function VendorMenu()
 								pnlUserIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
 								pnlUserIPanel.HP:SizeToContents() 
 								pnlUserIPanel.HP:SetContentAlignment( 5 )
+								
+								local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+								local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+								if newModel then model = newModel end
+								if newSkin then skin = tonumber(newSkin) end
 							else
 								pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
 								pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
@@ -546,7 +560,7 @@ function VendorMenu()
 							end
 							
 							pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
-							pnlUserIPanel.Icon:SetModel(item.Model)
+							pnlUserIPanel.Icon:SetModel(model, skin)
 							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
 							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n"..countTxt.."\n Press Icon to move item." )
 							pnlUserIPanel.Icon.DoClick = function() 
@@ -583,7 +597,7 @@ function VendorMenu()
 									net.SendToServer()
 									vendmenu_frame:Close()
 								else
-									setSellItem(vendorENT, item, tostring(sellCount), "new", v["iid"])
+									setSellItem(vendorENT, item, tostring(sellCount), "new", v["iid"], v["status_table"])
 									vendmenu_frame:Close()
 								end
 							end								
@@ -701,7 +715,7 @@ function VendorMenu()
 				vendRenameBtn:SetSize(30,30)
 				vendRenameBtn:SetImage( "VGUI/gfx/pnrp_button.png" )
 				vendRenameBtn.DoClick = function() 
-					renameVendor( vendorENT, vendor_table["vendorid"], vendor_table[1]["name"] )
+					renameVendor( vendorENT, vendor_table["vendorid"], vendor_table["name"] )
 					vendmenu_frame:Close()
 				end
 				vendRenameBtn.Paint = function()
@@ -894,12 +908,13 @@ function renameVendor( vendorENT, vendorid, name )
 			end
 end
 
-function setSellItem(vendorENT, item, count, option, iid)
+function setSellItem(vendorENT, item, count, option, iid, status_table)
 	local ply = LocalPlayer()
 	
 	local w = 600
 	local h = 100
 	local title = "Set Sell Price"
+	if not status_table then status_table = "" end
 	
 	local vendorID = vendorENT:GetNetVar("vendorid")
 		
@@ -912,9 +927,18 @@ function setSellItem(vendorENT, item, count, option, iid)
 		vendmenu_frame:ShowCloseButton( true )
 		vendmenu_frame:MakePopup()
 		
+		local model = item.Model
+		local skin = 0
+		if status_table != "" then
+			local newModel = PNRP.GetFromStat(status_table, "Model")
+			local newSkin = PNRP.GetFromStat(status_table, "Skin")
+			if newModel then model = newModel end
+			if newSkin then skin = tonumber(newSkin) end
+		end
+		
 		local ItemIcon = vgui.Create("SpawnIcon", vendmenu_frame)
 			ItemIcon:SetPos(20,30)
-			ItemIcon:SetModel(item.Model)
+			ItemIcon:SetModel(model, skin)
 			ItemIcon:SetToolTip( item.Name )
 		
 		local scrapSlideLbl = vgui.Create( "DLabel", vendmenu_frame )
@@ -1120,6 +1144,8 @@ function VendorShopMenu()
 						pnlPanel.ItemWeight:SizeToContents() 
 						pnlPanel.ItemWeight:SetContentAlignment( 5 )
 						
+						local model = item.Model
+						local skin = 0
 						if v["status_table"] == "" then
 							pnlPanel.ItemAmount = vgui.Create("DLabel", pnlPanel)		
 							pnlPanel.ItemAmount:SetPos(340, 30)
@@ -1149,10 +1175,15 @@ function VendorShopMenu()
 							pnlPanel.HP:SetColor(Color( 0, 255, 0, 255 ))
 							pnlPanel.HP:SizeToContents() 
 							pnlPanel.HP:SetContentAlignment( 5 )
+							
+							local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+							local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+							if newModel then model = newModel end
+							if newSkin then skin = tonumber(newSkin) end
 						end
 					
 						pnlPanel.Icon = vgui.Create("SpawnIcon", pnlPanel)
-						pnlPanel.Icon:SetModel(item.Model)
+						pnlPanel.Icon:SetModel(model, skin)
 						pnlPanel.Icon:SetPos(10, 5)
 						pnlPanel.Icon:SetToolTip( "Click to buy" )
 						pnlPanel.Icon.DoClick = function()

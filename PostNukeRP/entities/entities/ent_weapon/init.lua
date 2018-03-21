@@ -26,6 +26,8 @@ function ENT:Use( activator, caller )
 			
 			if ammo then
 				weaponEntity:SetClip1(ammo)
+			else 
+				weaponEntity:SetClip1(0)
 			end
 		elseif myWep == "weapon_frag" then
 			activator:GiveAmmo(1, "grenade")

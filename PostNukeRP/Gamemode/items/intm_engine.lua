@@ -3,8 +3,8 @@ local ITEM = {}
 
 ITEM.ID = "intm_engine"
 
-ITEM.Name = "Makeshift Engine"
-ITEM.ClassSpawn = "Engineer"
+ITEM.Name = "Old Car Engine"
+ITEM.ClassSpawn = "None"
 ITEM.Scrap = 50
 ITEM.Small_Parts = 75
 ITEM.Chemicals = 15
@@ -29,6 +29,8 @@ function ITEM.Create( ply, class, pos )
 	ent:SetAngles(Angle(0,0,0))
 	ent:SetPos(pos)
 	ent:Spawn()
+	
+	PNRP.SetOwner(ply, ent)
 end
 
 function ITEM.Use( ply )

@@ -8,11 +8,21 @@ function PNRP.RPSteamID( ply )
 end	
 
 --Gets inventory from the player (Non persistent items)
+--ply can have profile id passed into it
 function PNRP.Inventory( ply )
 	local query
 	local result
+	
+	if not ply then return {} end
+	
+	local pid
+	if isstring(ply) then 
+		pid = tostring(ply)
+	else
+		pid = tostring(ply.pid)
+	end
 
-	query = "SELECT inventory FROM player_inv WHERE pid="..tostring(ply.pid)
+	query = "SELECT inventory FROM player_inv WHERE pid="..pid
 	result = querySQL(query)
 
 	if not result then return nil end
@@ -30,6 +40,39 @@ function PNRP.Inventory( ply )
 
 	return invTbl
 end	
+
+function PNRP.GetFullInventoryPID( pid )
+	local query
+	local result
+
+	query = "SELECT inventory FROM player_inv WHERE pid="..tostring(pid)
+	result = querySQL(query)
+	
+	local invTbl = {}
+	
+	if result then
+		local invLongStr = string.Explode( " ", result[1]["inventory"] )
+		for i, invStr in pairs( invLongStr ) do
+			local invSplit = string.Explode( ",", invStr )
+			local have = math.Round(tonumber(invSplit[2]) or 0)
+			if have > 0 and itemid != "" then
+				table.insert( invTbl, {itemid=invSplit[1], status_table="", iid="", count=have} )
+			end
+		end
+	end
+	
+	query = "SELECT * FROM inventory_table WHERE pid="..tostring(pid)
+	result = querySQL(query)
+	if result then
+		for k, v in pairs(result) do
+			if v["location"] == "player" then
+				table.insert( invTbl, {itemid=v["itemid"], status_table=v["status_table"], iid=v["iid"], count=1} )
+			end
+		end
+	end
+
+	return invTbl
+end
 
 --Gets the players full inventory including persistent items
 function PNRP.GetFullInventory( ply )
@@ -59,6 +102,47 @@ function PNRP.GetFullInventory( ply )
 	end
 
 	return invTbl
+end
+
+--Returns Table[ID] = count
+--Mainly used for tool checks and such
+function PNRP.GetFullInventorySimple( ply )
+	local invTbl = PNRP.Inventory( ply )
+	
+	if not invTbl then invTbl = {} end
+	
+	for _, v in pairs(PNRP.PersistInventory( ply )) do
+		if v["location"] == "player" then
+			if invTbl[v["itemid"]] then
+				invTbl[v["itemid"]] = invTbl[v["itemid"]] + 1
+			else
+				invTbl[v["itemid"]] = 1
+			end
+		end
+	end
+	
+	return invTbl
+end
+
+
+
+function PNRP.GetFullInvStorageSimple( sid )
+	local invStorageTbl = PNRP.GetStorageInventory( sid )
+	local invTbl = invStorageTbl["inv"]
+	
+	if not invTbl then invTbl = {} end
+	
+	local inv = {}
+	for _, v in pairs(invTbl) do
+		if invTbl[v["itemid"]] then
+			inv[v["itemid"]] = v["count"] + tonumber(v["count"])
+		else
+			inv[v["itemid"]] = tonumber(v["count"])
+		end
+		
+	end
+	
+	return inv
 end
 
 --Gets all the persist items owned by the player
@@ -116,55 +200,124 @@ function PlayerMeta:HasInInventory( theitem )
 	
 end
 
---Gets the player's car inventory (Non Persistent items)
-function PNRP.CarInventory( ply )
-	local query
-	local result
+--Gets a persistent items inventory if it exists
+function PNRP.GetIIDtoSIDInvnetory( iid )
+	local query, result
 	
-	query = "SELECT car_inventory FROM player_inv WHERE pid="..tostring(ply.pid)
+	query = "SELECT * FROM inventory_storage WHERE iid="..tostring(iid)
 	result = querySQL(query)
 	
-	if not result then return nil end
+	if not result then return {} end
 	
-	local invTbl = {}
-	local invLongStr = string.Explode( " ", result[1]["car_inventory"] )
-	for _, invStr in pairs( invLongStr ) do
-		local invSplit = string.Explode( ",", invStr )
-		invTbl[invSplit[1]] =  math.Round(tonumber(invSplit[2]) or 0)
-	end
+	local sid = result[1]["sid"]
+	local invTbl = PNRP.GetStorageInventory( sid )
+	
+	if not invTbl then invTbl = {} end
 	
 	return invTbl
-end	
+end
 
---Gets the car's full inventory including persistent items
-function PNRP.GetFullCarInventory( ply )
-	local query
-	local result
-
-	query = "SELECT car_inventory FROM player_inv WHERE pid="..tostring(ply.pid)
+--This gets the inventory of a storage item (something flagged as HasStorage in itembase)
+--This is not currently used in player storage but it may get migrated to this later.
+--Persistent Item System
+function PNRP.GetNPStorageInventory( sid )
+	local result, query
+	
+	query = "SELECT * FROM inventory_storage WHERE sid="..tostring(sid)
 	result = querySQL(query)
-
-	if not result then return nil end
+	
+	--if no sid then there should not be any related items stored in it
+	if not result then 
+		PNRP.CheckPersistSIDs( sid )
+		return {} 
+	end
 	
 	local invTbl = {}
 	
-	local invLongStr = string.Explode( " ", result[1]["car_inventory"] )
-	for i, invStr in pairs( invLongStr ) do
+	local invLongStr = string.Explode(" ", result[1]["inventory"] )
+	for _, invStr in pairs( invLongStr ) do
 		local invSplit = string.Explode( ",", invStr )
 		local have = math.Round(tonumber(invSplit[2]) or 0)
 		if have > 0 and itemid != "" then
-			table.insert( invTbl, {itemid=invSplit[1], status_table="", iid="", count=have} )
+			table.insert( invTbl, {itemid=invSplit[1], status_table="", iid="", count=have, sid=sid} )
 		end
 	end
-
-	for k, v in pairs(PNRP.PersistInventory( ply )) do
-		if v["location"] == "car" then
-			table.insert( invTbl, {itemid=v["itemid"], status_table=v["status_table"], iid=v["iid"], count=1} )
-		end
-	end
-
+	
 	return invTbl
 end
+function PNRP.GetStorageInventory( sid )
+		
+	local invTbl = PNRP.GetNPStorageInventory( sid )
+	
+	local query, result
+	
+	query = "SELECT * FROM inventory_table WHERE location='inventory_storage' AND locid="..tostring(sid)
+	result = querySQL(query)
+	
+	if not result then result = {} end
+	for k, v in pairs(result) do
+		if v["location"] == "inventory_storage" then
+			table.insert( invTbl, {itemid=v["itemid"], status_table=v["status_table"], iid=v["iid"], count=1, sid=sid} )
+		end
+	end
+	
+	local returnTbl = {}
+	returnTbl["sid"] = sid
+	returnTbl["inv"] = invTbl
+	
+	return returnTbl
+	
+end
+
+--New Persistent Item Inventory
+function PNRP.OpenItemInventory( iid, ply, itemID )
+	local invStorageTbl = PNRP.GetIIDtoSIDInvnetory( iid )
+	
+	if not invStorageTbl then
+		invTbl = {}
+		print("[OpenItemInventory] Missing per inventory!")
+		return
+	end
+	
+	local sid = invStorageTbl["sid"]
+	local invTbl = invStorageTbl["inv"]
+	local plyInvTbl = PNRP.GetFullInventory( ply )
+	
+	if not invTbl then invTbl = {} end
+	
+	if not plyInvTbl then
+		plyInvTbl = {}
+		print("[OpenItemInventory] Missing ply inventory!")
+	end
+	
+	if not itemID then 
+		local getItem = PNRP.GetPersistItem(iid)
+		itemID = getItem["itemid"]
+	end
+	
+	local capacity = PNRP.Items[itemID].Capacity
+	if not capacity then capacity = 0 end
+	
+	local weightCap
+	if team.GetName(ply:Team()) == "Scavenger" then
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+	else
+		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+	end
+	
+	net.Start("pnrp_OpenItemStorageWindow")
+		net.WriteString(itemID)
+		net.WriteTable(invTbl)
+		net.WriteTable(plyInvTbl)
+		net.WriteString(tostring(PNRP.InventoryWeight( ply )))
+		net.WriteString(tostring(PNRP.StorageInventoryWeight( iid )))
+		net.WriteString(tostring(weightCap))
+		net.WriteString(tostring(capacity))
+		net.WriteString(tostring(sid))
+		net.WriteString(tostring(iid))
+	net.Send(ply)
+end
+util.AddNetworkString( "pnrp_OpenItemStorageWindow" )
 
 --Opens the player's Inventory Window
 function PNRP.OpenMainInventory(ply)	
@@ -186,7 +339,6 @@ function PNRP.OpenMainInventory(ply)
 	net.Start("pnrp_OpenInvWindow")
 		net.WriteTable(tbl)
 		net.WriteString(tostring(PNRP.InventoryWeight( ply )))
-		net.WriteString(tostring(PNRP.CarInventoryWeight( ply )))
 		net.WriteString(tostring(weightCap))
 	net.Send(ply)
 end
@@ -205,12 +357,33 @@ function PNRP.OpenEQWindow(ply)
 	net.Start("pnrp_OpenEquipmentWindow")
 		net.WriteEntity(ply)
 		net.WriteString(tostring(PNRP.InventoryWeight( ply )))
-		net.WriteString(tostring(PNRP.CarInventoryWeight( ply )))
 		net.WriteFloat(weightCap)
 	net.Send(ply)
 end
 concommand.Add("pnrp_initEQ", PNRP.OpenEQWindow)
 util.AddNetworkString( "pnrp_OpenEquipmentWindow" )
+
+--Gets the total weight of items stored in inventory_storage and persistent
+function PNRP.StorageInventoryWeight( iid )
+	local invStorageTbl = PNRP.GetIIDtoSIDInvnetory( iid )
+	
+	if not invStorageTbl then return 0 end
+	
+	local Inv = invStorageTbl["inv"]
+	if not Inv then return 0 end
+	
+	local weightSum = 0
+	
+	for k, v in pairs(Inv) do
+		if PNRP.Items[v["itemid"]] then
+			if PNRP.Items[v["itemid"]].Type ~= "vehicle" then
+				weightSum = weightSum + PNRP.Items[v["itemid"]].Weight * tonumber(v["count"])
+			end
+		end
+	end
+	
+	return weightSum
+end
 
 --Gets the players total carried weight including persistent items
 function PNRP.InventoryWeight( ply )
@@ -259,57 +432,63 @@ function PNRP.CheckPlayerWeight(ply, theitem)
 	return false
 end
 
---Opens the player's car invnetory
-function PNRP.OpenMainCarInventory(len, pl)
-	local ply = net.ReadEntity()
-	if pl ~= ply then 
-		ErrorNoHalt("[ALERT] OpenMainCarInventory: "..tostring(pl).."\n")
-		return 
+--Advanced weight check for Storage Items
+--Will return the amount that will fit in the item
+function PNRP.CheckStorageWeightAdv(iid, theitem, amount)
+	local itmWeight = PNRP.Items[theitem].Weight
+	local curWeight = PNRP.StorageInventoryWeight( iid )
+	local perItm = PNRP.GetPersistItem(iid)
+	local weightCap = PNRP.Items[perItm["itemid"]].Capacity
+	local weight = 0
+	
+	--Vehicle weight override
+	if PNRP.Items[theitem].Type == "vehicle" then return amount end
+	
+	weight = itmWeight * amount
+	
+	if weight+curWeight > weightCap then
+		
+		local RemainingW = weightCap - curWeight
+		if RemainingW >= 1 then
+			amount = RemainingW / itmWeight
+			amount = math.floor(amount)
+		else
+			amount = 0
+		end
 	end
 	
-	local tbl = PNRP.GetFullCarInventory( ply )
-	
-	if not tbl then
-		tbl = {}
-		print("Missing inventory!")
-	end
-	
-	net.Start("pnrp_OpenCarInvWindow")
-		net.WriteTable(tbl)
-		net.WriteString(tostring(PNRP.InventoryWeight( ply )))
-		net.WriteString(tostring(PNRP.CarInventoryWeight( ply )))
-	net.Send(ply)
+	return amount
 end
-net.Receive("pnrp_OpenCarInventory", PNRP.OpenMainCarInventory);
-util.AddNetworkString( "pnrp_OpenCarInventory" )
-util.AddNetworkString( "pnrp_OpenCarInvWindow" )
 
---Gets the Car's weight including persistent items
-function PNRP.CarInventoryWeight( ply )
-	local Inv = PNRP.CarInventory( ply )
-	local Inv2 = PNRP.PersistInventory( ply )
+--Advanced weight check for Player Inventory
+--Will return the amount that will fit in the item
+function PNRP.CheckPlayerWeightAdv(ply, theitem, amount)
+	local itmWeight = PNRP.Items[theitem].Weight
+	local curWeight = PNRP.InventoryWeight( ply ) + itmWeight
+	local weightCap
+	local weight = 0
 	
-	if not Inv then return 0 end
+	--Vehicle weight override
+	if PNRP.Items[theitem].Type == "vehicle" then return amount end
 	
-	local weightSum = 0
+	if team.GetName(ply:Team()) == "Scavenger" then
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+	else
+		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+	end
 	
-	for ID, count in pairs( Inv ) do
-		if PNRP.Items[ID] then
-			if PNRP.Items[ID].Type ~= "vehicle" then
-				weightSum = weightSum + (PNRP.Items[ID].Weight * tonumber(count))
-			end
+	weight = itmWeight * amount
+	if weight+curWeight > weightCap then
+		local RemainingW = weightCap - curWeight
+		if RemainingW >= 1 then
+			amount = RemainingW / itmWeight
+			amount = math.floor(amount)
+		else
+			amount = 0
 		end
 	end
 	
-	for k, v in pairs(Inv2) do
-		if v["location"] == "car" and PNRP.Items[v["itemid"]] then
-			if PNRP.Items[v["itemid"]].Type ~= "vehicle" then
-				weightSum = weightSum + PNRP.Items[v["itemid"]].Weight
-			end
-		end
-	end
-	
-	return weightSum
+	return amount
 end
 
 function PlayerMeta:AddToInventory( theitem, amount )
@@ -320,18 +499,26 @@ end
 function PNRP.AddToInventory( ply, theitem, amount, ent )
 	local query
 	local result
+	
+	local pid
+	if isstring(ply) then 
+		pid = tostring(ply)
+	else
+		pid = tostring(ply.pid)
+	end
+	
 	amount = tonumber(amount)
 	if PNRP.Items[theitem] != nil then
-		if PNRP.Items[theitem].SaveState then
+		if PNRP.Items[theitem].SaveState and ent then
 			
-			PNRP.SaveState(ply, ent, "player")
+			PNRP.SaveState(pid, ent, "player")
 
 		else
-			query = "SELECT pid FROM player_inv WHERE pid="..tostring(ply.pid)
+			query = "SELECT pid FROM player_inv WHERE pid="..tostring(pid)
 			result = querySQL(query)
 			
 			if result then
-				local Inv = PNRP.Inventory( ply )
+				local Inv = PNRP.Inventory( pid )
 				
 				if not Inv then
 					Inv = {}
@@ -353,71 +540,17 @@ function PNRP.AddToInventory( ply, theitem, amount, ent )
 				end
 				InvStr = string.TrimRight(InvStr)
 				
-				query = "UPDATE player_inv SET inventory='"..InvStr.."' WHERE pid="..tostring(ply.pid)
+				query = "UPDATE player_inv SET inventory='"..InvStr.."' WHERE pid="..tostring(pid)
 				querySQL(query)
 			else
 				local Inv = theitem..",1"
 				
-				query = "INSERT INTO player_inv (pid, inventory) VALUES ("..tostring(ply.pid)..", '"..Inv.."')"
+				query = "INSERT INTO player_inv (pid, inventory) VALUES ("..tostring(pid)..", '"..Inv.."')"
 				result = querySQL(query)
 			end
 		end
 	end
 end
-
---Adds persistent item to player from car inventory
-function PNRP.AddToInvFromCarPersist( len, pl )
-	local ply = net.ReadEntity()
-	local itemID = net.ReadString()
-	local iid = net.ReadString()
-	local option = net.ReadString()
-	
-	if pl ~= ply then 
-		ErrorNoHalt("[ALERT] Possible Lua Injection: AddToInvFromCarPersist by "..tostring(pl).."\n")
-		return
-	end
-	
-	local weightCheck = PNRP.CheckPlayerWeight(ply, itemID)
-	
-	if weightCheck then
-		PNRP.PersistMoveTo( ply, iid, "player" )
-		if option == "carInv" then 
-			PNRP.TakeFromCarInventory( ply, itemID )
-		end
-	else
-		ply:ChatPrint("Your pack is too full and cannot carry this.")
-		return
-	end
-	
-	ply:ConCommand("pnrp_carinv")	
-end
-net.Receive("pnrp_AddToInvFromCarPersist", PNRP.AddToInvFromCarPersist );
-util.AddNetworkString( "pnrp_AddToInvFromCarPersist" )
-
---Adds non persistent item to players inventory from car
-function PNRP.AddToInvFromCar( len, pl )
-	local ply = net.ReadEntity()
-	local theitem = net.ReadString()
-	
-	if pl ~= ply then 
-		ErrorNoHalt("[ALERT] Possible Lua Injection: AddToInvFromCar by "..tostring(pl).."\n")
-		return
-	end
-	
-	local weightCheck = PNRP.CheckPlayerWeight(ply, theitem)
-	
-	if weightCheck then
-		PNRP.AddToInventory( ply, theitem, 1 )
-		PNRP.TakeFromCarInventory( ply, theitem )
-	else
-		ply:ChatPrint("Your pack is too full and cannot carry this.")
-		return
-	end
-	
-	ply:ConCommand("pnrp_carinv")	
-end
-net.Receive("pnrp_addtoinvfromcar", PNRP.AddToInvFromCar );
-util.AddNetworkString( "pnrp_addtoinvfromcar" )
 
 --Adds to inventory from Equipment (non persistent items)
 function PNRP.AddToInvFromEQ( len, pl )
@@ -480,97 +613,198 @@ end
 net.Receive( "pnrp_addtoinvfromeq", PNRP.AddToInvFromEQ )
 util.AddNetworkString( "pnrp_addtoinvfromeq" )
 
---Adds non persistent items to Car inventory
-function PNRP.AddToCarInentory( len, ply )
-	local query
-	local result
+function PNRP.TakeFromItemStorage(sid, theitem, amount)
+	local query, result
 	
-	local ply = net.ReadEntity()
-	local command = net.ReadString()
-	local theitem = net.ReadString()
-	local amt = net.ReadDouble()
+	local AdvInv = PNRP.GetNPStorageInventory( sid )
 	
-	if pl ~= ply then 
-		ErrorNoHalt("[ALERT] Possible Lua Injection: AddToCarInentory by "..tostring(pl).."\n")
+	if not AdvInv then
+		AdvInv = {}
+	end
+	
+	local inv = {}
+	for _, v in pairs(AdvInv) do
+		inv[v["itemid"]] = v["count"]
+	end
+	
+	if inv[theitem] ~= nil then
+		if inv[theitem] < amount then
+			amount = 0
+		elseif inv[theitem]-amount > 0 then
+			inv[theitem] = inv[theitem] - amount
+		else 
+			inv[theitem] = nil
+		end
+		
+		local InvStr = ""
+		for item, amount in pairs(inv) do
+			InvStr = InvStr..item..","..tostring(amount).." "
+		end
+		
+		InvStr = string.TrimRight(InvStr)
+		print(InvStr)
+		query = "UPDATE inventory_storage SET inventory='"..InvStr.."' WHERE sid="..tostring(sid)
+		result = querySQL(query)
+	else
+		amount = 0
+	end
+	
+	return amount
+end
+
+function PNRP.AddToItemStorage(sid, itemID, amount, iid)
+	if not sid then return end
+	if amount <= 0 then amount = 1 end
+	
+	local theitem = PNRP.Items[itemID]
+	if not theitem then return end
+	
+	if iid and iid ~= "" and tostring(iid) ~= "nil"  then
+		PNRP.PersistMoveTo( nil, iid, "inventory_storage", sid )
+	else
+		local AdvInv = PNRP.GetNPStorageInventory( sid )
+		
+		if not AdvInv then
+			AdvInv = {}
+		end
+		
+		local Inv = {}
+		for _, v in pairs(AdvInv) do
+			Inv[v["itemid"]] = v["count"]
+		end
+		
+		if Inv[itemID] then
+			Inv[itemID] = Inv[itemID] + amount
+		else
+			Inv[itemID] = amount
+		end
+		
+		local InvStr = ""
+		for item, amount in pairs(Inv) do
+			InvStr = InvStr..item..","..tostring(amount).." "
+		end
+
+		InvStr = string.TrimRight(InvStr)
+		
+		query = "UPDATE inventory_storage SET inventory='"..InvStr.."' WHERE sid="..tostring(sid)
+		result = querySQL(query)
+	end
+	
+	return true
+end
+
+function PNRP.PlyInvAddToItemStorage(len, ply)
+	local itemID = net.ReadString()
+	local amount = net.ReadDouble()
+	local iid = net.ReadString()
+	local sid = net.ReadString()
+	local origin_iid = net.ReadString()
+	
+	if not sid then return end
+	if amount <= 0 then amount = 1 end
+
+	local theitem = PNRP.Items[itemID]
+	if not theitem then return end
+	
+	if theitem.HasStorage then
+		ply:ChatPrint("You can not store your "..theitem.Name.." in another storage item.")
 		return
 	end
 	
-	if amt <= 0 then amt = 1 end
+	local haveItem = true
 	
-	if PNRP.Items[theitem] != nil then
-		query = "SELECT pid FROM player_inv WHERE pid="..tostring(ply.pid)
-		result = querySQL(query)
-		
-		if result then
-			local Inv = PNRP.CarInventory( ply )
-			
-			if not Inv then
-				Inv = {}
-			end
-			
-			if Inv[theitem] then
-				Inv[theitem] = Inv[theitem] + amt
-			else
-				Inv[theitem] = amt
-			end
-			
-			local InvHalfString = {}
-			for item, amount in pairs(Inv) do
-				table.insert(InvHalfString, item..","..tostring(amount))
-			end
-			local InvStr = ""
-			for _, hstring in pairs(InvHalfString) do
-				InvStr = InvStr..hstring.." "
-			end
-			InvStr = string.TrimRight(InvStr)
-			
-			query = "UPDATE player_inv SET car_inventory='"..InvStr.."' WHERE pid="..tostring(ply.pid)
-			result = querySQL(query)
-		else
-			local Inv = theitem..","..tostring(amt)
-			
-			query = "INSERT INTO player_inv (pid, car_inventory) VALUES ("..tostring(ply.pid)..", '"..Inv.."')"
-			result = querySQL(query)
-		end
-		
-		for i = 1, amt do
-			PNRP.TakeFromInventory( ply, theitem )
-		end
-		Msg("["..tostring(theitem).."] added to "..ply:Nick().."'s car inventory.  \n")
-		ply:ChatPrint("You have stored "..tostring(amt).." "..PNRP.Items[theitem].Name.." in your vehicle's trunk.")
-	end
-	if command == "FromEQ" then
-		local ammoAmt = PNRP.Items[theitem].Energy
-		theitem = string.gsub(theitem, "ammo_", "")
-		ply:RemoveAmmo( ammoAmt, theitem )
+	local amount = PNRP.CheckStorageWeightAdv(origin_iid, itemID, amount)
+	
+	if amount < 1 then
+		ply:ChatPrint("Not enough space for "..tostring(theitem.Name))
+		return
 	end
 	
-	if command ~= "FromEQ" then
-		ply:ConCommand("pnrp_inv")
+	if iid and iid ~= "" and tostring(iid) ~= "nil"  then
+		if not PNRP.AddToItemStorage(sid, itemID, amount, iid) then return end
+		ply:EmitSound(Sound("items/ammo_pickup.wav"))
+		
+	else
+		
+		--Makes sure the player has enough of this item
+		local pInv = PNRP.Inventory( tostring(ply.pid) )
+		if not pInv then haveItem = false end
+		if pInv[itemID] < amount then haveItem = false end
+		if not haveItem then
+			ply:ChatPrint("You do not have enough of this.")
+			return
+		end
+		
+		if not PNRP.AddToItemStorage(sid, itemID, amount, iid) then return end
+		
+		ply:EmitSound(Sound("items/ammo_pickup.wav"))
+		
+		for i = 1, amount do
+			PNRP.TakeFromInventory( ply, itemID )
+		end
+	end
+	
+	ply:ChatPrint("You have stored "..tostring(amount).." "..theitem.Name)
+	if origin_iid then
+		PNRP.OpenItemInventory( origin_iid, ply )
 	end
 end
-net.Receive( "pnrp_addtocarinentory", PNRP.AddToCarInentory )
+net.Receive( "pnrp_PlyInvAddToItemStorage", PNRP.PlyInvAddToItemStorage )
+util.AddNetworkString( "pnrp_PlyInvAddToItemStorage" )
 
-function PNRP.AdmDelItm( len, pl )
+function PNRP.PlyInvTakeFromItemStorage(len, ply)
+	local itemID = net.ReadString()
+	local amount = net.ReadDouble()
+	local iid = net.ReadString()
+	local sid = net.ReadString()
+	local origin_iid = net.ReadString()
 	
-	local ply = net.ReadEntity()
-	local theitem = net.ReadString()
-	local amt = net.ReadDouble()
-	
-	if pl ~= ply then 
-		ErrorNoHalt("[ALERT] AdmDelItm: "..tostring(pl).."\n")
-		return 
+	if not sid then return end
+	if amount <= 0 then amount = 1 end
+
+	local theitem = PNRP.Items[itemID]
+	if not theitem then return end
+		
+	if iid and iid ~= "" and tostring(iid) ~= "nil"  then
+		
+		local weightCheck = PNRP.CheckPlayerWeight(ply, itemID)
+		if weightCheck or theitem.Type == "vehicle"  then
+			PNRP.PersistMoveTo( ply, iid, "player" )
+			ply:ChatPrint("You have removed "..tostring(amount).." "..theitem.Name)
+		else
+			ply:ChatPrint("Your pack is too full and cannot carry this.")	
+		end
+	else
+		amount = PNRP.CheckPlayerWeightAdv(ply, itemID, amount)
+		if amount > 0 then
+			amount = PNRP.TakeFromItemStorage(sid, itemID, amount)
+			PNRP.AddToInventory( ply, itemID, amount )
+			ply:EmitSound(Sound("items/ammo_pickup.wav"))
+			ply:ChatPrint("You have removed "..tostring(amount).." "..theitem.Name)
+		else
+			ply:ChatPrint("Your pack is too full and cannot carry this.")
+		end
 	end
+	
+	
+	if origin_iid then
+		PNRP.OpenItemInventory( origin_iid, ply )
+	end
+end
+net.Receive( "pnrp_PlyInvTakeFromItemStorage", PNRP.PlyInvTakeFromItemStorage )
+util.AddNetworkString( "pnrp_PlyInvTakeFromItemStorage" )
+
+--Just a easy function for multiple deletes of non persist items
+function PNRP.PlyDelItem( pid, theitem, amt )
 	
 	for i = 1, amt do
-		PNRP.TakeFromInventory( ply, theitem )
+		PNRP.TakeFromInventory( pid, theitem )
 	end
 	
 end
-net.Receive( "pnrp_adm_delItm", PNRP.AdmDelItm )
-util.AddNetworkString( "pnrp_adm_delItm" )
 
 --Removes non persistent item from player inventory
+--ply var can also be the profile ID
 function PNRP.TakeFromInventory( ply, theitem )
 	local query
 	local result
@@ -583,6 +817,13 @@ function PNRP.TakeFromInventory( ply, theitem )
 	end
 	
 	if inv[theitem] ~= nil then
+		local pid
+		if isstring(ply) then 
+			pid = tostring(ply)
+		else
+			pid = tostring(ply.pid)
+		end
+		
 		if inv[theitem] > 1 then
 			inv[theitem] = inv[theitem] - 1
 		else
@@ -599,7 +840,7 @@ function PNRP.TakeFromInventory( ply, theitem )
 		end
 		InvStr = string.TrimRight(InvStr)
 		
-		query = "UPDATE player_inv SET inventory='"..InvStr.."' WHERE pid="..tostring(ply.pid)
+		query = "UPDATE player_inv SET inventory='"..InvStr.."' WHERE pid="..pid
 		result = querySQL(query)
 	end
 end
@@ -647,83 +888,6 @@ function PNRP.TakeFromInventoryBulk( ply, theitem, Count )
 	return Check
 end
 
---Removes non persistent item from Car Inventory
-function PNRP.TakeFromCarInventory( ply, theitem )
-	local query
-	local result
-	
-	local inv = PNRP.CarInventory( ply )
-	
-	if not inv then
-		ErrorNoHalt("No inventory under PID!")
-		return
-	end
-	
-	if inv[theitem] ~= nil then
-		if inv[theitem] > 1 then
-			inv[theitem] = inv[theitem] - 1
-		else
-			inv[theitem] = nil
-		end
-		
-		local InvHalfString = {}
-		for item, amount in pairs(inv) do
-			table.insert(InvHalfString, item..","..tostring(amount))
-		end
-		local InvStr = ""
-		for _, hstring in pairs(InvHalfString) do
-			InvStr = InvStr..hstring.." "
-		end
-		InvStr = string.TrimRight(InvStr)
-		
-		query = "UPDATE player_inv SET car_inventory='"..InvStr.."' WHERE pid="..tostring(ply.pid)
-		result = querySQL(query)
-	end
-end
-
---Bulk remove non persistent items from Car invnetory
-function PNRP.TakeFromCarInventoryBulk( ply, theitem, Count )
-	local query
-	local result
-	local Check = false
-	
-	local inv = PNRP.CarInventory( ply )
-	
-	if not inv then
-		ErrorNoHalt("No inventory under PID!")
-		return
-	end
-	
-	if inv[theitem] ~= nil then
-		if inv[theitem] > Count then
-			inv[theitem] = inv[theitem] - Count
-			Check = true
-		else
-			if inv[theitem] == Count then
-				inv[theitem] = nil
-				Check = true
-			else
-				Check = false
-				return false
-			end
-		end
-		
-		local InvHalfString = {}
-		for item, amount in pairs(inv) do
-			table.insert(InvHalfString, item..","..tostring(amount))
-		end
-		local InvStr = ""
-		for _, hstring in pairs(InvHalfString) do
-			InvStr = InvStr..hstring.." "
-		end
-		InvStr = string.TrimRight(InvStr)
-		
-		query = "UPDATE player_inv SET car_inventory='"..InvStr.."' WHERE pid="..tostring(ply.pid)
-		result = querySQL(query)
-	end
-	return Check
-end
-
 --Construction of Persistent Item in world
 function PNRP.DropPersistItem( ply, itemID, iid, option )
 	--Second Check in case anything is nil
@@ -754,16 +918,10 @@ function PNRP.DropPersistItem( ply, itemID, iid, option )
 	
 end
 
-function NetDropPersistItem(len, pl)
-	ply = net.ReadEntity()
+function NetDropPersistItem(len, ply)
 	itemID = net.ReadString()
 	iid = net.ReadString()
 	option = net.ReadString()
-	
-	if pl ~= ply then 
-		ErrorNoHalt("[ALERT] NetDropPersistItem: "..tostring(pl).."\n")
-		return 
-	end
 	
 	local query, result
 	query = "SELECT * FROM inventory_table where pid='"..tostring(ply.pid).."'"
@@ -855,14 +1013,8 @@ end
 concommand.Add( "carinventory_drop", PNRP.DropCarItem )
 
 --Use item from inventory (non persistent items)
-function PNRP.UseFromInv(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.UseFromInv(len, ply)
 	local ItemID = net.ReadString()
-	
-	if ply ~= pl then 
-		ErrorNoHalt( "[ALERT] Possible Lua Injection: UseFromInv by "..tostring(pl).."\n")
-		return 
-	end
 	
 	if PNRP.Items[ItemID] == nil then return end
 	local item = PNRP.Items[ItemID]
@@ -879,6 +1031,68 @@ function PNRP.UseFromInv(len, pl)
 	end	
 end
 net.Receive( "UseFromInv", PNRP.UseFromInv )
+
+function PNRP.UseFromInvStoreage(len, ply)
+	local usedFrom = net.ReadString()
+	local ItemID = net.ReadString()
+	local sid = net.ReadString()
+	local origin_iid = net.ReadString()
+	
+	local item = PNRP.Items[ItemID]
+	if not item then return end
+	
+	if usedFrom == "storage" then
+		--Makes sure the player has the item
+		local invTbl = PNRP.GetFullInvStorageSimple( sid )
+		
+		if not invTbl then 
+			ply:ChatPrint("You don't have enough of this.")
+			return 
+		end
+		if not invTbl[ItemID] then
+			ply:ChatPrint("You don't have enough of this.")
+			return 
+		end
+		
+		if item.Type == "weapon" or item.Type == "ammo" or item.Type == "medical" or item.Type == "food" then
+			local useCheck	
+			useCheck = item.Use( ply )
+			if useCheck == true then
+				PNRP.TakeFromItemStorage(sid, ItemID, 1)
+			end
+		else
+			ply:ChatPrint("Cant use this, wrong type.")
+		end	
+	
+	elseif usedFrom == "player" then
+		--Make sure the player has the item
+		local invTbl = PNRP.GetFullInventorySimple( ply )
+		if not invTbl then 
+			ply:ChatPrint("You don't have enough of this.")
+			return 
+		end
+		if not invTbl[ItemID] then
+			ply:ChatPrint("You don't have enough of this.")
+			return 
+		end
+		
+		if item.Type == "weapon" or item.Type == "ammo" or item.Type == "medical" or item.Type == "food" then
+			local useCheck	
+			useCheck = item.Use( ply )
+			if useCheck == true then
+				PNRP.TakeFromInventory( ply, ItemID )
+			end
+		else
+			ply:ChatPrint("Cant use this, wrong type.")
+		end	
+	end
+	
+	if origin_iid then
+		PNRP.OpenItemInventory( origin_iid, ply )
+	end
+end
+net.Receive( "UseFromInvStoreage", PNRP.UseFromInvStoreage )
+util.AddNetworkString( "UseFromInvStoreage" )
 
 --debug weight report
 function PNRP.ReportWeight( ply, c, a )

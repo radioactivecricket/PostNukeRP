@@ -81,11 +81,8 @@ concommand.Add( "pnrp_setrpname", SetRPName )
 PNRP.ChatConCmd( "/rpname", "pnrp_setrpname" )
 util.AddNetworkString("RPNameChange")
 
-function PNRP.ChangeRPName(len, pl)
-	local ply = net.ReadEntity()
+function PNRP.ChangeRPName(len, ply)
 	local name = net.ReadString()
-	
-	if pl ~= ply then return end
 	
 	if (not name) or name == "" or name == nil then
 		ply.rpname = ply:SteamName()
@@ -136,23 +133,42 @@ end
 concommand.Add( "pnrp_setmodel", SetModel )
 PNRP.ChatConCmd( "/setmodel", "pnrp_setmodel" )
 
-function PNRP.SetPlayerModel(len, pl)
+function PNRP.SetPlayerModel(len, ply)
 	local GM = GAMEMODE
-	local ply = net.ReadEntity()
 	local model = net.ReadString()
 	local playerColor = net.ReadVector()
 	local wepColor = net.ReadVector()
-	
-	if pl ~= ply then return end
+	local skin = tonumber(net.ReadString())
+	local bgString = net.ReadString()
 	
 	ply.rpmodel = model
 	GM:PlayerSetModel( ply )
 	
 	ply:SetPlayerColor( playerColor )
 	ply:SetWeaponColor( wepColor )
+	
+	ply:SetSkin(skin)
+	ply:SetBodyGroups( bgString )
 end
 net.Receive("PNRP_SetPlayerModel", PNRP.SetPlayerModel )
 util.AddNetworkString("PNRP_SetPlayerModel")
+
+function PNRP.SetBodyGroups( ply )
+	local query = "SELECT * FROM profiles WHERE pid="..SQLStr(tostring(ply.pid))
+	local result = querySQL(query)
+	
+	if not result then return end
+	result = result[1]
+	
+	local bodygroups = result["bodygroups"]
+	if not bodygroups then bodygroups = "" end
+	ply:SetBodyGroups(tostring(bodygroups))	
+	
+	local skin = tonumber(result["skin"])
+	if not skin or skin == nil or not isnumber(skin) then skin = 0 end
+
+	ply:SetSkin(skin)
+end
 
 /*---------------------------------------------------------
   Save/Load
@@ -174,7 +190,14 @@ function GM.SaveCharacter(ply,cmd,args)
 		skillList = skillList..skillEscaped..","..tostring(level).." "
 	end
 	string.TrimRight(skillList)
-
+	
+	local numBG = ply:GetNumBodyGroups()
+	local skin = ply:GetSkin()
+	local bgString = ""
+	
+	for i=0, numBG do
+		bgString = bgString..tostring(ply:GetBodygroup( i ))
+	end
 
 	for k, v in pairs(ply:GetWeapons()) do
 		local ammo = ply:GetAmmoCount( v:GetPrimaryAmmoType() )
@@ -204,6 +227,7 @@ function GM.SaveCharacter(ply,cmd,args)
 	string.TrimRight(ammoList)
 
 	query = "UPDATE profiles SET model='"..ply:GetModel().."', nick ="..SQLStr(ply:Nick())..", lastlog="..SQLStr(os.date())..", class="..tostring(ply:Team())..", xp="..tostring(ply:GetXP())..", skills='"..skillList.."', health="..tostring(ply:Health())..", armor="..tostring(ply:Armor())..", endurance="..tostring(ply.Endurance)..", hunger="..tostring(ply.Hunger)
+	query = query..", skin="..tonumber(skin)..", bodygroups='"..tostring(bgString).."'"
 	query = query..", res='"..ply.Resources["Scrap"]..","..ply.Resources["Small_Parts"]..","..ply.Resources["Chemicals"].."', weapons='"..weaponList.."', ammo='"..ammoList.."' WHERE pid="..tostring(ply.pid)
 	result = querySQL(query)
 	print("Player data saved: "..ply:Nick())
@@ -218,11 +242,15 @@ function GM.CreateCharacter( ply, plyModel, plyClass )
 	result = querySQL(query)
 
 	if not result then
-		query = "INSERT INTO player_table VALUES ( '"..ply:SteamID().."', '"..tostring(ply:UniqueID()).."', '"..ply:IPAddress().."', "..SQLStr(ply:SteamName())..", '"..tostring(os.date()).."', '"..tostring(os.date()).."' )"
+		query = "INSERT INTO player_table "
+		query = query.."( 'steamid', 'uid', 'ip', 'name', 'first_joined', 'last_joined' ) VALUES "
+		query = query.."( '"..ply:SteamID().."', '"..tostring(ply:UniqueID()).."', '"..ply:IPAddress().."', "..SQLStr(ply:SteamName())..", '"..tostring(os.date()).."', '"..tostring(os.date()).."' )"
 		result = querySQL(query)
 	end
 
-	query = "INSERT INTO profiles VALUES ( NULL, '"..ply:SteamID().."', "..SQLStr(plyModel)..", "..SQLStr(ply:Name())..", "..SQLStr(os.date())..", "..tonumber(plyClass)..", 0, ' ', 150, 0, 100, 100, '0,0,0', ' ', ' ' )"
+	query = "INSERT INTO profiles "
+	query = query.."('steamid', 'model', 'nick', 'lastlog', 'class', 'xp', 'skills', 'health', 'armor', 'endurance', 'hunger', 'res', 'weapons', 'ammo' ) VALUES "
+	query = query.."('"..ply:SteamID().."', "..SQLStr(plyModel)..", "..SQLStr(ply:Name())..", "..SQLStr(os.date())..", "..tonumber(plyClass)..", 0, ' ', 150, 0, 100, 100, '0,0,0', ' ', ' ' )"
 	result = querySQL(query)
 
 	print("Created new character for "..ply:SteamName())
@@ -301,7 +329,8 @@ function GM.LoadCharacter( ply, pid )
 	local result
 
 	ply.pid = pid
-
+	ply:SetNetVar("pid", pid)
+	
 	query = "SELECT * FROM profiles WHERE pid="..SQLStr(tostring(pid))
 	result = querySQL(query)
 
@@ -322,7 +351,6 @@ function GM.LoadCharacter( ply, pid )
 
 	ply:SetHealth( tonumber(result[1]["health"]) or maxHealth )
 	ply.LoadHealth = tonumber(result[1]["health"])
---	ErrorNoHalt( "Stored HP:  "..result[1]["health"].."  After Set:  "..tostring(ply:Health()).."\n")
 
 	ply:SetArmor( tonumber(result[1]["armor"]) or 0 )
 	ply.Endurance = tonumber(result[1]["endurance"])
@@ -2494,13 +2522,9 @@ PNRP.ChatCmd( "/eq", PNRP.OpenEquipment )
 PNRP.ChatCmd( "/equipment", PNRP.OpenEquipment )
 
 --Will evntually build this to replace the above function
-function PNRP.DropWep( len, pl )
-
-	local ply = net.ReadEntity()
+function PNRP.DropWep( len, ply )
 	local myWep = PNRP.Items[net.ReadString()]
 	local curWepAmmo = net.ReadString()
-	
-	if pl ~= ply then return end
 
 	local tr = ply:TraceFromEyes(200)
 	local trPos = tr.HitPos
@@ -2516,7 +2540,6 @@ function PNRP.DropWep( len, pl )
 	ent:SetNetVar("Ammo", curWepAmmo)
 
 end
---datastream.Hook( "pnrp_dropWepFromEQ", PNRP.DropWep )
 net.Receive( "pnrp_dropWepFromEQ", PNRP.DropWep )
 
 function PNRP.StripWep (ply, command, args)
@@ -2630,15 +2653,39 @@ function PNRP.GetSpawnflags ( ply )
 --			return true
 --		end
 	end
-
+	
 --	ply:ChatPrint("Class: "..tostring(ent:GetClass()))
 	EntityKeyValueInfo( ent )
 --	Msg(EntityKeyValueInfo( ent, 0 ).."\n")
 	ply:ChatPrint("Handle Animation: "..tostring(ent:GetTable().HandleAnimation) )
 	ply:ChatPrint("Model: "..tostring(ent:GetModel()) )
 	ply:ChatPrint("Pos:  "..tostring(ent:GetPos()) )
+	local HPExt = ""
+	local item = PNRP.SearchItembase( ent )
+	if item then
+		ply:ChatPrint("Item ID: "..tostring(item.ID))
+		ply:ChatPrint("Item Name: "..tostring(item.Name))
+		if item.Hull then
+			ply:ChatPrint("Item Hull: "..tostring(item.Hull))
+		end
+		if item.Tank then
+			ply:ChatPrint("Gas: "..tostring(ent.gas).."/"..tostring(item.Tank))
+		end
+		if item.Capacity then
+			ply:ChatPrint("Capacity: "..tostring(item.Capacity))
+		end
+		if item.HP then
+			HPExt = "/"..item.HP
+		end
+		ply:ChatPrint("Weight: "..tostring(item.Weight))
+	end
+	ply:ChatPrint("HP:  "..tostring(ent:Health())..HPExt )
+	if ent.UnitLeft then
+		ply:ChatPrint("Charge: "..tostring(ent.UnitLeft))
+	end
 end
 concommand.Add( "pnrp_getinfo", PNRP.GetSpawnflags )
+PNRP.ChatConCmd( "/getinfo", "pnrp_getinfo" )
 
 function PNRP.GetRepelSpawnflags ( ply )
 
@@ -2681,59 +2728,6 @@ function PNRP.Unfreeze(ply)
 end
 concommand.Add( "pnrp_unfreeze", PNRP.Unfreeze )
 PNRP.ChatCmd( "/unfreeze", PNRP.Unfreeze )
-
-function seatSetup(ply, cmd, args)
-	for _, car in pairs(ents.FindInSphere( ply:GetPos(), 200 )) do
-		local ItemID = PNRP.FindItemID( car:GetClass() )
-		if ItemID != nil then
-			if ItemID == "vehicle_jalopy" and car:GetModel() == "models/buggy.mdl" then
-				ItemID = "vehicle_jeep"
-			end
-			local myType = PNRP.Items[ItemID].Type
-			if tostring(car:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
-				
-				local seatModel
-				local seatPos
-				if ItemID == "vehicle_jalopy" then
-					seatPos = util.LocalToWorld( car, Vector(20, -26, 20))
-					seatModel = "models/nova/jalopy_seat.mdl"
-				elseif ItemID == "vehicle_airboat" then
-					seatPos = util.LocalToWorld( car, Vector(0, -45, 65))
-					seatModel = "models/nova/airboat_seat.mdl"
-				else
-					seatPos = util.LocalToWorld( car, Vector(20, -35, 20))
-					seatModel = "models/nova/jeep_seat.mdl"
-				end
-				
-				local seats = constraint.FindConstraints( car, "Weld" )
-				for _, seat in pairs(seats) do
-					if seat.Entity[2].Entity.seat == 1 then
-						seat.Entity[2].Entity:Remove()
-					end
-				end
-				
-				local ent = ents.Create("prop_vehicle_prisoner_pod")
-				
-				ent:SetPos(seatPos)
-				ent:SetAngles(car:GetAngles()+Angle(0,0,0))
-				ent:SetModel(seatModel)
-				ent:SetKeyValue( "vehiclescript", "scripts/vehicles/prisoner_pod.txt" )
-				ent:SetKeyValue( "model", seatModel )
-				ent:Spawn()
-				ent:Activate()
-				ent.seat = 1
-				ent:SetNetVar( "hud" , false )
-				PNRP.SetOwner(ply, ent)
-				
-				constraint.Weld(car, ent, 0, 0, 0, true)
-				ent:EmitSound( "ambient/energy/zap1.wav", SNDLVL_30dB, 100)
-			end
-		end
-	end
-	
-end
-concommand.Add( "pnrp_seatSetup", seatSetup )
-PNRP.ChatConCmd( "/carseat", "pnrp_seatSetup" )
 
 function plyAFK(ply, cmd, args)
 	if ply:GetTable().IsAsleep then
@@ -2818,6 +2812,10 @@ function GasCar(ply, cmd, args)
 						if car.gas > car.tank then car.gas = car.tank end
 						ply:ChatPrint("You put gas in the vehicle.")
 						ent:Remove()
+						
+						if car.iid then
+							PNRP.SaveState(ply, ent)	
+						end
 					else
 						ply:ChatPrint("Tank is full.")
 					end
@@ -2829,6 +2827,11 @@ end
 concommand.Add( "pnrp_gascar", GasCar )
 
 function pickupGas( ply, ent )
+	if ent.iid then
+		local stateStr = PNRP.ReturnState(ent.iid)
+		local gas = PNRP.GetFromStat(stateStr, "Gas")
+		if gas then return end
+	end
 	if ent.gas then
 		if ent.gas >= 1 then
 			local gas = math.floor(ent.gas)
@@ -2890,5 +2893,148 @@ function PNRP.refundRes(pid, scrap, parts, chems)
 		end
 	end
 end
+
+function PNRP.DoCLRepairAsk(ply, ent)
+	net.Start("PNRP_CL_AskRepair")
+		net.WriteEntity(ent)
+	net.Send(ply)
+end
+util.AddNetworkString( "PNRP_CL_AskRepair" )
+
+function PNRP.DoRepairItem(len, ply)
+	local ent = net.ReadEntity()
+	
+	PNRP.RepairItem(ply, ent)
+end
+net.Receive("PNRP_DoRepairItem", PNRP.DoRepairItem)
+util.AddNetworkString( "PNRP_DoRepairItem" )
+
+function PNRP.EndRepairTimer(ply, ent)
+	local item = PNRP.SearchItembase( ent )
+	
+	ply:SetMoveType(MOVETYPE_WALK)
+	net.Start("stopProgressBar")
+	net.Send(ply)
+	if ent:IsValid() then 
+		timer.Stop(ply:UniqueID().."_repair_"..tostring(ent))
+	end
+	ent.Repairing = nil
+	ent.BlockF2 = false
+	
+	local totalScrap = ent.ScrapSpent + ent.scrapSaved
+	ply:ChatPrint("You repaired "..totalScrap.." HP to the "..item.Name)
+	ply:ChatPrint("The repairs cost "..ent.ScrapSpent.." scrap.")
+	ply:ChatPrint("Your skill saved you "..ent.scrapSaved.." scrap.")
+	ent.scrapSaved = 0
+	ent.ScrapSpent = 0
+			
+	if item.SaveState then
+		PNRP.SaveState(nil, ent, "world")
+	end
+end
+
+function PNRP.RepairItem(ply, ent)
+	local item = PNRP.SearchItembase( ent )
+	
+	if ply:InVehicle() then
+		ply:ChatPrint("You can not repair while in a vehicle.")
+		return
+	end	
+	
+	local canRepair = false
+	if table.getn(item.RepairClass) == 0 then
+		canRepair = true
+	elseif inTable(item.RepairClass, ply:Team()) then
+		canRepair = true
+	end
+	
+	if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then canRepair = true end
+	
+	if !canRepair then
+		local teamString = ""
+		for v, teamNum in pairs(item.RepairClass) do
+			teamString = teamString.." "..team.GetName(teamNum)
+			if v < table.getn(item.RepairClass) then teamString = teamString.."," end
+		end
+		ply:ChatPrint("You must be one the following class to fix this: "..teamString)
+		return
+	end
+	if not ply:HasInInventory("tool_toolbox") then
+		ply:ChatPrint("You need a toolbox to fix this.")
+		return
+	end
+	if ply:GetResource("Scrap") < 1 then
+		ply:ChatPrint("You do not have enough Scrap.")
+		return
+	end
+	
+	if item then
+		if item.CanRepair then
+			if ent:Health() >= item.HP then 
+				ply:ChatPrint("This is already fully repaired.")
+				return 
+			end
+			
+			ply:SelectWeapon("weapon_simplekeys")
+			ply:SetMoveType(MOVETYPE_NONE)
+			ent.Repairing = ply
+			
+			--Apply construction skill
+			local repairMod = 1
+			local skill = ply:GetSkill("Construction")
+			if not skill then skill = 0 end
+			local skillChance = skill*10
+			if skill == 0 then skill = .5 end
+			local delay = (item.HP - ent:Health())/(skill/2)
+			local times = item.HP - ent:Health()
+			local rate = delay / times
+			
+			net.Start("startProgressBar")
+				net.WriteDouble(delay)
+			net.Send(ply)
+			
+			local soundLevel = 75
+			local pitchPercent = 100
+			local volume = 1
+			
+			ent.scrapSaved = 0
+			ent.ScrapSpent = 0
+			
+			timer.Create( ply:UniqueID().."_repair_"..tostring(ent), rate, times, function()
+				if ent.Repairing:GetResource("Scrap") >= 1 then
+					ent:SetHealth(ent:Health() + repairMod)
+					if math.random(0, 100) < skillChance and skillChance > 0 then
+						ent.scrapSaved = ent.scrapSaved + 1
+					else
+						ent.Repairing:DecResource("Scrap", 1)
+						ent.ScrapSpent = ent.ScrapSpent + 1
+					end
+					
+					local rndSound = math.random(1,3)
+					if rndSound == 1 then
+						ent:EmitSound(Sound("ambient/materials/metal_rattle"..tostring(math.random(1,4))..".wav"),soundLevel,pitchPercent,volume)
+					elseif rndSound == 2 then
+						ent:EmitSound(Sound("physics/metal/metal_box_strain"..tostring(math.random(1,4))..".wav"),soundLevel,pitchPercent,volume)
+					else
+						ent:EmitSound(Sound("physics/metal/metal_solid_strain"..tostring(math.random(1,5))..".wav"),soundLevel,pitchPercent,volume)
+					end
+					
+					if ent:Health() >= item.HP then
+						ent:SetHealth( item.HP )
+						local repTxt = ""
+						if item then repTxt = " the "..item.Name end
+						ent.Repairing:ChatPrint("You finish repairing "..repTxt)
+						PNRP.EndRepairTimer(ent.Repairing, ent)
+					end
+				else
+					ent.Repairing:ChatPrint("You do not have enough Scrap")
+					PNRP.EndRepairTimer(ent.Repairing, ent)
+				end
+			end )
+		end
+	end	
+end
+
+
 
 --EOF

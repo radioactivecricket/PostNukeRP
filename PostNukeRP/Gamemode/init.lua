@@ -9,6 +9,10 @@ include( "netwrapper/sh_netwrapper.lua" )
 AddCSLuaFile( "netwrapper/cl_netwrapper.lua" )
 --End Net Wrapper
 
+--Required Workshop Items
+resource.AddWorkshop( "486550571" ) --PostNukeRP Official Content Pack
+resource.AddWorkshop( "104648051" ) --Doc's Half-Life 2 Drivable Vehicles (Needed for the new vehicles)
+
 include( 'shared.lua' ) --Tell the server to load shared.lua
 include("itembase.lua")
 
@@ -84,6 +88,8 @@ util.AddNetworkString("grubSelect")
 util.AddNetworkString("printUmsgTable")
 util.AddNetworkString("sendUmsgTable")
 util.AddNetworkString("sndComDipl")
+
+util.AddNetworkString( "repairMenu" )
 
 --Server settings will be initially written to the DB if not done yet.
 --Query string will be made with for loop.
@@ -258,37 +264,87 @@ end
 -------------------------------------
 function pndb(ply, command, args)
 	if ply:IsAdmin() then
-		query = "DROP TABLE PN_ServerSettings"
+		query = "DROP TABLE inventory_storage"
 		result = querySQL(query)
-		query = "CREATE TABLE PN_ServerSettings ( variable varchar(125) NOT NULL PRIMARY KEY, value int ) "
+		query = "CREATE TABLE inventory_storage ( sid INTEGER PRIMARY KEY AUTOINCREMENT, iid int, inventory varchar(255), res varchar(255) )"
 		result = querySQL(query)
-		for k, v in pairs(PNRP.PNRP_DefServerSettings) do
-			query = "INSERT INTO PN_ServerSettings VALUES ('"..k.."',"..v..")"
-			result = querySQL(query)
-		end	
-
 		
 		Msg(" PNDB: Done \n")
 	end
 end
-concommand.Add( "pndb", pndb )
+--concommand.Add( "pndb", pndb )
 
 function pntb(ply, command, args)
+	local GM = GAMEMODE
 	if ply:IsAdmin() then
-		local query, result 
 		
-		query = "SELECT * FROM PN_ServerSettings"
-		result = querySQL(query)
+		GM:PlayerDisconnected(ply)
+		PNRP.ReturnWorldCache( ply )
 		
-		if result then
-			Msg(table.ToString(result).."\n")
-		else
-			Msg("Nil \n")
-		end
 	end
 end
 concommand.Add( "pntb", pntb )
 
+--Converts needed aspects of the database to newer upgrades as needed
+function PNRP.UpgradeCheck()
+	
+	local query, result
+	
+	query = "SELECT * FROM player_inv"
+	result = querySQL(query)
+	
+	for k, v in pairs(result) do
+		local pInvStr = v["inventory"]
+		local cInvStr = v["car_inventory"]
+		local pid = v["pid"]
+		
+		if cInvStr ~= "" then
+			local inv = {}
+			local pInvSplit = string.Explode(" ", pInvStr)
+			for _, pItem in pairs(pInvSplit) do
+				local pInvTmp = string.Explode(",", pItem)
+				inv[pInvTmp[1]] = pInvTmp[2]
+			end
+			
+			local cInvSplit = string.Explode(" ", cInvStr)
+			for _, cItem in pairs(cInvSplit) do
+				local cInvTmp = string.Explode(",", cItem)
+				if inv[cInvTmp[1]] then
+					inv[cInvTmp[1]] = inv[cInvTmp[1]] + tonumber(cInvTmp[2])
+				else
+					inv[cInvTmp[1]] = tonumber(cInvTmp[2])
+				end
+			end
+			
+			local InvStr = ""
+			for item, amount in pairs(inv) do
+				InvStr = InvStr..item..","..tostring(amount).." "
+			end
+			
+			InvStr = string.TrimRight(InvStr)
+			
+			querySQL("UPDATE player_inv SET inventory='"..InvStr.."',car_inventory=''  WHERE pid="..tostring(pid))
+		end
+		
+		querySQL("UPDATE inventory_table SET location='player' WHERE location='car' AND pid="..tostring(pid))
+		--Clean up
+		querySQL("DELETE FROM inventory_table WHERE location='none' AND pid="..tostring(pid)) 
+	end
+	
+end
+--Runs the upgrade check. 
+--This can be commented out after run once
+function runUpgradeCheck(ply, command, args)
+	if ply:IsAdmin() then
+		PNRP.UpgradeCheck()
+		
+		if ply then
+			ply:ChatPrint("Upgrade Check Run")			
+		end
+		ErrorNoHalt("Upgrade Check Run \n")
+	end
+end
+concommand.Add( "pnrp_runuc", runUpgradeCheck )
 
 function SQLiteTableCheck()
 	local query
@@ -309,10 +365,19 @@ function SQLiteTableCheck()
 	end
 	
 	if not sql.TableExists("profiles") then
-		query = "CREATE TABLE profiles ( pid INTEGER PRIMARY KEY AUTOINCREMENT, steamid varchar(255), model varchar(255), nick varchar(255), lastlog varchar(255), class int, xp int, skills varchar(255), health int, armor int, endurance int, hunger int, res varchar(255), weapons varchar(255), ammo varchar(255) )"
+		query = "CREATE TABLE profiles ( pid INTEGER PRIMARY KEY AUTOINCREMENT, steamid varchar(255), model varchar(255), skin int, bodygroups varchar(255), nick varchar(255), lastlog varchar(255), class int, xp int, skills varchar(255), health int, armor int, endurance int, hunger int, res varchar(255), weapons varchar(255), ammo varchar(255) )"
 		result = querySQL(query)
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  profiles\n")
+		
+		query = "SELECT skin FROM profiles"
+		result = sql.Query(query)
+		if sql.LastError( result ) != nil and result == false then
+			query = "ALTER TABLE profiles ADD COLUMN skin int"
+			querySQL(query)
+			query = "ALTER TABLE profiles ADD COLUMN bodygroups varchar(255)"
+			querySQL(query)
+		end
 	end
 	
 	if not sql.TableExists("community_table") then
@@ -386,6 +451,14 @@ function SQLiteTableCheck()
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  inventory_table\n")
 	end
 	
+	--Table for persistent items that have inventory
+	if not sql.TableExists("inventory_storage") then
+		query = "CREATE TABLE inventory_storage ( sid INTEGER PRIMARY KEY AUTOINCREMENT, iid int, inventory varchar(255), res varchar(255) )"
+		result = querySQL(query)
+	else
+		Msg(tostring(os.date()).." SQL TABLE EXISTS:  inventory_storage\n")
+	end
+	
 	--PNRP.PNRP_DefServerSettings
 	if not sql.TableExists("PN_SpawnerSettings") then
 		query = "CREATE TABLE PN_SpawnerSettings ( map varchar(255)"
@@ -409,6 +482,7 @@ function SQLiteTableCheck()
 	else
 		Msg(tostring(os.date()).." SQL TABLE EXISTS:  PN_ServerSettings\n")
 	end
+	
 end
 hook.Add( "InitPostEntity", "tableCheck", SQLiteTableCheck )
 
@@ -436,7 +510,7 @@ for k, v in pairs( file.Find(PNRP_Path.."gamemode/items/*.lua",  "LUA" ) ) do
 end
 ]]--
 
---Runs the cleanup code
+--Runs the clean up code
 PNRP.CleanPersistItems()
 
 function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server and spawns" function
@@ -524,12 +598,20 @@ function LoadingFunction( len )
 		{
 			VoiceLimiter = getServerSetting("voiceLimit"),
 			PropPay = getServerSetting("propPay"),
-			PropCost = getServerSetting("propCost")
+			PropCost = getServerSetting("propCost"),
+			adminCreateAll = getServerSetting("adminCreateAll"),
+			adminTouchAll = getServerSetting("adminTouchAll"),
+			adminNoCost = getServerSetting("adminNoCost")
 		}
 		RunConsoleCommand("pnrp_voiceLimit",tostring(tbl.VoiceLimiter))
 		RunConsoleCommand("pnrp_propPay",tostring(tbl.PropPay))
 		RunConsoleCommand("pnrp_propCost",tostring(tbl.PropCost))
-
+		
+		RunConsoleCommand("pnrp_adminCreateAll",tostring(tbl.adminCreateAll))
+		RunConsoleCommand("pnrp_adminTouchAll",tostring(tbl.adminTouchAll))
+		RunConsoleCommand("pnrp_adminNoCost",tostring(tbl.adminNoCost))
+		
+		PNRP.SetBodyGroups( ply )
 	else
 		ErrorNoHalt("Load timer hit Null Entity (), retrying in 3 seconds.\n")
 	end
@@ -625,7 +707,7 @@ function GM:PlayerSpawn( ply )
 		ply:GodEnable()
 	
 		local timerID = tostring(math.random(1,9999999))
-		timer.Create( timerID.."god", 15, 1, function()
+		timer.Create( timerID.."god", 20, 1, function()
 			if IsValid(ply) then
 				if not ply.DevMode then
 					ply:GodDisable()
@@ -800,6 +882,7 @@ concommand.Add( "team_set_cultivator", team_set_cultivator )
 --May expand this function for other checks
 function classChangeCheck( ply )	
 	ply.LoadArmor = ply:Armor()
+	ply.LoadHealth = ply:Health()
 end
 
 function classChangeCost(ply, Recource)
@@ -914,49 +997,21 @@ function GM:ShowTeam( ply )
 	if ItemID != nil then
 		local myType = PNRP.Items[ItemID].Type
 		if myType == "vehicle" then
-			if tonumber(ent:GetNetVar( "Type" , "0" )) == 1 then
-				if ent:GetModel() == "models/nova/jeep_seat.mdl" then
-					ItemID = "seat_jeep"
-				else
-					ItemID = "seat_airboat"
-				end
-				
-				local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[ItemID].Weight
-				local weightCap
-				
-				if team.GetName(ply:Team()) == "Scavenger" then
-					weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
-				else
-					weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
-				end
-				
-				if weight <= weightCap then
-					PNRP.AddToInventory( ply, ItemID, 1 )
-					PNRP.TakeFromWorldCache( ply, ItemID )
-					pickupGas( ply, ent )
-					ent:Remove()
-				else
-					ply:ChatPrint("Your pack is too full and cannot carry this.")
-				end
-				
-			else
-				local myModel = ent:GetModel()	
-				
-				
-				if tostring(ent:GetNetVar( "Owner_UID" , "None" )) ~= PNRP:GetUID( ply ) then
-					ply:ChatPrint("You do not own this!")
-					return
-				end
-						
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
-				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
-				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-				PNRP.AddToInventory( ply, ItemID, 1 )
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) ~= PNRP:GetUID( ply ) then
+				ply:ChatPrint("You do not own this!")
+				return
+			end
+			
+			local Car_ItemID = PNRP.SearchItembase( ent )
+			if Car_ItemID then
+				ItemID = Car_ItemID["ID"]
+				PNRP.AddToInventory( ply, ItemID, 1, ent )
 				PNRP.TakeFromWorldCache( ply, ItemID )
-				ply:ChatPrint("You picked up your car.")
+
+				ply:ChatPrint("You picked up your "..Car_ItemID.Name)
+				
 				pickupGas( ply, ent )
 				ent:Remove()
-								
 			end
 		else
 			if myType == "weapon" then
@@ -1045,7 +1100,7 @@ function GM:ShowTeam( ply )
 				
 				if weight <= weightCap then
 					PNRP.AddToInventory( ply, ItemID, 1, ent )
-					if myType == "tool" then
+					if myType == "tool" or myType == "misc" then
 						PNRP.TakeFromWorldCache( ply, ItemID )
 					end
 					ent:Remove()
@@ -1064,14 +1119,13 @@ function GM:ShowSpare1( ply )
 	local ent = tr.Entity
 	--Opens Car inventory when looking at a car owned by you.
 	if tostring(ent) != "[NULL Entity]" then
-		local ItemID = PNRP.FindItemID( ent:GetClass() )
-		if ItemID != nil then
-			local myType = PNRP.Items[ItemID].Type
-			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
-				local myModel = ent:GetModel()
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
-				ply:SendLua( "CurCarMaxWeight = "..tostring(PNRP.Items[ItemID].Capacity) )
-				ply:ConCommand("pnrp_carinv")
+		local item = PNRP.SearchItembase( ent )
+		if item != nil then
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && item.HasStorage then
+				if ent.iid then
+					ply:SendLua( "ItemCapacity = "..tostring(item.Capacity) )
+					PNRP.OpenItemInventory( ent.iid, ply, item.ID )
+				end
 			else
 				--If not looking at the car, open normal inventory.
 				ply:ConCommand("pnrp_inv")
@@ -1100,9 +1154,11 @@ function PNRP.GetAllTools( ply )
 			local myType = PNRP.Items[ItemID].Type
 			if tostring(v:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && (myType == "tool" or myType == "misc") then
 				if not PNRP.Items[ItemID].Persistent then
-					Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-					PNRP.AddToInventory( ply, ItemID, 1 )
-					PNRP.TakeFromWorldCache( ply, ItemID )
+					if not v.iid then
+						Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
+						PNRP.AddToInventory( ply, ItemID, 1 )
+						PNRP.TakeFromWorldCache( ply, ItemID )
+					end
 					v:Remove()
 				end
 			end
@@ -1111,27 +1167,26 @@ function PNRP.GetAllTools( ply )
 end
 
 function PNRP.GetAllCars( ply )
-	for k,v in pairs(ents.GetAll()) do
-		local myClass = v:GetClass()
-		local ItemID = PNRP.FindItemID( myClass )
-		if ItemID != nil then
-			local myType = PNRP.Items[ItemID].Type
-			if tostring(v:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) && myType == "vehicle" then
+	for _, car in pairs(ents.GetAll()) do
+		local item = PNRP.SearchItembase( car )
+		if item then
+			if tostring(car:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID( ply ) && item.Type == "vehicle" then
 				
 				--Forces the player out of the vehicle (Nolcip exploit fix)
-				local driver = v:GetDriver( )
+				local driver = car:GetDriver( )
 				if IsValid(driver) then driver:ExitVehicle( ) end
-				
-				local myModel = v:GetModel()
 								
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
-				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
-				
+				local ItemID = item.ID
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-				PNRP.AddToInventory( ply, ItemID, 1 )
-				PNRP.TakeFromWorldCache( ply, ItemID )
-				pickupGas( ply, v )
-				v:Remove()
+				
+				if car.iid then
+					PNRP.SaveState(ply, car, "player")
+				else
+					PNRP.AddToInventory( ply, ItemID, 1 )
+					PNRP.TakeFromWorldCache( ply, ItemID )
+					pickupGas( ply, car )
+				end
+				car:Remove()
 				
 			end
 		end	
@@ -1141,23 +1196,24 @@ concommand.Add( "pnrp_GetAllCar", PNRP.GetAllCars )
 PNRP.ChatConCmd( "/getallcars", "pnrp_GetAllCar" )
 
 function PNRP.GetCar( ply )
-	
 	local tr = ply:TraceFromEyes(200)
-	local ent = tr.Entity
-	if tostring(ent) != "[NULL Entity]" then
-		local myClass = ent:GetClass()
-		local ItemID = PNRP.FindItemID( myClass )
+	local car = tr.Entity
+	if tostring(car) != "[NULL Entity]" then
+		local item = PNRP.SearchItembase( car )
 		if ItemID != nil then
 			local myType = PNRP.Items[ItemID].Type
-			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && myType == "vehicle" then
-				local myModel = ent:GetModel()
-								
-				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep"
-				elseif myModel == "models/vehicle.mdl" then ItemID = "vehicle_jalopy" end
+			if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) && item.Type == "vehicle" then
 				
+				local ItemID = item.ID
 				Msg("Sending "..ItemID.." to "..ply:Nick().."'s Inventory".."\n")
-				PNRP.AddToInventory( ply, ItemID, 1 )
-				PNRP.TakeFromWorldCache( ply, ItemID )
+				
+				if car.iid then
+					PNRP.SaveState(ply, car, "player")
+				else
+					PNRP.AddToInventory( ply, ItemID, 1 )
+					PNRP.TakeFromWorldCache( ply, ItemID )
+					pickupGas( ply, car )
+				end
 				ent:Remove()
 				
 			end
@@ -1167,6 +1223,7 @@ end
 concommand.Add( "pnrp_GetCar", PNRP.GetCar )
 PNRP.ChatConCmd( "/getcar", "pnrp_GetCar" )
 
+local spawnLogZone = 400
 --This is an override to hide death notices.
 function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	local infClass = "unknown"
@@ -1175,6 +1232,33 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	if IsValid(Attacker) then attClass = Attacker:GetClass() end
 	if Victim:IsPlayer() and Attacker:IsPlayer() then
 		ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by "..Attacker:Nick().." ("..Attacker:SteamName()..") with "..infClass.."\n")
+		
+		if Victim ~= Attacker then
+			local victumFoundSpawn = false
+			local attackerFoundSpawn = false
+			local found_ents = ents.FindInSphere( Victim:GetPos(), spawnLogZone )
+			for i, ent in ipairs(found_ents) do
+				if ent:GetClass() == "info_player_start" or ent:GetClass() == "info_player_terrorist" or ent:GetClass() == "info_player_counterterrorist" then
+					victumFoundSpawn = true
+				end
+			end
+			if victumFoundSpawn then
+				Attacker:ChatPrint("Spawn Kill logged")
+				ErrorNoHalt("[SPAWN KILL] :"..Attacker:Nick().." ("..Attacker:SteamName()..") \n")
+			end
+			local found_ents = ents.FindInSphere( Attacker:GetPos(), spawnLogZone )
+			for i, ent in ipairs(found_ents) do
+				if ent:GetClass() == "info_player_start" or ent:GetClass() == "info_player_terrorist" or ent:GetClass() == "info_player_counterterrorist" then
+					attackerFoundSpawn = true
+				end
+			end
+			if attackerFoundSpawn and not victumFoundSpawn then
+				Attacker:ChatPrint("Spawn Camping logged")
+				ErrorNoHalt("[SPAWN KILL (Camping)] :"..Attacker:Nick().." ("..Attacker:SteamName()..") \n")
+			elseif victumFoundSpawn then
+				ErrorNoHalt("[SPAWN KILL] :"..Attacker:Nick().." ("..Attacker:SteamName()..") was in spawn \n")
+			end
+		end
 	elseif Victim:IsPlayer() then
 		if Inflictor:GetNetVar("Owner", nil) then
 			ErrorNoHalt(Victim:Nick().." ("..Victim:SteamName()..")".." was killed by (Object Owner)"..tostring(Inflictor:GetNetVar("Owner",nil)).." with "..infClass.."\n")
@@ -1189,6 +1273,88 @@ function GM:PlayerDeath( Victim, Inflictor, Attacker )
 	Victim.DeathTime = CurTime()
 
 end
+
+function EntTakeDamage( target, dmginfo )
+	local attacker = dmginfo:GetAttacker()
+	--[[
+	print("Damage: "..tostring(dmginfo:GetDamage()))
+	print("Type: "..tostring(dmginfo:GetDamageType()))
+	print("Force: "..tostring(dmginfo:GetDamageForce()))
+	print("Max: "..tostring(dmginfo:GetMaxDamage()))
+	print("Target: "..tostring(target))
+	]]--
+	if attacker:IsVehicle() then
+		if target:GetClass() == "npc_combine_s" then
+			dmginfo:SetDamage(0)
+		end
+	end
+	
+	--Prevents player from damaging own vehicle
+	if attacker:IsPlayer() then
+		if attacker:InVehicle() then			
+			local conEnts = constraint.GetTable( target )
+			for _, seat in pairs(conEnts) do
+				if seat.Entity[2].Entity == attacker:GetVehicle() then
+					dmginfo:SetDamage(0)
+				end
+			end
+			
+			if inTable(conEnts, target) then ply:ChatPrint("ping") end
+			if target == ply:GetVehicle() then
+				dmginfo:SetDamage(0)
+			end
+		end
+	end
+	
+	local dmgEnt = target
+	if target:IsPlayer() then
+		if target:InVehicle() then
+			dmgEnt = target:GetVehicle()
+		end
+	end
+	
+	local targetItem = PNRP.SearchItembase( dmgEnt )
+	if targetItem then
+		if targetItem.CanRepair then
+			local damage = dmginfo:GetDamage()
+			dmgEnt:SetHealth(dmgEnt:Health() - damage)
+			if dmgEnt:Health() <= 0 then
+				dmgEnt:SetHealth( 0 )
+			end
+		end
+	end
+	
+	if attacker:IsPlayer() and target:IsPlayer() then
+		if target ~= attacker then
+			local victumFoundSpawn = false
+			local attackerFoundSpawn = false
+			local found_ents = ents.FindInSphere( target:GetPos(), spawnLogZone )
+			for i, ent in ipairs(found_ents) do
+				if ent:GetClass() == "info_player_start" or ent:GetClass() == "info_player_terrorist" or ent:GetClass() == "info_player_counterterrorist" then
+					victumFoundSpawn = true
+				end
+			end
+			if victumFoundSpawn then
+				local infClass = dmginfo:GetInflictor():GetClass()
+				attacker:ChatPrint("Warning: Attacking target near spawn.")
+				ErrorNoHalt("[SPAWN Attack] :"..attacker:Nick().." ("..attacker:SteamName()..") attacking "..target:Nick().." ("..target:SteamName()..") with "..tostring(infClass).." \n")
+			end
+			
+			local found_ents = ents.FindInSphere( attacker:GetPos(), spawnLogZone )
+			for i, ent in ipairs(found_ents) do
+				if ent:GetClass() == "info_player_start" or ent:GetClass() == "info_player_terrorist" or ent:GetClass() == "info_player_counterterrorist" then
+					attackerFoundSpawn = true
+				end
+			end
+			if attackerFoundSpawn and not victumFoundSpawn then
+				attacker:ChatPrint("Warning: Spawn camping detected")
+				ErrorNoHalt("[SPAWN Attack (Camping)] :"..attacker:Nick().." ("..attacker:SteamName()..") \n")
+			end
+			
+		end
+	end
+end
+hook.Add("EntityTakeDamage", "vehDamageFix", EntTakeDamage )
 
 --This is an override to hide NPC death notices.
 function GM:OnNPCKilled( victim, killer, weapon )
@@ -1270,15 +1436,6 @@ function GM:CanProperty( ply, strProp, ent )
 		return false	
 	end
 end
-
-function VehicleDamageFix( target, dmginfo )
-	if dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep_old" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_airboat" or dmginfo:GetAttacker():GetClass() == "prop_vehicle_jeep" then
-		if target:GetClass() == "npc_combine_s" then
-			dmginfo:SetDamage(0)
-		end
-	end
-end
-hook.Add("EntityTakeDamage", "vehDamageFix", VehicleDamageFix )
 
 -- Debug, REMOVE LATER
 

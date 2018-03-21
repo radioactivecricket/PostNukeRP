@@ -67,6 +67,102 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 	local textColor = Color(200,200,200,255)
 	local dListBKColor = Color(50,50,50,255)
 	
+	if itemtype == "vehicle" and not (ply:IsAdmin() and GetConVarNumber("pnrp_adminCreateAll") == 1)then
+		local vehicleInfoPanel = vgui.Create( "DPanel", parent_frame )
+			vehicleInfoPanel:SetPos( 5, 5 )
+			vehicleInfoPanel:SetSize( parent_frame:GetWide() - 60, parent_frame:GetTall() - 120 )
+			vehicleInfoPanel.Paint = function() end
+			
+			--local iconImg = "entities/Jalopy.png"
+			local img = vgui.Create( "DImage", vehicleInfoPanel )
+			img:SetSize( 125, 125 )
+			img:SetPos( 5, 5 )
+			img:SetImage( "entities/Jalopy.png" )
+			
+			local titleTxt = vgui.Create("DLabel", vehicleInfoPanel)
+			titleTxt:SetPos(150, 5)
+			titleTxt:SetText("PostNukeRP Vehicle Building System")
+			titleTxt:SetFont("Trebuchet18")
+			titleTxt:SizeToContents() 
+			titleTxt:SetColor(Color( 0, 255, 0, 255 ))
+			titleTxt:SetContentAlignment( 5 )
+			local addonTxt = vgui.Create("DLabel", vehicleInfoPanel)
+			addonTxt:SetPos(150, 20)
+			addonTxt:SetText("Currently using Doc's Half-Life 2 Driveable Vehicles")
+			addonTxt:SizeToContents() 
+			addonTxt:SetColor(Color( 0, 255, 0, 255 ))
+			addonTxt:SetContentAlignment( 5 )
+			
+			local instStr = "In the wasteland you will find Old Car Bodies. These will be needed to gather parts from.\n"
+			instStr = instStr.."Only Scavengers and Engineers can recover parts from these hulls, but everyone can get resources.\n"
+			instStr = instStr.."You will need a Toolbox in order to use the hull. \n"
+			instStr = instStr.."\n"
+			instStr = instStr.."Engineers will be able to recover the hull to make the vehicle from them.\n"
+			instStr = instStr.."A hull has to be 50% or greater to recover a hull, and has to be 25% or greater to recover a part.\n"
+			instStr = instStr.."\n"
+			instStr = instStr.."Every hull is unique and you will need the right one for the vehicle you want."
+			local instTxt = vgui.Create("DLabel", vehicleInfoPanel)
+				instTxt:SetPos(20, 150)
+				instTxt:SetText(instStr)
+				instTxt:SetFont("Trebuchet18")
+				instTxt:SizeToContents() 
+				instTxt:SetColor(Color( 0, 255, 0, 255 ))
+				instTxt:SetContentAlignment( 5 )
+			
+			local ToolScrollPanel = vgui.Create( "DPanel", vehicleInfoPanel )
+				ToolScrollPanel:SetPos( 20, 325 )
+				ToolScrollPanel:SetSize( parent_frame:GetWide() - 60, 150 )
+				ToolScrollPanel.Paint = function() end
+				local partsTxt = vgui.Create("DLabel", ToolScrollPanel)
+				partsTxt:SetPos(0, 0)
+				partsTxt:SetText("Parts that can be recovered:")
+				partsTxt:SetFont("Trebuchet18")
+				partsTxt:SizeToContents() 
+				partsTxt:SetColor(Color( 0, 255, 0, 255 ))
+				partsTxt:SetContentAlignment( 5 )
+				
+				local ToolScroller = vgui.Create("DHorizontalScroller", ToolScrollPanel) --Create the scroller
+				ToolScroller:SetSize(ToolScrollPanel:GetWide(), ToolScrollPanel:GetTall())
+				ToolScroller:AlignTop(20)
+				ToolScroller:AlignLeft(0)
+				ToolScroller:SetOverlap(-1)
+				
+				for k, v in pairs(PNRP.CarParts) do
+					local toolItem = PNRP.Items[k]
+					local pnlTPanel = vgui.Create("DPanel", ToolScroller)
+					pnlTPanel:SetSize( 50,50 )
+					pnlTPanel.Paint = function() end
+					
+					local toolIcon = vgui.Create( "SpawnIcon", pnlTPanel )
+						toolIcon:SetSize( pnlTPanel:GetWide(), pnlTPanel:GetTall() )
+						toolIcon:SetModel( toolItem.Model )
+						toolIcon:SetToolTip( toolItem.Name )
+						toolIcon.DoClick = function() end
+					ToolScroller:AddPanel(pnlTPanel)
+				end
+			
+			local repLblTxt = vgui.Create("DLabel", vehicleInfoPanel)
+				repLblTxt:SetPos(20, 420)
+				repLblTxt:SetText("Vehicle Repair")
+				repLblTxt:SetFont("Trebuchet18")
+				repLblTxt:SizeToContents() 
+				repLblTxt:SetColor(Color( 0, 255, 0, 255 ))
+				repLblTxt:SetContentAlignment( 5 )
+				
+			local repStr = "Only Engineers with a toolbox can repair vehicles.\n"
+			repStr = repStr.."Cost of repair is 1 Scrap per second while repairing, and can be stopped by pressing E on the vehicle.\n"
+			repStr = repStr.."Repair rate is affected by your Construction Skill.\n\n"
+			repStr = repStr.."Vehicles with a HP below 50 will consume more gas. The lower the HP the more it will consume."
+			local repTxt = vgui.Create("DLabel", vehicleInfoPanel)
+				repTxt:SetPos(20, 435)
+				repTxt:SetText(repStr)
+				repTxt:SizeToContents() 
+				repTxt:SetColor(Color( 0, 255, 0, 255 ))
+				repTxt:SetContentAlignment( 5 )
+		
+		return vehicleInfoPanel
+	end
+	
 	local pnlList = vgui.Create("DPanelList", PropertySheet)
 		pnlList:SetPos(20, 80)
 		pnlList:SetSize(parent_frame:GetWide() - 60, parent_frame:GetTall() - 120)
@@ -165,6 +261,9 @@ function PNRP.build_List(itemtype, parent_frame, PropertySheet)
 					local weightTXT = "Weight: "..item.Weight
 					if item.Capacity then
 						weightTXT = weightTXT.." | Capacity: "..item.Capacity
+					end
+					if item.HP then
+						weightTXT = weightTXT.." | HP: "..item.HP
 					end
 					pnlPanel.ItemWeight = vgui.Create("DLabel", pnlPanel)		
 					pnlPanel.ItemWeight:SetPos(340, 55)

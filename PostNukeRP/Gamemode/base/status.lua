@@ -50,12 +50,19 @@ function StatCheck()
 
 					if v:InVehicle() then
 						local car = v:GetVehicle()
-							
+						
+						if car:Health() <= 50 then runModifier = runModifier + 1 end
+						if car:Health() <= 25 then runModifier = runModifier + 3 end
+						if car:Health() <= 10 then runModifier = runModifier + 3 end
+						if car:Health() <= 2 then runModifier = runModifier + 3 end
+						
 						if !car.gas then car.gas = 0 end
 						if !car.tank then car.tank = 8 end
 						
-						if car.gas <= 0 then 
-							car.gas = 0 
+						if car.gas <= 0 or car:Health() <= 0 or car.Repairing then
+							if car.gas < 0 then car.gas = 0 end
+							if car:Health() < 0 then car:SetHealth(0) end
+							
 							car:Fire("turnoff", 1, 0)
 							--check Wire Adv Pod Controller 
 							for _,pod in pairs( ents.FindByClass( "gmod_wire_pod" ) ) do
@@ -65,7 +72,7 @@ function StatCheck()
 							end
 						end
 
-						if car.gas > 0 then
+						if car.gas > 0 and car:Health() > 0 then
 							car.gas = car.gas - (runModifier / 60)
 							car:Fire("turnon", 1, 0)
 							--check Wire Adv Pod Controller 

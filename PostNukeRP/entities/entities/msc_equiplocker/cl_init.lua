@@ -26,13 +26,8 @@ function LockerViewCheck()
 		surface.SetFont("CenterPrintText")
 		local tWidth, tHeight = surface.GetTextSize(community.." Community Equipment")
 		
-		-- surface.SetTextColor(Color(255,255,255,255))
-		-- surface.SetTextPos(ScrW() / 2, ScrH() / 2)
-		-- surface.DrawText( community.." Community Locker" )
 		draw.WordBox( 8, (ScrW() / 2) - (8 + (tWidth / 2)), (ScrH() / 2) - (16 + tHeight), community.." Community Equipment", "CenterPrintText", Color(50,50,75,100), Color(255,255,255,255) )
 		
-		-- local gridMessage = "Distance:  "..tostring(distance).."\nSpawn Resources:  "..tostring(resources).."\nSpawn Antlions:  "..tostring(antlions).."\nSpawn Zombies:  "..tostring(zombies).."\nCan Make Mounds:  "..tostring(mounds).."\nIs Indoor:  "..tostring(indoor)
-		-- AddWorldTip( self.Entity:EntIndex(), gridMessage, 0.5, self.Entity:GetPos(), self.Entity )
 	end
 end
 hook.Add( "HUDPaint", "LockerViewCheck", LockerViewCheck )
@@ -91,6 +86,8 @@ function LockerMenu( )
 						
 						pnlLIList:AddItem(pnlLIPanel)
 						
+						local model = item.Model
+						local skin = 0
 						local countTxt = "Count: "..tostring(v["count"])
 						if v["status_table"] != "" then
 							local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
@@ -106,6 +103,10 @@ function LockerMenu( )
 							pnlLIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
 							pnlLIPanel.HP:SizeToContents() 
 							pnlLIPanel.HP:SetContentAlignment( 5 )
+							local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+							local newSkin = PNRP.GetFromStat(v["status_table"], "Skin")
+							if newModel then model = newModel end
+							if newSkin then skin = tonumber(newSkin) end
 						else
 							pnlLIPanel.NumberWang = vgui.Create( "DNumberWang", pnlLIPanel )
 							pnlLIPanel.NumberWang:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.NumberWang:GetWide() / 2, 75 )
@@ -116,7 +117,7 @@ function LockerMenu( )
 						end
 						
 						pnlLIPanel.Icon = vgui.Create("SpawnIcon", pnlLIPanel)
-						pnlLIPanel.Icon:SetModel(item.Model)
+						pnlLIPanel.Icon:SetModel(model, skin)
 						pnlLIPanel.Icon:SetPos(pnlLIPanel:GetWide() / 2 - pnlLIPanel.Icon:GetWide() / 2, 5 )
 						pnlLIPanel.Icon:SetToolTip( item.Name.."\n"..countTxt.."\n Press Icon to move item." )
 						pnlLIPanel.Icon.DoClick = function() 
@@ -169,6 +170,7 @@ function LockerMenu( )
 							
 							pnlUserIList:AddItem(pnlUserIPanel)
 							
+							local model = item.Model
 							local countTxt = "Count: "..tostring(v["count"])
 							if v["status_table"] != "" then
 								local FuelLevel = PNRP.GetFromStat(v["status_table"], "FuelLevel")
@@ -184,6 +186,9 @@ function LockerMenu( )
 								pnlUserIPanel.HP:SetColor(Color( 0, 0, 0, 255 ))
 								pnlUserIPanel.HP:SizeToContents() 
 								pnlUserIPanel.HP:SetContentAlignment( 5 )
+								
+								local newModel = PNRP.GetFromStat(v["status_table"], "Model")
+								if newModel then model = newModel end
 							else
 								pnlUserIPanel.NumberWang = vgui.Create( "DNumberWang", pnlUserIPanel )
 								pnlUserIPanel.NumberWang:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.NumberWang:GetWide() / 2, 75 )
@@ -194,7 +199,7 @@ function LockerMenu( )
 							end
 							
 							pnlUserIPanel.Icon = vgui.Create("SpawnIcon", pnlUserIPanel)
-							pnlUserIPanel.Icon:SetModel(item.Model)
+							pnlUserIPanel.Icon:SetModel(model)
 							pnlUserIPanel.Icon:SetPos(pnlUserIPanel:GetWide() / 2 - pnlUserIPanel.Icon:GetWide() / 2, 5 )
 							pnlUserIPanel.Icon:SetToolTip( item.Name.."\n".."Count: "..countTxt.."\n Press Icon to move item." )
 							pnlUserIPanel.Icon.DoClick = function() 

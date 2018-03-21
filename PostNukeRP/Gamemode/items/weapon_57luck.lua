@@ -21,6 +21,9 @@ ITEM.Weight = 2
 
 WEAPON.ID = ITEM.ID
 WEAPON.AmmoType = "pistol"
+WEAPON.MagLoadTime = 6
+WEAPON.MagType = "normal"
+WEAPON.MagSize = "small"
 
 function ITEM.ToolCheck( p )
 	return true

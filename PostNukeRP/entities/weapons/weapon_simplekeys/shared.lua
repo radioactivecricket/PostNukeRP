@@ -61,22 +61,53 @@ function SWEP:Reload()
 	trace.filter = self.Owner
 	local tr = util.TraceLine(trace)
 	
-	local doorEnt = tr.Entity
+	local ent = tr.Entity
+	
+	local adminOveride = false
+	if self.Owner:IsAdmin() and getServerSetting("adminTouchAll") == 1 then adminOveride = true end
 	
 	if (tr.HitWorld) then return end
-	if !tr.Entity:IsValid() then return end
-	if not (tr.Entity:IsDoor() or tr.Entity:IsVehicle()) then return end
+	if !ent:IsValid() then return end
 	
-	local doorowner = doorEnt:GetNetVar( "ownerent", nil )
+	local item = PNRP.SearchItembase( ent )
+	local useKeys = false
+	if item then 
+		if self.Owner:KeyDown( IN_WALK ) and item.Keys then
+			useKeys = true
+		elseif item.CanRepair then 
+			if table.getn(item.RepairClass) == 0 or adminOveride then
+				net.Start("repairMenu")
+					net.WriteEntity(ent)
+				net.Send(self.Owner)
+			elseif inTable(item.RepairClass, self.Owner:Team()) then
+				net.Start("repairMenu")
+					net.WriteEntity(ent)
+				net.Send(self.Owner)
+			else
+				local teamString = ""
+				for v, teamNum in pairs(item.RepairClass) do
+					teamString = teamString.." "..team.GetName(teamNum)
+					if v < table.getn(item.RepairClass) then teamString = teamString.."," end
+				end
+				self.Owner:ChatPrint("You must be one the following class to fix this:"..teamString)
+			end
+			
+			self.NextR = CurTime() + 1
+			return
+		end
+	end
+	
+	if not (ent:IsDoor() or useKeys) then return end
+	
+	local doorowner = ent:GetNetVar( "ownerent", nil )
+	if doorowner == nil then return end
 	if !doorowner:IsValid() then
 		self.Owner:ConCommand("pnrp_setOwner")
-		-- self.Owner:ChatPrint("You have taken ownership of this door!")
 	elseif doorowner == self.Owner then
 		--Open Door Management
-		--datastream.StreamToClients(self.Owner, "manageDoor", { ["doorEnt"] = doorEnt, ["coowners"] = doorEnt.Coowners })
 		net.Start("manageDoor")
-			net.WriteEntity(doorEnt)
-			net.WriteTable(doorEnt.Coowners or {})
+			net.WriteEntity(ent)
+			net.WriteTable(ent.Coowners or {})
 		net.Send(self.Owner)
 	else
 		self.Owner:ChatPrint("You don't have this key.")

@@ -45,7 +45,20 @@ function ENT:Use( activator, caller )
 						self:Remove()
 						return
 					end
-					self:boxRespawn( activator, item.Model )
+					
+					local model = item.Model
+					local skin = 0
+					if iid ~= "" then
+						local status = PNRP.ReturnState(iid)
+						if status ~= "" then
+							local newModel = PNRP.GetFromStat(status, "Model")
+							local newSkin = PNRP.GetFromStat(status, "Skin")
+							if newModel then model = newModel end
+							if newSkin then skin = tonumber(newSkin) end
+						end
+					end
+					
+					self:boxRespawn( activator, model, skin)
 					
 					self.open = "true"
 					self:SetNetVar("open", "true")
@@ -126,9 +139,13 @@ end
 net.Receive( "BuyFromVendorDisp", BuyFromVendorDisp )
 util.AddNetworkString("BuyFromVendorDisp")
 
-function ENT:boxRespawn( ply, model )
+function ENT:boxRespawn( ply, model, skin )
+	local iid = self:GetNetVar("iid", "")
+	local status = self:GetNetVar("status", "")
 	local oldRad = self:GetCollisionBounds()
+	if not skin then skin = 0 end
 	self:SetModel(model)
+	self:SetSkin(skin)
 	local newRad = self:GetCollisionBounds()
 	local setRad = oldRad - newRad
 	local pos = self:GetPos()
@@ -137,6 +154,7 @@ function ENT:boxRespawn( ply, model )
 	self:Spawn()
 	self:Activate()
 	self:GetPhysicsObject():Wake()
+
 	if self.open != true then
 		local render = {}
 		render["mode"] = 0

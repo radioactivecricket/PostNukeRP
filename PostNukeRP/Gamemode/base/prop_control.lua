@@ -58,8 +58,7 @@ function PNRP.GetAllowedPropsList( )
 end
 PNRP.GetAllowedPropsList( )
 
-function PNRP.Start_open_PropPprotection()
-	local ply = net.ReadEntity()
+function PNRP.Start_open_PropPprotection(len, ply)
 	local bannedtbl = { }
 	if !file.IsDir("PostNukeRP", "DATA") then file.CreateDir("PostNukeRP") end
 	if file.Exists("PostNukeRP/banned_props.txt", "DATA") then
@@ -87,8 +86,7 @@ end
 net.Receive( "Start_open_PropProtection", PNRP.Start_open_PropPprotection )
 util.AddNetworkString( "pnrp_OpenPropProtectWindow" )
 
-function PNRP.PropProtect_AddItem( )
-	local ply = net.ReadEntity()
+function PNRP.PropProtect_AddItem( len, ply )
 	local model = net.ReadString()
 	local switch = net.ReadDouble() --1 is add Prop Block, 2 is add Prop Allowed
 	local tbl = {}
@@ -137,8 +135,7 @@ end
 --datastream.Hook(  "PropProtect_AddItem", PNRP.PropProtect_AddItem )
 net.Receive(  "PropProtect_AddItem", PNRP.PropProtect_AddItem )
 
-function PNRP.PropProtect_RemoveItem( )
-	local ply = net.ReadEntity()
+function PNRP.PropProtect_RemoveItem( len, ply )
 	local model = net.ReadString()
 	local switch = net.ReadDouble() --1 is add Prop Block, 2 is add Prop Allowed
 	local tbl = { }
@@ -323,6 +320,10 @@ function GM:PlayerSpawnedVehicle(ply, ent)
 	ent:SetNetVar( "Owner_UID", plUID )
 	ent:SetNetVar( "Owner", ply:Nick())
 	ent:SetNetVar( "ownerent", ply )
+	
+	local item = PNRP.SearchItembase( ent )
+	if not item then ent:SetHealth(tonumber(75))
+	elseif not item.HP then ent:SetHealth(tonumber(75)) end
 end
 
 function GM:PlayerSpawnRagdoll( p, model )
@@ -412,14 +413,30 @@ end
 
 function PlayerUse(ply, ent)
 	if ( !IsValid( ent ) or !ent:IsVehicle() ) then return end
-
+	
+	if ent.Repairing then
+		if ent.Repairing == ply then
+			
+			local item = PNRP.SearchItembase( ent )
+			local repTxt = ""
+			if item then repTxt = " the "..item.Name end
+			ply:ChatPrint("You stop repairing"..repTxt)
+			PNRP.EndRepairTimer(ply, ent)
+			
+		else
+			ply:ChatPrint("This is currently being repaired.")
+		end
+	end
+	
 	if ( ply:GetEyeTrace().HitBox == 3 ) then
 		
 		if tostring(ent:GetNetVar( "Owner_UID" , "None" )) == PNRP:GetUID(ply) then
-			local myModel = ent:GetModel()
-			if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
-			ply:SendLua( "CurCarMaxWeight = "..tostring(PNRP.Items[ItemID].Capacity) )
-			ply:ConCommand("pnrp_carinv")
+			local item = PNRP.SearchItembase( ent )
+			if item then
+				ply:SendLua( "CurCarMaxWeight = "..tostring(item.Capacity) )
+			--	ply:ConCommand("pnrp_carinv")
+				PNRP.OpenItemInventory( ent.iid, ply, item.ID )
+			end
 		end
 	
 		return false
@@ -458,6 +475,40 @@ function isPlayerAndAdmin( ent )
 	end
 end
 
+function PlayerPickupObject( ply, ent )
+	local doPickup = false
+	if ply:KeyPressed( IN_USE ) then
+		doPickup = true
+	end
+	
+	if doPickup then
+		if ( ent:IsPlayerHolding() ) then 
+			ply:DropObject()  
+			return
+		end
+
+		local canPickup = false
+		
+		local plUID = PNRP:GetUID( ply )
+		local owner = ent:GetNetVar( "Owner", "None" )
+		local ownerUID = ent:GetNetVar( "Owner_UID", "None" )
+		
+		--Unownable should be un-pickupable, so we check that next
+		if owner == "Unownable" then canPickup = true end
+		
+		--If player owns the prop
+		if ownerUID == plUID then canPickup = true end
+		
+		if owner == "World" then canPickup = true end
+		
+		if ply:IsAdmin() and getServerSetting("adminTouchAll") == 1 then canPickup = true end
+		
+		if canPickup then
+			ply:PickupObject( ent )
+		end
+	end
+end
+
 function PickupCheck( ply, ent)
 	--admin can do whatever they want
 	if ply:IsSuperAdmin() and getServerSetting("adminTouchAll") == 1 then return true end
@@ -467,6 +518,8 @@ function PickupCheck( ply, ent)
 	if ent:IsPlayer() then return false end
 	
 	if ent.moveActive == false then return false end
+
+	if ply:InVehicle() then return false end
 	
 	--local searchString = " "..ent:GetClass()
 	if string.find(ent:GetClass(), "unc_") == 2 then
@@ -654,6 +707,7 @@ function ToolCheck( ply, tr, toolmode )
 		if string.find(tostring(ent:GetClass()),"turret") then
 			if toolmode == "weld" or toolmode == "weld_ez" 
 			  or toolmode == "easy_precision" or toolmode == "nocollide" then
+				
 			else
 				return false
 			end
@@ -758,9 +812,10 @@ function ToolCheck( ply, tr, toolmode )
 		end
 	end
 	
-	if toolmode == "colour" then
+	if toolmode == "colour" or toolmode == "material" or toolmode == "unbreakable" then
 		if ent:IsWorld() then return false end
 		if ent:IsPlayer() then return false end
+		if ent:IsNPC() then return false end
 		if not IsBuddy then
 			if ownerUID != plUID then
 				ply:ChatPrint("You do not own this.")
@@ -855,5 +910,38 @@ function ToolCheck( ply, tr, toolmode )
 end
 hook.Add( "CanTool", "ToolCheck", ToolCheck )
 
+function PNRP.CanPlayerEnterVehicle( ply, vehicle )
+	
+	if vehicle.seat == 1 then
+		Msg(tostring(vehicle).."\n")
+		ply:SetAllowWeaponsInVehicle( true ) 
+	else
+		ply:SetAllowWeaponsInVehicle( false ) 
+	end
+	
+end
+hook.Add("CanPlayerEnterVehicle", "CanPlayerEnterVehicle", PNRP.CanPlayerEnterVehicle )
 
+function PNRP.PlayerEnteredVehicle( ply, vehicle )
+
+end
+hook.Add("PlayerEnteredVehicle", "PlayerEnteredVehicle", PNRP.PlayerEnteredVehicle )
+
+function PNRP.PlayerExitVehicle( ply, vehicle )
+	if vehicle.ExitAng then
+		local origin = vehicle:GetPos()
+		
+	end
+end
+hook.Add("PlayerLeaveVehicle", "PlayerExitVehicle", PNRP.PlayerExitVehicle )
+
+function PNRP.removeCarSeats( ent )
+	local seats = constraint.FindConstraints( ent, "Weld" )
+	for _, seat in pairs(seats) do
+		if seat.Entity[2].Entity.seat == 1 then
+			seat.Entity[2].Entity:Remove()
+		end
+	end
+end
+hook.Add( "EntityRemoved", "removeCarSeats", PNRP.removeCarSeats )
 --EOF

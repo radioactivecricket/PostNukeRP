@@ -34,10 +34,18 @@ function DispItemViewCheck()
 			local scrap = "Scrap: "..stringSplit[2]
 			local sp = "Small Parts: "..stringSplit[3]
 			local chems = "Chems: "..stringSplit[4]
-			local HP
-			if status == "" then HP = "" 
-			else HP = "\n ".."HP: "..PNRP.GetFromStat(status, "HP") end
-			text = text.."\n "..scrap.."\n "..sp.."\n "..chems..HP
+			local stTXT = " "
+			
+			if not status or status == "" or tostring(status) == "false" then
+				stTXT = " "
+			else
+				local HP = PNRP.GetFromStat(status, "HP")
+				if HP then stTXT = stTXT.."\n HP: "..HP end
+				local PowerLevel = tonumber(PNRP.GetFromStat(status, "PowerLevel"))
+				if PowerLevel then stTXT = stTXT.."\n Charge: "..tostring(math.Round(PowerLevel/100)).."% "	end
+			end
+			
+			text = text.."\n "..scrap.."\n "..sp.."\n "..chems..stTXT
 		end
 		local font = "CenterPrintText"
 		local tWidth, tHeight = surface.GetTextSize(text)

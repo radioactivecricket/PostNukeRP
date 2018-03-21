@@ -69,19 +69,8 @@ function ENT:Use( activator, caller )
 						net.Send(activator)
 					end
 				else
-				--	local result = querySQL("SELECT * FROM player_storage WHERE storageid="..SQLStr(storageID))
-					
-					local storageInventory = GetFullStorageInventory( ply, storageID )
-					local capString = tostring(getStorageCapacity( storageID )).."/"..tostring(PNRP.Items[self:GetClass()].Capacity)
-					net.Start("storage_menu")
-						net.WriteEntity(self)
-						net.WriteString(storageID)
-						net.WriteTable(storageInventory)
-						net.WriteTable(PNRP.GetFullInventory( activator ))
-						net.WriteTable(self.availableModels)
-						net.WriteDouble(math.Round((self.BreakInTimer / 60) * 100))
-						net.WriteString(capString)
-					net.Send(activator)
+					--Opens the Storage Inventory
+					OpenStorageMenu(self, activator)
 				end
 			else
 				if storageID == nil or storageID == "" then
@@ -99,6 +88,37 @@ function ENT:Use( activator, caller )
 end
 util.AddNetworkString("storage_new_menu")
 util.AddNetworkString("storage_breakin")
+
+function OpenStorageMenu(ent, ply)
+	local storageID = ent.storageID
+	local item = PNRP.SearchItembase( ent )
+	if not item then return end
+	
+	local storageInventory = GetFullStorageInventory( ply, storageID )
+	
+	local capacity = item.Capacity
+	if not capacity then capacity = 0 end
+	
+	local weightCap
+	if team.GetName(ply:Team()) == "Scavenger" then
+		weightCap = GetConVarNumber("pnrp_packCapScav") + (ply:GetSkill("Backpacking")*10)
+	else
+		weightCap = GetConVarNumber("pnrp_packCap") + (ply:GetSkill("Backpacking")*10)
+	end
+	
+	net.Start("storage_menu")
+		net.WriteEntity(ent)
+		net.WriteString(storageID)
+		net.WriteTable(storageInventory)
+		net.WriteTable(PNRP.GetFullInventory( ply ))
+		net.WriteTable(ent.availableModels)
+		net.WriteDouble(math.Round((ent.BreakInTimer / 60) * 100))
+		net.WriteString(tostring(PNRP.InventoryWeight( ply )))
+		net.WriteString(tostring(getStorageCapacity( storageID )))
+		net.WriteString(tostring(weightCap))
+		net.WriteString(capacity)
+	net.Send(ply)
+end
 
 function GetFullStorageInventory( ply, storageID )
 	local query
@@ -129,6 +149,23 @@ function GetFullStorageInventory( ply, storageID )
 	return invTbl
 end
 
+function GetFullStorageInventorySimple( ply, storageID )
+	local invTbl = GetFullStorageInventory( ply, storageID )
+	
+	if not invTbl then invTbl = {} end
+	local inv = {}
+	for _, v in pairs(invTbl) do
+		if invTbl[v["itemid"]] then
+			inv[v["itemid"]] = v["count"] + tonumber(v["count"])
+		else
+			inv[v["itemid"]] = tonumber(v["count"])
+		end
+		
+	end
+	
+	return inv
+end
+
 function getStorageCapacity( storageID )
 
 	local query = "SELECT inventory FROM player_storage WHERE storageid="..SQLStr(storageID)
@@ -149,10 +186,10 @@ function getStorageCapacity( storageID )
 				
 				local Item = PNRP.Items[invSplit[1]]
 				if Item != nil then
-					if Item.Type ~= "vehicle" then
+				--	if Item.Type ~= "vehicle" then
 						local tmpW = tonumber(Item.Weight) * tonumber(invSplit[2])
 						weightSum = weightSum + tmpW
-					end
+				--	end
 				end
 			end
 		end
@@ -161,9 +198,9 @@ function getStorageCapacity( storageID )
 	local Inv2 = PNRP.PersistOtherInventory( "storage", storageID )
 
 	for k, v in pairs(Inv2) do
-		if PNRP.Items[v["itemid"]].Type ~= "vehicle" then
+	--	if PNRP.Items[v["itemid"]].Type ~= "vehicle" then
 			weightSum = weightSum + PNRP.Items[v["itemid"]].Weight
-		end
+	--	end
 	end
 	
 	return weightSum
@@ -298,8 +335,7 @@ end
 util.AddNetworkString("StorageRename")
 net.Receive( "StorageRename", StorageRename )
 
-function TakeFromStorage( )
-	local ply = net.ReadEntity()
+function TakeFromStorage( len, ply )
 	local storageENT = net.ReadEntity()
 	local Item = net.ReadString()
 	local Amount = net.ReadDouble()
@@ -351,6 +387,8 @@ function TakeFromStorage( )
 			ply:ChatPrint("Unable to take item from storage.")
 		end
 	end
+	
+	OpenStorageMenu(storageENT, ply)
 end
 util.AddNetworkString("storage_take")
 net.Receive( "storage_take", TakeFromStorage )
@@ -405,13 +443,13 @@ function remStorageItem( storageID, Item, Amount )
 	return foundItem
 end
 
-function sendToPlayerStorage( p, command, arg )
-	local ply = net.ReadEntity()
+function sendToPlayerStorage( len, ply )
 	local storageENT = net.ReadEntity()
 	local itemID = net.ReadString()
 	local count = net.ReadDouble()
+	local iid = net.ReadString()
 	local storageID = storageENT.storageID
-
+	
 	local item = {}
 	
 	local query
@@ -423,60 +461,123 @@ function sendToPlayerStorage( p, command, arg )
 		return
 	end
 	
-	local Check = PNRP.TakeFromInventoryBulk( ply, itemID, tonumber(count) )
-	if not Check then
-		ply:ChatPrint("You do not have enough of this.")
-		return
-	end
+	if iid == nil or iid == "" then
+		local Check = PNRP.TakeFromInventoryBulk( ply, itemID, tonumber(count) )
+		if not Check then
+			ply:ChatPrint("You do not have enough of this.")
+			return
+		end
+			
+		query = "SELECT inventory FROM player_storage WHERE storageid="..SQLStr(storageID)
+		result = querySQL(query)
+
+		-- Inventory string design:  itemID, count scrap smallpats chems
+		if result then
+			local getInvTable = result[1]["inventory"]
+			local foundItem = false
+
+			local invTbl = {}
+			if getInvTable == nil or getInvTable == "" or tostring(getInvTable) == "NULL" then
+				foundItem = false
+			else
+				local invLongStr = string.Explode( " ", getInvTable )
+				for _, invStr in pairs( invLongStr ) do
+					local invSplit = string.Explode( ",", invStr )
+					
+					invTbl[invSplit[1]] = tostring(invSplit[2])
+				end
 		
-	query = "SELECT inventory FROM player_storage WHERE storageid="..SQLStr(storageID)
-	result = querySQL(query)
-
-	-- Inventory string design:  itemID, count scrap smallpats chems
-	if result then
-		local getInvTable = result[1]["inventory"]
-		local foundItem = false
-
-		local invTbl = {}
-		if getInvTable == nil or getInvTable == "" or tostring(getInvTable) == "NULL" then
-			foundItem = false
-		else
-			local invLongStr = string.Explode( " ", getInvTable )
-			for _, invStr in pairs( invLongStr ) do
-				local invSplit = string.Explode( ",", invStr )
-				
-				invTbl[invSplit[1]] = tostring(invSplit[2])
-			end
-	
-			for k, v in pairs(invTbl) do
-				if k == itemID then
-					local totalCount = tonumber(v) + tonumber(count)
-					invTbl[itemID] = totalCount
-					foundItem = true
+				for k, v in pairs(invTbl) do
+					if k == itemID then
+						local totalCount = tonumber(v) + tonumber(count)
+						invTbl[itemID] = totalCount
+						foundItem = true
+					end
 				end
 			end
-		end
 
-		if not foundItem then
-			invTbl[itemID] = tonumber(count)
+			if not foundItem then
+				invTbl[itemID] = tonumber(count)
+			end
+			
+			local newInvString = ""
+			for k, v in pairs(invTbl) do
+				newInvString = newInvString.." "..tostring(k)..","..tostring(v)
+			end
+			newInvString = string.Trim(newInvString)
+			query = "UPDATE player_storage SET inventory='"..newInvString.."' WHERE storageid="..SQLStr(storageID)
+			result = querySQL(query)
+			
+			ply:EmitSound(Sound("items/ammo_pickup.wav"))
+		else
+			ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No StorageProfile match in player_storage! ["..tostring(storageID).."] \n")
 		end
-		
-		local newInvString = ""
-		for k, v in pairs(invTbl) do
-			newInvString = newInvString.." "..tostring(k)..","..tostring(v)
-		end
-		newInvString = string.Trim(newInvString)
-		query = "UPDATE player_storage SET inventory='"..newInvString.."' WHERE storageid="..SQLStr(storageID)
-		result = querySQL(query)
-		
-		ply:EmitSound(Sound("items/ammo_pickup.wav"))
 	else
-		ErrorNoHalt(tostring(os.date()).." SQL ERROR:  No StorageProfile match in player_storage! ["..tostring(storageID).."] \n")
+		PNRP.PersistMoveTo( ply, iid, "storage", storageID )
+		ply:EmitSound(Sound("items/ammo_pickup.wav"))
 	end
+	OpenStorageMenu(storageENT, ply)
 end
 util.AddNetworkString("storage_give")
 net.Receive( "storage_give", sendToPlayerStorage )
 
+function UseFromPlyStoreage(len, ply)
+	local storageENT = net.ReadEntity()
+	local usedFrom = net.ReadString()
+	local ItemID = net.ReadString()
+	local storageID = storageENT.storageID
+	
+	local item = PNRP.Items[ItemID]
+	if not item then return end
+	
+	if usedFrom == "storage" then
+		--Makes sure the player has the item
+		local invTbl = GetFullStorageInventorySimple( ply, storageID )
+		
+		if not invTbl then 
+			ply:ChatPrint("You don't have enough of this.")
+			return 
+		end
+		if not invTbl[ItemID] then
+			ply:ChatPrint("You don't have enough of this.")
+			return 
+		end
+		
+		if item.Type == "weapon" or item.Type == "ammo" or item.Type == "medical" or item.Type == "food" then
+			local useCheck	
+			useCheck = item.Use( ply )
+			if useCheck == true then
+				remStorageItem(storageID, ItemID, 1)
+			end
+		else
+			ply:ChatPrint("Cant use this, wrong type.")
+		end	
+	elseif usedFrom == "player" then
+		--Make sure the player has the item
+		local invTbl = PNRP.GetFullInventorySimple( ply )
+		if not invTbl then 
+			ply:ChatPrint("You don't have enough of this.")
+			return 
+		end
+		if not invTbl[ItemID] then
+			ply:ChatPrint("You don't have enough of this.")
+			return 
+		end
+		
+		if item.Type == "weapon" or item.Type == "ammo" or item.Type == "medical" or item.Type == "food" then
+			local useCheck	
+			useCheck = item.Use( ply )
+			if useCheck == true then
+				PNRP.TakeFromInventory( ply, ItemID )
+			end
+		else
+			ply:ChatPrint("Cant use this, wrong type.")
+		end	
+	end
+	OpenStorageMenu(storageENT, ply)
+end
+net.Receive( "UseFromPlyStoreage", UseFromPlyStoreage )
+util.AddNetworkString( "UseFromPlyStoreage" )
 
 function StorageBreakIn( )
 	local ply = net.ReadEntity()
@@ -494,25 +595,14 @@ function StorageBreakIn( )
 		ply:ChatPrint("You can't break in while someone's repairing this storage!")
 		return
 	end
-	
-	local storageInventory = GetFullStorageInventory( ply, storageID )
-	local capString = tostring(getStorageCapacity(storageID)).."/"..tostring(PNRP.Items[storage:GetClass()].Capacity)
-			
+				
 	if not storage.BreakingIn then
 		if storage.BreakInTimer <= 0 then
 			net.Start("storage_stopbreakin")
 			net.Send(ply)
-						
-			net.Start("storage_menu")
-				net.WriteEntity(storage)
-				net.WriteString(storageID)
-				net.WriteTable(storageInventory)
-				net.WriteTable(PNRP.GetFullInventory( ply ))
-				net.WriteTable(storage.availableModels)
-				net.WriteDouble(math.Round((storage.BreakInTimer / 60) * 100))
-				net.WriteString(capString)
-			net.Send(ply)
-
+			
+			OpenStorageMenu(storage, ply)
+			
 		else
 			-- ply:Freeze(true)
 			ply:SetMoveType(MOVETYPE_NONE)
@@ -537,17 +627,9 @@ function StorageBreakIn( )
 					
 					ply:SetMoveType(MOVETYPE_WALK)
 					storage.BreakingIn = nil
-									
-					net.Start("storage_menu")
-						net.WriteEntity(storage)
-						net.WriteString(storageID)
-						net.WriteTable(storageInventory)
-						net.WriteTable(PNRP.GetFullInventory( ply ))
-						net.WriteTable(storage.availableModels)
-						net.WriteDouble(math.Round((storage.BreakInTimer / 60) * 100))
-						net.WriteString(capString)
-					net.Send(ply)
-
+					
+					OpenStorageMenu(storage, ply)
+					
 					storage:EmitSound("physics/wood/wood_box_break2.wav",100,100)
 					timer.Stop(ply:UniqueID()..tostring(storage:EntIndex()))
 				else
@@ -611,17 +693,7 @@ function StorageRepair( )
 					storage.Repairing = nil
 					storage.BreakInTimer = 60
 					
-					local storageInventory = GetFullStorageInventory( ply, storageID )
-					local capString = tostring(getStorageCapacity(storageID)).."/"..tostring(PNRP.Items[storage:GetClass()].Capacity)
-					net.Start("storage_menu")
-						net.WriteEntity(storage)
-						net.WriteString(storageID)
-						net.WriteTable(storageInventory)
-						net.WriteTable(PNRP.GetFullInventory( ply ))
-						net.WriteTable(storage.availableModels)
-						net.WriteDouble(math.Round((storage.BreakInTimer / 60) * 100))
-						net.WriteString(capString)
-					net.Send(ply)
+					OpenStorageMenu(storage, ply)
 				
 					timer.Stop(ply:UniqueID()..tostring(storage:EntIndex()))
 				else

@@ -15,7 +15,7 @@ ITEM.Energy = 15
 ITEM.Ent = "weapon_pnrp_knife"
 ITEM.Model = "models/weapons/w_knife_t.mdl"
 ITEM.Script = ""
-ITEM.Weight = 10
+ITEM.Weight = 2
 ITEM.ShopHide = false
 
 WEAPON.ID = ITEM.ID

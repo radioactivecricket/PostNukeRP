@@ -46,7 +46,7 @@ function ITEM.Create( ply, class, pos, iid )
 	
 	PNRP.SetOwner(ply, ent)
 	
-	PNRP.AddWorldCache( ply,ITEM.ID )
+	PNRP.AddWorldCache( ply,ITEM.ID,ent )
 end
 
 

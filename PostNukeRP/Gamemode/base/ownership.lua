@@ -42,7 +42,7 @@ function PNRP.SetOwnership( ply )
 					local myModel = ent:GetModel()			
 					if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
 				end		
-				PNRP.AddWorldCache( ply, ItemID )
+				PNRP.AddWorldCache( ply, ItemID, ent )
 			end
 			
 			ply:ChatPrint("Admin override of ownership.")
@@ -102,7 +102,7 @@ function AddOwner(ply, args)
 				local myModel = ent:GetModel()			
 				if myModel == "models/buggy.mdl" then ItemID = "vehicle_jeep" end
 			end		
-			PNRP.AddWorldCache( ply, ItemID )
+			PNRP.AddWorldCache( ply, ItemID, ent )
 		end
 		
 	else
