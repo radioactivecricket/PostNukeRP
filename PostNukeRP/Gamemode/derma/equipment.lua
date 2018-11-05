@@ -158,33 +158,36 @@ function GM.EquipmentWindow( )
 							pnlPanel.Icon:SetPos(pnlPanel:GetWide() / 2 - pnlPanel.Icon:GetWide() / 2, 5 )
 							pnlPanel.Icon:SetToolTip( nil )
 							pnlPanel.Icon.DoClick = function()	
-							
-								if ( v ) then
-									if v:GetClass() == "weapon_frag" then
-										if ply:GetAmmoCount( v:GetPrimaryAmmoType() ) > 0 then
-											RunConsoleCommand("pnrp_dropAmmo","grenade", "1")
-										else
-											RunConsoleCommand("pnrp_stripWep",v:GetClass())
+								if ply:Health() <= 0 then
+									ply:ChatPrint("You cant do this while dead.")
+								else
+									if ( IsValid( v ) ) then
+										if ( v ) then
+											if v:GetClass() == "weapon_frag" then
+												if ply:GetAmmoCount( v:GetPrimaryAmmoType() ) > 0 then
+													RunConsoleCommand("pnrp_dropAmmo","grenade", "1")
+												else
+													RunConsoleCommand("pnrp_stripWep",v:GetClass())
+												end
+											elseif v:GetClass() == "weapon_pnrp_charge" then
+												if ply:GetAmmoCount( v:GetPrimaryAmmoType() ) > 0 then
+													RunConsoleCommand("pnrp_dropAmmo","slam", "1")
+												else
+													RunConsoleCommand("pnrp_stripWep",v:GetClass())
+												end
+												
+											else
+												local curWepAmmo = v:Clip1()
+												net.Start( "pnrp_dropWepFromEQ" )
+													net.WriteString(myItem.ID)
+													net.WriteString(curWepAmmo)
+												net.SendToServer()
+												RunConsoleCommand("pnrp_stripWep",v:GetClass())
+											end
 										end
-										eq_frame:Close()
-									elseif v:GetClass() == "weapon_pnrp_charge" then
-										if ply:GetAmmoCount( v:GetPrimaryAmmoType() ) > 0 then
-											RunConsoleCommand("pnrp_dropAmmo","slam", "1")
-										else
-											RunConsoleCommand("pnrp_stripWep",v:GetClass())
-										end
-										eq_frame:Close()
-									else
-										local curWepAmmo = v:Clip1()
-										net.Start( "pnrp_dropWepFromEQ" )
-											net.WriteString(myItem.ID)
-											net.WriteString(curWepAmmo)
-										net.SendToServer()
-										eq_frame:Close()
-										RunConsoleCommand("pnrp_stripWep",v:GetClass())
 									end
 								end
-							
+								eq_frame:Close()
 							end
 							
 							pnlPanel.Name = vgui.Create("DLabel", pnlPanel)		
@@ -200,19 +203,24 @@ function GM.EquipmentWindow( )
 							pnlPanel.sendToInv:SetText( ">>Inv" )
 	--				    	pnlPanel.sendToInv:SizeToContents() 
 							pnlPanel.sendToInv.DoClick = function()
-								
-								local weight = MyWeight + myItem.Weight
-								
-								if weight <= MyWeightCap then
-								--	RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID,v:GetClass())
-									net.Start( "pnrp_addtoinvfromeq" )
-										net.WriteEntity(ply)
-										net.WriteString("pnrp_addtoinvfromeq")
-										net.WriteString(myItem.ID)
-									net.SendToServer()
-									RunConsoleCommand("pnrp_stripWep",v:GetClass())
+								if ply:Health() <= 0 then
+									ply:ChatPrint("You cant do this while dead.")
 								else
-									ply:ChatPrint("Your pack is full.")
+									if ( IsValid( v ) ) then
+										local weight = MyWeight + myItem.Weight
+										
+										if weight <= MyWeightCap then
+										--	RunConsoleCommand("pnrp_addtoinvfromeq",myItem.ID,v:GetClass())
+											net.Start( "pnrp_addtoinvfromeq" )
+												net.WriteEntity(ply)
+												net.WriteString("pnrp_addtoinvfromeq")
+												net.WriteString(myItem.ID)
+											net.SendToServer()
+											RunConsoleCommand("pnrp_stripWep",v:GetClass())
+										else
+											ply:ChatPrint("Your pack is full.")
+										end
+									end
 								end
 								eq_frame:Close()
 								

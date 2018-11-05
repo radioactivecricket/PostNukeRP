@@ -563,6 +563,11 @@ function PNRP.AddToInvFromEQ( len, pl )
 		return
 	end
 	
+	if ply:Health() <= 0 then 
+		ply:ChatPrint("You cant do this while dead.")
+		return
+	end
+	
 	local weight = PNRP.InventoryWeight( ply ) + PNRP.Items[theitem].Weight
 	local weightCap
 	
