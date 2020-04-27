@@ -25,23 +25,21 @@ function ENT:Initialize()
 	self.vendorID = self.Entity:GetNetVar("vendorid")
 	self.name = self.Entity:GetNetVar("name")
 	self.Enabled = false
-	
-	self.availableModels = {
-		"models/props/cs_office/vending_machine.mdl",
-		"models/props_interiors/vendingmachinesoda01a.mdl",
-		"models/props/de_tides/vending_cart.mdl",
-		"models/props_combine/health_charger001.mdl",
-		"models/props_combine/suit_charger001.mdl",
-		"models/props_c17/display_cooler01a.mdl",
-		"models/props_c17/cashregister01a.mdl",
-		"models/props/CS_militia/bar01.mdl",
-		"models/props/CS_militia/mailbox01.mdl",
-		"models/props/cs_assault/TicketMachine.mdl"
-	}
-	
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_NONE)
-	
 end
+
+ENT.availableModels = {
+	"models/props/cs_office/vending_machine.mdl",
+	"models/props_interiors/vendingmachinesoda01a.mdl",
+	"models/props/de_tides/vending_cart.mdl",
+	"models/props_combine/health_charger001.mdl",
+	"models/props_combine/suit_charger001.mdl",
+	"models/props_c17/display_cooler01a.mdl",
+	"models/props_c17/cashregister01a.mdl",
+	"models/props/cs_militia/bar01.mdl",
+	"models/props/cs_militia/mailbox01.mdl",
+	"models/props/cs_assault/ticketmachine.mdl"
+}
 
 function ENT:Use( activator, caller )
 --	if not self.Enabled then return end 
@@ -94,6 +92,13 @@ end
 util.AddNetworkString("CreateNewVendor")
 util.AddNetworkString("vendor_menu")
 util.AddNetworkString("vendor_new_menu")
+
+function ENT:IsOwner(ply)
+	return IsValid(ply) and ply ~= self and ply.pid and ply.pid ~= self.pid
+end
+local function isVendorOwner( vendorENT, ply )
+	return vendorENT.vendorID and vendorENT:IsOwner(ply)
+end
 
 function getFullVendorInventory(vendorID)
 	local invTbl = {}
@@ -162,11 +167,13 @@ function getVendorCapacity(vendorID)
 	return weightSum
 end
 
-function ChangeVendorModel( )
-	local ply = net.ReadEntity()
+function ChangeVendorModel( _, ply )
 	local vendorENT = net.ReadEntity()
-	local vendorModel = net.ReadString()
-	
+	if not isVendorOwner( vendorENT, ply ) then return end
+
+	local vendorModel = string.lower(net.ReadString())
+	if not util.IsValidModel(vendorModel) or not table.HasValue(vendorENT.availableModels, vendorModel) then return end -- prevent use of non available models
+
 	local effectdata = EffectData()
 	effectdata:SetStart( vendorENT:LocalToWorld( Vector( 0, 0, 0 ) ) ) 
 	effectdata:SetOrigin( vendorENT:LocalToWorld( Vector( 0, 0, 0 ) ) )
@@ -189,12 +196,13 @@ function ChangeVendorModel( )
 end
 net.Receive( "ChangeVendorModel", ChangeVendorModel )
 
-function CreateNewVendor( )
-	local ply = net.ReadEntity()
+function CreateNewVendor( _, ply )
 	local vendorENT = net.ReadEntity()
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	local vendorName = net.ReadString()
 
-	local itemID = PNRP.FindItemID( vendorENT:GetClass() )
+	local itemID = "tool_vendor"
 
 	local costStr = string.Explode( " ", PNRP.Items[itemID].ProfileCost)
 	local pScr = tonumber(costStr[1])
@@ -242,9 +250,10 @@ function deleteVendor( p, command, arg )
 end
 concommand.Add( "deleteVendor", deleteVendor )
 
-function SetVendor( )
-	local ply = net.ReadEntity()
+function SetVendor( _, ply )
 	local vendorENT = net.ReadEntity()
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	local vendorID = net.ReadDouble()
 	local vendorName = net.ReadString()
 	
@@ -263,10 +272,10 @@ function SetVendor( )
 end
 net.Receive( "SetVendor", SetVendor )
 
-function VendorReset( )
-	local ply = net.ReadEntity()
+function VendorReset( _, ply )
 	local vendorENT = net.ReadEntity()
-	
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	cleanupDispItems(vendorENT.vendorID)
 	
 	vendorENT:SetNetVar("vendorid", nil)
@@ -277,27 +286,23 @@ function VendorReset( )
 end
 net.Receive( "VendorReset", VendorReset )
 
-function VendorRename( )
-	local ply = net.ReadEntity()
+function VendorRename( _, ply )
 	local vendorENT = net.ReadEntity()
-	local vendorID = net.ReadDouble()
-	local vendorName = net.ReadString()
-	
-	if vendorENT.vendorID == vendorID then
-		vendorENT.name = vendorName
-		vendorENT:SetNetVar("name", vendorName)
-	end
-	
-	query = "UPDATE vending_table SET name="..SQLStr(vendorName).." WHERE vendorid="..SQLStr(vendorID)
-	result = querySQL(query)
+	if not isVendorOwner( vendorENT, ply ) then return end
 
+	local vendorName = net.ReadString()
+
+	vendorENT.name = vendorName
+	vendorENT:SetNetVar("name", vendorName)
+	query = "UPDATE vending_table SET name="..SQLStr(vendorName).." WHERE vendorid="..SQLStr(vendorENT.vendorID)
+	result = querySQL(query)
 end
 net.Receive( "VendorRename", VendorRename )
 
-function VendorGetRes( )
-	local ply = net.ReadEntity()
+function VendorGetRes( _, ply )
 	local vendorENT = net.ReadEntity()
-	
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	local result = querySQL("SELECT res FROM vending_table WHERE vendorid="..SQLStr(vendorENT.vendorID))
 	if result then
 		local vendorRes = result[1]["res"]
@@ -344,10 +349,10 @@ function VendorGetRes( )
 end
 net.Receive( "VendorGetRes", VendorGetRes )
 
-function VendorOwnerShop( )
-	local ply = net.ReadEntity()
+function VendorOwnerShop( _, ply )
 	local vendorENT = net.ReadEntity()
-	
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	local vendorID = vendorENT.vendorID
 	
 	local vendInv = getFullVendorInventory(vendorID)
@@ -359,9 +364,10 @@ function VendorOwnerShop( )
 end
 net.Receive( "VendorOwnerShop", VendorOwnerShop )
 
-function TakeFromVendor( )
-	local ply = net.ReadEntity()
+function TakeFromVendor( _, ply )
 	local vendorENT = net.ReadEntity()
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	local Item = net.ReadString()
 	local Amount = net.ReadDouble()
 	local iid = net.ReadString()
@@ -591,9 +597,10 @@ function updateDispItemCost(vendorID, itemID, costTable, iid)
 	end
 end
 
-function doBuyFromVendor( )
-	local ply = net.ReadEntity()
+function doBuyFromVendor( _, ply )
 	local vendorENT = net.ReadEntity()
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	local Amount = net.ReadDouble()
 	local Item = net.ReadString()
 	local Cost = net.ReadTable()
@@ -783,10 +790,10 @@ function checkRMDispItems(ply, itemID, vendorID, iid)
 	end
 end
 
-function clsDispItems()
-	local ply = net.ReadEntity()
+function  clsDispItems( _, ply )
 	local vendorENT = net.ReadEntity()
-	
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	cleanupDispItems(vendorENT.vendorID)
 end
 net.Receive( "clsDispItems", clsDispItems )
@@ -837,9 +844,10 @@ function getItemInfo(itemID, vendorID, iid)
 	return returnString
 end
 
-function VendorCreateDisplayItem()
-	local ply = net.ReadEntity()
+function VendorCreateDisplayItem( _, ply )
 	local vendorENT = net.ReadEntity()
+	if not isVendorOwner( vendorENT, ply ) then return end
+
 	local itemID = net.ReadString()
 	local vendorID = vendorENT.vendorID
 	local item = PNRP.Items[itemID]
