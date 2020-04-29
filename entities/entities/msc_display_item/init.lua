@@ -81,13 +81,15 @@ function ENT:Use( activator, caller )
 end
 util.AddNetworkString("dispBuyVerify")
 
-function BuyFromVendorDisp( )
-	local ply = net.ReadEntity()
+function BuyFromVendorDisp( _, ply )
 	local ent = net.ReadEntity()
 	local item = PNRP.Items[net.ReadString()]
 	local amount = tonumber(net.ReadString())
 	
 	local vendorID = ent.vendorid
+
+	if not vendorID then return end
+
 	local iid = ent:GetNetVar("iid", "")
 	local itemString = getItemInfo(item.ID, vendorID, iid)
 	

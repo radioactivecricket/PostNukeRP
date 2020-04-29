@@ -599,7 +599,7 @@ end
 
 function doBuyFromVendor( _, ply )
 	local vendorENT = net.ReadEntity()
-	if not isVendorOwner( vendorENT, ply ) then return end
+	if not vendorENT.vendorID then return end
 
 	local Amount = net.ReadDouble()
 	local Item = net.ReadString()
