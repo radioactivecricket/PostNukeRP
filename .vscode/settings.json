@@ -1,0 +1,9 @@
+{
+    "Lua.diagnostics.disable": [
+        "undefined-global"
+    ],
+    "Lua.diagnostics.globals": [
+        "result",
+        "query"
+    ]
+}
